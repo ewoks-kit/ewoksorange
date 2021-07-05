@@ -1,4 +1,7 @@
-from importlib import resources
+try:
+    from importlib import resources
+except ImportError:
+    import importlib_resources as resources
 from ewoksorange import owsconvert
 from ewokscore import load_graph
 from ewokscore.tests.examples import graphs
