@@ -13,6 +13,8 @@ lint:
 test:
   stage: test
   script:
+  # install opengl libraries (needed for PyQt5)
+  - apt-get update && apt-get -y install libxi6
   - pip install .[test]
   - pytest
   only:
