@@ -1,1 +1,1 @@
-# EwoksOrange: Pypushflow binding for Orange3
+# EwoksOrange: Orange binding for Ewoks
