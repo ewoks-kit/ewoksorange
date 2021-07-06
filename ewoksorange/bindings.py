@@ -14,9 +14,6 @@ from ewokscore.task import TaskInputError
 from . import owsconvert
 
 
-__all__ = ["execute_graph", "OWEwoksWidget"]
-
-
 def input_setter(name):
     def setter(self, var):
         self.set_input(name, var)
