@@ -1,7 +1,7 @@
 import sys
 import logging
 import pytest
-from ewoksorange import job
+from ewoksorange import execute_graph
 from ewokscore.tests.examples import graphs
 from ewokscore.tests.utils import assert_taskgraph_result
 
@@ -12,8 +12,8 @@ logging.getLogger("ewoksorange").addHandler(logging.StreamHandler(sys.stdout))
 
 
 @pytest.mark.skip("TODO: hashes are different due to static input")
-def test_job(tmpdir):
+def test_execute_graph(tmpdir):
     varinfo = {"root_uri": str(tmpdir)}
     graph, expected = graphs.acyclic_graph1()
-    job(graph, varinfo=varinfo)
+    execute_graph(graph, varinfo=varinfo)
     assert_taskgraph_result(graph, expected, varinfo)
