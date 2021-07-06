@@ -14,9 +14,6 @@ from ewokscore.task import TaskInputError
 from . import owsconvert
 
 
-__all__ = ["job", "OWEwoksWidget"]
-
-
 def input_setter(name):
     def setter(self, var):
         self.set_input(name, var)
@@ -163,7 +160,7 @@ class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, openclass=True):
         self.run()
 
 
-def job(graph, representation=None, varinfo=None):
+def execute_graph(graph, representation=None, varinfo=None):
     ewoksgraph = load_graph(source=graph, representation=representation)
     if ewoksgraph.is_cyclic:
         raise RuntimeError("Orange can only execute DAGs")
