@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<scheme version="2.0" title="SumTask (Custom cat.)" description="taskgraphlib.taskgraphs.acyclic_graph1">
+<scheme version="2.0" title="SumTask (Custom cat.)" description="acyclic1">
 	<nodes>
 		<node id="0" name="Adder1" qualified_name="orangecontrib.customcategory.adder1.Adder1" project_name="ewoks_example_addon" title="task1" position="(0.0, 0.0)" />
 		<node id="1" name="Adder2" qualified_name="orangecontrib.customcategory.adder2.Adder2" project_name="ewoks_example_addon" title="task2" position="(155.0, 308.0)" />

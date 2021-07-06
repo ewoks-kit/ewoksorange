@@ -2,7 +2,7 @@ from Orange.widgets import gui
 
 from ewoksorange.bindings import OWEwoksWidget
 from ewoksorange.gui.parameterform import ParameterForm
-from ewokscore.tests.examples.tasks import SumTask
+from ewokscore.tests.examples.tasks.sumtask import SumTask
 
 
 __all__ = ["Adder2"]
