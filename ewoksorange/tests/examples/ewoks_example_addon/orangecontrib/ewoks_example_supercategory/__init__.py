@@ -1,5 +1,7 @@
 import sysconfig
 
+NAME = "Ewoks example super-category"
+
 DESCRIPTION = "Short super-category description"
 
 LONG_DESCRIPTION = "Long super-category description"
@@ -24,7 +26,7 @@ def widget_discovery(discovery):
     distroname = pkg_resources.safe_name("ewoks_example_addon")
     dist = pkg_resources.get_distribution(distroname)
     pkgs = [
-        "orangecontrib.customsupercategory.customsubcategory",
+        "orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory",
     ]
     for pkg in pkgs:
         discovery.process_category_package(pkg, distribution=dist)

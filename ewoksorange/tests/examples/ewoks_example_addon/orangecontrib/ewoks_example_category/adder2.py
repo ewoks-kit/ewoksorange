@@ -23,10 +23,9 @@ class Adder2(
 
         box = gui.widgetBox(self.controlArea, "Static Inputs")
         self._static_input_form = ParameterForm(parent=box)
-        for name in self.input_names():
-            value = self.static_input.get(name, 0)
+        for name, value in self.static_input_values.items():
             self._static_input_form.addParameter(
-                name, value=value, changeCallback=self.changeStaticInput
+                name, value=value, default=0, changeCallback=self.changeStaticInput
             )
 
         box = gui.widgetBox(self.controlArea, "Dynamic Inputs")

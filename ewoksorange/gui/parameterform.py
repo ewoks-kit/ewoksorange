@@ -1,6 +1,7 @@
 from AnyQt import QtWidgets
 from AnyQt.QtCore import Qt
 import numbers
+from ewoksorange.bindings import MISSING_DATA
 
 
 class ParameterForm(QtWidgets.QWidget):
@@ -34,10 +35,10 @@ class ParameterForm(QtWidgets.QWidget):
     #    s = super().sizeHint()
     #    return QtCore.QSize(int(1.5 * s.width()), s.height())
 
-    def addParameter(self, name, value=None, changeCallback=None):
+    def addParameter(self, name, value=None, default="", changeCallback=None):
         label = name + ":"
-        if value is None:
-            value = ""
+        if value is None or value is MISSING_DATA:
+            value = default
         if isinstance(value, str):
             field = QtWidgets.QLineEdit()
             field.setText(value)
@@ -81,12 +82,14 @@ class ParameterForm(QtWidgets.QWidget):
             field.setValue(value)
 
     def enable(self, name):
-        field = self._fields[name]
-        field.setEnabled(True)
+        if name in self._fields:
+            field = self._fields[name]
+            field.setEnabled(True)
 
     def disable(self, name):
-        field = self._fields[name]
-        field.setEnabled(False)
+        if name in self._fields:
+            field = self._fields[name]
+            field.setEnabled(False)
 
     def getParameters(self):
         return {name: self.getParameter(name) for name in self._fields}
