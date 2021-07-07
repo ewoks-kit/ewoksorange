@@ -1,7 +1,6 @@
 """Each Orange3 Addon install entry-points for widgets and tutorials.
-Widget discovery is done here:
 
-    https://github.com/biolab/orange-canvas-core/search?q=iter_entry_points
+Widget discovery is done in `orangecanvas.registry.discovery.WidgetDiscovery`
 """
 
 import pkgutil
@@ -82,6 +81,12 @@ def get_subpackages(package):
 @contextmanager
 def register_addon_package(package, distroname=None):
     """An Orange Addon package which has not been installed.
+
+    TODO: the orangecontrib namespace does not get setup properly.
+    For the example Addon we currently have this:
+            qualified_name = "orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory.adder1.Adder1"
+            qualified_name = "ewoksorange.tests.examples.ewoks_example_addon.orangecontrib.ewoks_example_category.adder1.Adder1"
+            qualified_name = "ewoksorange.tests.examples.ewoks_example_addon.orangecontrib.evaluate.submodule.adder1.Adder1"
 
     :param package:
     :param str distroname:
