@@ -11,7 +11,11 @@ from Orange.widgets.settings import Setting
 from ewokscore import load_graph
 from ewokscore.variable import Variable
 from ewokscore.task import TaskInputError
+from ewokscore.hashing import UniversalHashable
+from ewokscore.hashing import MissingData
 from . import owsconvert
+
+MISSING_DATA = UniversalHashable.MISSING_DATA
 
 
 def input_setter(name):
@@ -38,7 +42,7 @@ def prepare_OWEwoksWidgetclass(
     attr["Inputs"] = Inputs
     attr["Outputs"] = Outputs
     attr["static_input"] = Setting(
-        {name: None for name in ewokstaskclass.input_names()}
+        {name: MISSING_DATA for name in ewokstaskclass.input_names()}
     )
     attr["varinfo"] = Setting({"root_uri": ""})
     attr["static_input"].schema_only = True
@@ -83,10 +87,12 @@ class OWEwoksWidgetMetaClass(WidgetMetaClass):
 
 
 class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, openclass=True):
+    MISSING_DATA = MISSING_DATA
+
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self.dynamic_input_variables = dict()
-        self.output_variables = dict()
+        self._dynamic_inputs = dict()
+        self._output_variables = dict()
 
     @classmethod
     def input_names(cls):
@@ -97,51 +103,68 @@ class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, openclass=True):
         return cls.ewokstaskclass.output_names()
 
     @property
-    def input_variables(self):
-        variables = dict()
-        for name in self.input_names():
-            var = self.dynamic_input_variables.get(name)
-            if var is None or var.value is None:
-                value = self.static_input.get(name)
-                var = Variable(value=value)
-            variables[name] = var
-        return variables
+    def _all_inputs(self):
+        inputs = self.static_input_values
+        inputs.update(self._dynamic_inputs)
+        return inputs
+
+    @staticmethod
+    def _get_value(value):
+        if isinstance(value, Variable):
+            return value.value
+        if isinstance(value, MissingData):
+            # `Setting` seems to make a copy of MISSING_DATA
+            return MISSING_DATA
+        return value
 
     @property
     def input_values(self):
-        return {k: v.value for k, v in self.input_variables.items()}
+        return {k: self._get_value(v) for k, v in self._all_inputs.items()}
+
+    @property
+    def static_input_values(self):
+        # Warning: do not use static_input directly because it
+        #          messes up MISSING_DATA
+        return {k: self._get_value(v) for k, v in self.static_input.items()}
 
     @property
     def dynamic_input_values(self):
-        return {k: v.value for k, v in self.dynamic_input_variables.items()}
+        return {k: self._get_value(v) for k, v in self._dynamic_inputs.items()}
 
     @property
     def output_values(self):
-        return {k: v.value for k, v in self.output_variables.items()}
+        return {k: v.value for k, v in self._output_variables.items()}
 
     def set_input(self, name, var):
         if var is None:
-            self.dynamic_input_variables.pop(name, None)
+            self._dynamic_inputs.pop(name, None)
         else:
             if not isinstance(var, Variable):
                 raise TypeError(var, Variable)
-            self.dynamic_input_variables[name] = var
+            self._dynamic_inputs[name] = var
 
     def trigger_downstream(self):
-        for name, var in self.output_variables.items():
+        for name, var in self._output_variables.items():
             channel = getattr(self.Outputs, name)
-            if var.value is None:
-                channel.send(None)  # or invalidate?
+            if var.value is MISSING_DATA:
+                channel.send(None)  # or channel.invalidate?
             else:
                 channel.send(var)
 
     def clear_downstream(self):
-        for name in self.output_variables:
+        for name in self._output_variables:
             channel = getattr(self.Outputs, name)
-            channel.send(None)  # or invalidate?
+            channel.send(None)  # or channel.invalidate?
 
     def run(self):
-        task = self.ewokstaskclass(inputs=self.input_variables, varinfo=self.varinfo)
+        try:
+            task = self.ewokstaskclass(inputs=self._all_inputs, varinfo=self.varinfo)
+        except TaskInputError:
+            self.clear_downstream()
+            return
+        if not task.is_ready_to_execute:
+            self.clear_downstream()
+            return
         try:
             task.execute()
         except TaskInputError:
@@ -150,7 +173,7 @@ class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, openclass=True):
         except Exception:
             self.clear_downstream()
             raise
-        self.output_variables = task.output_variables
+        self._output_variables = task.output_variables
         self.trigger_downstream()
 
     def changeStaticInput(self):
