@@ -40,7 +40,7 @@ def prepare_OWEwoksWidgetclass(
     attr["static_input"] = Setting(
         {name: None for name in ewokstaskclass.input_names()}
     )
-    attr["varinfo"] = Setting({"root_uri": "/tmp"})
+    attr["varinfo"] = Setting({"root_uri": ""})
     attr["static_input"].schema_only = True
     attr["varinfo"].schema_only = True
 
