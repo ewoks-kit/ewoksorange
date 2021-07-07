@@ -1,3 +1,9 @@
+"""Each Orange3 Addon install entry-points for widgets and tutorials.
+Widget discovery is done here:
+
+    https://github.com/biolab/orange-canvas-core/search?q=iter_entry_points
+"""
+
 import pkgutil
 import importlib
 import pkg_resources

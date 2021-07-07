@@ -1,10 +1,10 @@
 import sysconfig
 
-NAME = "Custom sub-category"
+NAME = "Ewoks example category"
 
-DESCRIPTION = "Short sub-category description"
+DESCRIPTION = "Short category description"
 
-LONG_DESCRIPTION = "Long sub-category description"
+LONG_DESCRIPTION = "Long category description"
 
 ICON = "icons/category.svg"
 
