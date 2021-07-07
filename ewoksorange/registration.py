@@ -87,7 +87,7 @@ def register_addon_package(package, distroname=None):
     :param str distroname:
     """
     entry_points = dict()
-    packages = get_subpackages(package)
+    packages = list(get_subpackages(package))
     if not distroname:
         distroname = package.__name__.split(".")[-1]
     setuptools.update_entry_points(packages, entry_points, distroname)
