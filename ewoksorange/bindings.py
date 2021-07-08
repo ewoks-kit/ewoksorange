@@ -13,6 +13,7 @@ from ewokscore.variable import Variable
 from ewokscore.task import TaskInputError
 from ewokscore.hashing import UniversalHashable
 from ewokscore.hashing import MissingData
+import inspect
 from . import owsconvert
 
 MISSING_DATA = UniversalHashable.MISSING_DATA
@@ -86,7 +87,15 @@ class OWEwoksWidgetMetaClass(WidgetMetaClass):
         return super().__new__(metacls, name, bases, attr, **kw)
 
 
-class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, openclass=True):
+# insure compatibility between old orange widget and new
+# orangewidget.widget.WidgetMetaClass. This was before split of the two
+# projects. Parameter name "openclass" is undefined on the old version
+ow_build_opts = {}
+if "openclass" in inspect.getargspec(WidgetMetaClass)[0]:
+    ow_build_opts["openclass"] = True
+
+
+class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_opts):
     MISSING_DATA = MISSING_DATA
 
     def __init__(self, *args, **kw):
