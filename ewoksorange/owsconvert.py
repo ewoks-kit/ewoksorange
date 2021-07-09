@@ -77,7 +77,7 @@ def find_argument_by_name(class_obj, var_name):
     for name, value in inspect.getmembers(class_obj, is_input_or_output):
         if value.name == var_name:
             return name
-    raise RuntimeError(f"{name} is not a valid member of {class_obj}")
+    raise RuntimeError(f"{var_name} is not a valid member of {class_obj}")
 
 
 def ows_to_ewoks(filename, preserve_ows_info=False):
