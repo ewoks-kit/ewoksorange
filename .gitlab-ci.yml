@@ -1,4 +1,4 @@
-image: python:3.6
+image: docker-registry.esrf.fr/dau/ewoks:python_3.6_glx
 
 lint:
   stage: test
@@ -14,9 +14,7 @@ lint:
 test:
   stage: test
   before_script:
-    # install opengl libraries (needed for PyQt5)
     - apt-get update
-    - apt-get -y install libgl1-mesa-glx
     - pip install pytest-cov
   script:
     - pip install .[test]
