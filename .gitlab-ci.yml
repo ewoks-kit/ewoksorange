@@ -14,7 +14,6 @@ lint:
 test:
   stage: test
   before_script:
-    - apt-get update
     - pip install pytest-cov
   script:
     - pip install .[test]
