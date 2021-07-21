@@ -7,7 +7,7 @@ from ewokscore.utils import qualname
 from ewokscore.utils import import_qualname
 from ewokscore.graph import TaskGraph
 from .registration import get_owwidget_descriptions
-
+from Orange.widgets.widget import Output, Input
 
 def widget_to_task(widget_qualname):
     class_obj = import_qualname(widget_qualname)
@@ -70,7 +70,10 @@ def scheme_to_ows_stream(scheme, stream):
 
 
 def is_input_or_output(x):
-    return isinstance(x, (InputSignal, OutputSignal))
+    """
+    Check if the provided class is an instance of InputSignal or OutputSignal
+    """
+    return isinstance(x, (InputSignal, OutputSignal, Output, Input))
 
 
 def find_argument_by_name(class_obj, var_name):
