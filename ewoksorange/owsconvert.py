@@ -14,15 +14,23 @@ def widget_to_task(widget_qualname):
     return class_obj, class_obj.ewokstaskclass.class_registry_name()
 
 
-def task_to_widget(task_qualname):
+def task_to_widgets(task_qualname):
     for class_desc in get_owwidget_descriptions():
         class_obj = import_qualname(class_desc.qualified_name)
         if not hasattr(class_obj, "ewokstaskclass"):
             continue
         regname = class_obj.ewokstaskclass.class_registry_name()
         if regname.endswith(task_qualname):
-            return class_obj, class_desc.project_name
-    raise RuntimeError("No OWWidget found for task " + task_qualname)
+            yield class_obj, class_desc.project_name
+
+
+def task_to_widget(task_qualname, error_on_duplicates=True):
+    all_widgets = list(task_to_widgets(task_qualname))
+    if not all_widgets:
+        raise RuntimeError("No OWWidget found for task " + task_qualname)
+    if len(all_widgets) == 1 or not error_on_duplicates:
+        return all_widgets[0]
+    raise RuntimeError("More than one widget for task " + task_qualname, all_widgets)
 
 
 def read_ows(source):
@@ -143,17 +151,21 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
     return load_graph(graph)
 
 
-def ewoks_to_ows(ewoksgraph, destination, varinfo=None):
+def ewoks_to_ows(ewoksgraph, destination, varinfo=None, error_on_duplicates=True):
     """Write a TaskGraph as an Orange Workflow Scheme file.
 
     :param TaskGraph ewoksgraph:
     :param str or stream destination:
+    :param bool error_on_duplicates:
     """
     if ewoksgraph.is_cyclic:
         raise RuntimeError("Orange can only execute DAGs")
     if ewoksgraph.has_conditional_links:
         raise RuntimeError("Orange cannot handle conditional links")
-    write_ows(OwsSchemeWrapper(ewoksgraph, varinfo), destination)
+    owsgraph = OwsSchemeWrapper(
+        ewoksgraph, varinfo, error_on_duplicates=error_on_duplicates
+    )
+    write_ows(owsgraph, destination)
 
 
 class OwsNodeWrapper:
@@ -198,7 +210,7 @@ class OwsSchemeWrapper:
         ["name"],
     )
 
-    def __init__(self, graph, varinfo):
+    def __init__(self, graph, varinfo, error_on_duplicates=True):
         if isinstance(graph, TaskGraph):
             graph = graph.dump()
         if varinfo is None:
@@ -210,7 +222,9 @@ class OwsSchemeWrapper:
         self._nodes = dict()
         self._classes = dict()
         for adict in graph["nodes"]:
-            class_obj, adict["project_name"] = task_to_widget(adict["class"])
+            class_obj, adict["project_name"] = task_to_widget(
+                adict["class"], error_on_duplicates=error_on_duplicates
+            )
             adict["qualified_name"] = qualname(class_obj)
             adict["varinfo"] = varinfo
             self._nodes[adict["id"]] = OwsNodeWrapper(adict)
