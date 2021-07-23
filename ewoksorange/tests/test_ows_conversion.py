@@ -9,7 +9,7 @@ from ewokscore.tests.examples.graphs import graph_names
 from ewokscore.tests.examples.graphs import get_graph
 
 
-def test_ows_to_ewoks(tmpdir, register_ewoks_example_addon):
+def test_ows_to_ewoks(tmpdir, register_ewoks_example_addons):
     from orangecontrib.evaluate.submodule import tutorials
 
     with resources.path(tutorials, "sumtask_tutorial2.ows") as filename:

@@ -13,7 +13,7 @@ logging.getLogger("ewoksorange").addHandler(logging.StreamHandler(sys.stdout))
 
 
 @pytest.mark.parametrize("graph_name", ["acyclic1", "cyclic1"])
-def test_execute_graph(graph_name, tmpdir, register_ewoks_example_addon):
+def test_execute_graph(graph_name, tmpdir, register_ewoks_example_addons):
     graph, expected = get_graph(graph_name)
     ewoksgraph = load_graph(graph)
     varinfo = {"root_uri": str(tmpdir)}
