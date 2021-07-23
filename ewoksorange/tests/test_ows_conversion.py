@@ -16,7 +16,7 @@ def test_ows_to_ewoks(tmpdir, register_ewoks_example_addon):
         ewoksgraph = owsconvert.ows_to_ewoks(str(filename))
 
     destination = str(tmpdir / "ewoksgraph.ows")
-    owsconvert.ewoks_to_ows(ewoksgraph, destination)
+    owsconvert.ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
     ewoksgraph2 = owsconvert.ows_to_ewoks(destination)
     assert ewoksgraph == ewoksgraph2
 
@@ -31,7 +31,7 @@ def test_ewoks_to_ows(graph_name, tmpdir):
         with pytest.raises(RuntimeError):
             owsconvert.ewoks_to_ows(ewoksgraph, destination)
         return
-    owsconvert.ewoks_to_ows(ewoksgraph, destination)
+    owsconvert.ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
 
     ewoksgraph2 = owsconvert.ows_to_ewoks(destination)
     assert ewoksgraph.dump() == ewoksgraph2.dump()
