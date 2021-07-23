@@ -72,4 +72,15 @@ And as "usual" this should also inherit from :class:`OWWidget`
     ):
         ewokstaskclass=ewokscore.tests.examples.tasks.sumtask.SumTask
 
+
+Then you can define standard orange `Input` and `Output` to connect it to the workflow.
+
+.. code-block:: python
+
+    class SumList(
+        OWWidget,
+        Registered,
+    ):
+        class Outputs
+
 To test the example...

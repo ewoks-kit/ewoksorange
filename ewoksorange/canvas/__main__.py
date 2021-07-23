@@ -27,8 +27,10 @@ def main(argv=None):
     if with_example:
         from ewoksorange.registration import register_addon_package
         from ewoksorange.tests.examples import ewoks_example_1_addon
+        from ewoksorange.tests.examples import ewoks_example_2_addon
 
         register_addon_package(ewoks_example_1_addon)
+        register_addon_package(ewoks_example_2_addon)
 
     _main(argv)
 

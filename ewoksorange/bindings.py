@@ -149,8 +149,10 @@ class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_opts)
             self._dynamic_inputs.pop(name, None)
         else:
             if not isinstance(var, Variable):
-                raise TypeError("{} is invalid. Expected to be an "
-                                "instance of {}".format(var, Variable))
+                raise TypeError(
+                    "{} is invalid. Expected to be an "
+                    "instance of {}".format(var, Variable)
+                )
             self._dynamic_inputs[name] = var
 
     def trigger_downstream(self):
