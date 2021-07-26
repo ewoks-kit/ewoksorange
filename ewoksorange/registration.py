@@ -9,10 +9,15 @@ import pkg_resources
 import logging
 from contextlib import contextmanager
 
-from orangecanvas.registry.base import WidgetRegistry
+# first check if we are on the old orange3 fork
+try:
+    from Orange.canvas.registry.discovery import WidgetDiscovery
+    from Orange.canvas.registry.base import WidgetRegistry
+except ImportError:
+    # from orangecanvas.registry.discovery import WidgetDiscovery
+    from orangewidget.workflow.discovery import WidgetDiscovery
+    from orangecanvas.registry.base import WidgetRegistry
 
-# from orangecanvas.registry.discovery import WidgetDiscovery
-from orangewidget.workflow.discovery import WidgetDiscovery
 
 from ewoksorange import setuptools
 
