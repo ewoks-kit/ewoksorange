@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   ewoksorange.tests.examples.ewoks_example_1_addon.ewoks_example_1_addon
+   ewoksorange.tests.examples.ewoks_example_1_addon.ewoks_example_addon
    ewoksorange.tests.examples.ewoks_example_1_addon.orangecontrib
 
 Submodules

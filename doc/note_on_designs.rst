@@ -12,7 +12,7 @@ Inheriting from :class:`OWEwoksWidget` and use `ewokstaskclass` instance directl
 ---------------------------------------------------------------------------------
 
 This is the default design to Be used.
-This is the one used in the `ewoks example 1 addon`.
+This is the designed used in the `ewoks example 1 addon`.
 
 On this case we made Orange Widget inherit from :class:`OWEwoksWidget` and with we define the ewoks :class:Task to be used.
 
@@ -52,7 +52,7 @@ Inheriting from :class:`Registered` and use another processing functions / class
 -----------------------------------------------------------------------------------
 
 In some cases you might want to execute one :class:`Task` with ewoks and another with orange.
-This is the one used in the `ewoks example 1 addon`.
+This is the design used in the `ewoks example 2 addon`.
 
 This can be the case for example if you want to have a ewoks Task 100% free of any gui import (as Qt) and have some interaction / progress... with from the orange canvas.
 In this case the created OWWidget will be more a "container" of Task than a Task itself. But this will be "hide" to ewoks.
@@ -81,6 +81,27 @@ Then you can define standard orange `Input` and `Output` to connect it to the wo
         OWWidget,
         Registered,
     ):
-        class Outputs
+        class Inputs:
+            list_ = Input("list", list)
 
-To test the example...
+        class Outputs:
+            sum_ = Output("sum", float)
+
+As usual `Inputs` and `Outputs` have to be connected somehow:
+
+.. code-block:: python
+
+    @Inputs.list_
+    def compute_sum(self, iterable):
+        ...
+
+    def _processingFinished(self):
+        ...
+        self.Outputs.sum_.send(...)
+
+
+To test the example in action open the ewoksorange/test/examples/orangecontrib/tutorials/sumlist_tutorial.ows file within the add-on activated.
+
+This way of insuring connection with Registered insure a safe conversion to ewoks.
+But of course no OWWidget will be executed this time but the `ewokstaskclass`.
+

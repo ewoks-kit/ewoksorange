@@ -20,6 +20,14 @@ ewoksorange.tests.conftest module
    :undoc-members:
    :show-inheritance:
 
+ewoksorange.tests.listoperations module
+---------------------------------------
+
+.. automodule:: ewoksorange.tests.listoperations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 ewoksorange.tests.test\_examples module
 ---------------------------------------
 
