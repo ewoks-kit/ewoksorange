@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scheme description="" title="" version="2.0">
+	<nodes>
+		<node id="0" name="ListGenerator" position="(150, 150)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.listgenerator.ListGenerator" title="ListGenerator" version="" />
+		<node id="1" name="SumList" position="(300, 150)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.sumlist.SumList" title="SumList" version="" />
+	</nodes>
+	<links>
+		<link enabled="true" id="0" sink_channel="list" sink_node_id="1" source_channel="list" source_node_id="0" />
+	</links>
+	<annotations />
+	<thumbnail />
+	<node_properties>
+		<properties format="literal" node_id="0">{'controlAreaVisible': True, 'savedWidgetGeometry': None, '__version__': 1}</properties>
+		<properties format="literal" node_id="1">{'controlAreaVisible': True, 'savedWidgetGeometry': None, '__version__': 1}</properties>
+	</node_properties>
+	<session_state>
+		<window_groups />
+	</session_state>
+</scheme>

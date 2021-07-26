@@ -1,6 +1,6 @@
 from ewokscore.registration import Registered
 from Orange.widgets.widget import OWWidget
-import ewoksorange.tests.sumlist
+import ewoksorange.tests.listoperations
 from silx.gui import qt
 from Orange.widgets import gui
 from Orange.widgets.widget import Input, Output
@@ -20,7 +20,7 @@ class SumList(
 
     id = "orangecontrib.list_operations.sumlist.SumList"
     category = "esrfWidgets"
-    ewokstaskclass = ewoksorange.tests.sumlist.SumList
+    ewokstaskclass = ewoksorange.tests.listoperations.SumList
 
     want_main_area = False
 
@@ -39,7 +39,6 @@ class SumList(
 
     @Inputs.list_
     def compute_sum(self, iterable):
-        print("iterable is", iterable)
         if self._processingThread.isRunning():
             _logger.error("A processing is already on going")
             return
