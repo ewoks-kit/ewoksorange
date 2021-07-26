@@ -1,6 +1,9 @@
 ewoks orange API
 ================
 
-.. toctree::
 
-    modules/modules.rst
+.. autosummary::
+    :toctree: _generated
+    :recursive:
+
+    ewoksorange

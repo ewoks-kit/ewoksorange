@@ -31,10 +31,11 @@ project = "ewoksorange"
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.autosummary",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["templates"]
+templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -66,6 +67,14 @@ release = "0.1"
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
 language = None
+
+autosummary_generate = True
+
+autodoc_default_flags = [
+    "members",
+    "undoc-members",
+    "show-inheritance",
+]
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

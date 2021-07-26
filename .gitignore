@@ -37,3 +37,6 @@ htmlcov/
 # VisualStudio IDE
 /.vscode/
 /.history/
+
+# sphinx generated doc
+/doc/_generated
