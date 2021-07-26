@@ -1,7 +1,7 @@
 from ewokscore.registration import Registered
 from Orange.widgets.widget import OWWidget
 import ewoksorange.tests.listoperations
-from silx.gui import qt
+from AnyQt.QtWidgets import QWidget, QPushButton, QFormLayout, QSpinBox
 from Orange.widgets import gui
 from Orange.widgets.widget import Output
 import logging
@@ -23,11 +23,11 @@ class ListGenerator(OWWidget, Registered):
     class Outputs:
         list_ = Output("list", list)
 
-    class ListLength(qt.QWidget):
+    class ListLength(QWidget):
         def __init__(self, *args, **kwargs):
-            qt.QWidget.__init__(self, *args, **kwargs)
-            self.setLayout(qt.QFormLayout())
-            self._lengthQSB = qt.QSpinBox(self)
+            QWidget.__init__(self, *args, **kwargs)
+            self.setLayout(QFormLayout())
+            self._lengthQSB = QSpinBox(self)
             self.layout().addRow("length", self._lengthQSB)
             self._lengthQSB.setMaximum(10000000)
             self._lengthQSB.setSingleStep(1000)
@@ -44,7 +44,7 @@ class ListGenerator(OWWidget, Registered):
         layout = self._box.layout()
         layout.addWidget(self._widget)
 
-        self._validateButton = qt.QPushButton("generate", self)
+        self._validateButton = QPushButton("generate", self)
         layout.addWidget(self._validateButton)
 
         # connect signal / slot

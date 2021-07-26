@@ -1,9 +1,10 @@
 from ewokscore.registration import Registered
 from Orange.widgets.widget import OWWidget
 import ewoksorange.tests.listoperations
-from silx.gui import qt
 from Orange.widgets import gui
 from Orange.widgets.widget import Input, Output
+from AnyQt.QtCore import pyqtSignal as Signal
+from AnyQt.QtCore import QThread
 import logging
 from typing import Iterable
 
@@ -53,8 +54,8 @@ class SumList(
         self.Outputs.sum_.send(sum_)
 
 
-class ProcessingThread(qt.QThread):
-    sigProgress = qt.Signal(float)
+class ProcessingThread(QThread):
+    sigProgress = Signal(float)
 
     def init(self, iterable: Iterable):
         self._iterable = iterable
