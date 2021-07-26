@@ -12,7 +12,5 @@ test-3.6-orange3-fork:
   before_script:
     # missing dependencies in the Orange3 fork
     - pip install numpy scipy PyQt5 silx chardet
-    # hard fork of Orange3. Remove existing orange installation
+    # hard fork of Orange3
     - pip install git+https://github.com/payno/orange3.git
-    - pip uninstall orange-widget-base --yes
-    - pip uninstall orange-canvas-core --yes
