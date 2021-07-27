@@ -14,7 +14,9 @@ class ListGenerator(OWWidget):
     description = "Generate a random list with X elements"
 
     id = "orangecontrib.list_operations.listgenerator.ListGenerator"
+
     category = "esrfWidgets"
+
     ewokstaskclass = ewoksorange.tests.listoperations.GenerateList
 
     want_main_area = True

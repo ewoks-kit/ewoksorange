@@ -15,7 +15,9 @@ class SumList(OWWidget):
     description = "Sum all elements of a list"
 
     id = "orangecontrib.list_operations.sumlist.SumList"
+
     category = "esrfWidgets"
+
     ewokstaskclass = ewoksorange.tests.listoperations.SumList
 
     want_main_area = False
