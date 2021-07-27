@@ -5,7 +5,6 @@ from Orange.widgets.widget import Input, Output
 from AnyQt.QtCore import pyqtSignal as Signal
 from AnyQt.QtCore import QThread
 import logging
-from typing import Iterable
 
 _logger = logging.getLogger(__name__)
 
@@ -29,40 +28,37 @@ class SumList(OWWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._processingThread = ProcessingThread()
         self._progress = gui.ProgressBar(self, 100)
-        self._processingThread.sigProgress.connect(self._setProgressValue)
-        self._processingThread.finished.connect(self._processingFinished)
+        self._processingThread = None
 
     @Inputs.list_
     def compute_sum(self, iterable):
-        if self._processingThread.isRunning():
+        if self._processingThread is not None and self._processingThread.isRunning():
             _logger.error("A processing is already on going")
             return
-        self._processingThread.init(iterable)
+
+        self._processingThread = ProcessingThread(inputs={"iterable": iterable})
+        self._processingThread.sigProgress.connect(self._setProgressValue)
+        self._processingThread.finished.connect(self._processingFinished)
         self._processingThread.start()
 
     def _setProgressValue(self, value):
         self._progress.widget.progressBarSet(value)
 
     def _processingFinished(self):
-        sum_ = self._processingThread.sum_
+        sum_ = self._processingThread.outputs.sum
+        self._processingThread.finished.disconnect(self._processingFinished)
         self.Outputs.sum_.send(sum_)
 
 
-class ProcessingThread(QThread):
+class ProcessingThread(QThread, ewoksorange.tests.listoperations.SumList):
     sigProgress = Signal(float)
 
-    def init(self, iterable: Iterable):
-        self._iterable = iterable
-        self.sum_ = 0
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._lastProgress = None
 
-    def run(self):
-        self.sum_ = 0
-        n_elmt = len(self._iterable)
-        for i_elmt, elmt in enumerate(self._iterable):
-            self.sum_ += elmt
-            if i_elmt % 100:
-                # avoid sending one signal per addition
-                self.sigProgress.emit((i_elmt / n_elmt) * 100.0)
-        self.sigProgress.emit(100.0)
+    def update_progress(self, progress: float):
+        if self._lastProgress != int(progress):
+            self._lastProgress = int(progress)
+            self.sigProgress.emit(progress)
