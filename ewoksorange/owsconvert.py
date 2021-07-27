@@ -2,6 +2,8 @@ import inspect
 from collections import namedtuple
 from orangecanvas.scheme import readwrite
 from orangecanvas.registry.description import InputSignal, OutputSignal
+from Orange.widgets.utils.signals import Input as OldInputSignal
+from Orange.widgets.utils.signals import Output as OldOutputSignal
 from ewokscore import load_graph
 from ewokscore.utils import qualname
 from ewokscore.utils import import_qualname
@@ -77,8 +79,11 @@ def scheme_to_ows_stream(scheme, stream):
     tree.write(stream, encoding="utf-8", xml_declaration=True)
 
 
+SIGNAL_TYPES = (InputSignal, OutputSignal, OldInputSignal, OldOutputSignal)
+
+
 def is_input_or_output(x):
-    return isinstance(x, (InputSignal, OutputSignal))
+    return isinstance(x, SIGNAL_TYPES)
 
 
 def find_argument_by_name(class_obj, var_name):
