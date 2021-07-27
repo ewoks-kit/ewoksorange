@@ -1,4 +1,3 @@
-from ewokscore.registration import Registered
 from Orange.widgets.widget import OWWidget
 import ewoksorange.tests.listoperations
 from Orange.widgets import gui
@@ -11,10 +10,7 @@ from typing import Iterable
 _logger = logging.getLogger(__name__)
 
 
-class SumList(
-    OWWidget,
-    Registered,
-):
+class SumList(OWWidget):
     name = "SumList"
 
     description = "Sum all elements of a list"

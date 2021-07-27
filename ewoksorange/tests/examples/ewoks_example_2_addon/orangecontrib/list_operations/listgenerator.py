@@ -1,4 +1,3 @@
-from ewokscore.registration import Registered
 from Orange.widgets.widget import OWWidget
 import ewoksorange.tests.listoperations
 from AnyQt.QtWidgets import QWidget, QPushButton, QFormLayout, QSpinBox
@@ -9,7 +8,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-class ListGenerator(OWWidget, Registered):
+class ListGenerator(OWWidget):
     name = "ListGenerator"
 
     description = "Generate a random list with X elements"
