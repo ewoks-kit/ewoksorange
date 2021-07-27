@@ -54,8 +54,7 @@ Inheriting from :class:`Registered` and use another processing functions / class
 In some cases you might want to execute one :class:`Task` with ewoks and another with orange.
 This is the design used in the `ewoks example 2 addon`.
 
-This can be the case for example if you want to have a ewoks Task 100% free of any gui import (as Qt) and have some interaction / progress... with from the orange canvas.
-In this case the created OWWidget will be more a "container" of Task than a Task itself. But this will be "hide" to ewoks.
+This can be the case for example to have an ewoks Task 100% free of any gui import (as Qt) and have some interaction / progress... with from the orange canvas.
 
 Here the simplest way is to inherit this time from :class:`Registered` and provide the `ewokstaskclass` pointing to the Task to be executed by ewoks when converted.
 And as "usual" this should also inherit from :class:`OWWidget`
