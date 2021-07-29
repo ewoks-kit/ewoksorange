@@ -1,6 +1,6 @@
 from Orange.widgets import gui
 
-from ewoksorange.bindings import OWEwoksWidget
+from ewoksorange.bindings import OWEwoksWidgetNoThread
 from ewoksorange.gui.parameterform import ParameterForm
 from ewokscore.tests.examples.tasks.sumtask import SumTask
 
@@ -9,7 +9,7 @@ __all__ = ["Adder1"]
 
 
 class Adder1(
-    OWEwoksWidget,
+    OWEwoksWidgetNoThread,
     ewokstaskclass=SumTask,
     inputnamemap={"a": "A", "b": "B"},
     outputnamemap={"result": "A + B"},

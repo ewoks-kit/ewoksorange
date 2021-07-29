@@ -8,22 +8,22 @@ There is two ways of providing an orange add-on with ewoks orange in order to ke
 
 .. _design 1:
 
-Inheriting from :class:`OWEwoksWidget` and use `ewokstaskclass` instance directly
+Inheriting from :class:`OWEwoksWidgetNoThread` and use `ewokstaskclass` instance directly
 ---------------------------------------------------------------------------------
 
 This is the default design to Be used.
 This is the designed used in the `ewoks example 1 addon`.
 
-On this case we made Orange Widget inherit from :class:`OWEwoksWidget` and with we define the ewoks :class:Task to be used.
+On this case we made Orange Widget inherit from :class:`OWEwoksWidgetNoThread` and with we define the ewoks :class:Task to be used.
 
 .. code-block:: python
 
-    from ewoksorange.bindings import OWEwoksWidget
+    from ewoksorange.bindings import OWEwoksWidgetNoThread
     from ewoksorange.gui.parameterform import ParameterForm
     from ewokscore.tests.examples.tasks.sumtask import SumTask
 
     class Adder1(
-        OWEwoksWidget,
+        OWEwoksWidgetNoThread,
         ewokstaskclass=SumTask,
     ):
         pass
@@ -41,7 +41,7 @@ The :class:`SumTask` is defined as :
             pass
 
 
-Each input_names, optional_input_names and output_names will be converted to orange InputSignal, OutputSignal by the :class:`OWEwoksWidget` constructor.
+Each input_names, optional_input_names and output_names will be converted to orange InputSignal, OutputSignal by the :class:`OWEwoksWidgetNoThread` constructor.
 
 
 .. warning:: the Input and Output values must be defined in SumTask

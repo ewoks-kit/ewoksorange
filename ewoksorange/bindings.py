@@ -67,7 +67,7 @@ def prepare_OWEwoksWidgetclass(
         setattr(Outputs, name, output)
 
 
-class OWEwoksWidgetMetaClass(WidgetMetaClass):
+class OWEwoksWidgetNoThreadMetaClass(WidgetMetaClass):
     def __new__(
         metacls,
         name,
@@ -95,7 +95,9 @@ if "openclass" in inspect.getargspec(WidgetMetaClass)[0]:
     ow_build_opts["openclass"] = True
 
 
-class _OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_opts):
+class _OWEwoksBaseWidget(
+    OWWidget, metaclass=OWEwoksWidgetNoThreadMetaClass, **ow_build_opts
+):
     """
     Base class to handle boiler plate code to interconnect ewoks and
     orange3
@@ -177,7 +179,7 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_
         raise NotImplementedError("Base class")
 
 
-class OWEwoksWidget(_OWEwoksBaseWidget):
+class OWEwoksWidgetNoThread(_OWEwoksBaseWidget):
     """Widget which will run the ewokscore.Task directly"""
 
     def changeStaticInput(self):
