@@ -33,9 +33,9 @@ class ListGenerator(OWWidget):
             self.setLayout(QFormLayout())
             self._lengthQSB = QSpinBox(self)
             self.layout().addRow("length", self._lengthQSB)
-            self._lengthQSB.setMaximum(10000000)
-            self._lengthQSB.setSingleStep(1000)
-            self._lengthQSB.setValue(100000)
+            self._lengthQSB.setMaximum(1000000000)
+            self._lengthQSB.setSingleStep(100000)
+            self._lengthQSB.setValue(10000000)
 
         def getLength(self):
             return self._lengthQSB.value()

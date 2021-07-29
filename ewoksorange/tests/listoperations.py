@@ -33,6 +33,11 @@ class SumList(Task, input_names=["list"], output_names=["sum"]):
         self.outputs.sum = sum_
 
 
+class SumList2(SumList):
+    # as each OW request his own Task we need to create this "dummy class"
+    pass
+
+
 class GenerateList(Task, input_names=["length"], output_names=["list"]):
     def run(self):
         if self.inputs.length is None:

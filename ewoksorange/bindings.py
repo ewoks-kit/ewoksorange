@@ -254,9 +254,53 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget):
     def handleNewSignals(self):
         self.run()
 
+    def close(self):
+        self._taskProgress.sigProgressChanged.disconnect(self._setProgressValue)
+        self._processingThread.finished.disconnect(self._processingFinished)
+        if self._processingThread.isRunning():
+            self._processingThread.quit()
+        self._processingThread = None
+
 
 class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget):
-    pass
+    """
+    Each time a task processing is requested this will create a new thread
+    to do the processing.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._threads = list()
+        # allows to keep trace of threads an insure there won't be removed by
+        # Qt until they are no more used
+
+    def run(self):
+        processingThread = _ProcessingThread(
+            taskprogress=None, ewokstaskclass=self.ewokstaskclass
+        )
+        processingThread.init(varinfo=self.varinfo, inputs=self._all_inputs)
+        processingThread.finished.connect(self._processingFinished)
+        self._threads.append(processingThread)
+        processingThread.start()
+
+    def _processingFinished(self):
+        thread = self.sender()
+        self._output_variables = thread.output_variables
+        if thread in self._threads:
+            self._threads.remove(thread)
+        self.trigger_downstream()
+
+    def changeStaticInput(self):
+        self.handleNewSignals()
+
+    def handleNewSignals(self):
+        self.run()
+
+    def close(self):
+        for thread in self._threads:
+            thread.finished.disconnect(self._processingFinished)
+            thread.quit()
+        self._threads.clear()
 
 
 class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget):
