@@ -32,7 +32,7 @@ def test_ows_to_ewoks_example_2(tmpdir, register_ewoks_example_addons):
     destination = str(tmpdir / "ewoksgraph.ows")
     owsconvert.ewoks_to_ows(ewoksgraph, destination)
     ewoksgraph2 = owsconvert.ows_to_ewoks(destination)
-    assert ewoksgraph == ewoksgraph2
+    assert ewoksgraph == ewoksgraph2, f"{ewoksgraph} vs {ewoksgraph2}"
 
 
 @pytest.mark.parametrize("graph_name", graph_names())
