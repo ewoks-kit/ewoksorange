@@ -1,5 +1,8 @@
 from ewokscore.task import Task
 import numpy
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class PrintSum(Task, input_names=["sum"]):
@@ -10,8 +13,13 @@ class PrintSum(Task, input_names=["sum"]):
 
 
 class SumList(Task, input_names=["list"], output_names=["sum"]):
+    def __init__(self, progress=None, inputs=None, varinfo=None):
+        super().__init__(varinfo=varinfo, inputs=inputs)
+        self._task_progress = progress
+
     def update_progress(self, progress):
-        pass
+        if self._task_progress is not None:
+            self._task_progress.progress = progress
 
     def run(self):
         if self.inputs.list is None:

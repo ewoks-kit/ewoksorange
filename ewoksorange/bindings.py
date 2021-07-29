@@ -14,6 +14,7 @@ from ewokscore.task import TaskInputError
 from ewokscore.hashing import UniversalHashable
 from ewokscore.hashing import MissingData
 from AnyQt.QtCore import pyqtSignal as Signal
+from AnyQt.QtCore import QObject
 import inspect
 from . import owsconvert
 import logging
@@ -221,9 +222,12 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
-        self._progress = gui.ProgressBar(self, 100)
-        self._processingThread = _ProcessingThread(ewokstaskclass=self.ewokstaskclass)
-        self._processingThread.sigProgress.connect(self._setProgressValue)
+        self._orangeProgress = gui.ProgressBar(self, 100)
+        self._taskProgress = QProgress()
+        self._processingThread = _ProcessingThread(
+            taskprogress=self._taskProgress, ewokstaskclass=self.ewokstaskclass
+        )
+        self._taskProgress.sigProgressChanged.connect(self._setProgressValue)
         self._processingThread.finished.connect(self._processingFinished)
 
     def run(self):
@@ -238,7 +242,7 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget):
             self._processingThread.start()
 
     def _setProgressValue(self, value):
-        self._progress.widget.progressBarSet(value)
+        self._orangeProgress.widget.progressBarSet(value)
 
     def _processingFinished(self):
         self._output_variables = self._processingThread.output_variables
@@ -260,12 +264,9 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget):
 
 
 class _ProcessingThread(QThread):
-    sigProgress = Signal(int)
-    """processing advancement. Expected value should be in [0, 100]"""
-
-    def __init__(self, ewokstaskclass, *args, **kwargs):
+    def __init__(self, ewokstaskclass, taskprogress, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._lastProgress = None
+        self._taskprogress = taskprogress
         self._ewokstaskclass = ewokstaskclass
         self._varinfo = None
         self._inputs = None
@@ -301,15 +302,12 @@ class _ProcessingThread(QThread):
         self._inputs = inputs
         self._output_variables = dict()
 
-    def update_progress(self, progress: float):
-        if self._lastProgress != int(progress):
-            self._lastProgress = int(progress)
-            self.sigProgress.emit(progress)
-
     def run(self):
         self._task = self.ewokstaskclass(inputs=self.inputs, varinfo=self.varinfo)
         try:
-            self._task = self.ewokstaskclass(inputs=self.inputs, varinfo=self.varinfo)
+            self._task = self.ewokstaskclass(
+                progress=self._taskprogress, inputs=self.inputs, varinfo=self.varinfo
+            )
         except TaskInputError as e:
             _logger.warning(e)
             return
@@ -339,3 +337,55 @@ def execute_graph(graph, representation=None, varinfo=None):
         owsconvert.ewoks_to_ows(ewoksgraph, filename, varinfo=varinfo)
         argv = [sys.argv[0], filename]
         launchcanvas(argv=argv)
+
+
+# TODO:
+# Do we want to generalise this "progress" stuff. Is it generic / usual enougth
+# Maybe it could be interesting to have a Progress contained that wouls remove
+# the update_progress function and check that if an object is provided to it
+# then this is an instance of BaseProgress
+class BaseProgress:
+    def __init__(self):
+        self._progress = 0
+        self._lastUpdate = None
+
+    # TODO: maybe this could be generalized and defined in ewoks.Task
+    # then we could have a text progress like (https://gitlab.esrf.fr/workflow/est/-/blob/master/est/core/process/progress.py)
+    # and a progress for Orange...
+    @property
+    def progress(self):
+        return self._progress
+
+    @progress.setter
+    def progress(self, progress: int):
+        if not (0 <= progress <= 100):
+            _logger.warning("progress is expected to be in [0, 100]. Clip it")
+        self._progress = int(progress)
+        self.update()
+
+    def completed(self):
+        self.progress = 100
+        self.update()
+
+    def reset(self):
+        self._lastUpdate = None
+        self._progress = 0
+        self.update()
+
+    def update(self):
+        if self._progress != self._lastUpdate:
+            self._lastUpdate = self._progress
+            self._update()
+
+    def _update(self):
+        raise NotImplementedError("Base class")
+
+
+class QProgress(QObject, BaseProgress):
+    sigProgressChanged = Signal(int)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _update(self):
+        self.sigProgressChanged.emit(self._progress)
