@@ -95,7 +95,12 @@ if "openclass" in inspect.getargspec(WidgetMetaClass)[0]:
     ow_build_opts["openclass"] = True
 
 
-class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_opts):
+class _OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_opts):
+    """
+    Base class to handle boiler plate code to interconnect ewoks and
+    orange3
+    """
+
     MISSING_DATA = MISSING_DATA
 
     def __init__(self, *args, **kw):
@@ -169,6 +174,19 @@ class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_opts)
             channel.send(None)  # or channel.invalidate?
 
     def run(self):
+        raise NotImplementedError("Base class")
+
+
+class OWEwoksWidget(_OWEwoksBaseWidget):
+    """Widget which will run the ewokscore.Task directly"""
+
+    def changeStaticInput(self):
+        self.handleNewSignals()
+
+    def handleNewSignals(self):
+        self.run()
+
+    def run(self):
         try:
             task = self.ewokstaskclass(inputs=self._all_inputs, varinfo=self.varinfo)
         except TaskInputError:
@@ -187,12 +205,6 @@ class OWEwoksWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_opts)
             raise
         self._output_variables = task.output_variables
         self.trigger_downstream()
-
-    def changeStaticInput(self):
-        self.handleNewSignals()
-
-    def handleNewSignals(self):
-        self.run()
 
 
 def execute_graph(graph, representation=None, varinfo=None):
