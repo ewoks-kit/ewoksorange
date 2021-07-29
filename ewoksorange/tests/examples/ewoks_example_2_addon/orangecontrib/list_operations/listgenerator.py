@@ -1,5 +1,6 @@
 from Orange.widgets.widget import OWWidget
 import ewoksorange.tests.listoperations
+from ewokscore.variable import Variable
 from AnyQt.QtWidgets import QWidget, QPushButton, QFormLayout, QSpinBox
 from Orange.widgets import gui
 from Orange.widgets.widget import Output
@@ -22,7 +23,9 @@ class ListGenerator(OWWidget):
     want_main_area = True
 
     class Outputs:
-        list_ = Output("list", list)
+        list_ = Output("list", Variable)
+        # TODO: Variable should be associable with some Variable. type to
+        # insure connect. If this is replaced by list this won't work anymore
 
     class ListLength(QWidget):
         def __init__(self, *args, **kwargs):
@@ -56,7 +59,9 @@ class ListGenerator(OWWidget):
             inputs={"length": self._widget.getLength()}
         )
         task.run()
-        return task.outputs.iterable
+        return task.outputs.list
 
     def _validate(self):
-        self.Outputs.list_.send(self.getList())
+        var = Variable()
+        var.value = self.getList()
+        self.Outputs.list_.send(var)

@@ -3,18 +3,23 @@ import sys
 import tempfile
 
 from Orange.canvas.__main__ import main as launchcanvas
-
 from Orange.widgets.widget import OWWidget, WidgetMetaClass
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.settings import Setting
-
+from Orange.widgets import gui
+from AnyQt.QtCore import QThread
 from ewokscore import load_graph
 from ewokscore.variable import Variable
 from ewokscore.task import TaskInputError
 from ewokscore.hashing import UniversalHashable
 from ewokscore.hashing import MissingData
+from AnyQt.QtCore import pyqtSignal as Signal
 import inspect
 from . import owsconvert
+import logging
+
+_logger = logging.getLogger(__name__)
+
 
 MISSING_DATA = UniversalHashable.MISSING_DATA
 
@@ -50,9 +55,9 @@ def prepare_OWEwoksWidgetclass(
     attr["varinfo"].schema_only = True
 
     if inputnamemap is None:
-        inputnamemap = inputnamemap
+        inputnamemap = {}
     if outputnamemap is None:
-        outputnamemap = outputnamemap
+        outputnamemap = {}
 
     for name in ewokstaskclass.input_names():
         inpt = Input(inputnamemap.get(name, name), Variable)
@@ -67,7 +72,7 @@ def prepare_OWEwoksWidgetclass(
         setattr(Outputs, name, output)
 
 
-class OWEwoksWidgetNoThreadMetaClass(WidgetMetaClass):
+class _OWEwoksWidgetMetaClass(WidgetMetaClass):
     def __new__(
         metacls,
         name,
@@ -95,9 +100,7 @@ if "openclass" in inspect.getargspec(WidgetMetaClass)[0]:
     ow_build_opts["openclass"] = True
 
 
-class _OWEwoksBaseWidget(
-    OWWidget, metaclass=OWEwoksWidgetNoThreadMetaClass, **ow_build_opts
-):
+class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts):
     """
     Base class to handle boiler plate code to interconnect ewoks and
     orange3
@@ -207,6 +210,119 @@ class OWEwoksWidgetNoThread(_OWEwoksBaseWidget):
             raise
         self._output_variables = task.output_variables
         self.trigger_downstream()
+
+
+class OWEwoksWidgetOneThread(_OWEwoksBaseWidget):
+    """
+    All the processing is done on one thread.
+    If a processing is requested when the thread is already running then
+    it is refused.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self._progress = gui.ProgressBar(self, 100)
+        self._processingThread = _ProcessingThread(ewokstaskclass=self.ewokstaskclass)
+        self._processingThread.sigProgress.connect(self._setProgressValue)
+        self._processingThread.finished.connect(self._processingFinished)
+
+    def run(self):
+        # TODO: handle empty inputs. When a link is removed by orange the
+        # value of the input is set to None and this trigger handleNewSignals
+        if self._processingThread.isRunning():
+            _logger.error("A processing is already on going")
+            return
+        else:
+            self._setProgressValue(0)
+            self._processingThread.init(varinfo=self.varinfo, inputs=self._all_inputs)
+            self._processingThread.start()
+
+    def _setProgressValue(self, value):
+        self._progress.widget.progressBarSet(value)
+
+    def _processingFinished(self):
+        self._output_variables = self._processingThread.output_variables
+        self.trigger_downstream()
+
+    def changeStaticInput(self):
+        self.handleNewSignals()
+
+    def handleNewSignals(self):
+        self.run()
+
+
+class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget):
+    pass
+
+
+class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget):
+    pass
+
+
+class _ProcessingThread(QThread):
+    sigProgress = Signal(int)
+    """processing advancement. Expected value should be in [0, 100]"""
+
+    def __init__(self, ewokstaskclass, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._lastProgress = None
+        self._ewokstaskclass = ewokstaskclass
+        self._varinfo = None
+        self._inputs = None
+        self._output_variables = None
+        self._task = None
+
+    @property
+    def ewokstaskclass(self):
+        return self._ewokstaskclass
+
+    @property
+    def varinfo(self):
+        return self._varinfo
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+    @property
+    def output_values(self):
+        return {k: v.value for k, v in self._output_variables.items()}
+
+    @property
+    def task(self):
+        return self._task
+
+    @property
+    def output_variables(self):
+        return self._output_variables
+
+    def init(self, varinfo=None, inputs=None):
+        self._varinfo = varinfo
+        self._inputs = inputs
+        self._output_variables = dict()
+
+    def update_progress(self, progress: float):
+        if self._lastProgress != int(progress):
+            self._lastProgress = int(progress)
+            self.sigProgress.emit(progress)
+
+    def run(self):
+        self._task = self.ewokstaskclass(inputs=self.inputs, varinfo=self.varinfo)
+        try:
+            self._task = self.ewokstaskclass(inputs=self.inputs, varinfo=self.varinfo)
+        except TaskInputError as e:
+            _logger.warning(e)
+            return
+        if not self.task.is_ready_to_execute:
+            return
+        try:
+            self.task.execute()
+        except TaskInputError as e:
+            _logger.warning(e)
+            return
+        except Exception:
+            raise
+        self._output_variables = self.task.output_variables
 
 
 def execute_graph(graph, representation=None, varinfo=None):
