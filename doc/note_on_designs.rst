@@ -11,10 +11,10 @@ There is several design possible to define your Orange Widget and insure compati
 
 .. _design qt main thread:
 
-Processing`ewokstaskclass` on the Qt main thread
-------------------------------------------------
+Processing `ewokstaskclass` on the Qt main thread
+-------------------------------------------------
 
-This is the default design to Be used.
+This is the the simplest case and the most robust one.
 This is the designed used in the `ewoks example 1 addon`.
 
 On this case we made Orange Widget inherit from :class:`OWEwoksWidgetNoThread` and with we define the ewoks :class:Task to be used.
@@ -47,12 +47,14 @@ The :class:`SumTask` is defined as :
 Each input_names, optional_input_names and output_names will be converted to orange InputSignal, OutputSignal by the :class:`OWEwoksWidgetNoThread` constructor.
 
 
-.. warning:: the Input and Output values must be defined in SumTask
+.. note:: the Input and Output values must be defined in SumTask
+
+.. warning:: As both processing and display are done in the main thread this will bring gui freeze. If your processing takes time wnd if you want to avoid gui freeze look at other proposed designs.
 
 .. _design single thread no stack:
 
-Single (dedicated) thread no stack
-----------------------------------
+Processing `ewokstaskclass` on a single (dedicated) thread without stack
+------------------------------------------------------------------------
 
 If you want to have a single thread that will process the ewoks.task then you can inherite from :class:`OWEwoksWidgetOneThread`
 
@@ -76,15 +78,39 @@ You just have to provide task description and link to the ewoks task class:
         want_main_area = False
 
 
+The Orange widget is containing a processing thread (`_processingThread`) that will execute the `ewokstaskclass`.
+
 .. note:: if a request for processing is done when the thread is already processing it will refuse the processing request. See other design for more advance use case.
+
+.. note:: TODO: speak about progress.
+
 
 .. _design several thread:
 
 One (dedicated) thread per task no stack
 ----------------------------------------
 
-TODO
+You can have an Orange widget that will create a new thread for each new `run`.
 
+For this you should inherit from the :class:`OWEwoksWidgetOneThreadPerRun` widget like this done by the :class:`SumListSeveralThread` of `ewoks example 2 addon`
+
+.. code-block:: python
+
+    class SumListSeveralThread(
+        OWEwoksWidgetOneThreadPerRun,
+        ewokstaskclass=SumList2,
+    ):
+
+        name = "SumList on several thread"
+
+        description = "Sum all elements of a list using a new thread for each" "summation"
+
+        category = "esrfWidgets"
+
+        want_main_area = False
+
+
+.. note:: when a new thread is created each time a processing is requested this usually prevent from providing a progress.
 
 .. _design single thread and stack:
 

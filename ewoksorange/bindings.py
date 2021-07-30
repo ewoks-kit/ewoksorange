@@ -254,6 +254,9 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget):
     def handleNewSignals(self):
         self.run()
 
+    def getProcessingThread(self):
+        return self._processingThread
+
     def close(self):
         self._taskProgress.sigProgressChanged.disconnect(self._setProgressValue)
         self._processingThread.finished.disconnect(self._processingFinished)

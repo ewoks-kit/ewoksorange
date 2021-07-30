@@ -9,6 +9,10 @@ class SumListSeveralThread(
     OWEwoksWidgetOneThreadPerRun,
     ewokstaskclass=SumList2,
 ):
+    """
+    Simple demo class that create a new thread each time an execution of
+    SumList2 is required
+    """
 
     name = "SumList on several thread"
 

@@ -9,6 +9,12 @@ class SumListOneThread(
     OWEwoksWidgetOneThread,
     ewokstaskclass=SumList,
 ):
+    """
+    Simple demo class that contains a single thread to execute SumList.run
+    when requested.
+    If a processing is requested when the thread is already running this
+    will be refused
+    """
 
     name = "SumList one thread"
 
