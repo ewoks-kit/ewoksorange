@@ -1,25 +1,28 @@
-import os
-import sys
-import tempfile
-
-from Orange.canvas.__main__ import main as launchcanvas
+"""
+contains Orange widget that can create direct connection with ewoks
+"""
 from Orange.widgets.widget import OWWidget, WidgetMetaClass
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.settings import Setting
 from Orange.widgets import gui
 from AnyQt.QtCore import QThread
-from ewokscore import load_graph
 from ewokscore.variable import Variable
 from ewokscore.task import TaskInputError
 from ewokscore.hashing import UniversalHashable
 from ewokscore.hashing import MissingData
-from AnyQt.QtCore import pyqtSignal as Signal
-from AnyQt.QtCore import QObject
+from .progress import QProgress
 import inspect
-from . import owsconvert
 import logging
 
 _logger = logging.getLogger(__name__)
+
+
+__all__ = [
+    "OWEwoksWidgetNoThread",
+    "OWEwoksWidgetOneThread",
+    "OWEwoksWidgetOneThreadPerRun",
+    "OWEwoksWidgetWithTaskStack",
+]
 
 
 MISSING_DATA = UniversalHashable.MISSING_DATA
@@ -263,6 +266,7 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget):
         if self._processingThread.isRunning():
             self._processingThread.quit()
         self._processingThread = None
+        super().close()
 
 
 class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget):
@@ -304,6 +308,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget):
             thread.finished.disconnect(self._processingFinished)
             thread.quit()
         self._threads.clear()
+        super().close()
 
 
 class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget):
@@ -368,71 +373,3 @@ class _ProcessingThread(QThread):
         except Exception:
             raise
         self._output_variables = self.task.output_variables
-
-
-def execute_graph(graph, representation=None, varinfo=None):
-    ewoksgraph = load_graph(source=graph, representation=representation)
-    if ewoksgraph.is_cyclic:
-        raise RuntimeError("Orange can only execute DAGs")
-    if ewoksgraph.has_conditional_links:
-        raise RuntimeError("Orange cannot handle conditional links")
-
-    # We do not have a mapping between OWS and the runtime representation.
-    # So map to a (temporary) persistent representation first.
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        filename = os.path.join(tmpdirname, "ewokstaskgraph.ows")
-        owsconvert.ewoks_to_ows(ewoksgraph, filename, varinfo=varinfo)
-        argv = [sys.argv[0], filename]
-        launchcanvas(argv=argv)
-
-
-# TODO:
-# Do we want to generalise this "progress" stuff. Is it generic / usual enougth
-# Maybe it could be interesting to have a Progress contained that wouls remove
-# the update_progress function and check that if an object is provided to it
-# then this is an instance of BaseProgress
-class BaseProgress:
-    def __init__(self):
-        self._progress = 0
-        self._lastUpdate = None
-
-    # TODO: maybe this could be generalized and defined in ewoks.Task
-    # then we could have a text progress like (https://gitlab.esrf.fr/workflow/est/-/blob/master/est/core/process/progress.py)
-    # and a progress for Orange...
-    @property
-    def progress(self):
-        return self._progress
-
-    @progress.setter
-    def progress(self, progress: int):
-        if not (0 <= progress <= 100):
-            _logger.warning("progress is expected to be in [0, 100]. Clip it")
-        self._progress = int(progress)
-        self.update()
-
-    def completed(self):
-        self.progress = 100
-        self.update()
-
-    def reset(self):
-        self._lastUpdate = None
-        self._progress = 0
-        self.update()
-
-    def update(self):
-        if self._progress != self._lastUpdate:
-            self._lastUpdate = self._progress
-            self._update()
-
-    def _update(self):
-        raise NotImplementedError("Base class")
-
-
-class QProgress(QObject, BaseProgress):
-    sigProgressChanged = Signal(int)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def _update(self):
-        self.sigProgressChanged.emit(self._progress)

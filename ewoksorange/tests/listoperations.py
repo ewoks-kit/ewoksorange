@@ -1,4 +1,5 @@
 from ewokscore.task import Task
+from ewokscore.tests.examples.tasks.sumlist import SumList
 import numpy
 import logging
 
@@ -12,25 +13,9 @@ class PrintSum(Task, input_names=["sum"]):
         print("input value is", self.inputs.sum)
 
 
-class SumList(Task, input_names=["list"], output_names=["sum"]):
-    def __init__(self, progress=None, inputs=None, varinfo=None):
-        super().__init__(varinfo=varinfo, inputs=inputs)
-        self._task_progress = progress
-
-    def update_progress(self, progress):
-        if self._task_progress is not None:
-            self._task_progress.progress = progress
-
-    def run(self):
-        if self.inputs.list is None:
-            raise ValueError("list should be provided")
-        sum_ = 0
-        n_elmt = len(self.inputs.list)
-        for i_elmt, elmt in enumerate(self.inputs.list):
-            sum_ += elmt
-            self.update_progress((i_elmt / n_elmt) * 100.0)
-        self.update_progress(100.0)
-        self.outputs.sum = sum_
+class SumList1(SumList):
+    # as each OW request his own Task we need to create this "dummy class"
+    pass
 
 
 class SumList2(SumList):
