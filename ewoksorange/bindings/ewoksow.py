@@ -11,6 +11,7 @@ from ewokscore.task import TaskInputError
 from ewokscore.hashing import UniversalHashable
 from ewokscore.hashing import MissingData
 from .progress import QProgress
+from .taskexecutor import _TaskExecutor
 import inspect
 import logging
 
@@ -104,7 +105,9 @@ if "openclass" in inspect.getargspec(WidgetMetaClass)[0]:
     ow_build_opts["openclass"] = True
 
 
-class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts):
+class _OWEwoksBaseWidget(
+    OWWidget, _TaskExecutor, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts
+):
     """
     Base class to handle boiler plate code to interconnect ewoks and
     orange3
@@ -141,10 +144,6 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
         return value
 
     @property
-    def input_values(self):
-        return {k: self._get_value(v) for k, v in self._all_inputs.items()}
-
-    @property
     def static_input_values(self):
         # Warning: do not use static_input directly because it
         #          messes up MISSING_DATA
@@ -153,10 +152,6 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
     @property
     def dynamic_input_values(self):
         return {k: self._get_value(v) for k, v in self._dynamic_inputs.items()}
-
-    @property
-    def output_values(self):
-        return {k: v.value for k, v in self._output_variables.items()}
 
     def set_input(self, name, var):
         if var is None:
@@ -186,33 +181,33 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
         raise NotImplementedError("Base class")
 
 
-class OWEwoksWidgetNoThread(_OWEwoksBaseWidget):
+class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, _TaskExecutor):
     """Widget which will run the ewokscore.Task directly"""
 
     def changeStaticInput(self):
         self.handleNewSignals()
 
     def handleNewSignals(self):
+        self.inputs = self._all_inputs
         self.run()
 
     def run(self):
         try:
-            task = self.ewokstaskclass(inputs=self._all_inputs, varinfo=self.varinfo)
+            self.create_task()
         except TaskInputError:
             self.clear_downstream()
             return
-        if not task.is_ready_to_execute:
+        if not self.task.is_ready_to_execute:
             self.clear_downstream()
             return
         try:
-            task.execute()
+            _TaskExecutor.run(self)
         except TaskInputError:
             self.clear_downstream()
             return
         except Exception:
             self.clear_downstream()
             raise
-        self._output_variables = task.output_variables
         self.trigger_downstream()
 
 
@@ -315,61 +310,19 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget):
     pass
 
 
-class _ProcessingThread(QThread):
-    def __init__(self, ewokstaskclass, taskprogress, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._taskprogress = taskprogress
-        self._ewokstaskclass = ewokstaskclass
-        self._varinfo = None
-        self._inputs = None
-        self._output_variables = None
-        self._task = None
-
-    @property
-    def ewokstaskclass(self):
-        return self._ewokstaskclass
-
-    @property
-    def varinfo(self):
-        return self._varinfo
-
-    @property
-    def inputs(self):
-        return self._inputs
-
-    @property
-    def output_values(self):
-        return {k: v.value for k, v in self._output_variables.items()}
-
-    @property
-    def task(self):
-        return self._task
-
-    @property
-    def output_variables(self):
-        return self._output_variables
-
-    def init(self, varinfo=None, inputs=None):
-        self._varinfo = varinfo
-        self._inputs = inputs
-        self._output_variables = dict()
-
+class _ProcessingThread(QThread, _TaskExecutor):
     def run(self):
-        self._task = self.ewokstaskclass(inputs=self.inputs, varinfo=self.varinfo)
         try:
-            self._task = self.ewokstaskclass(
-                progress=self._taskprogress, inputs=self.inputs, varinfo=self.varinfo
-            )
+            self.create_task()
         except TaskInputError as e:
             _logger.warning(e)
             return
         if not self.task.is_ready_to_execute:
             return
         try:
-            self.task.execute()
+            _TaskExecutor.run(self)
         except TaskInputError as e:
             _logger.warning(e)
             return
         except Exception:
             raise
-        self._output_variables = self.task.output_variables

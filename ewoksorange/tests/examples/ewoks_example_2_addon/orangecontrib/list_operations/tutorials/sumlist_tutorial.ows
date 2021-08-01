@@ -5,13 +5,12 @@
 		<node id="1" name="SumList one thread" position="(348.0, 186.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.sumlist_one_thread.SumListOneThread" title="SumList one thread" version="" />
 		<node id="2" name="SumList on several thread" position="(291.0, 298.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.sumlist_several_thread.SumListSeveralThread" title="SumList on several thread" version="" />
 		<node id="3" name="Print list sum" position="(495.0, 207.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.print_sum.PrintSumOW" title="Print list sum" version="" />
-		<node id="4" name="Print list sum" position="(414.0, 341.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.print_sum.PrintSumOW" title="Print list sum (1)" version="" />
+		<node id="4" name="Print list sum" position="(451.0, 363.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.print_sum.PrintSumOW" title="Print list sum (1)" version="" />
 	</nodes>
 	<links>
 		<link enabled="true" id="0" sink_channel="list" sink_node_id="1" source_channel="list" source_node_id="0" />
-		<link enabled="true" id="1" sink_channel="list" sink_node_id="2" source_channel="list" source_node_id="0" />
-		<link enabled="true" id="2" sink_channel="sum" sink_node_id="3" source_channel="sum" source_node_id="1" />
-		<link enabled="true" id="3" sink_channel="sum" sink_node_id="4" source_channel="sum" source_node_id="2" />
+		<link enabled="true" id="1" sink_channel="sum" sink_node_id="3" source_channel="sum" source_node_id="1" />
+		<link enabled="true" id="2" sink_channel="sum" sink_node_id="4" source_channel="sum" source_node_id="2" />
 	</links>
 	<annotations />
 	<thumbnail />
