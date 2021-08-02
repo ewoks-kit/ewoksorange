@@ -4,23 +4,23 @@
 		<node id="0" name="ListGenerator" position="(150, 150)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.listgenerator.ListGenerator" title="ListGenerator" version="" />
 		<node id="1" name="SumList one thread" position="(348.0, 186.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.sumlist_one_thread.SumListOneThread" title="SumList one thread" version="" />
 		<node id="2" name="SumList on several thread" position="(291.0, 298.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.sumlist_several_thread.SumListSeveralThread" title="SumList on several thread" version="" />
-		<node id="3" name="Print list sum" position="(495.0, 207.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.print_sum.PrintSumOW" title="Print list sum" version="" />
+		<node id="3" name="Print list sum" position="(506.0, 216.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.print_sum.PrintSumOW" title="Print list sum" version="" />
 		<node id="4" name="Print list sum" position="(451.0, 363.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.print_sum.PrintSumOW" title="Print list sum (1)" version="" />
-		<node id="5" name="SumList with one thread and a stack" position="(258.0, 415.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.sumlist_stack.SumListSeveralThread" title="SumList with one thread and a stack" version="" />
-		<node id="6" name="Print list sum" position="(432.0, 474.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.print_sum.PrintSumOW" title="Print list sum (2)" version="" />
+		<node id="5" name="Print list sum" position="(432.0, 474.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.print_sum.PrintSumOW" title="Print list sum (2)" version="" />
+		<node id="6" name="SumList with one thread and a stack" position="(258.0, 419.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.sumlist_stack.SumListWithTaskStack" title="SumList with one thread and a stack" version="" />
 	</nodes>
 	<links>
 		<link enabled="true" id="0" sink_channel="sum" sink_node_id="3" source_channel="sum" source_node_id="1" />
 		<link enabled="true" id="1" sink_channel="sum" sink_node_id="4" source_channel="sum" source_node_id="2" />
-		<link enabled="true" id="2" sink_channel="sum" sink_node_id="6" source_channel="sum" source_node_id="5" />
-		<link enabled="true" id="3" sink_channel="list" sink_node_id="5" source_channel="list" source_node_id="0" />
-		<link enabled="true" id="4" sink_channel="list" sink_node_id="2" source_channel="list" source_node_id="0" />
-		<link enabled="true" id="5" sink_channel="list" sink_node_id="1" source_channel="list" source_node_id="0" />
+		<link enabled="true" id="2" sink_channel="list" sink_node_id="2" source_channel="list" source_node_id="0" />
+		<link enabled="true" id="3" sink_channel="list" sink_node_id="1" source_channel="list" source_node_id="0" />
+		<link enabled="true" id="4" sink_channel="sum" sink_node_id="5" source_channel="sum" source_node_id="6" />
+		<link enabled="true" id="5" sink_channel="list" sink_node_id="6" source_channel="list" source_node_id="0" />
 	</links>
 	<annotations />
 	<thumbnail />
 	<node_properties>
-		<properties format="literal" node_id="0">{'controlAreaVisible': True, 'savedWidgetGeometry': b'\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x03J\x00\x00\x01\xde\x00\x00\x04!\x00\x00\x02\x81\x00\x00\x03J\x00\x00\x01\xde\x00\x00\x04!\x00\x00\x02\x81\x00\x00\x00\x00\x00\x00\x00\x00\x07\x80\x00\x00\x03J\x00\x00\x01\xde\x00\x00\x04!\x00\x00\x02\x81', '__version__': 1}</properties>
+		<properties format="literal" node_id="0">{'controlAreaVisible': True, 'savedWidgetGeometry': b'\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x03\x96\x00\x00\x01=\x00\x00\x05P\x00\x00\x02\xaf\x00\x00\x03\x96\x00\x00\x01b\x00\x00\x05P\x00\x00\x02\xaf\x00\x00\x00\x00\x00\x00\x00\x00\x07\x80\x00\x00\x03\x96\x00\x00\x01b\x00\x00\x05P\x00\x00\x02\xaf', 'static_input': {'length': 100000}, 'varinfo': {'root_uri': ''}, '__version__': 1}</properties>
 		<properties format="pickle" node_id="1">gAN9cQAoWBIAAABjb250cm9sQXJlYVZpc2libGVxAYhYEwAAAHNhdmVkV2lkZ2V0R2VvbWV0cnlx
 Ak5YDAAAAHN0YXRpY19pbnB1dHEDfXEEWAQAAABsaXN0cQVjZXdva3Njb3JlLmhhc2hpbmcKTWlz
 c2luZ0RhdGEKcQYpgXEHc1gHAAAAdmFyaW5mb3EIfXEJWAgAAAByb290X3VyaXEKWAAAAABxC3NY
@@ -42,14 +42,14 @@ aW5nRGF0YQpxBimBcQdzWAcAAAB2YXJpbmZvcQh9cQlYCAAAAHJvb3RfdXJpcQpYAAAAAHELc1gL
 AAAAX192ZXJzaW9uX19xDEsBdS4=
 </properties>
 		<properties format="pickle" node_id="5">gAN9cQAoWBIAAABjb250cm9sQXJlYVZpc2libGVxAYhYEwAAAHNhdmVkV2lkZ2V0R2VvbWV0cnlx
-Ak5YDAAAAHN0YXRpY19pbnB1dHEDfXEEWAQAAABsaXN0cQVjZXdva3Njb3JlLmhhc2hpbmcKTWlz
-c2luZ0RhdGEKcQYpgXEHc1gHAAAAdmFyaW5mb3EIfXEJWAgAAAByb290X3VyaXEKWAAAAABxC3NY
-CwAAAF9fdmVyc2lvbl9fcQxLAXUu
-</properties>
-		<properties format="pickle" node_id="6">gAN9cQAoWBIAAABjb250cm9sQXJlYVZpc2libGVxAYhYEwAAAHNhdmVkV2lkZ2V0R2VvbWV0cnlx
 Ak5YDAAAAHN0YXRpY19pbnB1dHEDfXEEWAMAAABzdW1xBWNld29rc2NvcmUuaGFzaGluZwpNaXNz
 aW5nRGF0YQpxBimBcQdzWAcAAAB2YXJpbmZvcQh9cQlYCAAAAHJvb3RfdXJpcQpYAAAAAHELc1gL
 AAAAX192ZXJzaW9uX19xDEsBdS4=
+</properties>
+		<properties format="pickle" node_id="6">gAN9cQAoWBIAAABjb250cm9sQXJlYVZpc2libGVxAYhYEwAAAHNhdmVkV2lkZ2V0R2VvbWV0cnlx
+Ak5YDAAAAHN0YXRpY19pbnB1dHEDfXEEWAQAAABsaXN0cQVjZXdva3Njb3JlLmhhc2hpbmcKTWlz
+c2luZ0RhdGEKcQYpgXEHc1gHAAAAdmFyaW5mb3EIfXEJWAgAAAByb290X3VyaXEKWAAAAABxC3NY
+CwAAAF9fdmVyc2lvbl9fcQxLAXUu
 </properties>
 	</node_properties>
 	<session_state>

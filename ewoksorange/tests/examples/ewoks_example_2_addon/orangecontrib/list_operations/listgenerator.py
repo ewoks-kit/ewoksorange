@@ -1,15 +1,18 @@
-from Orange.widgets.widget import OWWidget
+from ewoksorange.bindings import OWEwoksWidgetNoThread
 import ewoksorange.tests.listoperations
-from ewokscore.variable import Variable
-from AnyQt.QtWidgets import QWidget, QPushButton, QFormLayout, QSpinBox
+from AnyQt.QtWidgets import QPushButton
 from Orange.widgets import gui
-from Orange.widgets.widget import Output
+from ewoksorange.gui.parameterform import ParameterForm
 import logging
 
 _logger = logging.getLogger(__name__)
 
 
-class ListGenerator(OWWidget):
+class ListGenerator(
+    OWEwoksWidgetNoThread,
+    ewokstaskclass=ewoksorange.tests.listoperations.GenerateList,
+):
+
     name = "ListGenerator"
 
     description = "Generate a random list with X elements"
@@ -18,50 +21,38 @@ class ListGenerator(OWWidget):
 
     category = "esrfWidgets"
 
-    ewokstaskclass = ewoksorange.tests.listoperations.GenerateList
-
-    want_main_area = True
-
-    class Outputs:
-        list_ = Output("list", Variable)
-        # TODO: Variable should be associable with some Variable. type to
-        # insure connect. If this is replaced by list this won't work anymore
-
-    class ListLength(QWidget):
-        def __init__(self, *args, **kwargs):
-            QWidget.__init__(self, *args, **kwargs)
-            self.setLayout(QFormLayout())
-            self._lengthQSB = QSpinBox(self)
-            self.layout().addRow("length", self._lengthQSB)
-            self._lengthQSB.setMaximum(1000000000)
-            self._lengthQSB.setSingleStep(100000)
-            self._lengthQSB.setValue(10000000)
-
-        def getLength(self):
-            return self._lengthQSB.value()
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._widget = self.ListLength(parent=self)
 
-        self._box = gui.vBox(self.mainArea, self.name)
-        layout = self._box.layout()
-        layout.addWidget(self._widget)
+        box = gui.widgetBox(self.controlArea, "Static Inputs")
+        self._static_input_form = ParameterForm(parent=box)
+        for name, value in self.static_input_values.items():
+            self._static_input_form.addParameter(
+                name, value=value, default=0, changeCallback=self.changeStaticInput
+            )
 
+        box = gui.widgetBox(self.controlArea, "Outputs")
+        self._output_form = ParameterForm(parent=box)
+        for name in self.output_names():
+            self._output_form.addParameter(name)
+
+        box = gui.widgetBox(self.controlArea, "Commands")
+        layout = box.layout()
         self._validateButton = QPushButton("generate", self)
         layout.addWidget(self._validateButton)
 
+        self.handleNewSignals()
         # connect signal / slot
-        self._validateButton.released.connect(self._validate)
+        self._validateButton.released.connect(self.handleNewSignals)
 
-    def getList(self):
-        task = ewoksorange.tests.listoperations.GenerateList(
-            inputs={"length": self._widget.getLength()}
-        )
-        task.run()
-        return task.outputs.list
+    def changeStaticInput(self):
+        self.static_input.update(self._static_input_form.getParameters())
+        super().changeStaticInput()
 
-    def _validate(self):
-        var = Variable()
-        var.value = self.getList()
-        self.Outputs.list_.send(var)
+    def handleNewSignals(self):
+        for name, value in self.dynamic_input_values.items():
+            self._dynamic_input_form.setParameter(name, value)
+            self._static_input_form.disable(name)
+        super().handleNewSignals()
+        for name, value in self.output_values.items():
+            self._output_form.setParameter(name, value)
