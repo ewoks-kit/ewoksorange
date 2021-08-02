@@ -54,7 +54,7 @@ class ParameterForm(QtWidgets.QWidget):
                 field = QtWidgets.QDoubleSpinBox()
             field.setValue(value)
             if changeCallback:
-                field.valueChanged.connect(changeCallback)
+                field.editingFinished.connect(changeCallback)
             else:
                 field.setReadOnly(True)
         else:
