@@ -5,13 +5,13 @@ from Orange.widgets.widget import OWWidget, WidgetMetaClass
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.settings import Setting
 from Orange.widgets import gui
-from AnyQt.QtCore import QThread
 from ewokscore.variable import Variable
 from ewokscore.task import TaskInputError
 from ewokscore.hashing import UniversalHashable
 from ewokscore.hashing import MissingData
 from .progress import QProgress
-from .taskexecutor import _TaskExecutor
+from .taskexecutor import _TaskExecutor, _ProcessingThread
+from .stack import FIFOTaskStack
 import inspect
 import logging
 
@@ -226,6 +226,7 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget):
         self._processingThread = _ProcessingThread(
             taskprogress=self._taskProgress, ewokstaskclass=self.ewokstaskclass
         )
+        # connect signal / slot
         self._taskProgress.sigProgressChanged.connect(self._setProgressValue)
         self._processingThread.finished.connect(self._processingFinished)
 
@@ -308,25 +309,41 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget):
 
 
 class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget):
-    pass
-
-
-class _ProcessingThread(QThread, _TaskExecutor):
     """
-    Run a task on a QThread
+    Each time a task processing is requested add it to the FIFO stack.
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._taskProgress = QProgress()
+        self._orangeProgress = gui.ProgressBar(self, 100)
+        self._stack = FIFOTaskStack(
+            ewokstaskclass=self.ewokstaskclass, taskprogress=self._taskProgress
+        )
+        # connect signal / slot
+        self._taskProgress.sigProgressChanged.connect(self._setProgressValue)
+
     def run(self):
-        try:
-            self.create_task()
-        except TaskInputError as e:
-            _logger.warning(e)
-            return
-        if not self.task.is_ready_to_execute:
-            return
-        try:
-            _TaskExecutor.run(self)
-        except TaskInputError as e:
-            _logger.warning(e)
-            return
-        except Exception:
-            raise
+        self._stack.add(
+            varinfo=self.varinfo,
+            inputs=self._all_inputs,
+            callbacks=(self._processingFinished,),
+        )
+
+    def close(self):
+        self._stack.stop()
+        super().close()
+
+    def _processingFinished(self):
+        thread = self.sender()
+        self._output_variables = thread.output_variables
+        self.trigger_downstream()
+
+    def _setProgressValue(self, value):
+        self._orangeProgress.widget.progressBarSet(value)
+
+    def changeStaticInput(self):
+        self.handleNewSignals()
+
+    def handleNewSignals(self):
+        self.run()

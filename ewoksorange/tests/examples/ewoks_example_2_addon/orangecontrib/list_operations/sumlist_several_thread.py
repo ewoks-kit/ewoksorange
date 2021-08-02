@@ -16,7 +16,7 @@ class SumListSeveralThread(
 
     name = "SumList on several thread"
 
-    description = "Sum all elements of a list using a new thread for each" "summation"
+    description = "Sum all elements of a list using a new thread for each summation"
 
     category = "esrfWidgets"
 

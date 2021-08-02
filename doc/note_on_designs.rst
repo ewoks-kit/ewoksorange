@@ -117,8 +117,28 @@ For this you should inherit from the :class:`OWEwoksWidgetOneThreadPerRun` widge
 One dedicated thread for the task and with a stack
 --------------------------------------------------
 
-TODO
+Last design for which we propose an automatic binding is an Orange widget containing a Stack.
+The stack is associated with a processing thread and has a first in first out (FIFO) behavior.
 
+To access it you can create a widget inheriting from :class:`OWEwoksWidgetWithTaskStack` widget.
+This is what is on in `ewoks example 2 addon` / :class:`SumListWithTaskStack`
+
+.. code-block:: python
+
+    class SumListWithTaskStack(
+        OWEwoksWidgetWithTaskStack,
+        ewokstaskclass=SumList3,
+    ):
+        name = "SumList with one thread and a stack"
+
+        description = "Sum all elements of a list using a thread and a stack"
+
+        category = "esrfWidgets"
+
+        want_main_area = False
+
+
+The SumListWithTaskStack also include an instance of `QProgress`. So you will be able to display the progress of each task.
 
 .. _design free implementation:
 
@@ -127,9 +147,6 @@ Handling everything yourself
 ----------------------------
 
 In some cases you might want to execute one :class:`Task` with ewoks and another with orange.
-This is the design used in the `ewoks example 2 addon` TODO.
-
-This can be the case for example to have an ewoks Task 100% free of any gui import (as Qt) and have some interaction / progress... with from the orange canvas.
 
 Here the simplest way is to inherit directly from :class:`OWWidget` and provide the `ewokstaskclass` pointing to the Task to be executed by ewoks when converted.
 
@@ -138,7 +155,7 @@ Here the simplest way is to inherit directly from :class:`OWWidget` and provide 
     from Orange.widgets.widget import OWWidget
     import ewokscore.tests.examples.tasks.sumtask import SumTask
 
-    class SumList(
+    class SumListFreeImplementation(
         OWWidget,
     ):
         ewokstaskclass=ewokscore.tests.examples.tasks.sumtask.SumTask
@@ -148,7 +165,7 @@ Then you can define standard orange `Input` and `Output` to connect it to the wo
 
 .. code-block:: python
 
-    class SumList(
+    class SumListFreeImplementation(
         OWWidget,
     ):
         class Inputs:
@@ -170,4 +187,5 @@ As usual `Inputs` and `Outputs` have to be connected somehow:
         self.Outputs.sum_.send(...)
 
 
-This design insure safe conversion to ewoks (the task provided by `ewokstaskclass` will be excuted).
+Orange will use the `@Inputs.[input]` decorator and `Outputs.output` to insure connection between widget.
+Ewoks will use the provided `ewokstaskclass` to know which class to execut and the `INPUT_NAMES`, `OUTPUT_NAMES` to insure connection between classes.

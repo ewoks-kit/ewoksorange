@@ -1,5 +1,6 @@
 from ewokscore.task import TaskInputError
 from ewokscore.task import TaskWithProgress
+from AnyQt.QtCore import QThread
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -54,3 +55,25 @@ class _TaskExecutor:
             raise ValueError("Task must be created first")
         self.task.execute()
         self._output_variables = self.task.output_variables
+
+
+class _ProcessingThread(QThread, _TaskExecutor):
+    """
+    Run a task on a QThread
+    """
+
+    def run(self):
+        try:
+            self.create_task()
+        except TaskInputError as e:
+            _logger.warning(e)
+            return
+        if not self.task.is_ready_to_execute:
+            return
+        try:
+            _TaskExecutor.run(self)
+        except TaskInputError as e:
+            _logger.warning(e)
+            return
+        except Exception:
+            raise
