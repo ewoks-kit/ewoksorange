@@ -188,6 +188,7 @@ class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, _TaskExecutor):
         self.handleNewSignals()
 
     def handleNewSignals(self):
+        # update task inputs
         self.inputs = self._all_inputs
         self.run()
 
@@ -311,6 +312,9 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget):
 
 
 class _ProcessingThread(QThread, _TaskExecutor):
+    """
+    Run a task on a QThread
+    """
     def run(self):
         try:
             self.create_task()
