@@ -1,3 +1,3 @@
-from .progress import *
-from .bindings import *
-from .ewoksow import *
+from .progress import *  # noqa
+from .bindings import *  # noqa
+from .ewoksow import *  # noqa
