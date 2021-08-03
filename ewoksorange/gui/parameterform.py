@@ -1,7 +1,7 @@
 from AnyQt import QtWidgets
 from AnyQt.QtCore import Qt
 import numbers
-from ewoksorange.bindings import MISSING_DATA
+from ewokscore.hashing import UniversalHashable
 
 
 class ParameterForm(QtWidgets.QWidget):
@@ -37,7 +37,7 @@ class ParameterForm(QtWidgets.QWidget):
 
     def addParameter(self, name, value=None, default="", changeCallback=None):
         label = name + ":"
-        if value is None or value is MISSING_DATA:
+        if value is None or value is UniversalHashable.MISSING_DATA:
             value = default
         if isinstance(value, str):
             field = QtWidgets.QLineEdit()
@@ -54,7 +54,7 @@ class ParameterForm(QtWidgets.QWidget):
                 field = QtWidgets.QDoubleSpinBox()
             field.setValue(value)
             if changeCallback:
-                field.valueChanged.connect(changeCallback)
+                field.editingFinished.connect(changeCallback)
             else:
                 field.setReadOnly(True)
         else:

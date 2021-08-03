@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scheme version="2.0" title="SumTask (Evaluate category from Ewoks-example-addon)" description="acyclic1">
+	<nodes>
+		<node id="0" name="Adder1" qualified_name="orangecontrib.evaluate.submodule.adder1.Adder1" project_name="ewoks_example_1_addon" title="task1" position="(0.0, 0.0)" />
+		<node id="1" name="Adder2" qualified_name="orangecontrib.evaluate.submodule.adder2.Adder2" project_name="ewoks_example_1_addon" title="task2" position="(155.0, 308.0)" />
+		<node id="2" name="Adder1" qualified_name="orangecontrib.evaluate.submodule.adder1.Adder1" project_name="ewoks_example_1_addon" title="task3" position="(402.0, 134.0)" />
+		<node id="3" name="Adder2" qualified_name="orangecontrib.evaluate.submodule.adder2.Adder2" project_name="ewoks_example_1_addon" title="task4" position="(415.0, 300.0)" />
+		<node id="4" name="Adder1" qualified_name="orangecontrib.evaluate.submodule.adder1.Adder1" project_name="ewoks_example_1_addon" title="task5" position="(649.0, 197.0)" />
+		<node id="5" name="Adder1" qualified_name="orangecontrib.evaluate.submodule.adder1.Adder1" project_name="ewoks_example_1_addon" title="task6" position="(857.0, 202.0)" />
+	</nodes>
+	<links>
+		<link id="0" source_node_id="0" sink_node_id="2" source_channel="A + B" sink_channel="A" enabled="true" />
+		<link id="1" source_node_id="1" sink_node_id="3" source_channel="A + B" sink_channel="A" enabled="true" />
+		<link id="2" source_node_id="2" sink_node_id="4" source_channel="A + B" sink_channel="A" enabled="true" />
+		<link id="3" source_node_id="3" sink_node_id="4" source_channel="A + B" sink_channel="B" enabled="true" />
+		<link id="4" source_node_id="4" sink_node_id="5" source_channel="A + B" sink_channel="A" enabled="true" />
+	</links>
+	<annotations />
+	<thumbnail />
+	<node_properties>
+		<properties node_id="0" format="literal">{'static_input': {'a': 1}}</properties>
+		<properties node_id="1" format="literal">{'static_input': {'a': 2}}</properties>
+		<properties node_id="2" format="literal">{'static_input': {'b': 3}}</properties>
+		<properties node_id="3" format="literal">{'static_input': {'b': 4}}</properties>
+		<properties node_id="4" format="literal">{'static_input': {'b': 5}}</properties>
+		<properties node_id="5" format="literal">{'static_input': {'b': 6}}</properties>
+	</node_properties>
+	<session_state>
+		<window_groups />
+	</session_state>
+</scheme>
