@@ -1,5 +1,5 @@
 from ewokscore.task import TaskInputError
-from ewokscore.task import TaskWithProgress
+from ewokscore import TaskWithProgress
 from AnyQt.QtCore import QThread
 import logging
 
