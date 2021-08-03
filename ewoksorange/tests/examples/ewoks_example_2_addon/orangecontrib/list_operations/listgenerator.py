@@ -41,7 +41,6 @@ class ListGenerator(
         self._validateButton = QPushButton("generate", self)
         layout.addWidget(self._validateButton)
 
-        self.handleNewSignals()
         # connect signal / slot
         self._validateButton.released.connect(self.handleNewSignals)
 

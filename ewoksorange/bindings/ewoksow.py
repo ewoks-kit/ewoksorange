@@ -53,7 +53,7 @@ def prepare_OWEwoksWidgetclass(
     attr["Inputs"] = Inputs
     attr["Outputs"] = Outputs
     attr["static_input"] = Setting(
-        {name: MISSING_DATA for name in ewokstaskclass.input_names()}
+        {name: None for name in ewokstaskclass.input_names()}
     )
     attr["varinfo"] = Setting({"root_uri": ""})
     attr["static_input"].schema_only = True

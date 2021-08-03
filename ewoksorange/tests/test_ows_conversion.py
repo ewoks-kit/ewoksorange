@@ -22,7 +22,7 @@ def test_ows_to_ewoks_example_1(tmpdir, register_ewoks_example_addons):
     assert ewoksgraph == ewoksgraph2
 
 
-def test_ows_to_ewoks_example_2(tmpdir, register_ewoks_example_addons):
+def test_ows_to_ewoks_example_2(tmpdir, capsys, register_ewoks_example_addons):
     """Test conversion of orange worflow files to ewoks"""
     from orangecontrib.list_operations import tutorials
 
@@ -33,6 +33,13 @@ def test_ows_to_ewoks_example_2(tmpdir, register_ewoks_example_addons):
     owsconvert.ewoks_to_ows(ewoksgraph, destination)
     ewoksgraph2 = owsconvert.ows_to_ewoks(destination)
     assert ewoksgraph == ewoksgraph2, f"{ewoksgraph} vs {ewoksgraph2}"
+
+    # check execution
+    ewoksgraph.execute()
+    stdout = capsys.readouterr()
+    # check 3 prints are done (if input value is None will raise an error)
+    assert len(stdout.out) > 0
+    assert stdout.out.count("input value is") == 3
 
 
 @pytest.mark.parametrize("graph_name", graph_names())
