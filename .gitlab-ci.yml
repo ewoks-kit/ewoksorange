@@ -15,5 +15,5 @@ test-3.6-orange3-fork:
     # hard fork of Orange3
     - pip install git+https://github.com/payno/orange3.git
 
-ewoksorange_deploy:
-  extends: ".deploy"
+pages:
+  extends: ".pages"
