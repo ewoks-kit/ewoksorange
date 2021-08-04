@@ -17,4 +17,3 @@ test-3.6-orange3-fork:
 
 ewoksorange_deploy:
   extends: ".deploy"
-
