@@ -11,8 +11,8 @@ ewoksorange is the Orange bindings for Ewoks.
 ewoksorange has been developed by the `Software group <http://www.esrf.eu/Instrumentation/software>`_ of the `European Synchrotron <https://www.esrf.eu/>`_.
 
 .. toctree::
-    :maxdepth: 4
+    :maxdepth: 2
 
-    examples.rst
-    note_on_designs.rst
-    API.rst
+    examples
+    note_on_designs
+    API
