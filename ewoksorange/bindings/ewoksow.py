@@ -101,7 +101,7 @@ class _OWEwoksWidgetMetaClass(WidgetMetaClass):
 # orangewidget.widget.WidgetMetaClass. This was before split of the two
 # projects. Parameter name "openclass" is undefined on the old version
 ow_build_opts = {}
-if "openclass" in inspect.getargspec(WidgetMetaClass)[0]:
+if "openclass" in inspect.signature(WidgetMetaClass).parameters:
     ow_build_opts["openclass"] = True
 
 
