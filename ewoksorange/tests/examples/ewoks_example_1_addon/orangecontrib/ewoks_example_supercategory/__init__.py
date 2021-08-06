@@ -23,7 +23,7 @@ WIDGET_HELP_PATH = (
 def widget_discovery(discovery):
     import pkg_resources
 
-    distroname = pkg_resources.safe_name("ewoks_example_1_addon")
+    distroname = pkg_resources.safe_name("ewoks-example-1-addon")
     dist = pkg_resources.get_distribution(distroname)
     pkgs = [
         "orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory",

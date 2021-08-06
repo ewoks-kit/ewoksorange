@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<scheme description="" title="" version="2.0">
+<scheme title="Ewoks example (threading)" description="threading" version="2.0">
 	<nodes>
 		<node id="0" name="ListGenerator" position="(150, 150)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.listgenerator.ListGenerator" title="ListGenerator" version="" />
 		<node id="1" name="SumList one thread" position="(426.0, 154.0)" project_name="ewoks-example-2-addon" qualified_name="ewoksorange.tests.examples.ewoks_example_2_addon.orangecontrib.list_operations.sumlist_one_thread.SumListOneThread" title="SumList one thread" version="" />
@@ -20,13 +20,7 @@
 	<annotations />
 	<thumbnail />
 	<node_properties>
-		<properties format="literal" node_id="0">{'controlAreaVisible': True, 'savedWidgetGeometry': b'\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x03R\x00\x00\x01\x85\x00\x00\x04\x1a\x00\x00\x02\xb6\x00\x00\x03R\x00\x00\x01\xaa\x00\x00\x04\x1a\x00\x00\x02\xb6\x00\x00\x00\x00\x00\x00\x00\x00\x07\x80\x00\x00\x03R\x00\x00\x01\xaa\x00\x00\x04\x1a\x00\x00\x02\xb6', 'static_input': {'length': 100000}, 'varinfo': {'root_uri': ''}, '__version__': 1}</properties>
-		<properties format="literal" node_id="1">{'controlAreaVisible': True, 'savedWidgetGeometry': None, 'static_input': {'list': None}, 'varinfo': {'root_uri': ''}, '__version__': 1}</properties>
-		<properties format="literal" node_id="2">{'controlAreaVisible': True, 'savedWidgetGeometry': None, 'static_input': {'list': None}, 'varinfo': {'root_uri': ''}, '__version__': 1}</properties>
-		<properties format="literal" node_id="3">{'controlAreaVisible': True, 'savedWidgetGeometry': None, 'static_input': {'list': None}, 'varinfo': {'root_uri': ''}, '__version__': 1}</properties>
-		<properties format="literal" node_id="4">{'controlAreaVisible': True, 'savedWidgetGeometry': None, 'static_input': {'sum': None}, 'varinfo': {'root_uri': ''}, '__version__': 1}</properties>
-		<properties format="literal" node_id="5">{'controlAreaVisible': True, 'savedWidgetGeometry': None, 'static_input': {'sum': None}, 'varinfo': {'root_uri': ''}, '__version__': 1}</properties>
-		<properties format="literal" node_id="6">{'controlAreaVisible': True, 'savedWidgetGeometry': None, 'static_input': {'sum': None}, 'varinfo': {'root_uri': ''}, '__version__': 1}</properties>
+		<properties format="literal" node_id="0">{'static_input': {'length': 100000}}</properties>
 	</node_properties>
 	<session_state>
 		<window_groups />
