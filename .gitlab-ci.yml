@@ -14,9 +14,20 @@ test-3.6-orange3-fork:
 
 build_sdist:
   extends: ".build_sdist"
+  after_script:
+    - python setup.py sdist
+  only:
+      - merge_requests
+
 
 test_sdist-3.6:
   extends: ".test_sdist-3.6"
+  script:
+    - ls sdist
+    - pip install --pre sdist/$(ls sdist)[test]
+    - pytest --pyargs ${CI_PROJECT_NAME}.tests
+  only:
+      - merge_requests
 
 build_doc:
   extends: ".build_doc"
