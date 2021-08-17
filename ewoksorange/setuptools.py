@@ -49,8 +49,14 @@ def include_documentation(local_dir, install_dir):
     return doc_files
 
 
+def orangecontrib_qualname(qualname):
+    if ".orangecontrib." in qualname:
+        return "orangecontrib." + qualname.partition(".orangecontrib.")[-1]
+    return qualname
+
+
 def register_category(cat_package, entry_points, defaultname=None):
-    qualname = cat_package.__name__
+    qualname = orangecontrib_qualname(cat_package.__name__)
     try:
         catname = cat_package.NAME
     except AttributeError:
@@ -69,7 +75,7 @@ def register_category(cat_package, entry_points, defaultname=None):
 
 
 def register_tutorials(tut_package, entry_points):
-    qualname = tut_package.__name__
+    qualname = orangecontrib_qualname(tut_package.__name__)
 
     # For auto-discovery of tutorials in this package
     eps = entry_points.setdefault(TUTORIAL_GROUP, list())

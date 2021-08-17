@@ -92,12 +92,6 @@ def get_subpackages(package):
 def register_addon_package(package, distroname=None):
     """An Orange Addon package which has not been installed.
 
-    TODO: the orangecontrib namespace does not get setup properly.
-    For the example Addon we currently have this:
-            qualified_name = "orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory.adder1.Adder1"
-            qualified_name = "ewoksorange.tests.examples.ewoks_example_1_addon.orangecontrib.ewoks_example_category.adder1.Adder1"
-            qualified_name = "ewoksorange.tests.examples.ewoks_example_1_addon.orangecontrib.evaluate.ewoks_example_submodule.adder1.Adder1"
-
     :param package:
     :param str distroname:
     """
