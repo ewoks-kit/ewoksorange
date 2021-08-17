@@ -5,6 +5,12 @@ from Orange.widgets.widget import OWWidget, WidgetMetaClass
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.settings import Setting
 from Orange.widgets import gui
+
+try:
+    from orangewidget.utils.signals import summarize, PartialSummary
+except ImportError:
+    summarize = None
+
 from ewokscore.variable import Variable
 from ewokscore.task import TaskInputError
 from ewokscore.hashing import UniversalHashable
@@ -34,6 +40,18 @@ def input_setter(name):
         self.set_input(name, var)
 
     return setter
+
+
+if summarize is not None:
+
+    @summarize.register(Variable)
+    def summarize_variable(var: Variable):
+        if var.value is MISSING_DATA:
+            dtype = MISSING_DATA
+        else:
+            dtype = type(var.value).__name__
+        desc = f"ewoks variable ({dtype})"
+        return PartialSummary(desc, desc)
 
 
 def prepare_OWEwoksWidgetclass(
@@ -86,7 +104,7 @@ class _OWEwoksWidgetMetaClass(WidgetMetaClass):
         ewokstaskclass=None,
         inputnamemap=None,
         outputnamemap=None,
-        **kw
+        **kw,
     ):
         prepare_OWEwoksWidgetclass(
             attr,
@@ -181,7 +199,7 @@ class _OWEwoksBaseWidget(
         raise NotImplementedError("Base class")
 
 
-class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, _TaskExecutor):
+class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, **ow_build_opts):
     """Widget which will run the ewokscore.Task directly"""
 
     def changeStaticInput(self):
@@ -212,7 +230,7 @@ class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, _TaskExecutor):
         self.trigger_downstream()
 
 
-class OWEwoksWidgetOneThread(_OWEwoksBaseWidget):
+class OWEwoksWidgetOneThread(_OWEwoksBaseWidget, **ow_build_opts):
     """
     All the processing is done on one thread.
     If a processing is requested when the thread is already running then
@@ -266,7 +284,7 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget):
         super().close()
 
 
-class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget):
+class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget, **ow_build_opts):
     """
     Each time a task processing is requested this will create a new thread
     to do the processing.
@@ -308,7 +326,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget):
         super().close()
 
 
-class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget):
+class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget, **ow_build_opts):
     """
     Each time a task processing is requested add it to the FIFO stack.
     """
