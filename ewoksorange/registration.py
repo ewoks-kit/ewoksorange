@@ -41,11 +41,15 @@ def add_entry_points(distribution, entry_points):
         distroname = distribution
         dist = get_distribution(distroname)
         if dist is None:
-            print("Existing distributions:")
-            print(list(pkg_resources.working_set.by_key.keys()))
+            logger.error(
+                "Distribution '%s' not found. Existing distributions:\n %s",
+                distroname,
+                list(pkg_resources.working_set.by_key.keys()),
+            )
             raise pkg_resources.DistributionNotFound(distroname, [repr("ewoksorange")])
     else:
         dist = distribution
+        distroname = dist.project_name
 
     entry_map = dist.get_entry_map()
     for group, lst in entry_points.items():
@@ -57,6 +61,7 @@ def add_entry_points(distribution, entry_points):
                     f"Entry point {repr(ep.name)} already exists in group {repr(group)} of distribution {repr(distroname)}"
                 )
             group_map[ep.name] = ep
+            logger.debug(f"Dynamically add entry point for '{distroname}': {ep}")
 
 
 def create_fake_distribution(distroname, location):
