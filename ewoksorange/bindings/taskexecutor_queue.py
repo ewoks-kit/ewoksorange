@@ -1,12 +1,13 @@
+from typing import Iterable
 from queue import Queue
+
 from AnyQt.QtCore import QObject
 from AnyQt.QtCore import pyqtSignal as Signal
-from .taskexecutor import _ProcessingThread
-from typing import Union
-from typing import Iterable
+
+from .taskexecutor import ThreadedTaskExecutor
 
 
-class FIFOTaskStack(QObject, Queue):
+class TaskExecutorQueue(QObject, Queue):
     """Processing Queue with a First In, First Out behavior"""
 
     sigComputationStarted = Signal()
@@ -14,12 +15,10 @@ class FIFOTaskStack(QObject, Queue):
     sigComputationEnded = Signal()
     """Signal emitted when a computation is ended"""
 
-    def __init__(self, ewokstaskclass, taskprogress):
+    def __init__(self, ewokstaskclass):
         super().__init__()
-        self._processingThread = _StackProcessingThread(
-            taskprogress=taskprogress, ewokstaskclass=ewokstaskclass
-        )
-        self._processingThread.finished.connect(self._process_ended)
+        self._taskExecutor = _ThreadedTaskExecutor(ewokstaskclass=ewokstaskclass)
+        self._taskExecutor.finished.connect(self._process_ended)
         self._available = True
         """Simple thread to know if we can do some processing
         and avoid to mix thinks with QSignals and different threads
@@ -29,22 +28,20 @@ class FIFOTaskStack(QObject, Queue):
     def is_available(self) -> bool:
         return self._available
 
-    def add(self, varinfo=None, inputs=None, callbacks: Union[Iterable, None] = None):
+    def add(self, **kwargs):
         """Add a task `ewokstaskclass` execution request"""
-        super().put((varinfo, inputs, callbacks or tuple()))
-
+        super().put(kwargs)
         if self.is_available:
             self._process_next()
 
     def _process_next(self):
         if Queue.empty(self):
             return
-
         self._available = False
-        varinfo, inputs, callbacks = Queue.get(self)
-        self._processingThread.init(varinfo=varinfo, inputs=inputs, callbacks=callbacks)
-        self.sigComputationStarted.emit()
-        self._processingThread.start()
+        self._taskExecutor.create_task(**Queue.get(self))
+        if self._taskExecutor.is_ready_to_execute:
+            self.sigComputationStarted.emit()
+            self._taskExecutor.start()
 
     def _process_ended(self):
         for callback in self.sender().callbacks:
@@ -57,22 +54,22 @@ class FIFOTaskStack(QObject, Queue):
     def stop(self):
         while not self.empty():
             self.get()
-        self._processingThread.blockSignals(True)
-        self._processingThread.wait()
+        self._taskExecutor.blockSignals(True)
+        self._taskExecutor.wait()
 
 
-class _StackProcessingThread(_ProcessingThread):
+class _ThreadedTaskExecutor(ThreadedTaskExecutor):
     """Processing thread with some information on callbacks to be executed"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._callbacks = tuple()
+        self.__callbacks = tuple()
 
-    def init(self, callbacks=None, *args, **kwargs):
-        super().init(*args, **kwargs)
-        self._callbacks = callbacks or tuple()
+    def create_task(self, _callbacks: Iterable = tuple(), **kwargs):
+        super().create_task(**kwargs)
+        self.__callbacks = _callbacks
 
     @property
     def callbacks(self):
-        """callback to be executed by the thread once the computation is done"""
-        return self._callbacks
+        """Methods to be executed by the thread once the computation is done"""
+        return self.__callbacks

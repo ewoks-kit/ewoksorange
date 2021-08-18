@@ -1,9 +1,6 @@
 from ewokscore.task import Task
 from ewokscore.tests.examples.tasks.sumlist import SumList
 import numpy
-import logging
-
-_logger = logging.getLogger(__name__)
 
 
 class PrintSum(Task, input_names=["sum"]):

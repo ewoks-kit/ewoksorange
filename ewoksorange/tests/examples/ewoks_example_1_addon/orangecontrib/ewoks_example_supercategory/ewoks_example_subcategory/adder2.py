@@ -25,7 +25,7 @@ class Adder2(
         self._static_input_form = ParameterForm(parent=box)
         for name, value in self.static_input_values.items():
             self._static_input_form.addParameter(
-                name, value=value, default=0, changeCallback=self.changeStaticInput
+                name, value=value, default=0, changeCallback=self.staticInputHasChanged
             )
 
         box = gui.widgetBox(self.controlArea, "Dynamic Inputs")
@@ -40,9 +40,9 @@ class Adder2(
 
         self.handleNewSignals()
 
-    def changeStaticInput(self):
+    def staticInputHasChanged(self):
         self.static_input.update(self._static_input_form.getParameters())
-        super().changeStaticInput()
+        super().staticInputHasChanged()
 
     def handleNewSignals(self):
         for name, value in self.dynamic_input_values.items():
