@@ -144,10 +144,10 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
         return cls.ewokstaskclass.output_names()
 
     @property
-    def _all_inputs(self):
+    def _task_arguments(self):
         inputs = self.defined_static_input_values
         inputs.update(self.__dynamic_inputs)
-        return inputs
+        return {"inputs": inputs, "varinfo": self.varinfo}
 
     @staticmethod
     def _get_value(value):
@@ -228,7 +228,7 @@ class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, **ow_build_opts):
         self.__taskExecutor = TaskExecutor(self.ewokstaskclass)
 
     def execute_task(self):
-        self.__taskExecutor.create_task(inputs=self._all_inputs, varinfo=self.varinfo)
+        self.__taskExecutor.create_task(**self._task_arguments)
         try:
             self.__taskExecutor.execute_task()
         except Exception:
@@ -266,9 +266,7 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget, **ow_build_opts):
         else:
             self._setProgressValue(0)
             self.__taskExecutor.create_task(
-                varinfo=self.varinfo,
-                inputs=self._all_inputs,
-                progress=self.__taskProgress,
+                progress=self.__taskProgress, **self._task_arguments
             )
             if self.__taskExecutor.is_ready_to_execute:
                 self.__taskExecutor.start()
@@ -306,7 +304,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget, **ow_build_opts):
 
     def execute_task(self):
         taskExecutor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
-        taskExecutor.create_task(varinfo=self.varinfo, inputs=self._all_inputs)
+        taskExecutor.create_task(**self._task_arguments)
         if not taskExecutor.is_ready_to_execute:
             return
         taskExecutor.finished.connect(self._processingFinished)
@@ -347,10 +345,9 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget, **ow_build_opts):
 
     def execute_task(self):
         self.__taskExecutorQueue.add(
-            varinfo=self.varinfo,
-            inputs=self._all_inputs,
             progress=self.__taskProgress,
             _callbacks=(self._processingFinished,),
+            **self._task_arguments,
         )
 
     @property
