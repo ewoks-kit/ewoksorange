@@ -145,7 +145,7 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
 
     @property
     def _all_inputs(self):
-        inputs = self.static_input_values
+        inputs = self.defined_static_input_values
         inputs.update(self.__dynamic_inputs)
         return inputs
 
@@ -159,12 +159,15 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
         return value
 
     @property
-    def static_input_values(self):
+    def defined_static_input_values(self):
         # Warning: do not use static_input directly because it
         #          messes up MISSING_DATA
+        return {k: self._get_value(v) for k, v in self.static_input.items()}
+
+    @property
+    def static_input_values(self):
         values = {name: MISSING_DATA for name in self.input_names()}
-        for k, v in self.static_input.items():  # returns only the specified ones
-            values[k] = self._get_value(v)
+        values.update(self.defined_static_input_values)
         return values
 
     @property
