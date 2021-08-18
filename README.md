@@ -29,7 +29,7 @@ python -m pip install ewoksorange/tests/examples/ewoks_example_2_addon
 python -m Orange.canvas
 ```
 
-When removing a editable install, you may need to delete one file manually:
+When removing an editable install, you may need to delete one file manually:
 
 ```bash
 python -m pip install -e ewoksorange/tests/examples/ewoks_example_1_addon
