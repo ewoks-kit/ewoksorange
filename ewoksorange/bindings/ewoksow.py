@@ -302,7 +302,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget, **ow_build_opts):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__taskExecutors = list()
-        self.__last_output_variables = None
+        self.__last_output_variables = dict()
 
     def execute_task(self):
         taskExecutor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
@@ -343,7 +343,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget, **ow_build_opts):
         self.__progressWidget = gui.ProgressBar(self, 100)
         self.__taskExecutorQueue = TaskExecutorQueue(ewokstaskclass=self.ewokstaskclass)
         self.__taskProgress.sigProgressChanged.connect(self._setProgressValue)
-        self.__last_output_variables = None
+        self.__last_output_variables = dict()
 
     def execute_task(self):
         self.__taskExecutorQueue.add(
