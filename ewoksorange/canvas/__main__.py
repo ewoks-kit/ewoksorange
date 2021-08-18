@@ -24,6 +24,9 @@ def main(argv=None):
     else:
         with_example = True
 
+    if "--force-discovery" not in argv:
+        argv.append("--force-discovery")
+
     if with_example:
         from ewoksorange.registration import register_addon_package
         from ewoksorange.tests.examples import ewoks_example_1_addon

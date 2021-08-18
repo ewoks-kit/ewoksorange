@@ -11,7 +11,7 @@ from ewokscore.tests.examples.graphs import get_graph
 
 def test_ows_to_ewoks_example_1(tmpdir, register_ewoks_example_addons):
     """Test conversion of orange worflow files to ewoks"""
-    from orangecontrib.evaluate.submodule import tutorials
+    from orangecontrib.evaluate.ewoks_example_submodule import tutorials
 
     with resources.path(tutorials, "sumtask_tutorial2.ows") as filename:
         ewoksgraph = owsconvert.ows_to_ewoks(str(filename))
