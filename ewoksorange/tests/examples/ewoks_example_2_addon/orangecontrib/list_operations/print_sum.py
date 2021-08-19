@@ -14,6 +14,4 @@ class PrintSumOW(
 
     description = "Print received list sum"
 
-    category = "esrfWidgets"
-
     want_main_area = False

@@ -18,6 +18,4 @@ class SumListWithTaskStack(
 
     description = "Sum all elements of a list using a thread and a stack"
 
-    category = "esrfWidgets"
-
     want_main_area = False

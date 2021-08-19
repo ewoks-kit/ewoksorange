@@ -19,8 +19,6 @@ class ListGenerator(
 
     id = "orangecontrib.list_operations.listgenerator.ListGenerator"
 
-    category = "esrfWidgets"
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

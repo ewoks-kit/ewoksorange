@@ -20,6 +20,4 @@ class SumListOneThread(
 
     description = "Sum all elements of a list using at most one thread"
 
-    category = "esrfWidgets"
-
     want_main_area = False
