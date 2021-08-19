@@ -1,10 +1,10 @@
 """
 contains Orange widget that can create direct connection with ewoks
 """
+from contextlib import contextmanager
 from Orange.widgets.widget import OWWidget, WidgetMetaClass
 from Orange.widgets.widget import Input, Output
 from Orange.widgets.settings import Setting
-from Orange.widgets import gui
 
 try:
     from orangewidget.utils.signals import summarize, PartialSummary
@@ -253,7 +253,29 @@ class _OWEwoksThreadedBaseWidget(_OWEwoksBaseWidget, **ow_build_opts):
         raise NotImplementedError("Base class")
 
 
-class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
+class _OWEwoksThreadedBaseWidgetWithProgress(
+    _OWEwoksThreadedBaseWidget, **ow_build_opts
+):
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self._taskProgress = QProgress()
+        self._taskProgress.sigProgressChanged.connect(self.progressBarSet)
+
+    def onDeleteWidget(self):
+        self._taskProgress.sigProgressChanged.disconnect(self.progressBarSet)
+        super().onDeleteWidget()
+
+    @contextmanager
+    def progressBarInitSafe(self):
+        self.progressBarInit()
+        try:
+            yield
+        except Exception:
+            self.progressBarFinished()
+            raise
+
+
+class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidgetWithProgress, **ow_build_opts):
     """
     All the processing is done on one thread.
     If a processing is requested when the thread is already running then
@@ -262,38 +284,31 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
-        self.__progressWidget = gui.ProgressBar(self, 100)
-        self.__taskProgress = QProgress()
         self.__taskExecutor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
-        self.__taskProgress.sigProgressChanged.connect(self._setProgressValue)
-        self.__taskExecutor.finished.connect(self._processingFinished)
+        self.__taskExecutor.finished.connect(self._taskFinishedCallback)
 
     def execute_task(self):
         if self.__taskExecutor.isRunning():
             _logger.error("A processing is already on going")
             return
         else:
-            self._setProgressValue(0)
             self.__taskExecutor.create_task(
-                progress=self.__taskProgress, **self._task_arguments
+                progress=self._taskProgress, **self._task_arguments
             )
             if self.__taskExecutor.is_ready_to_execute:
-                self.__taskExecutor.start()
+                with self.progressBarInitSafe():
+                    self.__taskExecutor.start()
 
     @property
     def output_variables(self):
         return self.__taskExecutor.output_variables
 
-    def _setProgressValue(self, value):
-        self.__progressWidget.widget.progressBarSet(value)
-
-    def _processingFinished(self):
+    def _taskFinishedCallback(self):
+        self.progressBarFinished()
         self.trigger_downstream()
 
     def _cleanupTaskExecutor(self):
-        self.__progressWidget.finish()
-        self.__taskProgress.sigProgressChanged.disconnect(self._setProgressValue)
-        self.__taskExecutor.finished.disconnect(self._processingFinished)
+        self.__taskExecutor.finished.disconnect(self._taskFinishedCallback)
         if self.__taskExecutor.isRunning():
             self.__taskExecutor.quit()
         self.__taskExecutor = None
@@ -315,11 +330,11 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         taskExecutor.create_task(**self._task_arguments)
         if not taskExecutor.is_ready_to_execute:
             return
-        taskExecutor.finished.connect(self._processingFinished)
+        taskExecutor.finished.connect(self._taskFinishedCallback)
         self.__taskExecutors.append(taskExecutor)
         taskExecutor.start()
 
-    def _processingFinished(self):
+    def _taskFinishedCallback(self):
         taskExecutor = self.sender()
         self.__last_output_variables = taskExecutor.output_variables
         if taskExecutor in self.__taskExecutors:
@@ -328,7 +343,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def _cleanupTaskExecutor(self):
         for taskExecutor in self.__taskExecutors:
-            taskExecutor.finished.disconnect(self._processingFinished)
+            taskExecutor.finished.disconnect(self._taskFinishedCallback)
             taskExecutor.quit()
         self.__taskExecutors.clear()
 
@@ -337,40 +352,36 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         return self.__last_output_variables
 
 
-class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
+class OWEwoksWidgetWithTaskStack(
+    _OWEwoksThreadedBaseWidgetWithProgress, **ow_build_opts
+):
     """
     Each time a task processing is requested add it to the FIFO stack.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__taskProgress = QProgress()
-        self.__progressWidget = gui.ProgressBar(self, 100)
         self.__taskExecutorQueue = TaskExecutorQueue(ewokstaskclass=self.ewokstaskclass)
-        self.__taskProgress.sigProgressChanged.connect(self._setProgressValue)
         self.__last_output_variables = dict()
 
     def execute_task(self):
-        self.__taskExecutorQueue.add(
-            progress=self.__taskProgress,
-            _callbacks=(self._processingFinished,),
-            **self._task_arguments,
-        )
+        with self.progressBarInitSafe():
+            self.__taskExecutorQueue.add(
+                progress=self._taskProgress,
+                _callbacks=(self._taskFinishedCallback,),
+                **self._task_arguments,
+            )
 
     @property
     def output_variables(self):
         return self.__last_output_variables
 
     def _cleanupTaskExecutor(self):
-        self.__progressWidget.finish()
-        self.__taskProgress.sigProgressChanged.disconnect(self._setProgressValue)
         self.__taskExecutorQueue.stop()
         self.__taskExecutorQueue = None
 
-    def _processingFinished(self):
+    def _taskFinishedCallback(self):
+        self.progressBarFinished()
         taskExecutor = self.sender()
         self.__last_output_variables = taskExecutor.output_variables
         self.trigger_downstream()
-
-    def _setProgressValue(self, value):
-        self.__progressWidget.widget.progressBarSet(value)
