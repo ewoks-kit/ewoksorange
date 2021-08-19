@@ -18,7 +18,7 @@ def test_discover_widgets(register_ewoks_example_addons):
         "orangecontrib.evaluate.ewoks_example_submodule.adder2",
         "orangecontrib.ewoks_example_category.adder1",
         "orangecontrib.ewoks_example_category.adder2",
-        "orangecontrib.list_operations.listgenerator.ListGenerator",
+        "orangecontrib.list_operations.listgenerator",
         "orangecontrib.list_operations.print_sum",
         "orangecontrib.list_operations.sumlist_one_thread",
         "orangecontrib.list_operations.sumlist_several_thread",

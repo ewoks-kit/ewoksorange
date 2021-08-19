@@ -13,11 +13,9 @@ class ListGenerator(
     ewokstaskclass=ewoksorange.tests.listoperations.GenerateList,
 ):
 
-    name = "ListGenerator"
 
+    name = "List generator"
     description = "Generate a random list with X elements"
-
-    id = "orangecontrib.list_operations.listgenerator.ListGenerator"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
