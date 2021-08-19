@@ -1,7 +1,7 @@
-from ewokscore.progress import BasePercentageProgress
 from AnyQt.QtCore import pyqtSignal as Signal
 from AnyQt.QtCore import QObject
 
+from ewokscore.progress import BasePercentageProgress
 
 __all__ = ["QProgress"]
 

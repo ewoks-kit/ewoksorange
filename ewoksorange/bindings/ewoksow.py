@@ -12,12 +12,12 @@ except ImportError:
     summarize = None
 
 from ewokscore.variable import Variable
-from ewokscore.task import TaskInputError
 from ewokscore.hashing import UniversalHashable
 from ewokscore.hashing import MissingData
 from .progress import QProgress
-from .taskexecutor import _TaskExecutor, _ProcessingThread
-from .stack import FIFOTaskStack
+from .taskexecutor import TaskExecutor
+from .taskexecutor import ThreadedTaskExecutor
+from .taskexecutor_queue import TaskExecutorQueue
 import inspect
 import logging
 
@@ -123,9 +123,7 @@ if "openclass" in inspect.signature(WidgetMetaClass).parameters:
     ow_build_opts["openclass"] = True
 
 
-class _OWEwoksBaseWidget(
-    OWWidget, _TaskExecutor, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts
-):
+class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts):
     """
     Base class to handle boiler plate code to interconnect ewoks and
     orange3
@@ -135,8 +133,7 @@ class _OWEwoksBaseWidget(
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self._dynamic_inputs = dict()
-        self._output_variables = dict()
+        self.__dynamic_inputs = dict()
 
     @classmethod
     def input_names(cls):
@@ -147,10 +144,10 @@ class _OWEwoksBaseWidget(
         return cls.ewokstaskclass.output_names()
 
     @property
-    def _all_inputs(self):
-        inputs = self.static_input_values
-        inputs.update(self._dynamic_inputs)
-        return inputs
+    def _task_arguments(self):
+        inputs = self.defined_static_input_values
+        inputs.update(self.__dynamic_inputs)
+        return {"inputs": inputs, "varinfo": self.varinfo}
 
     @staticmethod
     def _get_value(value):
@@ -162,28 +159,34 @@ class _OWEwoksBaseWidget(
         return value
 
     @property
-    def static_input_values(self):
+    def defined_static_input_values(self):
         # Warning: do not use static_input directly because it
         #          messes up MISSING_DATA
         return {k: self._get_value(v) for k, v in self.static_input.items()}
 
     @property
+    def static_input_values(self):
+        values = {name: MISSING_DATA for name in self.input_names()}
+        values.update(self.defined_static_input_values)
+        return values
+
+    @property
     def dynamic_input_values(self):
-        return {k: self._get_value(v) for k, v in self._dynamic_inputs.items()}
+        return {k: self._get_value(v) for k, v in self.__dynamic_inputs.items()}
 
     def set_input(self, name, var):
         if var is None:
-            self._dynamic_inputs.pop(name, None)
+            self.__dynamic_inputs.pop(name, None)
         else:
             if not isinstance(var, Variable):
                 raise TypeError(
                     "{} is invalid. Expected to be an "
                     "instance of {}".format(var, Variable)
                 )
-            self._dynamic_inputs[name] = var
+            self.__dynamic_inputs[name] = var
 
     def trigger_downstream(self):
-        for name, var in self._output_variables.items():
+        for name, var in self.output_variables.items():
             channel = getattr(self.Outputs, name)
             if var.value is MISSING_DATA:
                 channel.send(None)  # or channel.invalidate?
@@ -191,43 +194,54 @@ class _OWEwoksBaseWidget(
                 channel.send(var)
 
     def clear_downstream(self):
-        for name in self._output_variables:
+        for name in self.output_variables:
             channel = getattr(self.Outputs, name)
             channel.send(None)  # or channel.invalidate?
 
-    def run(self):
+    def staticInputHasChanged(self):
+        """Needs to be called when static inputs have changed"""
+        self.execute_task()
+
+    def handleNewSignals(self):
+        """Invoked by the workflow signal propagation manager after all
+        signals handlers have been called.
+        """
+        self.execute_task()
+
+    def execute_task(self):
         raise NotImplementedError("Base class")
+
+    @property
+    def output_variables(self):
+        raise NotImplementedError("Base class")
+
+    @property
+    def output_values(self):
+        return {name: var.value for name, var in self.output_variables.items()}
 
 
 class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, **ow_build_opts):
-    """Widget which will run the ewokscore.Task directly"""
+    """Widget which will execute_task the ewokscore.Task directly"""
 
-    def changeStaticInput(self):
-        self.handleNewSignals()
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self.__taskExecutor = TaskExecutor(self.ewokstaskclass)
 
-    def handleNewSignals(self):
-        # update task inputs
-        self.inputs = self._all_inputs
-        self.run()
-
-    def run(self):
+    def execute_task(self):
+        self.__taskExecutor.create_task(**self._task_arguments)
         try:
-            self.create_task()
-        except TaskInputError:
-            self.clear_downstream()
-            return
-        if not self.task.is_ready_to_execute:
-            self.clear_downstream()
-            return
-        try:
-            _TaskExecutor.run(self)
-        except TaskInputError:
-            self.clear_downstream()
-            return
+            self.__taskExecutor.execute_task()
         except Exception:
             self.clear_downstream()
             raise
-        self.trigger_downstream()
+        if self.__taskExecutor.succeeded:
+            self.trigger_downstream()
+        else:
+            self.clear_downstream()
+
+    @property
+    def output_variables(self):
+        return self.__taskExecutor.output_variables
 
 
 class OWEwoksWidgetOneThread(_OWEwoksBaseWidget, **ow_build_opts):
@@ -239,48 +253,41 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
-        self._orangeProgress = gui.ProgressBar(self, 100)
-        self._taskProgress = QProgress()
-        self._processingThread = _ProcessingThread(
-            taskprogress=self._taskProgress, ewokstaskclass=self.ewokstaskclass
-        )
-        # connect signal / slot
-        self._taskProgress.sigProgressChanged.connect(self._setProgressValue)
-        self._processingThread.finished.connect(self._processingFinished)
+        self.__progressWidget = gui.ProgressBar(self, 100)
+        self.__taskProgress = QProgress()
+        self.__taskExecutor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
+        self.__taskProgress.sigProgressChanged.connect(self._setProgressValue)
+        self.__taskExecutor.finished.connect(self._processingFinished)
 
-    def run(self):
-        # TODO: handle empty inputs. When a link is removed by orange the
-        # value of the input is set to None and this trigger handleNewSignals
-        if self._processingThread.isRunning():
+    def execute_task(self):
+        if self.__taskExecutor.isRunning():
             _logger.error("A processing is already on going")
             return
         else:
             self._setProgressValue(0)
-            self._processingThread.init(varinfo=self.varinfo, inputs=self._all_inputs)
-            self._processingThread.start()
+            self.__taskExecutor.create_task(
+                progress=self.__taskProgress, **self._task_arguments
+            )
+            if self.__taskExecutor.is_ready_to_execute:
+                self.__taskExecutor.start()
+
+    @property
+    def output_variables(self):
+        return self.__taskExecutor.output_variables
 
     def _setProgressValue(self, value):
-        self._orangeProgress.widget.progressBarSet(value)
+        self.__progressWidget.widget.progressBarSet(value)
 
     def _processingFinished(self):
-        self._output_variables = self._processingThread.output_variables
         self.trigger_downstream()
 
-    def changeStaticInput(self):
-        self.handleNewSignals()
-
-    def handleNewSignals(self):
-        self.run()
-
-    def getProcessingThread(self):
-        return self._processingThread
-
     def close(self):
-        self._taskProgress.sigProgressChanged.disconnect(self._setProgressValue)
-        self._processingThread.finished.disconnect(self._processingFinished)
-        if self._processingThread.isRunning():
-            self._processingThread.quit()
-        self._processingThread = None
+        self.__progressWidget.finish()
+        self.__taskProgress.sigProgressChanged.disconnect(self._setProgressValue)
+        self.__taskExecutor.finished.disconnect(self._processingFinished)
+        if self.__taskExecutor.isRunning():
+            self.__taskExecutor.quit()
+        self.__taskExecutor = None
         super().close()
 
 
@@ -292,38 +299,35 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._threads = list()
-        # allows to keep trace of threads an insure there won't be removed by
-        # Qt until they are no more used
+        self.__taskExecutors = list()
+        self.__last_output_variables = dict()
 
-    def run(self):
-        processingThread = _ProcessingThread(
-            taskprogress=None, ewokstaskclass=self.ewokstaskclass
-        )
-        processingThread.init(varinfo=self.varinfo, inputs=self._all_inputs)
-        processingThread.finished.connect(self._processingFinished)
-        self._threads.append(processingThread)
-        processingThread.start()
+    def execute_task(self):
+        taskExecutor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
+        taskExecutor.create_task(**self._task_arguments)
+        if not taskExecutor.is_ready_to_execute:
+            return
+        taskExecutor.finished.connect(self._processingFinished)
+        self.__taskExecutors.append(taskExecutor)
+        taskExecutor.start()
 
     def _processingFinished(self):
-        thread = self.sender()
-        self._output_variables = thread.output_variables
-        if thread in self._threads:
-            self._threads.remove(thread)
+        taskExecutor = self.sender()
+        self.__last_output_variables = taskExecutor.output_variables
+        if taskExecutor in self.__taskExecutors:
+            self.__taskExecutors.remove(taskExecutor)
         self.trigger_downstream()
 
-    def changeStaticInput(self):
-        self.handleNewSignals()
-
-    def handleNewSignals(self):
-        self.run()
-
     def close(self):
-        for thread in self._threads:
-            thread.finished.disconnect(self._processingFinished)
-            thread.quit()
-        self._threads.clear()
+        for taskExecutor in self.__taskExecutors:
+            taskExecutor.finished.disconnect(self._processingFinished)
+            taskExecutor.quit()
+        self.__taskExecutors.clear()
         super().close()
+
+    @property
+    def output_variables(self):
+        return self.__last_output_variables
 
 
 class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget, **ow_build_opts):
@@ -333,35 +337,33 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._taskProgress = QProgress()
-        self._orangeProgress = gui.ProgressBar(self, 100)
-        self._stack = FIFOTaskStack(
-            ewokstaskclass=self.ewokstaskclass, taskprogress=self._taskProgress
-        )
-        # connect signal / slot
-        self._taskProgress.sigProgressChanged.connect(self._setProgressValue)
+        self.__taskProgress = QProgress()
+        self.__progressWidget = gui.ProgressBar(self, 100)
+        self.__taskExecutorQueue = TaskExecutorQueue(ewokstaskclass=self.ewokstaskclass)
+        self.__taskProgress.sigProgressChanged.connect(self._setProgressValue)
+        self.__last_output_variables = dict()
 
-    def run(self):
-        self._stack.add(
-            varinfo=self.varinfo,
-            inputs=self._all_inputs,
-            callbacks=(self._processingFinished,),
+    def execute_task(self):
+        self.__taskExecutorQueue.add(
+            progress=self.__taskProgress,
+            _callbacks=(self._processingFinished,),
+            **self._task_arguments,
         )
+
+    @property
+    def output_variables(self):
+        return self.__last_output_variables
 
     def close(self):
-        self._stack.stop()
+        self.__progressWidget.finish()
+        self.__taskProgress.sigProgressChanged.disconnect(self._setProgressValue)
+        self.__taskExecutorQueue.stop()
         super().close()
 
     def _processingFinished(self):
-        thread = self.sender()
-        self._output_variables = thread.output_variables
+        taskExecutor = self.sender()
+        self.__last_output_variables = taskExecutor.output_variables
         self.trigger_downstream()
 
     def _setProgressValue(self, value):
-        self._orangeProgress.widget.progressBarSet(value)
-
-    def changeStaticInput(self):
-        self.handleNewSignals()
-
-    def handleNewSignals(self):
-        self.run()
+        self.__progressWidget.widget.progressBarSet(value)
