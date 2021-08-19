@@ -1,18 +1,15 @@
-from ewoksorange.bindings import OWEwoksWidgetNoThread
-import ewoksorange.tests.listoperations
 from AnyQt.QtWidgets import QPushButton
 from Orange.widgets import gui
+from ewoksorange.bindings import OWEwoksWidgetNoThread
 from ewoksorange.gui.parameterform import ParameterForm
+from ewoksorange.tests.listoperations import GenerateList
 
 
-class ListGenerator(
-    OWEwoksWidgetNoThread,
-    ewokstaskclass=ewoksorange.tests.listoperations.GenerateList,
-):
-
-
+class ListGenerator(OWEwoksWidgetNoThread, ewokstaskclass=GenerateList):
     name = "List generator"
     description = "Generate a random list with X elements"
+    icon = "icons/mywidget.svg"
+    want_main_area = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
