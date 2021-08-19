@@ -16,6 +16,7 @@ class Adder2(
 ):
     name = "Adder2"
     description = "Adds two numbers"
+    icon = "icons/mywidget.svg"
     want_main_area = False
 
     def __init__(self):

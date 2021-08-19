@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <scheme title="Ewoks example (threading)" description="threading" version="2.0">
 	<nodes>
-		<node id="0" name="ListGenerator" position="(150, 150)" project_name="ewoks-example-2-addon" qualified_name="orangecontrib.list_operations.listgenerator.ListGenerator" title="ListGenerator" version="" />
+		<node id="0" name="List generator" position="(150, 150)" project_name="ewoks-example-2-addon" qualified_name="orangecontrib.list_operations.listgenerator.ListGenerator" title="List generator" version="" />
 		<node id="1" name="SumList one thread" position="(426.0, 154.0)" project_name="ewoks-example-2-addon" qualified_name="orangecontrib.list_operations.sumlist_one_thread.SumListOneThread" title="SumList one thread" version="" />
 		<node id="2" name="SumList on several thread" position="(417.0, 307.0)" project_name="ewoks-example-2-addon" qualified_name="orangecontrib.list_operations.sumlist_several_thread.SumListSeveralThread" title="SumList on several thread" version="" />
 		<node id="3" name="SumList with one thread and a stack" position="(399.0, 455.0)" project_name="ewoks-example-2-addon" qualified_name="orangecontrib.list_operations.sumlist_stack.SumListWithTaskStack" title="SumList with one thread and a stack" version="" />
