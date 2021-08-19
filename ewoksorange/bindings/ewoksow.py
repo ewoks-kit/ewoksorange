@@ -244,7 +244,16 @@ class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, **ow_build_opts):
         return self.__taskExecutor.output_variables
 
 
-class OWEwoksWidgetOneThread(_OWEwoksBaseWidget, **ow_build_opts):
+class _OWEwoksThreadedBaseWidget(_OWEwoksBaseWidget, **ow_build_opts):
+    def onDeleteWidget(self):
+        self._cleanupTaskExecutor()
+        super().onDeleteWidget()
+
+    def _cleanupTaskExecutor(self):
+        raise NotImplementedError("Base class")
+
+
+class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     """
     All the processing is done on one thread.
     If a processing is requested when the thread is already running then
@@ -281,17 +290,16 @@ class OWEwoksWidgetOneThread(_OWEwoksBaseWidget, **ow_build_opts):
     def _processingFinished(self):
         self.trigger_downstream()
 
-    def close(self):
+    def _cleanupTaskExecutor(self):
         self.__progressWidget.finish()
         self.__taskProgress.sigProgressChanged.disconnect(self._setProgressValue)
         self.__taskExecutor.finished.disconnect(self._processingFinished)
         if self.__taskExecutor.isRunning():
             self.__taskExecutor.quit()
         self.__taskExecutor = None
-        super().close()
 
 
-class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget, **ow_build_opts):
+class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     """
     Each time a task processing is requested this will create a new thread
     to do the processing.
@@ -318,19 +326,18 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksBaseWidget, **ow_build_opts):
             self.__taskExecutors.remove(taskExecutor)
         self.trigger_downstream()
 
-    def close(self):
+    def _cleanupTaskExecutor(self):
         for taskExecutor in self.__taskExecutors:
             taskExecutor.finished.disconnect(self._processingFinished)
             taskExecutor.quit()
         self.__taskExecutors.clear()
-        super().close()
 
     @property
     def output_variables(self):
         return self.__last_output_variables
 
 
-class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget, **ow_build_opts):
+class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     """
     Each time a task processing is requested add it to the FIFO stack.
     """
@@ -354,11 +361,11 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksBaseWidget, **ow_build_opts):
     def output_variables(self):
         return self.__last_output_variables
 
-    def close(self):
+    def _cleanupTaskExecutor(self):
         self.__progressWidget.finish()
         self.__taskProgress.sigProgressChanged.disconnect(self._setProgressValue)
         self.__taskExecutorQueue.stop()
-        super().close()
+        self.__taskExecutorQueue = None
 
     def _processingFinished(self):
         taskExecutor = self.sender()
