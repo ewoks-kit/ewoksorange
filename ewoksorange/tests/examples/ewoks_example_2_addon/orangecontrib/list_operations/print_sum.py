@@ -1,8 +1,6 @@
 from ewoksorange.bindings import OWEwoksWidgetNoThread
 from ewoksorange.tests.listoperations import PrintSum
-import logging
 
-_logger = logging.getLogger(__name__)
 
 
 class PrintSumOW(

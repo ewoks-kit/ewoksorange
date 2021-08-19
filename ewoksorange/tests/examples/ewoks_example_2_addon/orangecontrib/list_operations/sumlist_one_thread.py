@@ -1,8 +1,6 @@
 from ewoksorange.bindings import OWEwoksWidgetOneThread
 from ewoksorange.tests.listoperations import SumList
-import logging
 
-_logger = logging.getLogger(__name__)
 
 
 class SumListOneThread(

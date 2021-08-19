@@ -1,8 +1,6 @@
 from ewoksorange.bindings import OWEwoksWidgetWithTaskStack
 from ewoksorange.tests.listoperations import SumList3
-import logging
 
-_logger = logging.getLogger(__name__)
 
 
 class SumListWithTaskStack(

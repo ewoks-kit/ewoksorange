@@ -3,9 +3,6 @@ import ewoksorange.tests.listoperations
 from AnyQt.QtWidgets import QPushButton
 from Orange.widgets import gui
 from ewoksorange.gui.parameterform import ParameterForm
-import logging
-
-_logger = logging.getLogger(__name__)
 
 
 class ListGenerator(
