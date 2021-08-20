@@ -52,6 +52,7 @@ class TaskExecutorQueue(QObject, Queue):
             self._process_next()
 
     def stop(self):
+        self._taskExecutor.finished.disconnect(self._process_ended)
         while not self.empty():
             self.get()
         self._taskExecutor.blockSignals(True)
