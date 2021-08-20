@@ -3,7 +3,8 @@ try:
 except ImportError:
     import importlib_resources as resources
 import pytest
-from ewoksorange import owsconvert
+from ewoksorange.bindings import ows_to_ewoks
+from ewoksorange.bindings import ewoks_to_ows
 from ewokscore import load_graph
 from ewokscore.tests.examples.graphs import graph_names
 from ewokscore.tests.examples.graphs import get_graph
@@ -14,11 +15,11 @@ def test_ows_to_ewoks_example_1(tmpdir, register_ewoks_example_addons):
     from orangecontrib.evaluate.ewoks_example_submodule import tutorials
 
     with resources.path(tutorials, "sumtask_tutorial2.ows") as filename:
-        ewoksgraph = owsconvert.ows_to_ewoks(str(filename))
+        ewoksgraph = ows_to_ewoks(str(filename))
 
     destination = str(tmpdir / "ewoksgraph.ows")
-    owsconvert.ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
-    ewoksgraph2 = owsconvert.ows_to_ewoks(destination)
+    ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
+    ewoksgraph2 = ows_to_ewoks(destination)
     assert ewoksgraph == ewoksgraph2
 
 
@@ -27,11 +28,11 @@ def test_ows_to_ewoks_example_2(tmpdir, capsys, register_ewoks_example_addons):
     from orangecontrib.list_operations import tutorials
 
     with resources.path(tutorials, "sumlist_tutorial.ows") as filename:
-        ewoksgraph = owsconvert.ows_to_ewoks(str(filename))
+        ewoksgraph = ows_to_ewoks(str(filename))
 
     destination = str(tmpdir / "ewoksgraph.ows")
-    owsconvert.ewoks_to_ows(ewoksgraph, destination)
-    ewoksgraph2 = owsconvert.ows_to_ewoks(destination)
+    ewoks_to_ows(ewoksgraph, destination)
+    ewoksgraph2 = ows_to_ewoks(destination)
     assert ewoksgraph == ewoksgraph2, f"{ewoksgraph} vs {ewoksgraph2}"
 
     # check execution
@@ -51,9 +52,9 @@ def test_ewoks_to_ows(graph_name, tmpdir):
     destination = str(tmpdir / "ewoksgraph2.ows")
     if ewoksgraph.is_cyclic or ewoksgraph.has_conditional_links:
         with pytest.raises(RuntimeError):
-            owsconvert.ewoks_to_ows(ewoksgraph, destination)
+            ewoks_to_ows(ewoksgraph, destination)
         return
-    owsconvert.ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
+    ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
 
-    ewoksgraph2 = owsconvert.ows_to_ewoks(destination)
+    ewoksgraph2 = ows_to_ewoks(destination)
     assert ewoksgraph.dump() == ewoksgraph2.dump()

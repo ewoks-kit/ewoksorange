@@ -5,7 +5,19 @@ from .examples import ewoks_example_2_addon
 
 
 @pytest.fixture(scope="session")
-def register_ewoks_example_addons():
+def register_ewoks_example_1_addon():
     register_addon_package(ewoks_example_1_addon)
+    yield
+
+
+@pytest.fixture(scope="session")
+def register_ewoks_example_2_addon():
     register_addon_package(ewoks_example_2_addon)
+    yield
+
+
+@pytest.fixture(scope="session")
+def register_ewoks_example_addons(
+    register_ewoks_example_1_addon, register_ewoks_example_2_addon
+):
     yield

@@ -1,32 +1,54 @@
 import inspect
 from collections import namedtuple
-from orangecanvas.scheme import readwrite
-from orangecanvas.registry.description import InputSignal, OutputSignal
+from typing import Iterator, Tuple
+
+from Orange.widgets.widget import OWWidget
 from Orange.widgets.utils.signals import Input as OldInputSignal
 from Orange.widgets.utils.signals import Output as OldOutputSignal
+from orangecanvas.scheme import readwrite
+from orangecanvas.registry.description import InputSignal, OutputSignal
+
 from ewokscore import load_graph
 from ewokscore.utils import qualname
 from ewokscore.utils import import_qualname
 from ewokscore.graph import TaskGraph
-from .registration import get_owwidget_descriptions
+
+from ..registration import get_owwidget_descriptions
+from .taskwrapper import OWWIDGET_TASKS_GENERATOR
 
 
-def widget_to_task(widget_qualname):
-    class_obj = import_qualname(widget_qualname)
-    return class_obj, class_obj.ewokstaskclass.class_registry_name()
+__all__ = ["ows_to_ewoks", "ewoks_to_ows"]
 
 
-def task_to_widgets(task_qualname):
+def widget_to_task(widget_qualname) -> Tuple[OWWidget, dict]:
+    widget_class = import_qualname(widget_qualname)
+    if hasattr(widget_class, "ewokstaskclass"):
+        # Ewoks Orange widget
+        return widget_class, {
+            "class": widget_class.ewokstaskclass.class_registry_name()
+        }
+    else:
+        # Native Orange widget
+        return widget_class, {
+            "task": widget_qualname,
+            "task_generator": OWWIDGET_TASKS_GENERATOR,
+        }
+
+
+def task_to_widgets(task_qualname: str) -> Iterator[OWWidget]:
+    """The `task_qualname` could be an ewoks task or an orange widget"""
     for class_desc in get_owwidget_descriptions():
-        class_obj = import_qualname(class_desc.qualified_name)
-        if not hasattr(class_obj, "ewokstaskclass"):
-            continue
-        regname = class_obj.ewokstaskclass.class_registry_name()
-        if regname.endswith(task_qualname):
-            yield class_obj, class_desc.project_name
+        widget_class = import_qualname(class_desc.qualified_name)
+        if hasattr(widget_class, "ewokstaskclass"):
+            regname = widget_class.ewokstaskclass.class_registry_name()
+            if regname.endswith(task_qualname):
+                yield widget_class, class_desc.project_name
+        elif class_desc.qualified_name == task_qualname:
+            yield widget_class, class_desc.project_name
 
 
-def task_to_widget(task_qualname, error_on_duplicates=True):
+def task_to_widget(task_qualname: str, error_on_duplicates: bool = True) -> OWWidget:
+    """The `task_qualname` could be an ewoks task or an orange widget"""
     all_widgets = list(task_to_widgets(task_qualname))
     if not all_widgets:
         raise RuntimeError("No OWWidget found for task " + task_qualname)
@@ -121,15 +143,12 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
             "position": ows_node.position,
             "version": ows_node.version,
         }
-        class_obj, class_name = widget_to_task(ows_node.qualified_name)
-        node = {
-            "id": idmap[ows_node.id],
-            "inputs": static_input,
-            "class": class_name,
-        }
+        class_obj, node_attrs = widget_to_task(ows_node.qualified_name)
+        node_attrs["id"] = idmap[ows_node.id]
+        node_attrs["inputs"] = static_input
         if preserve_ows_info:
-            node["ows"] = owsinfo
-        nodes.append(node)
+            node_attrs["ows"] = owsinfo
+        nodes.append(node_attrs)
         classes[ows_node.id] = class_obj
 
     links = list()
