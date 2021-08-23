@@ -23,9 +23,21 @@ def owwidget_task_wrapper(widget_qualname: str) -> Task:
     if registry_name in Task.get_subclass_names():
         return Task.get_subclass(registry_name)
 
+    all_input_names = widget_class.input_names()
+    try:
+        ewokstaskclass = widget_class.ewokstaskclass
+        input_names = ewokstaskclass.required_input_names()
+        optional_input_names = ewokstaskclass.optional_input_names()
+        expected = set(input_names) | set(optional_input_names)
+        assert all_input_names == expected
+    except AttributeError:
+        input_names = all_input_names
+        optional_input_names = None
+
     class WrapperTask(
         Task,
-        input_names=widget_class.input_names(),
+        input_names=input_names,
+        optional_input_names=optional_input_names,
         output_names=widget_class.output_names(),
         registry_name=registry_name,
     ):
