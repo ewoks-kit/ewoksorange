@@ -4,6 +4,7 @@ from ewokscore.utils import qualname
 from ewokscore.utils import import_qualname
 from ewokscore.variable import value_from_transfer
 from .qtapp import ensure_qtapp
+from ewoksorange.bindings.qtapp import QtEvent
 
 
 __all__ = ["OWWIDGET_TASKS_GENERATOR"]
@@ -31,6 +32,7 @@ def owwidget_task_wrapper(widget_qualname: str) -> Task:
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
             ensure_qtapp()
+            self.outputsReceived = QtEvent()
             self.widget = widget_class()
             self.widget.ewoks_output_callbacks = (self.receiveOutputSend,)
 
@@ -44,10 +46,14 @@ def owwidget_task_wrapper(widget_qualname: str) -> Task:
             # Send the outputs
             self.widget.handleNewSignals()
 
+            self.outputsReceived.wait()
 
         def receiveOutputSend(self, values):
-            for name, value in values.items():
-                self.output_variables[name].value = value_from_transfer(value)
+            try:
+                for name, value in values.items():
+                    self.output_variables[name].value = value_from_transfer(value)
+            finally:
+                self.outputsReceived.set()
 
     return WrapperTask
 
