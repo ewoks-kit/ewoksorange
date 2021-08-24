@@ -1,5 +1,19 @@
+import inspect
 from Orange.widgets.widget import Input, Output
-from orangewidget.utils.signals import getsignals
+
+
+SIGNAL_TYPES = (Input, Output)
+
+
+def is_signal(obj):
+    return isinstance(obj, SIGNAL_TYPES)
+
+
+def get_signals(signals_class):
+    # TODO: getsignals doesn't work in the Orange3 hard-fork
+    # from orangewidget.utils.signals import getsignals
+    # return dict(getsignals(signals_class))
+    return dict(inspect.getmembers(signals_class, is_signal))
 
 
 def receiveDynamicInputs(name):
@@ -18,7 +32,7 @@ def _validate_signals(namespace, direction, names):
     signals_class_name = direction.title()
     is_inputs = direction == "inputs"
     signals_class = namespace[signals_class_name]
-    signals = dict(getsignals(signals_class))
+    signals = get_signals(signals_class)
     for ewoksname in names:
         signal = signals.pop(ewoksname, None)
         if signal is None:

@@ -1,12 +1,8 @@
-import inspect
 from collections import namedtuple
 from typing import Iterator, Tuple
 
 from Orange.widgets.widget import OWWidget
-from Orange.widgets.utils.signals import Input as OldInputSignal
-from Orange.widgets.utils.signals import Output as OldOutputSignal
 from orangecanvas.scheme import readwrite
-from orangecanvas.registry.description import InputSignal, OutputSignal
 
 from ewokscore import load_graph
 from ewokscore.utils import qualname
@@ -15,6 +11,7 @@ from ewokscore.graph import TaskGraph
 
 from ..registration import get_owwidget_descriptions
 from .taskwrapper import OWWIDGET_TASKS_GENERATOR
+from .ewoksowsignals import get_signals
 
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows"]
@@ -101,18 +98,11 @@ def scheme_to_ows_stream(scheme, stream):
     tree.write(stream, encoding="utf-8", xml_declaration=True)
 
 
-SIGNAL_TYPES = (InputSignal, OutputSignal, OldInputSignal, OldOutputSignal)
-
-
-def is_input_or_output(x):
-    return isinstance(x, SIGNAL_TYPES)
-
-
-def find_argument_by_name(class_obj, var_name):
-    for name, value in inspect.getmembers(class_obj, is_input_or_output):
-        if value.name == var_name:
-            return name
-    raise RuntimeError(f"{var_name} is not a valid member of {class_obj}")
+def find_argument_by_name(signals_class, orangename):
+    for ewoksname, signal in get_signals(signals_class).items():
+        if signal.name == orangename:
+            return ewoksname
+    raise RuntimeError(f"{orangename} is not a signal of {signals_class}")
 
 
 def ows_to_ewoks(filename, preserve_ows_info=False):
