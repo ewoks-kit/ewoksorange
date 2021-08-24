@@ -3,10 +3,13 @@ include:
 
 test-3.6:
   extends: ".test-3.6_glx"
+  before_script:
+    - export QT_QPA_PLATFORM=offscreen
 
 test-3.6-orange3-fork:
   extends: ".test-3.6_glx"
   before_script:
+    - export QT_QPA_PLATFORM=offscreen
     # missing dependencies in the Orange3 fork
     - pip install numpy scipy PyQt5 silx chardet
     # hard fork of Orange3
