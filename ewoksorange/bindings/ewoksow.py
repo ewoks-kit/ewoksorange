@@ -282,8 +282,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def _cleanupTaskExecutor(self):
         self.__taskExecutor.finished.disconnect(self._ewoksTaskFinishedCallback)
-        if self.__taskExecutor.isRunning():
-            self.__taskExecutor.quit()
+        self.__taskExecutor.stop()
         self.__taskExecutor = None
 
 
