@@ -11,8 +11,8 @@ from ewokscore.graph import TaskGraph
 
 from ..registration import get_owwidget_descriptions
 from .taskwrapper import OWWIDGET_TASKS_GENERATOR
-from .ewoksowsignals import get_signals
-
+from .ewoksowsignals import signal_ewoks_to_orange_name
+from .ewoksowsignals import signal_orange_to_ewoks_name
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows"]
 
@@ -98,13 +98,6 @@ def scheme_to_ows_stream(scheme, stream):
     tree.write(stream, encoding="utf-8", xml_declaration=True)
 
 
-def find_argument_by_name(signals_class, orangename):
-    for ewoksname, signal in get_signals(signals_class).items():
-        if signal.name == orangename:
-            return ewoksname
-    raise RuntimeError(f"{orangename} is not a signal of {signals_class}")
-
-
 def ows_to_ewoks(filename, preserve_ows_info=False):
     """Load an Orange Workflow Scheme from a file and convert it
     to a `TaskGraph`.
@@ -119,7 +112,7 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
         idmap = {ows_node.id: ows_node.id for ows_node in ows.nodes}
 
     nodes = list()
-    classes = dict()
+    widget_classes = dict()
     for ows_node in ows.nodes:
         data = ows_node.data
         if data is None:
@@ -133,24 +126,26 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
             "position": ows_node.position,
             "version": ows_node.version,
         }
-        class_obj, node_attrs = widget_to_task(ows_node.qualified_name)
+        widget_class, node_attrs = widget_to_task(ows_node.qualified_name)
         node_attrs["id"] = idmap[ows_node.id]
         node_attrs["inputs"] = static_input
         if preserve_ows_info:
             node_attrs["ows"] = owsinfo
         nodes.append(node_attrs)
-        classes[ows_node.id] = class_obj
+        widget_classes[ows_node.id] = widget_class
 
     links = list()
     for ows_link in ows.links:
-        outputs = classes[ows_link.source_node_id].Outputs
-        source_channel = find_argument_by_name(outputs, ows_link.source_channel)
-        inputs = classes[ows_link.sink_node_id].Inputs
-        sink_channel = find_argument_by_name(inputs, ows_link.sink_channel)
+        outputs_class = widget_classes[ows_link.source_node_id].Outputs
+        source_name = signal_orange_to_ewoks_name(
+            outputs_class, ows_link.source_channel
+        )
+        inputs_class = widget_classes[ows_link.sink_node_id].Inputs
+        sink_name = signal_orange_to_ewoks_name(inputs_class, ows_link.sink_channel)
         link = {
             "source": idmap[ows_link.source_node_id],
             "target": idmap[ows_link.sink_node_id],
-            "arguments": {sink_channel: source_channel},
+            "arguments": {sink_name: source_name},
         }
         links.append(link)
 
@@ -234,15 +229,15 @@ class OwsSchemeWrapper:
         self.description = graph["graph"]["name"]
 
         self._nodes = dict()
-        self._classes = dict()
+        self._widget_classes = dict()
         for adict in graph["nodes"]:
-            class_obj, adict["project_name"] = task_to_widget(
+            widget_class, adict["project_name"] = task_to_widget(
                 adict["class"], error_on_duplicates=error_on_duplicates
             )
-            adict["qualified_name"] = qualname(class_obj)
+            adict["qualified_name"] = qualname(widget_class)
             adict["varinfo"] = varinfo
             self._nodes[adict["id"]] = OwsNodeWrapper(adict)
-            self._classes[adict["id"]] = class_obj
+            self._widget_classes[adict["id"]] = widget_class
 
         self.links = list()
         for link in graph["links"]:
@@ -259,13 +254,13 @@ class OwsSchemeWrapper:
     def _convert_link(self, link):
         source_node = self._nodes[link["source"]]
         sink_node = self._nodes[link["target"]]
-        source_class = self._classes[link["source"]]
-        sink_class = self._classes[link["target"]]
-        for sink_channel, source_channel in link["arguments"].items():
-            sink_channel = getattr(sink_class.Inputs, sink_channel).name
-            source_channel = getattr(source_class.Outputs, source_channel).name
-            sink_channel = self._link_channel(name=sink_channel)
-            source_channel = self._link_channel(name=source_channel)
+        source_class = self._widget_classes[link["source"]]
+        sink_class = self._widget_classes[link["target"]]
+        for target_name, source_name in link["arguments"].items():
+            target_name = signal_ewoks_to_orange_name(sink_class.Inputs, target_name)
+            source_name = signal_ewoks_to_orange_name(source_class.Outputs, source_name)
+            sink_channel = self._link_channel(name=target_name)
+            source_channel = self._link_channel(name=source_name)
             link = self._link(
                 source_node=source_node,
                 sink_node=sink_node,

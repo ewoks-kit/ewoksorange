@@ -9,11 +9,25 @@ def is_signal(obj):
     return isinstance(obj, SIGNAL_TYPES)
 
 
-def get_signals(signals_class):
+def get_signals(signals_class) -> dict:
     # TODO: getsignals doesn't work in the Orange3 hard-fork
     # from orangewidget.utils.signals import getsignals
     # return dict(getsignals(signals_class))
     return dict(inspect.getmembers(signals_class, is_signal))
+
+
+def signal_ewoks_to_orange_name(signals_class, ewoskname: str) -> str:
+    try:
+        return getattr(signals_class, ewoskname).name
+    except AttributeError:
+        raise RuntimeError(f"{ewoskname} is not a signal of {signals_class}")
+
+
+def signal_orange_to_ewoks_name(signals_class, orangename: str) -> str:
+    for ewoskname, signal in get_signals(signals_class).items():
+        if signal.name == orangename:
+            return ewoskname
+    raise RuntimeError(f"{orangename} is not a signal of {signals_class}")
 
 
 def receiveDynamicInputs(name):
