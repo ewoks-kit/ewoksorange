@@ -55,3 +55,13 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
 
     def run(self):
         self.execute_task()
+
+    def stop(self, timeout=None, wait=False):
+        self.blockSignals(True)
+        if wait:
+            if timeout:
+                self.wait(timeout * 1000)
+            else:
+                self.wait()
+        if self.isRunning():
+            self.quit()

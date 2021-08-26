@@ -21,6 +21,11 @@ class ListGenerator(OWEwoksWidgetNoThread, ewokstaskclass=GenerateList):
                 name, value=value, default=0, changeCallback=self.staticInputHasChanged
             )
 
+        box = gui.widgetBox(self.controlArea, "Dynamic Inputs")
+        self._dynamic_input_form = ParameterForm(parent=box)
+        for name in self.input_names():
+            self._dynamic_input_form.addParameter(name)
+
         box = gui.widgetBox(self.controlArea, "Outputs")
         self._output_form = ParameterForm(parent=box)
         for name in self.output_names():

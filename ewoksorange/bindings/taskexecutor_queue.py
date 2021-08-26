@@ -44,7 +44,8 @@ class TaskExecutorQueue(QObject, Queue):
             self._taskExecutor.start()
 
     def _process_ended(self):
-        for callback in self.sender().callbacks:
+        taskExecutor = self.sender()
+        for callback in taskExecutor.callbacks:
             callback()
         self.sigComputationEnded.emit()
         self._available = True
@@ -55,8 +56,8 @@ class TaskExecutorQueue(QObject, Queue):
         self._taskExecutor.finished.disconnect(self._process_ended)
         while not self.empty():
             self.get()
-        self._taskExecutor.blockSignals(True)
-        self._taskExecutor.wait()
+        self._taskExecutor.stop(wait=True)
+        self._taskExecutor = None
 
 
 class _ThreadedTaskExecutor(ThreadedTaskExecutor):

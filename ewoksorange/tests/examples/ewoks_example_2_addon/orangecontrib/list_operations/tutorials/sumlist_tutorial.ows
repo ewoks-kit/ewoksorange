@@ -20,7 +20,10 @@
 	<annotations />
 	<thumbnail />
 	<node_properties>
-		<properties format="literal" node_id="0">{'static_input': {'length': 100000}}</properties>
+		<properties format="literal" node_id="0">{'static_input': {'length': 10}}</properties>
+		<properties format="literal" node_id="1">{'static_input': {'delay': 0.1}}</properties>
+		<properties format="literal" node_id="2">{'static_input': {'delay': 0.1}}</properties>
+		<properties format="literal" node_id="3">{'static_input': {'delay': 0.1}}</properties>
 	</node_properties>
 	<session_state>
 		<window_groups />
