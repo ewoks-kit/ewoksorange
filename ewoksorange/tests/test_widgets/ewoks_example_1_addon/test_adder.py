@@ -17,7 +17,8 @@ from ewokscore.inittask import instantiate_task
 )
 def test_adder_missing_inputs(widget_qualname, register_ewoks_example_1_addon):
     node_attrs = {
-        "task": widget_qualname,
+        "task_type": "generated",
+        "task_identifier": widget_qualname,
         "task_generator": OWWIDGET_TASKS_GENERATOR,
     }
     with pytest.raises(TaskInputError):
@@ -37,7 +38,8 @@ def test_adder_missing_inputs(widget_qualname, register_ewoks_example_1_addon):
 )
 def test_adder_all_inputs(widget_qualname, register_ewoks_example_1_addon):
     node_attrs = {
-        "task": widget_qualname,
+        "task_type": "generated",
+        "task_identifier": widget_qualname,
         "task_generator": OWWIDGET_TASKS_GENERATOR,
     }
     task = instantiate_task(node_attrs, inputs={"a": 1, "b": 2})
