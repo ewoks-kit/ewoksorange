@@ -8,6 +8,7 @@ from ewokscore import load_graph
 from ewokscore.utils import qualname
 from ewokscore.utils import import_qualname
 from ewokscore.graph import TaskGraph
+from ewokscore.inittask import task_executable_info
 
 from ..registration import get_owwidget_descriptions
 from .taskwrapper import OWWIDGET_TASKS_GENERATOR
@@ -22,12 +23,14 @@ def widget_to_task(widget_qualname) -> Tuple[OWWidget, dict]:
     if hasattr(widget_class, "ewokstaskclass"):
         # Ewoks Orange widget
         return widget_class, {
-            "class": widget_class.ewokstaskclass.class_registry_name()
+            "task_type": "class",
+            "task_identifier": widget_class.ewokstaskclass.class_registry_name(),
         }
     else:
         # Native Orange widget
         return widget_class, {
-            "task": widget_qualname,
+            "task_type": "generated",
+            "task_identifier": widget_qualname,
             "task_generator": OWWIDGET_TASKS_GENERATOR,
         }
 
@@ -230,14 +233,17 @@ class OwsSchemeWrapper:
 
         self._nodes = dict()
         self._widget_classes = dict()
-        for adict in graph["nodes"]:
-            widget_class, adict["project_name"] = task_to_widget(
-                adict["class"], error_on_duplicates=error_on_duplicates
+        for node_attrs in graph["nodes"]:
+            task_type, task_info = task_executable_info(node_attrs)
+            if task_type != "class":
+                raise ValueError("Orange workflows only support task type 'class'")
+            widget_class, node_attrs["project_name"] = task_to_widget(
+                task_info["task_identifier"], error_on_duplicates=error_on_duplicates
             )
-            adict["qualified_name"] = qualname(widget_class)
-            adict["varinfo"] = varinfo
-            self._nodes[adict["id"]] = OwsNodeWrapper(adict)
-            self._widget_classes[adict["id"]] = widget_class
+            node_attrs["qualified_name"] = qualname(widget_class)
+            node_attrs["varinfo"] = varinfo
+            self._nodes[node_attrs["id"]] = OwsNodeWrapper(node_attrs)
+            self._widget_classes[node_attrs["id"]] = widget_class
 
         self.links = list()
         for link in graph["links"]:
