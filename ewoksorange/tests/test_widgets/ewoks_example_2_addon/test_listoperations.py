@@ -13,7 +13,8 @@ from ewokscore.inittask import instantiate_task
 )
 def test_sumlist(widget_qualname, register_ewoks_example_2_addon):
     node_attrs = {
-        "task": widget_qualname,
+        "task_type": "generated",
+        "task_identifier": widget_qualname,
         "task_generator": OWWIDGET_TASKS_GENERATOR,
     }
     task = instantiate_task(node_attrs, inputs={"list": [1, 2, 3]})
@@ -23,7 +24,8 @@ def test_sumlist(widget_qualname, register_ewoks_example_2_addon):
 
 def test_listgenerator(register_ewoks_example_2_addon):
     node_attrs = {
-        "task": "orangecontrib.list_operations.listgenerator.ListGenerator",
+        "task_type": "generated",
+        "task_identifier": "orangecontrib.list_operations.listgenerator.ListGenerator",
         "task_generator": OWWIDGET_TASKS_GENERATOR,
     }
     task = instantiate_task(node_attrs, inputs={"length": [7]})
@@ -33,7 +35,8 @@ def test_listgenerator(register_ewoks_example_2_addon):
 
 def test_printsum(register_ewoks_example_2_addon):
     node_attrs = {
-        "task": "orangecontrib.list_operations.print_sum.PrintSumOW",
+        "task_type": "generated",
+        "task_identifier": "orangecontrib.list_operations.print_sum.PrintSumOW",
         "task_generator": OWWIDGET_TASKS_GENERATOR,
     }
     task = instantiate_task(node_attrs, inputs={"sum": 99})
