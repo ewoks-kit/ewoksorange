@@ -20,6 +20,8 @@ build_sdist:
 
 test_sdist-3.6:
   extends: ".test_sdist-3.6_glx"
+  before_script:
+    - export QT_QPA_PLATFORM=offscreen
 
 build_doc:
   extends: ".build_doc"
