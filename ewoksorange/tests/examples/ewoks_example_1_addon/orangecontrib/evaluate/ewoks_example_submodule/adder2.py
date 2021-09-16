@@ -25,11 +25,14 @@ class Adder2(OWEwoksWidgetNoThread, ewokstaskclass=SumTask):
     def __init__(self):
         super().__init__()
 
-        box = gui.widgetBox(self.controlArea, "Static Inputs")
-        self._static_input_form = ParameterForm(parent=box)
-        for name, value in self.static_input_values.items():
-            self._static_input_form.addParameter(
-                name, value=value, default=0, changeCallback=self.staticInputHasChanged
+        box = gui.widgetBox(self.controlArea, "Default Inputs")
+        self._default_inputs_form = ParameterForm(parent=box)
+        for name, value in self.default_input_values.items():
+            self._default_inputs_form.addParameter(
+                name,
+                value=value,
+                default=0,
+                changeCallback=self.defaultInputsHaveChanged,
             )
 
         box = gui.widgetBox(self.controlArea, "Dynamic Inputs")
@@ -44,14 +47,16 @@ class Adder2(OWEwoksWidgetNoThread, ewokstaskclass=SumTask):
 
         self.handleNewSignals()
 
-    def staticInputHasChanged(self):
-        self.static_input.update(self._static_input_form.getParameters())
-        super().staticInputHasChanged()
+    def defaultInputsHaveChanged(self):
+        self.default_inputs.update(self._default_inputs_form.getParameters())
+        super().defaultInputsHaveChanged()
+        for name, value in self.output_values.items():
+            self._output_form.setParameter(name, value)
 
     def handleNewSignals(self):
         for name, value in self.dynamic_input_values.items():
             self._dynamic_input_form.setParameter(name, value)
-            self._static_input_form.disable(name)
+            self._default_inputs_form.disable(name)
         super().handleNewSignals()
         for name, value in self.output_values.items():
             self._output_form.setParameter(name, value)
