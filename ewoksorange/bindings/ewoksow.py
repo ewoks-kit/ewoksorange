@@ -58,11 +58,11 @@ if summarize is not None:
 def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     """This needs to be called before signal and setting parsing"""
     namespace["ewokstaskclass"] = ewokstaskclass
-    namespace["static_input"] = Setting(
+    namespace["default_inputs"] = Setting(
         {name: INVALIDATION_DATA for name in ewokstaskclass.input_names()}
     )
     namespace["varinfo"] = Setting({"root_uri": ""})
-    namespace["static_input"].schema_only = True
+    namespace["default_inputs"].schema_only = True
     namespace["varinfo"].schema_only = True
     validate_inputs(namespace)
     validate_outputs(namespace)
@@ -105,7 +105,7 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
         return cls.ewokstaskclass.output_names()
 
     def _getTaskArguments(self):
-        inputs = self.defined_static_input_values
+        inputs = self.defined_default_input_values
         inputs.update(self.__dynamic_inputs)
         return {"inputs": inputs, "varinfo": self.varinfo}
 
@@ -119,23 +119,23 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
         return value
 
     @property
-    def defined_static_input_values(self):
-        # Warning: do not use static_input directly because it
+    def defined_default_input_values(self) -> dict:
+        # Warning: do not use default_inputs directly because it
         #          messes up MISSING_DATA
         return {
-            k: self._get_value(v)
-            for k, v in self.static_input.items()
-            if v is not INVALIDATION_DATA
+            name: value
+            for name, value in self.default_inputs.items()
+            if value is not INVALIDATION_DATA
         }
 
     @property
-    def static_input_values(self):
+    def default_input_values(self) -> dict:
         values = {name: MISSING_DATA for name in self.input_names()}
-        values.update(self.defined_static_input_values)
+        values.update(self.defined_default_input_values)
         return values
 
     @property
-    def dynamic_input_values(self):
+    def dynamic_input_values(self) -> dict:
         return {k: self._get_value(v) for k, v in self.__dynamic_inputs.items()}
 
     def receiveDynamicInputs(self, name, value):
@@ -159,8 +159,8 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
             channel = getattr(self.Outputs, name)
             channel.send(INVALIDATION_DATA)  # or channel.invalidate?
 
-    def staticInputHasChanged(self):
-        """Needs to be called when static inputs have changed"""
+    def defaultInputsHaveChanged(self):
+        """Needs to be called when default inputs have changed"""
         self.executeEwoksTask()
 
     def handleNewSignals(self):

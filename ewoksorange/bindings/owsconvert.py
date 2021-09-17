@@ -119,10 +119,13 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
     for ows_node in ows.nodes:
         data = ows_node.data
         if data is None:
-            static_input = dict()
+            default_inputs = dict()
         else:
             node_properties = readwrite.loads(data.data, data.format)
-            static_input = node_properties.get("static_input", dict())
+            default_inputs = node_properties.get("default_inputs", dict())
+        default_inputs = [
+            {"name": name, "value": value} for name, value in default_inputs.items()
+        ]
         owsinfo = {
             "title": ows_node.title,
             "name": ows_node.name,
@@ -131,7 +134,7 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
         }
         widget_class, node_attrs = widget_to_task(ows_node.qualified_name)
         node_attrs["id"] = idmap[ows_node.id]
-        node_attrs["inputs"] = static_input
+        node_attrs["default_inputs"] = default_inputs
         if preserve_ows_info:
             node_attrs["ows"] = owsinfo
         nodes.append(node_attrs)
@@ -148,7 +151,7 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
         link = {
             "source": idmap[ows_link.source_node_id],
             "target": idmap[ows_link.sink_node_id],
-            "arguments": {sink_name: source_name},
+            "data_mapping": [{"target_input": sink_name, "source_output": source_name}],
         }
         links.append(link)
 
@@ -201,8 +204,10 @@ class OwsNodeWrapper:
             version=ows.get("version", ""),
         )
 
+        default_inputs = adict.get("default_inputs", list())
+        default_inputs = {item["name"]: item["value"] for item in default_inputs}
         self.properties = {
-            "static_input": adict.get("inputs", dict()),
+            "default_inputs": default_inputs,
             "varinfo": adict.get("varinfo", dict()),
         }
 
@@ -262,7 +267,9 @@ class OwsSchemeWrapper:
         sink_node = self._nodes[link["target"]]
         source_class = self._widget_classes[link["source"]]
         sink_class = self._widget_classes[link["target"]]
-        for target_name, source_name in link["arguments"].items():
+        for item in link["data_mapping"]:
+            target_name = item["target_input"]
+            source_name = item["source_output"]
             target_name = signal_ewoks_to_orange_name(sink_class.Inputs, target_name)
             source_name = signal_ewoks_to_orange_name(source_class.Outputs, source_name)
             sink_channel = self._link_channel(name=target_name)

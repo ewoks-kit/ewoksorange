@@ -18,12 +18,12 @@
 	<annotations />
 	<thumbnail />
 	<node_properties>
-		<properties node_id="0" format="literal">{'static_input': {'a': 1}}</properties>
-		<properties node_id="1" format="literal">{'static_input': {'a': 2}}</properties>
-		<properties node_id="2" format="literal">{'static_input': {'b': 3}}</properties>
-		<properties node_id="3" format="literal">{'static_input': {'b': 4}}</properties>
-		<properties node_id="4" format="literal">{'static_input': {'b': 5}}</properties>
-		<properties node_id="5" format="literal">{'static_input': {'b': 6}}</properties>
+		<properties node_id="0" format="literal">{'default_inputs': {'a': 1}}</properties>
+		<properties node_id="1" format="literal">{'default_inputs': {'a': 2}}</properties>
+		<properties node_id="2" format="literal">{'default_inputs': {'b': 3}}</properties>
+		<properties node_id="3" format="literal">{'default_inputs': {'b': 4}}</properties>
+		<properties node_id="4" format="literal">{'default_inputs': {'b': 5}}</properties>
+		<properties node_id="5" format="literal">{'default_inputs': {'b': 6}}</properties>
 	</node_properties>
 	<session_state>
 		<window_groups />
