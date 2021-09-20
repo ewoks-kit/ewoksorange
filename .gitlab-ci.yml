@@ -13,7 +13,8 @@ test-3.6-orange3-fork:
     # missing dependencies in the Orange3 fork
     - pip install numpy scipy PyQt5 silx chardet
     # hard fork of Orange3
-    - pip install git+https://github.com/payno/orange3.git
+    # - pip install git+https://github.com/payno/orange3.git
+    - pip install git+https://github.com/woutdenolf/orange3.git@nodeitem_animatedicon_bug
 
 build_sdist:
   extends: ".build_sdist"
