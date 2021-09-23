@@ -11,7 +11,7 @@ from ewokscore.tests.examples.graphs import get_graph
 
 
 def test_ows_to_ewoks_example_1(tmpdir, register_ewoks_example_addons):
-    """Test conversion of orange worflow files to ewoks"""
+    """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.evaluate.ewoks_example_submodule import tutorials
 
     with resources.path(tutorials, "sumtask_tutorial2.ows") as filename:
@@ -23,8 +23,8 @@ def test_ows_to_ewoks_example_1(tmpdir, register_ewoks_example_addons):
     assert ewoksgraph == ewoksgraph2
 
 
-def test_ows_to_ewoks_example_2(tmpdir, capsys, register_ewoks_example_addons):
-    """Test conversion of orange worflow files to ewoks"""
+def test_ows_to_ewoks_example_2(tmpdir, register_ewoks_example_addons):
+    """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.list_operations import tutorials
 
     with resources.path(tutorials, "sumlist_tutorial.ows") as filename:
@@ -33,19 +33,12 @@ def test_ows_to_ewoks_example_2(tmpdir, capsys, register_ewoks_example_addons):
     destination = str(tmpdir / "ewoksgraph.ows")
     ewoks_to_ows(ewoksgraph, destination)
     ewoksgraph2 = ows_to_ewoks(destination)
-    assert ewoksgraph == ewoksgraph2, f"{ewoksgraph} vs {ewoksgraph2}"
-
-    # check execution
-    ewoksgraph.execute()
-    stdout = capsys.readouterr()
-    # check 3 prints are done (if input value is None will raise an error)
-    assert len(stdout.out) > 0
-    assert stdout.out.count("input value is") == 3
+    assert ewoksgraph == ewoksgraph2
 
 
 @pytest.mark.parametrize("graph_name", graph_names())
 def test_ewoks_to_ows(graph_name, tmpdir):
-    """Test conversion of orange worflow files to ewoks"""
+    """Test conversion of ewoks to orange worflow files and back"""
     graph, _ = get_graph(graph_name)
     ewoksgraph = load_graph(graph)
 
@@ -57,4 +50,4 @@ def test_ewoks_to_ows(graph_name, tmpdir):
     ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
 
     ewoksgraph2 = ows_to_ewoks(destination)
-    assert ewoksgraph.dump() == ewoksgraph2.dump()
+    assert ewoksgraph == ewoksgraph2

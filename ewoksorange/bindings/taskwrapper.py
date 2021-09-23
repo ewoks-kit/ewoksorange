@@ -43,29 +43,35 @@ def owwidget_task_wrapper(widget_qualname: str) -> Task:
     ):
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
-            ensure_qtapp()
-            self.outputsReceived = QtEvent()
-            self.widget = widget_class()
-            self.widget.ewoks_output_callbacks = (self.receiveOutputSend,)
+            self.outputsReceived = None
 
         def run(self):
-            # Trigger the input handlers
-            values = self.input_values
-            for signal in self.widget.get_signals("inputs"):
-                handler = getattr(self.widget, signal.handler)
-                handler(values[signal.ewoksname])
+            ensure_qtapp()
+            self.outputsReceived = QtEvent()
+            widget = widget_class()
+            try:
+                widget.ewoks_output_callbacks = (self.receiveOutputSend,)
+                # Trigger the input handlers
+                values = self.input_values
+                for signal in widget.get_signals("inputs"):
+                    handler = getattr(widget, signal.handler)
+                    handler(values[signal.ewoksname])
 
-            # Send the outputs
-            self.widget.handleNewSignals()
+                # Send the outputs
+                widget.handleNewSignals()
 
-            self.outputsReceived.wait()
+                self.outputsReceived.wait()
+            finally:
+                widget.destroy()
+                self.outputsReceived = None
 
         def receiveOutputSend(self, values):
             try:
                 for name, value in values.items():
                     self.output_variables[name].value = value_from_transfer(value)
             finally:
-                self.outputsReceived.set()
+                if self.outputsReceived is not None:
+                    self.outputsReceived.set()
 
     return WrapperTask
 

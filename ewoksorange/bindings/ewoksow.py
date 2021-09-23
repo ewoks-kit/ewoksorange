@@ -61,7 +61,7 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     namespace["default_inputs"] = Setting(
         {name: INVALIDATION_DATA for name in ewokstaskclass.input_names()}
     )
-    namespace["varinfo"] = Setting({"root_uri": ""})
+    namespace["varinfo"] = Setting(dict())
     namespace["default_inputs"].schema_only = True
     namespace["varinfo"].schema_only = True
     validate_inputs(namespace)
@@ -105,9 +105,7 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
         return cls.ewokstaskclass.output_names()
 
     def _getTaskArguments(self):
-        inputs = self.defined_default_input_values
-        inputs.update(self.__dynamic_inputs)
-        return {"inputs": inputs, "varinfo": self.varinfo}
+        return {"inputs": self.task_inputs, "varinfo": self.varinfo}
 
     @staticmethod
     def _get_value(value):
@@ -137,6 +135,12 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
     @property
     def dynamic_input_values(self) -> dict:
         return {k: self._get_value(v) for k, v in self.__dynamic_inputs.items()}
+
+    @property
+    def task_inputs(self) -> dict:
+        inputs = self.defined_default_input_values
+        inputs.update(self.__dynamic_inputs)
+        return inputs
 
     def receiveDynamicInputs(self, name, value):
         if value is INVALIDATION_DATA:
