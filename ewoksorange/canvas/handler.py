@@ -1,4 +1,5 @@
 import time
+from typing import Optional
 from AnyQt.QtCore import Qt
 
 try:
@@ -20,18 +21,35 @@ except ImportError:
 
 
 from ..bindings import qtapp
+from ..bindings.owsignal_manager import SignalManagerWithOutputTracking
 
 
-def default_widget_is_ready(widget):
-    return bool(widget.task_outputs)
+def get_orange_canvas() -> Optional[MainWindow]:
+    app = qtapp.get_qtapp()
+    if app is None:
+        return None
+    for widget in app.topLevelWidgets():
+        if isinstance(widget, MainWindow):
+            return widget
+    return None
 
 
 class OrangeCanvasHandler:
-    """Orange canvas handler intended for the test suite"""
-
     def __init__(self):
-        self.canvas = None
-        self._init_canvas()
+        self.canvas = get_orange_canvas()
+        self.__is_owner = self.canvas is None
+
+    def __del__(self):
+        self.close()
+
+    def __enter__(self):
+        if self.canvas is None:
+            self._init_canvas()
+            self.__is_owner = True
+        return self
+
+    def __exit__(self, *args):
+        self.close()
 
     def _init_canvas(self):
         qtapp.ensure_qtapp()
@@ -52,29 +70,19 @@ class OrangeCanvasHandler:
         canvas = MainWindow()
         canvas.setAttribute(Qt.WA_DeleteOnClose)
         # set_global_registry(widget_registry)
-        canvas.set_widget_registry(widget_registry)  # make a copy of the registry
+        canvas.set_widget_registry(widget_registry)  # makes a copy of the registry
         self.canvas = canvas
         self.process_events()
 
-    def __enter__(self):
-        if self.canvas is None:
-            self._init_canvas()
-        return self
-
-    def __exit__(self, *args):
-        self.close()
-
-    def __del__(self):
-        self.close()
-
-    def close(self):
-        if self.canvas is not None:
-            canvas, self.canvas = self.canvas, None
-            self.process_events()
-            # do not prompt for saving modification:
-            canvas.current_document().setModified(False)
-            canvas.close()
-            self.process_events()
+    def close(self, force=False):
+        if self.canvas is None or (not self.__is_owner and not force):
+            return
+        canvas, self.canvas = self.canvas, None
+        self.process_events()
+        # do not prompt for saving modification:
+        canvas.current_document().setModified(False)
+        canvas.close()
+        self.process_events()
 
     def load_ows(self, filename: str):
         self.canvas.load_scheme(filename)
@@ -82,6 +90,19 @@ class OrangeCanvasHandler:
     @property
     def scheme(self):
         return self.canvas.current_document().scheme()
+
+    @property
+    def signal_manager(self) -> SignalManagerWithOutputTracking:
+        signal_manager = self.scheme.signal_manager
+        assert isinstance(
+            signal_manager, SignalManagerWithOutputTracking
+        ), "Orange signal manager was not patched before instantiated"
+        return signal_manager
+
+    def iter_nodes(self):
+        scheme = self.scheme
+        for node in scheme.nodes:
+            yield node
 
     def process_events(self):
         qtapp.process_qtapp_events()
@@ -92,21 +113,28 @@ class OrangeCanvasHandler:
         qtapp.get_qtapp().exec()
 
     def widgets_from_name(self, name: str):
-        scheme = self.scheme
-        for node in scheme.nodes:
+        for node in self.iter_nodes():
             if node.title == name:
                 yield self.scheme.widget_for_node(node)
 
-    def all_widgets(self):
-        scheme = self.scheme
-        for node in scheme.nodes:
+    def iter_widgets(self):
+        for node in self.iter_nodes():
             yield self.scheme.widget_for_node(node)
 
-    def wait_widgets(self, timeout=None, widget_is_ready=default_widget_is_ready):
-        widgets = list(self.all_widgets())
+    def wait_widgets(self, timeout=None):
+        signal_manager = self.signal_manager
+        widgets = list(self.iter_widgets())
         t0 = time.time()
-        while any(not widget_is_ready(widget) for widget in widgets):
+        while True:
             self.process_events()
-            if timeout is not None and (time.time() - t0) > timeout:
-                raise TimeoutError()
+            executed = (signal_manager.widget_is_executed(widget) for widget in widgets)
+            executed = list(executed)
+            if all(executed):
+                break
+            if timeout is not None:
+                t1 = time.time()
+                timeout -= t1 - t0
+                if timeout < 0:
+                    raise TimeoutError
+                t0 = t1
             time.sleep(0.1)

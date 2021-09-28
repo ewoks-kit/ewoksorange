@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scheme version="2.0" title="Mixed Ewoks/Native example" description="simple mixed graph">
+	<nodes>
+		<node id="0" name="Adder1" qualified_name="orangecontrib.ewoks_example_category.adder1.Adder1" project_name="ewoks-example-1-addon" version="" title="Adder1" position="(190.0, 271.0)" />
+		<node id="1" name="Adder2" qualified_name="orangecontrib.ewoks_example_category.adder2.Adder2" project_name="ewoks-example-1-addon" version="" title="Adder2" position="(577.0, 267.0)" />
+		<node id="2" name="Python Script" qualified_name="Orange.widgets.data.owpythonscript.OWPythonScript" project_name="Orange3" version="" title="Python Script" position="(390.0, 268.0)" />
+	</nodes>
+	<links>
+		<link id="0" source_node_id="0" sink_node_id="2" source_channel="A + B" sink_channel="Object" enabled="true" />
+		<link id="1" source_node_id="2" sink_node_id="1" source_channel="Object" sink_channel="A" enabled="true" />
+	</links>
+	<annotations />
+	<thumbnail />
+	<node_properties>
+		<properties node_id="0" format="literal">{'default_inputs': {'b': 0, 'a': 1}}</properties>
+		<properties node_id="1" format="literal">{'default_inputs': {'b': 1, 'a': 0}}</properties>
+		<properties node_id="2" format="literal">{'currentScriptIndex': 0, 'scriptLibrary': [], 'scriptText': 'print("Script input:",in_object)\nout_object = in_object + 1\nprint("Script output:", out_object)\n', '__version__': 2}</properties>
+	</node_properties>
+	<session_state>
+		<window_groups />
+	</session_state>
+</scheme>

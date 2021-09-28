@@ -1,7 +1,6 @@
 import inspect
 from Orange.widgets.widget import Input, Output
 
-
 SIGNAL_TYPES = (Input, Output)
 
 
@@ -10,6 +9,7 @@ def is_signal(obj):
 
 
 def get_signals(signals_class) -> dict:
+    """Returns a map from ewoks names to signal objects"""
     # TODO: getsignals doesn't work in the Orange3 hard-fork
     # from orangewidget.utils.signals import getsignals
     # return dict(getsignals(signals_class))
@@ -81,3 +81,13 @@ def validate_outputs(namespace):
         namespace["Outputs"] = Outputs
 
     _validate_signals(namespace, "outputs", namespace["ewokstaskclass"].output_names())
+
+
+def get_input_names(widget_class):
+    """Returns the Orange signal names, not the Ewoks output names"""
+    return [signal.name for signal in get_signals(widget_class.Outputs).values()]
+
+
+def get_output_names(widget_class):
+    """Returns the Orange signal names, not the Ewoks output names"""
+    return [signal.name for signal in get_signals(widget_class.Outputs).values()]

@@ -6,6 +6,11 @@ import logging
 from contextlib import contextmanager
 
 from Orange.widgets.widget import OWWidget, WidgetMetaClass
+
+try:
+    from Orange.widgets.widget import OWBaseWidget
+except ImportError:
+    OWBaseWidget = OWWidget
 from Orange.widgets.settings import Setting
 
 try:
@@ -21,8 +26,8 @@ from .progress import QProgress
 from .taskexecutor import TaskExecutor
 from .taskexecutor import ThreadedTaskExecutor
 from .taskexecutor_queue import TaskExecutorQueue
-from .ewoksowsignals import validate_inputs
-from .ewoksowsignals import validate_outputs
+from .owsignals import validate_inputs
+from .owsignals import validate_outputs
 
 
 _logger = logging.getLogger(__name__)
@@ -60,11 +65,10 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     """This needs to be called before signal and setting parsing"""
     namespace["ewokstaskclass"] = ewokstaskclass
     namespace["default_inputs"] = Setting(
-        {name: INVALIDATION_DATA for name in ewokstaskclass.input_names()}
+        {name: INVALIDATION_DATA for name in ewokstaskclass.input_names()},
+        schema_only=True,
     )
-    namespace["varinfo"] = Setting(dict())
-    namespace["default_inputs"].schema_only = True
-    namespace["varinfo"].schema_only = True
+    namespace["varinfo"] = Setting(dict(), schema_only=True)
     validate_inputs(namespace)
     validate_outputs(namespace)
 
@@ -198,6 +202,32 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
             name: value_from_transfer(var, varinfo=self.varinfo)
             for name, var in self.task_inputs.items()
         }
+
+
+def is_orange_widget_class(widget_class):
+    return issubclass(widget_class, OWBaseWidget)
+
+
+def is_ewoks_widget_class(widget_class):
+    return issubclass(widget_class, _OWEwoksBaseWidget)
+
+
+def is_native_widget_class(widget_class):
+    return is_orange_widget_class(widget_class) and not is_ewoks_widget_class(
+        widget_class
+    )
+
+
+def is_orange_widget(widget):
+    return isinstance(widget, OWBaseWidget)
+
+
+def is_ewoks_widget(widget):
+    return isinstance(widget, _OWEwoksBaseWidget)
+
+
+def is_native_widget(widget_class):
+    return is_orange_widget(widget_class) and not is_ewoks_widget(widget_class)
 
 
 class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, **ow_build_opts):
