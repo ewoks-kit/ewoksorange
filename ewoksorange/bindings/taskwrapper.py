@@ -2,7 +2,6 @@ from Orange.widgets.widget import OWWidget
 from ewokscore import Task
 from ewokscore.utils import qualname
 from ewokscore.utils import import_qualname
-from ewokscore.variable import value_from_transfer
 from .qtapp import ensure_qtapp
 from ewoksorange.bindings.qtapp import QtEvent
 
@@ -44,31 +43,33 @@ def owwidget_task_wrapper(widget_qualname: str) -> Task:
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
             self.outputsReceived = None
+            self.widget = None
 
         def run(self):
             ensure_qtapp()
             self.outputsReceived = QtEvent()
-            widget = widget_class()
+            self.widget = widget_class()
             try:
-                widget.ewoks_output_callbacks = (self.receiveOutputSend,)
+                self.widget.task_output_changed_callbacks.add(self.receiveOutputSend)
                 # Trigger the input handlers
                 values = self.input_values
-                for signal in widget.get_signals("inputs"):
-                    handler = getattr(widget, signal.handler)
+                for signal in self.widget.get_signals("inputs"):
+                    handler = getattr(self.widget, signal.handler)
                     handler(values[signal.ewoksname])
 
                 # Send the outputs
-                widget.handleNewSignals()
+                self.widget.handleNewSignals()
 
                 self.outputsReceived.wait()
             finally:
-                widget.destroy()
+                self.widget.destroy()
+                self.widget = None
                 self.outputsReceived = None
 
-        def receiveOutputSend(self, values):
+        def receiveOutputSend(self):
             try:
-                for name, value in values.items():
-                    self.output_variables[name].value = value_from_transfer(value)
+                for name, value in self.widget.task_output_values.items():
+                    self.output_variables[name].value = value
             finally:
                 if self.outputsReceived is not None:
                     self.outputsReceived.set()
