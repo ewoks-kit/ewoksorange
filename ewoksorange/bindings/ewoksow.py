@@ -95,7 +95,7 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dynamic_inputs = dict()
-        self.ewoks_output_callbacks = tuple()
+        self.__task_output_changed_callbacks = {self.task_output_changed}
 
     @classmethod
     def input_names(cls):
@@ -156,8 +156,15 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
                 channel.send(INVALIDATION_DATA)  # or channel.invalidate?
             else:
                 channel.send(var)
-        for cb in self.ewoks_output_callbacks:
-            cb(self.task_outputs)
+        for cb in self.__task_output_changed_callbacks:
+            cb()
+
+    @property
+    def task_output_changed_callbacks(self) -> set:
+        return self.__task_output_changed_callbacks
+
+    def task_output_changed(self):
+        pass
 
     def clear_downstream(self):
         for name in self.task_outputs:
