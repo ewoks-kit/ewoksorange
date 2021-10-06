@@ -71,7 +71,7 @@ def assert_sumtask_tutorial(ewoks_orange_canvas, filename):
     ewoks_orange_canvas.load_ows(str(filename))
     ewoks_orange_canvas.wait_widgets()
     widgets = list(ewoks_orange_canvas.widgets_from_name("task6"))
-    results = {name: var.value for name, var in widgets[0].output_variables.items()}
+    results = widgets[0].task_output_values
     assert results == {"result": 16}
 
 
@@ -87,7 +87,7 @@ def assert_sumlist_tutorial(ewoks_orange_canvas, filename):
     ewoks_orange_canvas.load_ows(str(filename))
     wgenerator = list(ewoks_orange_canvas.widgets_from_name("List generator"))[0]
     wgenerator.defaultInputsHaveChanged()
-    results = {name: var.value for name, var in wgenerator.output_variables.items()}
+    results = wgenerator.task_output_values
     listsum = sum(results["list"])
 
     def widget_is_ready(widget):

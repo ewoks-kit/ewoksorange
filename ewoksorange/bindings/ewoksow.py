@@ -14,6 +14,7 @@ except ImportError:
     summarize = None
 
 from ewokscore.variable import Variable
+from ewokscore.variable import value_from_transfer
 from ewokscore.hashing import UniversalHashable
 from ewokscore.hashing import MissingData
 from .progress import QProgress
@@ -149,17 +150,17 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
             self.__dynamic_inputs[name] = value
 
     def trigger_downstream(self):
-        for name, var in self.output_variables.items():
+        for name, var in self.task_outputs.items():
             channel = getattr(self.Outputs, name)
             if var.value is MISSING_DATA:
                 channel.send(INVALIDATION_DATA)  # or channel.invalidate?
             else:
                 channel.send(var)
         for cb in self.ewoks_output_callbacks:
-            cb(self.output_variables)
+            cb(self.task_outputs)
 
     def clear_downstream(self):
-        for name in self.output_variables:
+        for name in self.task_outputs:
             channel = getattr(self.Outputs, name)
             channel.send(INVALIDATION_DATA)  # or channel.invalidate?
 
@@ -177,12 +178,19 @@ class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build
         raise NotImplementedError("Base class")
 
     @property
-    def output_variables(self):
+    def task_outputs(self):
         raise NotImplementedError("Base class")
 
     @property
-    def output_values(self):
-        return {name: var.value for name, var in self.output_variables.items()}
+    def task_output_values(self):
+        return {name: var.value for name, var in self.task_outputs.items()}
+
+    @property
+    def task_input_values(self):
+        return {
+            name: value_from_transfer(var, varinfo=self.varinfo)
+            for name, var in self.task_inputs.items()
+        }
 
 
 class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, **ow_build_opts):
@@ -205,7 +213,7 @@ class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, **ow_build_opts):
             self.clear_downstream()
 
     @property
-    def output_variables(self):
+    def task_outputs(self):
         return self.__taskExecutor.output_variables
 
 
@@ -274,7 +282,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
                     self.__taskExecutor.start()
 
     @property
-    def output_variables(self):
+    def task_outputs(self):
         return self.__taskExecutor.output_variables
 
     def _ewoksTaskFinishedCallback(self):
@@ -349,7 +357,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__taskExecutors.clear()
 
     @property
-    def output_variables(self):
+    def task_outputs(self):
         return self.__last_output_variables
 
 
@@ -371,7 +379,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             )
 
     @property
-    def output_variables(self):
+    def task_outputs(self):
         return self.__last_output_variables
 
     def _cleanupTaskExecutor(self):

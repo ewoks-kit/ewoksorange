@@ -23,7 +23,7 @@ from ..bindings import qtapp
 
 
 def default_widget_is_ready(widget):
-    return bool(widget.output_variables)
+    return bool(widget.task_outputs)
 
 
 class OrangeCanvasHandler:

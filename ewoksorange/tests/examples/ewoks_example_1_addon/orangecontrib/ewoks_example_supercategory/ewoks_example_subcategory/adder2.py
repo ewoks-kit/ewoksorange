@@ -50,7 +50,7 @@ class Adder2(OWEwoksWidgetNoThread, ewokstaskclass=SumTask):
     def defaultInputsHaveChanged(self):
         self.default_inputs.update(self._default_inputs_form.getParameters())
         super().defaultInputsHaveChanged()
-        for name, value in self.output_values.items():
+        for name, value in self.task_output_values.items():
             self._output_form.setParameter(name, value)
 
     def handleNewSignals(self):
@@ -58,5 +58,5 @@ class Adder2(OWEwoksWidgetNoThread, ewokstaskclass=SumTask):
             self._dynamic_input_form.setParameter(name, value)
             self._default_inputs_form.disable(name)
         super().handleNewSignals()
-        for name, value in self.output_values.items():
+        for name, value in self.task_output_values.items():
             self._output_form.setParameter(name, value)
