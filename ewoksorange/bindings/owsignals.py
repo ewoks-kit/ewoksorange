@@ -1,5 +1,10 @@
 import inspect
-from Orange.widgets.widget import Input, Output
+from ..orange_version import ORANGE_VERSION
+
+if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+    from Orange.widgets.utils.signals import Input, Output
+else:
+    from orangewidget.widget import Input, Output
 
 SIGNAL_TYPES = (Input, Output)
 

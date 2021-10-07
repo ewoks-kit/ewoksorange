@@ -9,33 +9,58 @@ Which is equivalent to
 but it registers the example Addon before launching.
 """
 
-
 import sys
-from Orange.canvas.__main__ import main as _main
+import logging
+from contextlib import contextmanager
+from Orange.canvas.__main__ import main as orange_main
+from orangecanvas.main import arg_parser
+
+from ewoksorange.registration import register_addon_package
+from ewoksorange import ewoks_addon
+
+
+@contextmanager
+def temporary_log_handlers(log_level):
+    logger = logging.getLogger("ewoksorange")
+    logger.setLevel(log_level)
+    if logger.hasHandlers():
+        yield
+    else:
+        stdouthandler = logging.StreamHandler(sys.stdout)
+        logger.addHandler(stdouthandler)
+        yield
+        logger.removeHandler(stdouthandler)
 
 
 def main(argv=None):
+    parser = arg_parser()
+    parser.add_argument(
+        "--with_example",
+        action="store_true",
+        help="Register example add-on's from ewoksorange.",
+    )
+
     if argv is None:
         argv = sys.argv
-    try:
+    options, _ = parser.parse_known_args(argv[1:])
+
+    if "--with_example" in argv:
         argv.pop(argv.index("--with_example"))
-    except ValueError:
-        with_example = False
-    else:
-        with_example = True
 
     if "--force-discovery" not in argv:
         argv.append("--force-discovery")
 
-    if with_example:
-        from ewoksorange.registration import register_addon_package
-        from ewoksorange.tests.examples import ewoks_example_1_addon
-        from ewoksorange.tests.examples import ewoks_example_2_addon
+    with temporary_log_handlers(options.log_level):
+        register_addon_package(ewoks_addon)
 
-        register_addon_package(ewoks_example_1_addon)
-        register_addon_package(ewoks_example_2_addon)
+        if options.with_example:
+            from ewoksorange.tests.examples import ewoks_example_1_addon
+            from ewoksorange.tests.examples import ewoks_example_2_addon
 
-    _main(argv)
+            register_addon_package(ewoks_example_1_addon)
+            register_addon_package(ewoks_example_2_addon)
+
+    orange_main(argv)
 
 
 if __name__ == "__main__":

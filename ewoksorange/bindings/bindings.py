@@ -1,9 +1,10 @@
 import os
 import sys
 import tempfile
-from Orange.canvas.__main__ import main as launchcanvas
+
 from ewokscore import load_graph
 from .owsconvert import ewoks_to_ows
+from ..canvas.__main__ import main as launchcanvas
 
 
 __all__ = ["execute_graph"]
