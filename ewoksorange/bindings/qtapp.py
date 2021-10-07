@@ -63,12 +63,14 @@ def process_qtapp_events():
 
 
 class QtEvent:
-    """Event that also works for Qt applications without event loop"""
+    """Event that also works for Qt applications with an event loop
+    that need to run manually"""
 
     def __init__(self):
         self.__flag = False
 
     def wait(self, timeout=None):
+        """Processes events associated to the calling thread while waiting"""
         global APP
         if timeout is not None:
             t0 = time.time()

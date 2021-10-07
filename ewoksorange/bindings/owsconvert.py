@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Iterator, Tuple
+from typing import Iterator, List, Tuple
 
 from Orange.widgets.widget import OWWidget
 from orangecanvas.scheme import readwrite
@@ -12,8 +12,9 @@ from ewokscore.inittask import task_executable_info
 
 from ..registration import get_owwidget_descriptions
 from .taskwrapper import OWWIDGET_TASKS_GENERATOR
-from .ewoksowsignals import signal_ewoks_to_orange_name
-from .ewoksowsignals import signal_orange_to_ewoks_name
+from .owsignals import signal_ewoks_to_orange_name
+from .owsignals import signal_orange_to_ewoks_name
+from .owwidgets import is_ewoks_widget_class
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows"]
 
@@ -101,6 +102,17 @@ def scheme_to_ows_stream(scheme, stream):
     tree.write(stream, encoding="utf-8", xml_declaration=True)
 
 
+def node_data_to_default_inputs(data: dict, widget_class) -> List[dict]:
+    if data is None:
+        return list()
+    node_properties = readwrite.loads(data.data, data.format)
+    if is_ewoks_widget_class(widget_class):
+        default_inputs = node_properties.get("default_inputs", dict())
+    else:
+        default_inputs = node_properties
+    return [{"name": name, "value": value} for name, value in default_inputs.items()]
+
+
 def ows_to_ewoks(filename, preserve_ows_info=False):
     """Load an Orange Workflow Scheme from a file and convert it
     to a `TaskGraph`.
@@ -117,22 +129,14 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
     nodes = list()
     widget_classes = dict()
     for ows_node in ows.nodes:
-        data = ows_node.data
-        if data is None:
-            default_inputs = dict()
-        else:
-            node_properties = readwrite.loads(data.data, data.format)
-            default_inputs = node_properties.get("default_inputs", dict())
-        default_inputs = [
-            {"name": name, "value": value} for name, value in default_inputs.items()
-        ]
+        widget_class, node_attrs = widget_to_task(ows_node.qualified_name)
+        default_inputs = node_data_to_default_inputs(ows_node.data, widget_class)
         owsinfo = {
             "title": ows_node.title,
             "name": ows_node.name,
             "position": ows_node.position,
             "version": ows_node.version,
         }
-        widget_class, node_attrs = widget_to_task(ows_node.qualified_name)
         node_attrs["id"] = idmap[ows_node.id]
         node_attrs["default_inputs"] = default_inputs
         if preserve_ows_info:
