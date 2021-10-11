@@ -13,7 +13,42 @@ import sys
 import logging
 from contextlib import contextmanager
 from Orange.canvas.__main__ import main as orange_main
-from orangecanvas.main import arg_parser
+from ..orange_version import ORANGE_VERSION
+
+if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+    import argparse
+
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument(
+        "--no-discovery",
+        action="store_true",
+        help="Don't run widget discovery (use full cache instead)",
+    )
+    arg_parser.add_argument(
+        "--force-discovery",
+        action="store_true",
+        help="Force full widget discovery (invalidate cache)",
+    )
+    arg_parser.add_argument(
+        "--no-welcome", action="store_true", help="Don't show welcome dialog."
+    )
+    arg_parser.add_argument(
+        "--no-splash", action="store_true", help="Don't show splash screen."
+    )
+    arg_parser.add_argument(
+        "--stylesheet",
+        help="Application level CSS style sheet to use",
+        type=str,
+        default=None,
+    )
+    arg_parser.add_argument(
+        "--config",
+        help="Configuration namespace",
+        type=str,
+        default=None,
+    )
+else:
+    from orangecanvas.main import arg_parser
 
 from ewoksorange.registration import register_addon_package
 from ewoksorange import ewoks_addon
