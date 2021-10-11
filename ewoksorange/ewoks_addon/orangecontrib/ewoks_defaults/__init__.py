@@ -36,7 +36,7 @@ def default_owwidget_class(task_class: Task) -> Tuple[OWEwoksBaseWidget, str]:
     # Create the widget class
     class DefaultOwWidget(OWEwoksWidgetNoThread, ewokstaskclass=task_class):
         name = f"DefaultOwWidget({task_class.__name__})"
-        description = f"Widget is missing for ewoks task {task_class.__name__}"
+        description = f"Orange widget is missing for Ewoks task {task_class.__name__}"
         want_main_area = False
 
         def __init__(self):
