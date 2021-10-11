@@ -15,6 +15,7 @@ from .taskwrapper import OWWIDGET_TASKS_GENERATOR
 from .owsignals import signal_ewoks_to_orange_name
 from .owsignals import signal_orange_to_ewoks_name
 from .owwidgets import is_ewoks_widget_class
+from ..ewoks_addon.orangecontrib.ewoks_defaults import default_owwidget_class
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows"]
 
@@ -36,7 +37,7 @@ def widget_to_task(widget_qualname) -> Tuple[OWWidget, dict]:
         }
 
 
-def task_to_widgets(task_qualname: str) -> Iterator[OWWidget]:
+def task_to_widgets(task_qualname: str) -> Iterator[Tuple[OWWidget, str]]:
     """The `task_qualname` could be an ewoks task or an orange widget"""
     for class_desc in get_owwidget_descriptions():
         widget_class = import_qualname(class_desc.qualified_name)
@@ -48,11 +49,13 @@ def task_to_widgets(task_qualname: str) -> Iterator[OWWidget]:
             yield widget_class, class_desc.project_name
 
 
-def task_to_widget(task_qualname: str, error_on_duplicates: bool = True) -> OWWidget:
+def task_to_widget(
+    task_qualname: str, error_on_duplicates: bool = True
+) -> Tuple[OWWidget, str]:
     """The `task_qualname` could be an ewoks task or an orange widget"""
     all_widgets = list(task_to_widgets(task_qualname))
     if not all_widgets:
-        raise RuntimeError("No OWWidget found for task " + task_qualname)
+        return default_owwidget_class(import_qualname(task_qualname))
     if len(all_widgets) == 1 or not error_on_duplicates:
         return all_widgets[0]
     raise RuntimeError("More than one widget for task " + task_qualname, all_widgets)
@@ -237,8 +240,8 @@ class OwsSchemeWrapper:
         if varinfo is None:
             varinfo = dict()
 
-        self.title = graph["graph"]["name"]
-        self.description = graph["graph"]["name"]
+        self.title = graph["graph"].get("name", "")
+        self.description = self.title
 
         self._nodes = dict()
         self._widget_classes = dict()

@@ -1,11 +1,12 @@
 from typing import Optional
 
-try:
-    OBSOLETE_ORANGE = False
-    from Orange.canvas.mainwindow import MainWindow
-except ImportError:
-    OBSOLETE_ORANGE = True
+from ..orange_version import ORANGE_VERSION
+
+if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
     from Orange.canvas.application.canvasmain import CanvasMainWindow as MainWindow
+else:
+    from Orange.canvas.mainwindow import MainWindow
+
 from ..bindings.qtapp import get_qtapp
 
 

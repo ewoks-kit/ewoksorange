@@ -1,16 +1,11 @@
 import time
-from typing import Optional
 from AnyQt.QtCore import Qt
 
-try:
-    OBSOLETE_ORANGE = False
-    from Orange.canvas.mainwindow import MainWindow
-    from orangecanvas.registry.qt import QtWidgetRegistry
-    from Orange.canvas import config as orangeconfig
-    from orangecanvas import config as canvasconfig
-except ImportError:
-    OBSOLETE_ORANGE = True
+from ..orange_version import ORANGE_VERSION
+
+if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
     from Orange.canvas.application.canvasmain import CanvasMainWindow as MainWindow
+    from Orange.canvas.registry import set_global_registry
     from Orange.canvas.registry.qt import QtWidgetRegistry
     from Orange.canvas.registry.qt import QtWidgetDiscovery
     from Orange.canvas import config as orangeconfig
@@ -18,20 +13,16 @@ except ImportError:
 
     # QWaiterThread is not always stopped before garbage collection
     Orange.canvas.canvas.items.nodeitem.has_silx = False
+else:
+    from Orange.canvas.mainwindow import MainWindow
+    from orangecanvas.registry import set_global_registry
+    from orangecanvas.registry.qt import QtWidgetRegistry
+    from Orange.canvas import config as orangeconfig
+    from orangecanvas import config as canvasconfig
 
-
+from .utils import get_orange_canvas
 from ..bindings import qtapp
 from ..bindings.owsignal_manager import SignalManagerWithOutputTracking
-
-
-def get_orange_canvas() -> Optional[MainWindow]:
-    app = qtapp.get_qtapp()
-    if app is None:
-        return None
-    for widget in app.topLevelWidgets():
-        if isinstance(widget, MainWindow):
-            return widget
-    return None
 
 
 class OrangeCanvasHandler:
@@ -55,7 +46,8 @@ class OrangeCanvasHandler:
         qtapp.ensure_qtapp()
 
         widget_registry = QtWidgetRegistry()
-        if OBSOLETE_ORANGE:
+        set_global_registry(widget_registry)
+        if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
             config = orangeconfig  # a module
             widget_discovery = QtWidgetDiscovery()
             widget_discovery.found_category.connect(widget_registry.register_category)
@@ -69,7 +61,6 @@ class OrangeCanvasHandler:
 
         canvas = MainWindow()
         canvas.setAttribute(Qt.WA_DeleteOnClose)
-        # set_global_registry(widget_registry)
         canvas.set_widget_registry(widget_registry)  # makes a copy of the registry
         self.canvas = canvas
         self.process_events()
@@ -120,6 +111,14 @@ class OrangeCanvasHandler:
     def iter_widgets(self):
         for node in self.iter_nodes():
             yield self.scheme.widget_for_node(node)
+
+    def iter_widgets_with_name(self):
+        for node in self.iter_nodes():
+            yield node.title, self.scheme.widget_for_node(node)
+
+    def iter_output_values(self):
+        for name, widget in self.iter_widgets_with_name():
+            yield name, widget.task_output_values
 
     def wait_widgets(self, timeout=None):
         signal_manager = self.signal_manager

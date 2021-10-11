@@ -6,6 +6,7 @@ from ewoksorange.bindings.qtapp import get_all_qtwidgets
 from ewoksorange.canvas.handler import OrangeCanvasHandler
 from .examples import ewoks_example_1_addon
 from .examples import ewoks_example_2_addon
+from ewoksorange import ewoks_addon
 
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ def qtapp():
 
 @pytest.fixture(scope="session")
 def ewoks_orange_canvas(qtapp, register_ewoks_example_addons):
+    register_addon_package(ewoks_addon)
     with OrangeCanvasHandler() as handler:
         yield handler
 

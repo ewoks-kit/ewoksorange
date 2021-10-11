@@ -7,10 +7,12 @@ from contextlib import contextmanager
 
 from Orange.widgets.widget import OWWidget, WidgetMetaClass
 
-try:
-    from Orange.widgets.widget import OWBaseWidget
-except ImportError:
+from ..orange_version import ORANGE_VERSION
+
+if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
     OWBaseWidget = OWWidget
+else:
+    from Orange.widgets.widget import OWBaseWidget
 from Orange.widgets.settings import Setting
 
 try:
@@ -88,7 +90,7 @@ if "openclass" in inspect.signature(WidgetMetaClass).parameters:
     ow_build_opts["openclass"] = True
 
 
-class _OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts):
+class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts):
     """
     Base class to handle boiler plate code to interconnect ewoks and
     orange3
@@ -209,7 +211,7 @@ def is_orange_widget_class(widget_class):
 
 
 def is_ewoks_widget_class(widget_class):
-    return issubclass(widget_class, _OWEwoksBaseWidget)
+    return issubclass(widget_class, OWEwoksBaseWidget)
 
 
 def is_native_widget_class(widget_class):
@@ -223,14 +225,14 @@ def is_orange_widget(widget):
 
 
 def is_ewoks_widget(widget):
-    return isinstance(widget, _OWEwoksBaseWidget)
+    return isinstance(widget, OWEwoksBaseWidget)
 
 
 def is_native_widget(widget_class):
     return is_orange_widget(widget_class) and not is_ewoks_widget(widget_class)
 
 
-class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, **ow_build_opts):
+class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
     """Widget which will executeEwoksTask the ewokscore.Task directly"""
 
     def __init__(self, *args, **kwargs):
@@ -254,7 +256,7 @@ class OWEwoksWidgetNoThread(_OWEwoksBaseWidget, **ow_build_opts):
         return self.__taskExecutor.output_variables
 
 
-class _OWEwoksThreadedBaseWidget(_OWEwoksBaseWidget, **ow_build_opts):
+class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
         self.__taskProgress = QProgress()
