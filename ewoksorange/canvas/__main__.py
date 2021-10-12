@@ -18,35 +18,46 @@ from ..orange_version import ORANGE_VERSION
 if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
     import argparse
 
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument(
-        "--no-discovery",
-        action="store_true",
-        help="Don't run widget discovery (use full cache instead)",
-    )
-    arg_parser.add_argument(
-        "--force-discovery",
-        action="store_true",
-        help="Force full widget discovery (invalidate cache)",
-    )
-    arg_parser.add_argument(
-        "--no-welcome", action="store_true", help="Don't show welcome dialog."
-    )
-    arg_parser.add_argument(
-        "--no-splash", action="store_true", help="Don't show splash screen."
-    )
-    arg_parser.add_argument(
-        "--stylesheet",
-        help="Application level CSS style sheet to use",
-        type=str,
-        default=None,
-    )
-    arg_parser.add_argument(
-        "--config",
-        help="Configuration namespace",
-        type=str,
-        default=None,
-    )
+    def arg_parser():
+        parser = argparse.ArgumentParser()
+        parser.add_argument(
+            "--no-discovery",
+            action="store_true",
+            help="Don't run widget discovery (use full cache instead)",
+        )
+        parser.add_argument(
+            "--force-discovery",
+            action="store_true",
+            help="Force full widget discovery (invalidate cache)",
+        )
+        parser.add_argument(
+            "--no-welcome", action="store_true", help="Don't show welcome dialog."
+        )
+        parser.add_argument(
+            "--no-splash", action="store_true", help="Don't show splash screen."
+        )
+        parser.add_argument(
+            "--stylesheet",
+            help="Application level CSS style sheet to use",
+            type=str,
+            default=None,
+        )
+        parser.add_argument(
+            "--config",
+            help="Configuration namespace",
+            type=str,
+            default=None,
+        )
+        parser.add_argument(
+            "-l",
+            "--log-level",
+            help="Logging level (0, 1, 2, 3, 4)",
+            type=int,
+            default=1,
+        )
+        return parser
+
+
 else:
     from orangecanvas.main import arg_parser
 
