@@ -236,7 +236,7 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
     """Widget which will executeEwoksTask the ewokscore.Task directly"""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__taskExecutor = TaskExecutor(self.ewokstaskclass)
 
     def executeEwoksTask(self):
@@ -258,7 +258,7 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
 
 class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__taskProgress = QProgress()
         self.__taskProgress.sigProgressChanged.connect(self.progressBarSet)
 
@@ -306,7 +306,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__taskExecutor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
         self.__taskExecutor.finished.connect(self._ewoksTaskFinishedCallback)
 
