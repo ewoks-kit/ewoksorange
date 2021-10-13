@@ -47,6 +47,7 @@ class OrangeCanvasHandler:
 
         widget_registry = QtWidgetRegistry()
         set_global_registry(widget_registry)
+
         if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
             config = orangeconfig  # a module
             widget_discovery = QtWidgetDiscovery()
@@ -57,7 +58,14 @@ class OrangeCanvasHandler:
             config.init()
             canvasconfig.set_default(config)
             widget_discovery = config.widget_discovery(widget_registry)
+
         widget_discovery.run(orangeconfig.widgets_entry_points())
+
+        if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+            widget_discovery.found_category.disconnect(
+                widget_registry.register_category
+            )
+            widget_discovery.found_widget.disconnect(widget_registry.register_widget)
 
         canvas = MainWindow()
         canvas.setAttribute(Qt.WA_DeleteOnClose)
