@@ -1,3 +1,4 @@
+import gc
 import logging
 import pytest
 from ewoksorange.registration import register_addon_package
@@ -7,6 +8,7 @@ from ewoksorange.canvas.handler import OrangeCanvasHandler
 from .examples import ewoks_example_1_addon
 from .examples import ewoks_example_2_addon
 from ewoksorange import ewoks_addon
+from ewoksorange.orange_version import ORANGE_VERSION
 
 
 logger = logging.getLogger(__name__)
@@ -31,10 +33,34 @@ def register_ewoks_example_addons(
     yield
 
 
+def global_cleanup_orange():
+    if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+        from Orange.canvas.document.suggestions import Suggestions
+    else:
+        from orangecanvas.document.suggestions import Suggestions
+    Suggestions.instance = None
+
+
+def global_cleanup_pytest():
+    for obj in gc.get_objects():
+        if isinstance(obj, logging.LogRecord):
+            obj.exc_info = None  # traceback keeps frames which keep locals
+
+
+def collect_garbage(app):
+    app.processEvents()
+    while gc.collect():
+        app.processEvents()
+
+
 @pytest.fixture(scope="session")
 def qtapp():
     with qtapp_context() as app:
         yield app
+    collect_garbage(app)
+    global_cleanup_orange()
+    global_cleanup_pytest()
+    collect_garbage(app)
     warn_qtwidgets_alive()
 
 
