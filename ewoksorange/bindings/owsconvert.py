@@ -1,7 +1,14 @@
 from collections import namedtuple
 from typing import Iterator, List, Tuple
 
-from Orange.widgets.widget import OWWidget
+from ..orange_version import ORANGE_VERSION
+
+if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    from oasys.widgets.widget import OWWidget as OWBaseWidget
+elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+    from Orange.widgets.widget import OWWidget as OWBaseWidget
+else:
+    from orangewidget.widget import OWBaseWidget
 from orangecanvas.scheme import readwrite
 
 from ewokscore import load_graph
@@ -20,8 +27,11 @@ from ..ewoks_addon.orangecontrib.ewoks_defaults import default_owwidget_class
 __all__ = ["ows_to_ewoks", "ewoks_to_ows"]
 
 
-def widget_to_task(widget_qualname) -> Tuple[OWWidget, dict]:
-    widget_class = import_qualname(widget_qualname)
+def widget_to_task(widget_qualname) -> Tuple[OWBaseWidget, dict]:
+    try:
+        widget_class = import_qualname(widget_qualname)
+    except ImportError:
+        widget_class = None
     if hasattr(widget_class, "ewokstaskclass"):
         # Ewoks Orange widget
         return widget_class, {
@@ -37,7 +47,7 @@ def widget_to_task(widget_qualname) -> Tuple[OWWidget, dict]:
         }
 
 
-def task_to_widgets(task_qualname: str) -> Iterator[Tuple[OWWidget, str]]:
+def task_to_widgets(task_qualname: str) -> Iterator[Tuple[OWBaseWidget, str]]:
     """The `task_qualname` could be an ewoks task or an orange widget"""
     for class_desc in get_owwidget_descriptions():
         widget_class = import_qualname(class_desc.qualified_name)
@@ -51,7 +61,7 @@ def task_to_widgets(task_qualname: str) -> Iterator[Tuple[OWWidget, str]]:
 
 def task_to_widget(
     task_qualname: str, error_on_duplicates: bool = True
-) -> Tuple[OWWidget, str]:
+) -> Tuple[OWBaseWidget, str]:
     """The `task_qualname` could be an ewoks task or an orange widget"""
     all_widgets = list(task_to_widgets(task_qualname))
     if not all_widgets:
@@ -133,7 +143,6 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
     widget_classes = dict()
     for ows_node in ows.nodes:
         widget_class, node_attrs = widget_to_task(ows_node.qualified_name)
-        default_inputs = node_data_to_default_inputs(ows_node.data, widget_class)
         owsinfo = {
             "title": ows_node.title,
             "name": ows_node.name,
@@ -141,20 +150,33 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
             "version": ows_node.version,
         }
         node_attrs["id"] = idmap[ows_node.id]
-        node_attrs["default_inputs"] = default_inputs
         if preserve_ows_info:
             node_attrs["ows"] = owsinfo
-        nodes.append(node_attrs)
+        if widget_class is not None:
+            node_attrs["default_inputs"] = node_data_to_default_inputs(
+                ows_node.data, widget_class
+            )
         widget_classes[ows_node.id] = widget_class
+        nodes.append(node_attrs)
 
     links = list()
     for ows_link in ows.links:
-        outputs_class = widget_classes[ows_link.source_node_id].Outputs
-        source_name = signal_orange_to_ewoks_name(
-            outputs_class, ows_link.source_channel
-        )
-        inputs_class = widget_classes[ows_link.sink_node_id].Inputs
-        sink_name = signal_orange_to_ewoks_name(inputs_class, ows_link.sink_channel)
+        widget_class = widget_classes[ows_link.source_node_id]
+        if widget_class is None:
+            source_name = ows_link.source_channel
+        else:
+            source_name = signal_orange_to_ewoks_name(
+                widget_class, "outputs", ows_link.source_channel
+            )
+
+        widget_class = widget_classes[ows_link.sink_node_id]
+        if widget_class is None:
+            sink_name = ows_link.sink_channel
+        else:
+            sink_name = signal_orange_to_ewoks_name(
+                widget_class, "inputs", ows_link.sink_channel
+            )
+
         link = {
             "source": idmap[ows_link.source_node_id],
             "target": idmap[ows_link.sink_node_id],
@@ -162,11 +184,13 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
         }
         links.append(link)
 
+    graph_attrs = dict()
+    if ows.title:
+        graph_attrs["name"] = ows.title
+
     graph = {
-        "directed": True,
-        "graph": {"name": ows.title},
+        "graph": graph_attrs,
         "links": links,
-        "multigraph": True,
         "nodes": nodes,
     }
 
@@ -277,8 +301,10 @@ class OwsSchemeWrapper:
         for item in link["data_mapping"]:
             target_name = item["target_input"]
             source_name = item["source_output"]
-            target_name = signal_ewoks_to_orange_name(sink_class.Inputs, target_name)
-            source_name = signal_ewoks_to_orange_name(source_class.Outputs, source_name)
+            target_name = signal_ewoks_to_orange_name(sink_class, "inputs", target_name)
+            source_name = signal_ewoks_to_orange_name(
+                source_class, "outputs", source_name
+            )
             sink_channel = self._link_channel(name=target_name)
             source_channel = self._link_channel(name=source_name)
             link = self._link(

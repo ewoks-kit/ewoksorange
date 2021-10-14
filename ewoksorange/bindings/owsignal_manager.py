@@ -1,6 +1,17 @@
 from ..orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    from oasys.canvas.widgetsscheme import (
+        OASYSSignalManager as _SignalManagerWithSchemeOrg,
+    )
+    import oasys.canvas.widgetsscheme as widgetsscheme_module
+
+    class _SignalManagerWithScheme(_SignalManagerWithSchemeOrg):
+        def has_pending(self):
+            return bool(self._input_queue)
+
+    notify_input_helper = None
+elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
     from Orange.canvas.scheme.widgetsscheme import (
         WidgetsSignalManager as _SignalManagerWithSchemeOrg,
     )
@@ -10,7 +21,7 @@ if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
         def has_pending(self):
             return bool(self._input_queue)
 
-
+    notify_input_helper = None
 else:
     from orangewidget.workflow.widgetsscheme import (
         WidgetsSignalManager as _SignalManagerWithScheme,
@@ -166,7 +177,9 @@ class SignalManagerWithScheme(
 
     def process_signals_for_widget(self, node, widget, signals):
         for signal in signals:
-            if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+            if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+                signal_name = signal.link.sink_channel
+            elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
                 signal_name = signal.link.sink_channel
             else:
                 signal_name = signal.channel.name
@@ -195,7 +208,10 @@ class SignalManagerWithScheme(
 
 def set_input_value(widget, signal, value, index):
     key = id(widget), signal.name, signal.id
-    if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+        handler = getattr(widget, signal.handler)
+        handler(value)
+    elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
         handler = getattr(widget, signal.handler)
         if signal.single:
             handler(value)
@@ -206,4 +222,7 @@ def set_input_value(widget, signal, value, index):
 
 
 def patch_signal_manager():
-    widgetsscheme_module.WidgetsSignalManager = SignalManagerWithScheme
+    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+        widgetsscheme_module.OASYSSignalManager = SignalManagerWithScheme
+    else:
+        widgetsscheme_module.WidgetsSignalManager = SignalManagerWithScheme

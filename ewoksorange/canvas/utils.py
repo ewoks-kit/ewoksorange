@@ -2,7 +2,9 @@ from typing import Optional
 
 from ..orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    from oasys.canvas.mainwindow import OASYSMainWindow as MainWindow
+elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
     from Orange.canvas.application.canvasmain import CanvasMainWindow as MainWindow
 else:
     from Orange.canvas.mainwindow import MainWindow

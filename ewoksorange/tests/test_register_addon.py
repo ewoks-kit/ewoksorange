@@ -10,18 +10,18 @@ def test_orangecontrib_packages(register_ewoks_example_addons):
 
 def test_discover_widgets(register_ewoks_example_addons):
     widgets = get_owwidget_descriptions()
-    discovered = set(w.id for w in widgets)
+    discovered = set(w.qualified_name for w in widgets)
     expected = {
-        "orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory.adder1",
-        "orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory.adder2",
-        "orangecontrib.evaluate.ewoks_example_submodule.adder1",
-        "orangecontrib.evaluate.ewoks_example_submodule.adder2",
-        "orangecontrib.ewoks_example_category.adder1",
-        "orangecontrib.ewoks_example_category.adder2",
-        "orangecontrib.list_operations.listgenerator",
-        "orangecontrib.list_operations.print_sum",
-        "orangecontrib.list_operations.sumlist_one_thread",
-        "orangecontrib.list_operations.sumlist_several_thread",
-        "orangecontrib.list_operations.sumlist_stack",
+        "orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory.adder1.Adder1",
+        "orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory.adder2.Adder2",
+        "orangecontrib.evaluate.ewoks_example_submodule.adder1.Adder1",
+        "orangecontrib.evaluate.ewoks_example_submodule.adder2.Adder2",
+        "orangecontrib.ewoks_example_category.adder1.Adder1",
+        "orangecontrib.ewoks_example_category.adder2.Adder2",
+        "orangecontrib.list_operations.listgenerator.ListGenerator",
+        "orangecontrib.list_operations.print_sum.PrintSumOW",
+        "orangecontrib.list_operations.sumlist_one_thread.SumListOneThread",
+        "orangecontrib.list_operations.sumlist_several_thread.SumListSeveralThread",
+        "orangecontrib.list_operations.sumlist_stack.SumListWithTaskStack",
     }
     assert (discovered & expected) == expected

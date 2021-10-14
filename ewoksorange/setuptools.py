@@ -19,10 +19,20 @@ from pprint import pprint
 from setuptools import find_packages
 from setuptools import setup as _setup
 
+
+from .orange_version import ORANGE_VERSION
+
+if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    from oasys.canvas.conf import WIDGETS_ENTRY as WIDGET_GROUP
+elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+    from Orange.canvas.config import WIDGETS_ENTRY as WIDGET_GROUP
+else:
+    from orangewidget.workflow.config import WIDGETS_ENTRY as WIDGET_GROUP
+
+
 NAMESPACE_PACKAGE = "orangecontrib"
 PYPI_KEYWORD = "orange3 add-on"
-WIDGET_GROUP = "orange.widgets"
-TUTORIAL_GROUP = "orange.widgets.tutorials"
+TUTORIAL_GROUP = WIDGET_GROUP + ".tutorials"
 HELP_GROUP = "orange.canvas.help"
 TUTORIAL_EXT = ("*.ows",)
 ICON_EXT = ("*.png", "*.svg")

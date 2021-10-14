@@ -14,6 +14,7 @@ from . import owsignals
 from . import owsettings
 from .owsignal_manager import SignalManagerWithoutScheme
 from .owsignal_manager import set_input_value
+from ..orange_version import ORANGE_VERSION
 
 __all__ = ["OWWIDGET_TASKS_GENERATOR"]
 
@@ -74,10 +75,21 @@ def _ewoks_owwidget_task_wrapper(registry_name, widget_class) -> Task:
 
                 # Call the input setters
                 values = self.input_values
-                for index, signal in enumerate(self.widget.get_signals("inputs")):
-                    set_input_value(
-                        self.widget, signal, values[signal.ewoksname], index
-                    )
+
+                if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+                    signals = self.widget.inputs
+                else:
+                    signals = self.widget.get_signals("inputs")
+                orange_to_ewoks = owsignals.get_orange_to_ewoks_mapping(
+                    widget_class, "inputs"
+                )
+
+                for index, signal in enumerate(signals):
+                    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+                        key = orange_to_ewoks.get(signal.name, signal.name)
+                    else:
+                        key = signal.ewoksname
+                    set_input_value(self.widget, signal, values[key], index)
 
                 # Start calculation
                 self.widget.handleNewSignals()
@@ -171,7 +183,7 @@ def _native_owwidget_task_wrapper(registry_name, widget_class) -> Task:
             # Values corresponding to inputs
             for signal in widget_class.get_signals("inputs"):
                 ewoksname = owsignals.signal_orange_to_ewoks_name(
-                    widget_class.Inputs, signal.name
+                    widget_class, "inputs", signal.name
                 )
                 if ewoksname not in values:
                     continue

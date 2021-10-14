@@ -1,4 +1,6 @@
+import pytest
 from ewoksorange.bindings import ows_to_ewoks
+from ewoksorange.orange_version import ORANGE_VERSION
 
 try:
     from importlib import resources
@@ -66,6 +68,10 @@ def test_list_operations_without_qt(ewoks_orange_canvas):
         assert_sumlist_tutorial_without_qt(filename)
 
 
+@pytest.mark.skipif(
+    ORANGE_VERSION == ORANGE_VERSION.oasys_fork,
+    reason="Oasys does not have Orange3 widgets",
+)
 def test_mixed_tutorial1_with_qt(ewoks_orange_canvas):
     from orangecontrib.ewoks_example_category import tutorials
 
@@ -73,6 +79,10 @@ def test_mixed_tutorial1_with_qt(ewoks_orange_canvas):
         assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename)
 
 
+@pytest.mark.skipif(
+    ORANGE_VERSION == ORANGE_VERSION.oasys_fork,
+    reason="Oasys does not have Orange3 widgets",
+)
 def test_mixed_tutorial1_without_qt(register_ewoks_example_addons):
     from orangecontrib.ewoks_example_category import tutorials
 

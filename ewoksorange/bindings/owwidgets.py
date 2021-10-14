@@ -5,20 +5,31 @@ import inspect
 import logging
 from contextlib import contextmanager
 
-from Orange.widgets.widget import OWWidget, WidgetMetaClass
-
 from ..orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-    OWBaseWidget = OWWidget
-else:
-    from Orange.widgets.widget import OWBaseWidget
-from Orange.widgets.settings import Setting
+if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    from oasys.widgets.widget import OWWidget
+    from orangewidget.widget import WidgetMetaClass
+    from orangewidget.settings import Setting
 
-try:
-    from orangewidget.utils.signals import summarize, PartialSummary
-except ImportError:
+    OWBaseWidget = OWWidget
     summarize = None
+    PartialSummary = None
+elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+    from Orange.widgets.widget import OWWidget
+    from Orange.widgets.widget import WidgetMetaClass
+    from Orange.widgets.settings import Setting
+
+    OWBaseWidget = OWWidget
+    summarize = None
+    PartialSummary = None
+else:
+    from Orange.widgets.widget import OWWidget
+    from Orange.widgets.widget import WidgetMetaClass
+    from orangewidget.widget import OWBaseWidget
+    from orangewidget.settings import Setting
+    from orangewidget.utils.signals import summarize
+    from orangewidget.utils.signals import PartialSummary
 
 from ewokscore.variable import Variable
 from ewokscore.variable import value_from_transfer
@@ -28,8 +39,7 @@ from .progress import QProgress
 from .taskexecutor import TaskExecutor
 from .taskexecutor import ThreadedTaskExecutor
 from .taskexecutor_queue import TaskExecutorQueue
-from .owsignals import validate_inputs
-from .owsignals import validate_outputs
+from . import owsignals
 
 
 _logger = logging.getLogger(__name__)
@@ -71,8 +81,8 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
         schema_only=True,
     )
     namespace["varinfo"] = Setting(dict(), schema_only=True)
-    validate_inputs(namespace)
-    validate_outputs(namespace)
+    owsignals.validate_inputs(namespace)
+    owsignals.validate_outputs(namespace)
 
 
 class _OWEwoksWidgetMetaClass(WidgetMetaClass):
@@ -155,13 +165,37 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         else:
             self.__dynamic_inputs[name] = value
 
-    def trigger_downstream(self):
-        for name, var in self.task_outputs.items():
-            channel = getattr(self.Outputs, name)
-            if var.value is MISSING_DATA:
-                channel.send(INVALIDATION_DATA)  # or channel.invalidate?
+    def _get_output_signal(self, ewoksname):
+        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+            for signal in self.outputs:
+                if signal.name == ewoksname:
+                    break
             else:
-                channel.send(var)
+                signal = None
+        else:
+            signal = getattr(self.Outputs, ewoksname, None)
+        if signal is None:
+            raise RuntimeError(f"Output signal '{ewoksname}' does not exist")
+        return signal
+
+    def trigger_downstream(self):
+        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+            for ewoksname, var in self.task_outputs.items():
+                ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
+                    type(self), "outputs"
+                )
+                orangename = ewoks_to_orange.get(ewoksname, ewoksname)
+                if var.value is MISSING_DATA:
+                    self.send(orangename, INVALIDATION_DATA)  # or channel.invalidate?
+                else:
+                    self.send(orangename, var)
+        else:
+            for ewoksname, var in self.task_outputs.items():
+                channel = self._get_output_signal(ewoksname)
+                if var.value is MISSING_DATA:
+                    channel.send(INVALIDATION_DATA)  # or channel.invalidate?
+                else:
+                    channel.send(var)
         for cb in self.__task_output_changed_callbacks:
             cb()
 
@@ -173,9 +207,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         pass
 
     def clear_downstream(self):
-        for name in self.task_outputs:
-            channel = getattr(self.Outputs, name)
-            channel.send(INVALIDATION_DATA)  # or channel.invalidate?
+        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+            for name in self.task_outputs:
+                self.send(name, INVALIDATION_DATA)  # or channel.invalidate?
+        else:
+            for name in self.task_outputs:
+                channel = self._get_output_signal(name)
+                channel.send(INVALIDATION_DATA)  # or channel.invalidate?
 
     def defaultInputsHaveChanged(self):
         """Needs to be called when default inputs have changed"""
