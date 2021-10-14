@@ -6,7 +6,7 @@ test-3.6:
   before_script:
     - export QT_QPA_PLATFORM=offscreen
 
-test-3.6-orange3-fork:
+test-3.6-henri-orange-fork:
   extends: ".test-3.6_glx"
   before_script:
     - export QT_QPA_PLATFORM=offscreen
@@ -14,6 +14,20 @@ test-3.6-orange3-fork:
     - pip install numpy scipy PyQt5 silx chardet sklearn
     # hard fork of Orange3
     - pip install git+https://github.com/payno/orange3.git
+
+test-3.6-oasys-orange-fork:
+  extends: ".test-3.6_glx"
+  before_script:
+    - export QT_QPA_PLATFORM=offscreen
+    - pip install pytest-cov
+    - pip install --pre .[test]
+    # hard fork of Orange3
+    - pip uninstall orange3 -y
+    - pip uninstall orange-canvas-core -y
+    - pip uninstall orange-widget-base -y
+    - pip install git+https://github.com/oasys-kit/OASYS1.git
+  script:
+    - pytest --cov=./ -v .
 
 build_sdist:
   extends: ".build_sdist"

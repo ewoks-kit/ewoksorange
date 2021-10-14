@@ -1,5 +1,11 @@
-from Orange.widgets import gui
-from Orange.widgets.widget import Input, Output
+from ewoksorange.orange_version import ORANGE_VERSION
+
+if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    from oasys.widgets import gui
+
+else:
+    from Orange.widgets import gui
+    from Orange.widgets.widget import Input, Output
 
 
 from ewoksorange.bindings import OWEwoksWidgetNoThread
@@ -16,12 +22,19 @@ class Adder1(OWEwoksWidgetNoThread, ewokstaskclass=SumTask):
     icon = "icons/mywidget.svg"
     want_main_area = False
 
-    class Inputs:
-        a = Input("A", object)
-        b = Input("B", object)
+    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+        inputs = [("A", object, ""), ("B", object, "")]
+        outputs = [{"name": "A + B", "id": "A + B", "type": object}]
+        inputs_orange_to_ewoks = {"A": "a", "B": "b"}
+        outputs_orange_to_ewoks = {"A + B": "result"}
+    else:
 
-    class Outputs:
-        result = Output("A + B", object)
+        class Inputs:
+            a = Input("A", object)
+            b = Input("B", object)
+
+        class Outputs:
+            result = Output("A + B", object)
 
     def __init__(self):
         super().__init__()

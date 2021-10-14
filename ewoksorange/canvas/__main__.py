@@ -12,10 +12,16 @@ but it registers the example Addon before launching.
 import sys
 import logging
 from contextlib import contextmanager
-from Orange.canvas.__main__ import main as orange_main
+
 from ..orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
+if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    from oasys.canvas.__main__ import main as orange_main
+else:
+    from Orange.canvas.__main__ import main as orange_main
+
+
+if ORANGE_VERSION in (ORANGE_VERSION.henri_fork, ORANGE_VERSION.oasys_fork):
     import argparse
 
     def arg_parser():
