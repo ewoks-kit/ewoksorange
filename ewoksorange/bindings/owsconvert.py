@@ -1,5 +1,5 @@
 from collections import namedtuple
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Optional, Tuple
 
 from ..orange_version import ORANGE_VERSION
 
@@ -16,6 +16,7 @@ from ewokscore.utils import qualname
 from ewokscore.utils import import_qualname
 from ewokscore.graph import TaskGraph
 from ewokscore.inittask import task_executable_info
+from ewokscore.task import Task
 
 from ..registration import get_owwidget_descriptions
 from .taskwrapper import OWWIDGET_TASKS_GENERATOR
@@ -27,24 +28,27 @@ from ..ewoks_addon.orangecontrib.ewoks_defaults import default_owwidget_class
 __all__ = ["ows_to_ewoks", "ewoks_to_ows"]
 
 
-def widget_to_task(widget_qualname) -> Tuple[OWBaseWidget, dict]:
+def widget_to_task(widget_qualname) -> Tuple[OWBaseWidget, dict, Optional[Task]]:
     try:
         widget_class = import_qualname(widget_qualname)
     except ImportError:
         widget_class = None
     if hasattr(widget_class, "ewokstaskclass"):
         # Ewoks Orange widget
-        return widget_class, {
+        node_attrs = {
             "task_type": "class",
             "task_identifier": widget_class.ewokstaskclass.class_registry_name(),
         }
+        ewokstaskclass = widget_class.ewokstaskclass
     else:
         # Native Orange widget
-        return widget_class, {
+        node_attrs = {
             "task_type": "generated",
             "task_identifier": widget_qualname,
             "task_generator": OWWIDGET_TASKS_GENERATOR,
         }
+        ewokstaskclass = None
+    return widget_class, node_attrs, ewokstaskclass
 
 
 def task_to_widgets(task_qualname: str) -> Iterator[Tuple[OWBaseWidget, str]]:
@@ -115,14 +119,21 @@ def scheme_to_ows_stream(scheme, stream):
     tree.write(stream, encoding="utf-8", xml_declaration=True)
 
 
-def node_data_to_default_inputs(data: dict, widget_class) -> List[dict]:
+def node_data_to_default_inputs(data: dict, widget_class, ewokstaskclass) -> List[dict]:
     if data is None:
         return list()
     node_properties = readwrite.loads(data.data, data.format)
     if is_ewoks_widget_class(widget_class):
         default_inputs = node_properties.get("default_inputs", dict())
     else:
-        default_inputs = node_properties
+        if ewokstaskclass:
+            default_inputs = {
+                name: value
+                for name, value in node_properties.items()
+                if name in ewokstaskclass.input_names()
+            }
+        else:
+            default_inputs = node_properties
     return [{"name": name, "value": value} for name, value in default_inputs.items()]
 
 
@@ -134,7 +145,6 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
     :returns TaskGraph:
     """
     ows = read_ows(filename)
-
     idmap = {ows_node.id: ows_node.name for ows_node in ows.nodes}
     if len(set(idmap.values())) != len(ows.nodes):
         idmap = {ows_node.id: ows_node.id for ows_node in ows.nodes}
@@ -142,7 +152,9 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
     nodes = list()
     widget_classes = dict()
     for ows_node in ows.nodes:
-        widget_class, node_attrs = widget_to_task(ows_node.qualified_name)
+        widget_class, node_attrs, ewokstaskclass = widget_to_task(
+            ows_node.qualified_name
+        )
         owsinfo = {
             "title": ows_node.title,
             "name": ows_node.name,
@@ -154,7 +166,7 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
             node_attrs["ows"] = owsinfo
         if widget_class is not None:
             node_attrs["default_inputs"] = node_data_to_default_inputs(
-                ows_node.data, widget_class
+                ows_node.data, widget_class, ewokstaskclass
             )
         widget_classes[ows_node.id] = widget_class
         nodes.append(node_attrs)
