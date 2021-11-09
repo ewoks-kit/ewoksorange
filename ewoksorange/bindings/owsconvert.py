@@ -1,15 +1,17 @@
 from collections import namedtuple
-from typing import Iterator, List, Optional, Tuple
+from typing import IO, Iterator, List, Optional, Tuple, Type, Union
 
 from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.widgets.widget import OWWidget as OWBaseWidget
+    from orangecanvas.scheme import readwrite
 elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
     from Orange.widgets.widget import OWWidget as OWBaseWidget
+    from Orange.canvas.scheme import readwrite
 else:
     from orangewidget.widget import OWBaseWidget
-from orangecanvas.scheme import readwrite
+    from orangecanvas.scheme import readwrite
 
 from ewokscore import load_graph
 from ewokscore.utils import qualname
@@ -17,6 +19,7 @@ from ewokscore.utils import import_qualname
 from ewokscore.graph import TaskGraph
 from ewokscore.inittask import task_executable_info
 from ewokscore.task import Task
+from ewokscore.node import get_node_label
 
 from ..registration import get_owwidget_descriptions
 from .taskwrapper import OWWIDGET_TASKS_GENERATOR
@@ -27,8 +30,10 @@ from ..ewoks_addon.orangecontrib.ewoks_defaults import default_owwidget_class
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows"]
 
+ReadSchemeType = readwrite._scheme
 
-def widget_to_task(widget_qualname) -> Tuple[OWBaseWidget, dict, Optional[Task]]:
+
+def widget_to_task(widget_qualname: str) -> Tuple[OWBaseWidget, dict, Optional[Task]]:
     try:
         widget_class = import_qualname(widget_qualname)
     except ImportError:
@@ -75,51 +80,9 @@ def task_to_widget(
     raise RuntimeError("More than one widget for task " + task_qualname, all_widgets)
 
 
-def read_ows(source):
-    """Read an Orange Workflow Scheme
-
-    :param str or stream source:
-    :returns NamedTuple:
-    """
-    if isinstance(source, str):
-        with open(source, mode="rb") as stream:
-            return readwrite.parse_ows_stream(stream)
-    else:
-        return readwrite.parse_ows_stream(source)
-
-
-def write_ows(scheme, destination):
-    """Write an Orange Workflow Scheme
-
-    :param OwsSchemeWrapper scheme:
-    :param str or stream destination:
-    """
-    if not isinstance(scheme, OwsSchemeWrapper):
-        raise TypeError(scheme, type(scheme))
-    if isinstance(destination, str):
-        with open(destination, mode="wb") as stream:
-            scheme_to_ows_stream(scheme, stream)
-    else:
-        scheme_to_ows_stream(scheme, destination)
-
-
-def scheme_to_ows_stream(scheme, stream):
-    """Write an Orange Workflow Scheme
-
-    :param OwsSchemeWrapper scheme:
-    :param str or stream destination:
-    :returns NamedTuple:
-    """
-    if not isinstance(scheme, OwsSchemeWrapper):
-        raise TypeError(scheme, type(scheme))
-    tree = readwrite.scheme_to_etree(scheme, data_format="literal")
-    for node in tree.getroot().find("nodes"):
-        del node.attrib["scheme_node_type"]
-    readwrite.indent(tree.getroot(), 0)
-    tree.write(stream, encoding="utf-8", xml_declaration=True)
-
-
-def node_data_to_default_inputs(data: dict, widget_class, ewokstaskclass) -> List[dict]:
+def node_data_to_default_inputs(
+    data: dict, widget_class: Type[OWBaseWidget], ewokstaskclass: Type[Task]
+) -> List[dict]:
     if data is None:
         return list()
     node_properties = readwrite.loads(data.data, data.format)
@@ -137,20 +100,22 @@ def node_data_to_default_inputs(data: dict, widget_class, ewokstaskclass) -> Lis
     return [{"name": name, "value": value} for name, value in default_inputs.items()]
 
 
-def ows_to_ewoks(filename, preserve_ows_info=False):
-    """Load an Orange Workflow Scheme from a file and convert it
-    to a `TaskGraph`.
-
-    :param str filename:
-    :returns TaskGraph:
-    """
-    ows = read_ows(filename)
-    idmap = {ows_node.id: ows_node.name for ows_node in ows.nodes}
-    if len(set(idmap.values())) != len(ows.nodes):
-        idmap = {ows_node.id: ows_node.id for ows_node in ows.nodes}
-
+def ows_to_ewoks(
+    source: Union[str, IO],
+    preserve_ows_info: bool = False,
+    title_as_node_id: bool = False,
+) -> TaskGraph:
+    """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
+    ows = read_ows(source)
     nodes = list()
     widget_classes = dict()
+    if title_as_node_id:
+        id_to_title = {ows_node.id: ows_node.title for ows_node in ows.nodes}
+        if len(set(id_to_title.values())) != len(id_to_title):
+            id_to_title = dict()
+    else:
+        id_to_title = dict()
+
     for ows_node in ows.nodes:
         widget_class, node_attrs, ewokstaskclass = widget_to_task(
             ows_node.qualified_name
@@ -161,7 +126,8 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
             "position": ows_node.position,
             "version": ows_node.version,
         }
-        node_attrs["id"] = idmap[ows_node.id]
+        node_attrs["id"] = id_to_title.get(ows_node.id, ows_node.id)
+        node_attrs["label"] = ows_node.title
         if preserve_ows_info:
             node_attrs["ows"] = owsinfo
         if widget_class is not None:
@@ -190,15 +156,16 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
             )
 
         link = {
-            "source": idmap[ows_link.source_node_id],
-            "target": idmap[ows_link.sink_node_id],
+            "source": id_to_title.get(ows_link.source_node_id, ows_link.source_node_id),
+            "target": id_to_title.get(ows_link.sink_node_id, ows_link.sink_node_id),
             "data_mapping": [{"target_input": sink_name, "source_output": source_name}],
         }
         links.append(link)
 
     graph_attrs = dict()
     if ows.title:
-        graph_attrs["name"] = ows.title
+        graph_attrs["id"] = ows.title
+        graph_attrs["label"] = ows.description
 
     graph = {
         "graph": graph_attrs,
@@ -209,12 +176,14 @@ def ows_to_ewoks(filename, preserve_ows_info=False):
     return load_graph(graph)
 
 
-def ewoks_to_ows(ewoksgraph, destination, varinfo=None, error_on_duplicates=True):
-    """Write a TaskGraph as an Orange Workflow Scheme file.
-
-    :param TaskGraph ewoksgraph:
-    :param str or stream destination:
-    :param bool error_on_duplicates:
+def ewoks_to_ows(
+    ewoksgraph: TaskGraph,
+    destination: Union[str, IO],
+    varinfo: Optional[dict] = None,
+    error_on_duplicates: bool = True,
+):
+    """Write a TaskGraph as an Orange Workflow Scheme file. The ewoks node id's
+    are lost because Orange uses node index numbers as id's.
     """
     if ewoksgraph.is_cyclic:
         raise RuntimeError("Orange can only execute DAGs")
@@ -234,24 +203,24 @@ class OwsNodeWrapper:
         ["name", "qualified_name", "version", "project_name"],
     )
 
-    def __init__(self, adict):
-        ows = adict.get("ows", dict())
-
-        self.title = ows.get("title", adict["id"])
+    def __init__(self, node_attrs: dict):
+        ows = node_attrs.get("ows", dict())
+        node_id = node_attrs["id"]
+        node_label = get_node_label(node_attrs, node_id=node_id)
+        self.title = ows.get("title", node_label)
         self.position = ows.get("position", (0.0, 0.0))
-
+        default_name = node_attrs["qualified_name"].split(".")[-1]
         self.description = self._node_desc(
-            name=ows.get("name", adict["id"]),
-            qualified_name=adict["qualified_name"],
-            project_name=adict["project_name"],
+            name=ows.get("name", default_name),
+            qualified_name=node_attrs["qualified_name"],
+            project_name=node_attrs["project_name"],
             version=ows.get("version", ""),
         )
-
-        default_inputs = adict.get("default_inputs", list())
+        default_inputs = node_attrs.get("default_inputs", list())
         default_inputs = {item["name"]: item["value"] for item in default_inputs}
         self.properties = {
             "default_inputs": default_inputs,
-            "varinfo": adict.get("varinfo", dict()),
+            "varinfo": node_attrs.get("varinfo", dict()),
         }
 
     def __str__(self):
@@ -259,7 +228,7 @@ class OwsNodeWrapper:
 
 
 class OwsSchemeWrapper:
-    """Only part of the API used by scheme_to_ows_stream"""
+    """Only the part of the scheme API used by scheme_to_ows_stream"""
 
     _link = namedtuple(
         "Link",
@@ -276,10 +245,10 @@ class OwsSchemeWrapper:
         if varinfo is None:
             varinfo = dict()
 
-        self.title = graph["graph"].get("name", "")
-        self.description = self.title
+        self.title = graph["graph"].get("id", "")
+        self.description = graph["graph"].get("label", "")
 
-        self._nodes = dict()
+        self._nodes = dict()  # the keys of this dictionary never used
         self._widget_classes = dict()
         for node_attrs in graph["nodes"]:
             task_type, task_info = task_executable_info(node_attrs)
@@ -330,3 +299,21 @@ class OwsSchemeWrapper:
 
     def window_group_presets(self):
         return list()
+
+
+def read_ows(source: Union[str, IO]) -> ReadSchemeType:
+    """Read an Orange Workflow Scheme from a file or a stream."""
+    return readwrite.parse_ows_stream(source)
+
+
+def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):
+    """Write an Orange Workflow Scheme. The ewoks node id's
+    are lost because Orange uses node index numbers as id's.
+    """
+    if not isinstance(scheme, OwsSchemeWrapper):
+        raise TypeError(scheme, type(scheme))
+    tree = readwrite.scheme_to_etree(scheme, data_format="literal")
+    for node in tree.getroot().find("nodes"):
+        del node.attrib["scheme_node_type"]
+    readwrite.indent(tree.getroot(), 0)
+    tree.write(destination, encoding="utf-8", xml_declaration=True)

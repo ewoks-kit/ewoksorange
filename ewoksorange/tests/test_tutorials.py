@@ -159,4 +159,4 @@ def assert_mixed_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
     graph = ows_to_ewoks(filename)
     results = graph.execute()
-    assert results["Adder2"].output_values == {"result": 3}
+    assert results["1"].output_values == {"result": 3}
