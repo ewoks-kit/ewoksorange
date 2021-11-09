@@ -41,13 +41,15 @@ def test_ewoks_to_ows(graph_name, tmpdir):
     """Test conversion of ewoks to orange worflow files and back"""
     graph, _ = get_graph(graph_name)
     ewoksgraph = load_graph(graph)
+    for node_id, node_attrs in ewoksgraph.graph.nodes.items():
+        node_attrs["label"] = node_id
 
     destination = str(tmpdir / "ewoksgraph2.ows")
     if ewoksgraph.is_cyclic or ewoksgraph.has_conditional_links:
         with pytest.raises(RuntimeError):
             ewoks_to_ows(ewoksgraph, destination)
         return
-    ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
 
-    ewoksgraph2 = ows_to_ewoks(destination)
+    ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
+    ewoksgraph2 = ows_to_ewoks(destination, title_as_node_id=True)
     assert ewoksgraph == ewoksgraph2
