@@ -78,20 +78,20 @@ def get_ewoks_to_orange_mapping(widget_class, direction: str) -> Optional[dict]:
         return None
 
 
-def signal_ewoks_to_orange_name(widget_class, direction: str, ewoskname: str) -> str:
+def signal_ewoks_to_orange_name(widget_class, direction: str, ewoksname: str) -> str:
     signal_container = get_signal_container(widget_class, direction)
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         orange_to_ewoks = get_orange_to_ewoks_mapping(widget_class, direction)
         for signal in signal_container:
-            signal_ewoskname = orange_to_ewoks.get(signal.name, signal.name)
-            if signal_ewoskname == ewoskname:
+            signal_ewoksname = orange_to_ewoks.get(signal.name, signal.name)
+            if signal_ewoksname == ewoksname:
                 return signal.name
-        raise RuntimeError(f"{ewoskname} is not a signal of {signal_container}")
+        raise RuntimeError(f"{ewoksname} is not a signal of {signal_container}")
     else:
         try:
-            return getattr(signal_container, ewoskname).name
+            return getattr(signal_container, ewoksname).name
         except AttributeError:
-            raise RuntimeError(f"{ewoskname} is not a signal of {signal_container}")
+            raise RuntimeError(f"{ewoksname} is not a signal of {signal_container}")
 
 
 def signal_orange_to_ewoks_name(widget_class, direction: str, orangename: str) -> str:
@@ -103,9 +103,9 @@ def signal_orange_to_ewoks_name(widget_class, direction: str, orangename: str) -
                 return orange_to_ewoks.get(orangename, orangename)
         raise RuntimeError(f"{orangename} is not a signal of {signal_container}")
     else:
-        for ewoskname, signal in get_signals(signal_container).items():
+        for ewoksname, signal in get_signals(signal_container).items():
             if signal.name == orangename:
-                return ewoskname
+                return ewoksname
         raise RuntimeError(f"{orangename} is not a signal of {signal_container}")
 
 
