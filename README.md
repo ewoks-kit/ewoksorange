@@ -6,6 +6,22 @@
 python -m pip install ewoksorange[test]
 ```
 
+When using Oasys instead of Orange3
+
+```bash
+python -m pip install --no-deps ewoksorange
+python -m pip install ewokscore
+python -m pip install AnyQt
+python -m pip install oasys1
+```
+
+For the tests in an Oasys environment
+
+```bash
+python -m pip install ewokscore[test]
+python -m pip install importlib_resources  # python_version < "3.7"
+```
+
 ## Test
 
 ```bash
