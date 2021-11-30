@@ -140,7 +140,7 @@ def assert_sumlist_tutorial_without_qt(filename):
             if adict["name"] == "delay":
                 adict["value"] = 0
 
-    results = graph.execute()
+    results = graph.execute(results_of_all_nodes=True)
     listsum = sum(results["0"].output_values["list"])
     for i in [4, 5, 6]:
         assert results[str(i)].input_values == {"sum": listsum}
