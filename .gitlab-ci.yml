@@ -33,3 +33,7 @@ build_doc:
 
 pages:
   extends: .pages
+
+assets:
+  extends: .assets
+
