@@ -63,7 +63,6 @@ if ORANGE_VERSION in (ORANGE_VERSION.henri_fork, ORANGE_VERSION.oasys_fork):
         )
         return parser
 
-
 else:
     from orangecanvas.main import arg_parser
 

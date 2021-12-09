@@ -16,7 +16,6 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         def __getattr__(self, attr):
             return self[attr]
 
-
 elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
     from Orange.widgets.utils.signals import Input, Output
 else:

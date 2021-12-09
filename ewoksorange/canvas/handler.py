@@ -14,7 +14,6 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         def show_scheme_properties_for(self, scheme, window_title=None):
             return QDialog.Accepted
 
-
 elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
     from Orange.canvas.application.canvasmain import CanvasMainWindow as MainWindow
     from Orange.canvas.registry import set_global_registry
