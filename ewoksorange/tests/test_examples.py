@@ -21,7 +21,15 @@ def test_execute_graph(graph_name, tmpdir, ewoks_orange_canvas):
     graph, expected = get_graph(graph_name)
     ewoksgraph = load_graph(graph)
     varinfo = {"root_uri": str(tmpdir)}
-    if ewoksgraph.is_cyclic or ewoksgraph.has_conditional_links:
+    no_explicit_datamapping = any(
+        not link_attrs.get("data_mapping")
+        for link_attrs in ewoksgraph.graph.edges.values()
+    )
+    if (
+        ewoksgraph.is_cyclic
+        or ewoksgraph.has_conditional_links
+        or no_explicit_datamapping
+    ):
         pytest.skip("graph not supported by orange")
     else:
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -30,6 +38,6 @@ def test_execute_graph(graph_name, tmpdir, ewoks_orange_canvas):
                 ewoksgraph, filename, varinfo=varinfo, error_on_duplicates=False
             )
             ewoks_orange_canvas.load_ows(filename)
-        ewoks_orange_canvas.wait_widgets(timeout=60)
+        ewoks_orange_canvas.wait_widgets(timeout=10)
 
         assert_taskgraph_result(ewoksgraph, expected, varinfo=varinfo)
