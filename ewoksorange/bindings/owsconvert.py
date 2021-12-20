@@ -1,3 +1,5 @@
+import json
+import logging
 from collections import namedtuple
 from typing import IO, Iterator, List, Optional, Tuple, Type, Union
 
@@ -31,6 +33,8 @@ from ..ewoks_addon.orangecontrib.ewoks_defaults import default_owwidget_class
 __all__ = ["ows_to_ewoks", "ewoks_to_ows"]
 
 ReadSchemeType = readwrite._scheme
+
+logger = logging.getLogger(__name__)
 
 
 def widget_to_task(widget_qualname: str) -> Tuple[OWBaseWidget, dict, Optional[Task]]:
@@ -107,6 +111,14 @@ def ows_to_ewoks(
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
     ows = read_ows(source)
+
+    description = ows.description
+    try:
+        ewoksinfo = json.loads(description)
+        description = ewoksinfo["description"]
+    except Exception:
+        ewoksinfo = dict()
+
     nodes = list()
     widget_classes = dict()
     if title_as_node_id:
@@ -131,9 +143,11 @@ def ows_to_ewoks(
         if preserve_ows_info:
             node_attrs["ows"] = owsinfo
         if widget_class is not None:
-            node_attrs["default_inputs"] = node_data_to_default_inputs(
+            default_inputs = node_data_to_default_inputs(
                 ows_node.data, widget_class, ewokstaskclass
             )
+            if default_inputs:
+                node_attrs["default_inputs"] = default_inputs
         widget_classes[ows_node.id] = widget_class
         nodes.append(node_attrs)
 
@@ -162,10 +176,12 @@ def ows_to_ewoks(
         }
         links.append(link)
 
+    links += ewoksinfo.get("missing_links", list())
+
     graph_attrs = dict()
     if ows.title:
         graph_attrs["id"] = ows.title
-        graph_attrs["label"] = ows.description
+        graph_attrs["label"] = description
 
     graph = {
         "graph": graph_attrs,
@@ -246,7 +262,7 @@ class OwsSchemeWrapper:
             varinfo = dict()
 
         self.title = graph["graph"].get("id", "")
-        self.description = graph["graph"].get("label", "")
+        self._description = graph["graph"].get("label", "")
 
         self._nodes = dict()  # the keys of this dictionary never used
         self._widget_classes = dict()
@@ -263,6 +279,7 @@ class OwsSchemeWrapper:
             self._widget_classes[node_attrs["id"]] = widget_class
 
         self.links = list()
+        self.missing_links = list()
         for link in graph["links"]:
             self._convert_link(link)
 
@@ -274,12 +291,33 @@ class OwsSchemeWrapper:
     def annotations(self):
         return list()
 
+    @property
+    def description(self):
+        if self.missing_links:
+            description = {
+                "description": self._description,
+                "missing_links": self.missing_links,
+            }
+            return json.dumps(description)
+        else:
+            return self._description
+
     def _convert_link(self, link):
+        """In Orange, a link must transfer data"""
         source_node = self._nodes[link["source"]]
         sink_node = self._nodes[link["target"]]
         source_class = self._widget_classes[link["source"]]
         sink_class = self._widget_classes[link["target"]]
-        for item in link["data_mapping"]:
+        data_mapping = link.get("data_mapping", None)
+        if not data_mapping:
+            logger.warning(
+                "link '%s' -> '%s' cannot be created in Orange because it has not data transfer",
+                source_node,
+                sink_node,
+            )
+            self.missing_links.append(link)
+            return
+        for item in data_mapping:
             target_name = item["target_input"]
             source_name = item["source_output"]
             target_name = signal_ewoks_to_orange_name(sink_class, "inputs", target_name)
