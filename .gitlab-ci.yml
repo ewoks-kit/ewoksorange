@@ -22,11 +22,17 @@ test-3.6-oasys-orange-fork:
     - pip install oasys1
     - pytest --cov=./ -v .
 
+test-3.8-win:
+  extends: .test-3.8_glx-win
+
 build_sdist:
   extends: .build_sdist
 
 test_sdist-3.6:
   extends: .test_sdist-3.6_glx
+
+test_sdist-3.8-win:
+  extends: .test_sdist-3.8_glx-win
 
 build_doc:
   extends: .build_doc
