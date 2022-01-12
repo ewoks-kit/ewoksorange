@@ -15,14 +15,6 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     OWBaseWidget = OWWidget
     summarize = None
     PartialSummary = None
-elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-    from Orange.widgets.widget import OWWidget
-    from Orange.widgets.widget import WidgetMetaClass
-    from Orange.widgets.settings import Setting
-
-    OWBaseWidget = OWWidget
-    summarize = None
-    PartialSummary = None
 else:
     from Orange.widgets.widget import OWWidget
     from Orange.widgets.widget import WidgetMetaClass

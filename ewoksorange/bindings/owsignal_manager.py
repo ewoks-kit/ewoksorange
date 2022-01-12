@@ -11,17 +11,6 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             return bool(self._input_queue)
 
     notify_input_helper = None
-elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-    from Orange.canvas.scheme.widgetsscheme import (
-        WidgetsSignalManager as _SignalManagerWithSchemeOrg,
-    )
-    import Orange.canvas.scheme.widgetsscheme as widgetsscheme_module
-
-    class _SignalManagerWithScheme(_SignalManagerWithSchemeOrg):
-        def has_pending(self):
-            return bool(self._input_queue)
-
-    notify_input_helper = None
 else:
     from orangewidget.workflow.widgetsscheme import (
         WidgetsSignalManager as _SignalManagerWithScheme,
@@ -179,8 +168,6 @@ class SignalManagerWithScheme(
         for signal in signals:
             if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
                 signal_name = signal.link.sink_channel
-            elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-                signal_name = signal.link.sink_channel
             else:
                 signal_name = signal.channel.name
             self.set_input_value(widget, signal_name, signal.value)
@@ -211,12 +198,6 @@ def set_input_value(widget, signal, value, index):
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         handler = getattr(widget, signal.handler)
         handler(value)
-    elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-        handler = getattr(widget, signal.handler)
-        if signal.single:
-            handler(value)
-        else:
-            handler(value, key)
     else:
         notify_input_helper(signal, widget, value, key=key, index=index)
 

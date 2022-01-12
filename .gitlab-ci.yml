@@ -4,14 +4,6 @@ include:
 test-3.6:
   extends: .test-3.6_glx
 
-test-3.6-henri-orange-fork:
-  extends: .test-3.6_glx
-  script:
-    - pip install --no-deps .
-    - pip install ewokscore[test]
-    - pip install importlib_resources  # python_version < "3.7"
-    - pip install git+https://github.com/payno/orange3.git
-
 test-3.6-oasys-orange-fork:
   extends: .test-3.6_glx
   script:

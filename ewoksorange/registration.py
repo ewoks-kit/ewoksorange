@@ -65,16 +65,6 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         )
 
     NATIVE_WIDGETS_PROJECT = "oasys1"
-elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-    from Orange.canvas.registry.discovery import WidgetDiscovery
-    from Orange.canvas.registry.base import WidgetRegistry
-    from Orange.canvas.registry.description import WidgetDescription
-    from Orange.canvas.registry.description import CategoryDescription
-    from Orange.canvas.registry import global_registry
-
-    category_from_package_globals = CategoryDescription.from_package
-
-    NATIVE_WIDGETS_PROJECT = "orange3"
 else:
     from orangewidget.workflow.discovery import WidgetDiscovery
     from orangecanvas.registry.base import WidgetRegistry
@@ -218,15 +208,6 @@ def get_owwidget_description(
 ):
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         description = get_widget_description(widget_class)
-    elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-        kwargs = widget_class.get_widget_description()
-
-        for key in ["inputs", "outputs"]:
-            for s in kwargs[key]:
-                if isinstance(s.type, type):
-                    s.type = "%s.%s" % (s.type.__module__, s.type.__name__)
-
-        description = WidgetDescription(**kwargs)
     else:
         kwargs = widget_class.get_widget_description()
         description = WidgetDescription(**kwargs)

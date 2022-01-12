@@ -21,7 +21,7 @@ else:
     from Orange.canvas.__main__ import main as orange_main
 
 
-if ORANGE_VERSION in (ORANGE_VERSION.henri_fork, ORANGE_VERSION.oasys_fork):
+if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     import argparse
 
     def arg_parser():
