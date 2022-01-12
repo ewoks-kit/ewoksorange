@@ -15,10 +15,16 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             return QDialog.Accepted
 
 else:
-    from Orange.canvas.mainwindow import MainWindow
+    try:
+        # load MainWindow and config from Orange if installed
+        from Orange.canvas.mainwindow import MainWindow
+        from Orange.canvas import config as orangeconfig
+    except ImportError:
+        # else use the base one from orangewidget
+        from orangewidget.workflow.mainwindow import OWCanvasMainWindow as MainWindow
+        from orangewidget.workflow import config as orangeconfig
     from orangecanvas.registry import set_global_registry
     from orangecanvas.registry.qt import QtWidgetRegistry
-    from Orange.canvas import config as orangeconfig
     from orangecanvas import config as canvasconfig
 
 from .utils import get_orange_canvas

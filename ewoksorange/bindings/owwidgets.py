@@ -16,12 +16,17 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     summarize = None
     PartialSummary = None
 else:
-    from Orange.widgets.widget import OWWidget
-    from Orange.widgets.widget import WidgetMetaClass
     from orangewidget.widget import OWBaseWidget
     from orangewidget.settings import Setting
     from orangewidget.utils.signals import summarize
     from orangewidget.utils.signals import PartialSummary
+
+    try:
+        from Orange.widgets.widget import OWWidget
+        from Orange.widgets.widget import WidgetMetaClass
+    except ImportError:
+        OWWidget = OWBaseWidget
+        WidgetMetaClass = type(OWBaseWidget)
 
 from ewokscore.variable import Variable
 from ewokscore.variable import value_from_transfer

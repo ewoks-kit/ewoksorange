@@ -1,8 +1,15 @@
 include:
   - remote: https://gitlab.esrf.fr/workflow/ewoks/ewoks/raw/main/.gitlab-ci-template.yml
 
-test-3.6:
+test-3.6-orange:
   extends: .test-3.6_glx
+  script:
+    - pip install --no-deps .
+    - pip install Orange3
+    - pip install ewokscore[test]
+    - pip install importlib_resources  # python_version < "3.7"
+    - pip install Orange3
+    - pytest --cov=./ -v .
 
 test-3.6-oasys-orange-fork:
   extends: .test-3.6_glx

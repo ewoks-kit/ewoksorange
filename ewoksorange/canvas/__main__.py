@@ -18,7 +18,7 @@ from ..orange_version import ORANGE_VERSION
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas.__main__ import main as orange_main
 else:
-    from Orange.canvas.__main__ import main as orange_main
+    from orangecanvas import main as orange_main
 
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
