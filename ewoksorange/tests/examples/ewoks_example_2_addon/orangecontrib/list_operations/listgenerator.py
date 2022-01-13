@@ -3,12 +3,10 @@ from ewoksorange.orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.widgets import gui
-
+elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+    from Orange.widgets import gui
 else:
-    try:
-        from Orange.widgets import gui
-    except ImportError:
-        from orangewidget import gui
+    from orangewidget import gui
 from ewoksorange.bindings import OWEwoksWidgetNoThread
 from ewoksorange.gui.parameterform import ParameterForm
 from ewoksorange.tests.listoperations import GenerateList

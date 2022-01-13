@@ -72,7 +72,10 @@ else:
     from orangecanvas.registry import global_registry
     from orangecanvas.registry.utils import category_from_package_globals
 
-    NATIVE_WIDGETS_PROJECT = "orange3"
+    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+        NATIVE_WIDGETS_PROJECT = "orange3"
+    else:
+        NATIVE_WIDGETS_PROJECT = "orange"
 
 from ewoksorange import setuptools
 from .canvas.utils import get_orange_canvas
@@ -177,7 +180,7 @@ def global_registry_objects() -> List[WidgetRegistry]:
         reg = canvas.widget_registry
         if reg is not None:
             registry_objects.append(reg)
-    if ORANGE_VERSION == ORANGE_VERSION.latest and scene is not None:
+    if ORANGE_VERSION != ORANGE_VERSION.oasys_fork and scene is not None:
         reg = scene.registry()
         if reg is not None:
             registry_objects.append(reg)

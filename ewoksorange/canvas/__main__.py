@@ -17,8 +17,17 @@ from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas.__main__ import main as orange_main
+elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+    from Orange.canvas.__main__ import main as orange_main
 else:
-    from orangecanvas import main as orange_main
+    from orangecanvas.main import Main as OrangeCanvasMain
+
+    class Main(OrangeCanvasMain):
+        DefaultConfig = "ewoksorange.canvas.config.Config"
+
+    def orange_main(argv):
+        main_instance = Main()
+        return main_instance.run(argv)
 
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:

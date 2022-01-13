@@ -4,6 +4,8 @@ from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas.mainwindow import OASYSMainWindow as MainWindow
+elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+    from Orange.canvas.mainwindow import MainWindow
 else:
     from orangewidget.workflow.mainwindow import OWCanvasMainWindow as MainWindow
 

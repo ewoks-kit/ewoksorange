@@ -15,22 +15,18 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             return QDialog.Accepted
 
 else:
-    try:
-        # load MainWindow and config from Orange if installed
-        from Orange.canvas.mainwindow import MainWindow
-        from Orange.canvas import config as orangeconfig
-    except ImportError:
-        # else use the base one from orangewidget
-        from orangewidget.workflow.mainwindow import OWCanvasMainWindow as MainWindow
-        from orangewidget.workflow import config as orangeconfig
-        import pkg_resources
-
-        has_orange = False
-    else:
-        has_orange = True
     from orangecanvas.registry import set_global_registry
     from orangecanvas.registry.qt import QtWidgetRegistry
     from orangecanvas import config as canvasconfig
+
+    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+        # load MainWindow and config from Orange if installed
+        from Orange.canvas.mainwindow import MainWindow
+        from Orange.canvas import config as orangeconfig
+    else:
+        # else use the base one from orangewidget
+        from orangewidget.workflow.mainwindow import OWCanvasMainWindow as MainWindow
+        from ewoksorange.canvas import config as orangeconfig
 
 from .utils import get_orange_canvas
 from ..bindings import qtapp
@@ -67,40 +63,7 @@ class OrangeCanvasHandler:
             widget_discovery = config.widget_discovery(widget_registry)
             widget_discovery.run(config.widgets_entry_points())
         else:
-            if has_orange:
-                config = orangeconfig.Config()
-            else:
-                # redefine Config in order to load add-on
-                class TmpConfig(orangeconfig.Config):
-                    @staticmethod
-                    def widgets_entry_points():
-                        """
-                        Return an `EntryPoint` iterator for all 'orange.widget' entry
-                        points.
-                        """
-                        # Ensure the 'this' distribution's ep is the first. iter_entry_points
-                        # yields them in unspecified order.
-                        WIDGETS_ENTRY = "orange.widgets"
-
-                        def is_tomwer_extension(entry):
-                            return "tomwer" in entry.name.lower()
-
-                        all_eps = pkg_resources.iter_entry_points(WIDGETS_ENTRY)
-                        all_eps = sorted(
-                            all_eps,
-                            key=lambda ep: 0
-                            if ep.dist.project_name.lower()
-                            in ("orange3", "ewoksorange")
-                            else 1,
-                        )
-                        return iter(all_eps)
-
-                    @staticmethod
-                    def addon_entry_points():
-                        return TmpConfig.widgets_entry_points()
-
-                config = TmpConfig()
-
+            config = orangeconfig.Config()
             config.init()
             canvasconfig.set_default(config)
             widget_discovery = config.widget_discovery(widget_registry)
