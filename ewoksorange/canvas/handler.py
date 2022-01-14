@@ -14,22 +14,19 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         def show_scheme_properties_for(self, scheme, window_title=None):
             return QDialog.Accepted
 
-elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-    from Orange.canvas.application.canvasmain import CanvasMainWindow as MainWindow
-    from Orange.canvas.registry import set_global_registry
-    from Orange.canvas.registry.qt import QtWidgetRegistry
-    from Orange.canvas.registry.qt import QtWidgetDiscovery
-    from Orange.canvas import config as orangeconfig
-    import Orange.canvas.canvas.items.nodeitem
-
-    # QWaiterThread is not always stopped before garbage collection
-    Orange.canvas.canvas.items.nodeitem.has_silx = False
 else:
-    from Orange.canvas.mainwindow import MainWindow
     from orangecanvas.registry import set_global_registry
     from orangecanvas.registry.qt import QtWidgetRegistry
-    from Orange.canvas import config as orangeconfig
     from orangecanvas import config as canvasconfig
+
+    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+        # load MainWindow and config from Orange if installed
+        from Orange.canvas.mainwindow import MainWindow
+        from Orange.canvas import config as orangeconfig
+    else:
+        # else use the base one from orangewidget
+        from orangewidget.workflow.mainwindow import OWCanvasMainWindow as MainWindow
+        from ewoksorange.canvas import config as orangeconfig
 
 from .utils import get_orange_canvas
 from ..bindings import qtapp
@@ -65,23 +62,12 @@ class OrangeCanvasHandler:
             canvasconfig.set_default(config)
             widget_discovery = config.widget_discovery(widget_registry)
             widget_discovery.run(config.widgets_entry_points())
-        elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-            widget_discovery = QtWidgetDiscovery()
-            widget_discovery.found_category.connect(widget_registry.register_category)
-            widget_discovery.found_widget.connect(widget_registry.register_widget)
-            widget_discovery.run(orangeconfig.widgets_entry_points())
         else:
             config = orangeconfig.Config()
             config.init()
             canvasconfig.set_default(config)
             widget_discovery = config.widget_discovery(widget_registry)
             widget_discovery.run(orangeconfig.widgets_entry_points())
-
-        if ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-            widget_discovery.found_category.disconnect(
-                widget_registry.register_category
-            )
-            widget_discovery.found_widget.disconnect(widget_registry.register_widget)
 
         canvas = MainWindow()
         canvas.setAttribute(Qt.WA_DeleteOnClose)

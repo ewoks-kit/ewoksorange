@@ -65,16 +65,6 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         )
 
     NATIVE_WIDGETS_PROJECT = "oasys1"
-elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-    from Orange.canvas.registry.discovery import WidgetDiscovery
-    from Orange.canvas.registry.base import WidgetRegistry
-    from Orange.canvas.registry.description import WidgetDescription
-    from Orange.canvas.registry.description import CategoryDescription
-    from Orange.canvas.registry import global_registry
-
-    category_from_package_globals = CategoryDescription.from_package
-
-    NATIVE_WIDGETS_PROJECT = "orange3"
 else:
     from orangewidget.workflow.discovery import WidgetDiscovery
     from orangecanvas.registry.base import WidgetRegistry
@@ -82,7 +72,10 @@ else:
     from orangecanvas.registry import global_registry
     from orangecanvas.registry.utils import category_from_package_globals
 
-    NATIVE_WIDGETS_PROJECT = "orange3"
+    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+        NATIVE_WIDGETS_PROJECT = "orange3"
+    else:
+        NATIVE_WIDGETS_PROJECT = "orange"
 
 from ewoksorange import setuptools
 from .canvas.utils import get_orange_canvas
@@ -187,7 +180,7 @@ def global_registry_objects() -> List[WidgetRegistry]:
         reg = canvas.widget_registry
         if reg is not None:
             registry_objects.append(reg)
-    if ORANGE_VERSION == ORANGE_VERSION.latest and scene is not None:
+    if ORANGE_VERSION != ORANGE_VERSION.oasys_fork and scene is not None:
         reg = scene.registry()
         if reg is not None:
             registry_objects.append(reg)
@@ -218,15 +211,6 @@ def get_owwidget_description(
 ):
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         description = get_widget_description(widget_class)
-    elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-        kwargs = widget_class.get_widget_description()
-
-        for key in ["inputs", "outputs"]:
-            for s in kwargs[key]:
-                if isinstance(s.type, type):
-                    s.type = "%s.%s" % (s.type.__module__, s.type.__name__)
-
-        description = WidgetDescription(**kwargs)
     else:
         kwargs = widget_class.get_widget_description()
         description = WidgetDescription(**kwargs)

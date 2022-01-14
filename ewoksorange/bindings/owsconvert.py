@@ -8,9 +8,6 @@ from ..orange_version import ORANGE_VERSION
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.widgets.widget import OWWidget as OWBaseWidget
     from orangecanvas.scheme import readwrite
-elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-    from Orange.widgets.widget import OWWidget as OWBaseWidget
-    from Orange.canvas.scheme import readwrite
 else:
     from orangewidget.widget import OWBaseWidget
     from orangecanvas.scheme import readwrite

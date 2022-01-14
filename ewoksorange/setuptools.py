@@ -24,8 +24,6 @@ from .orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas.conf import WIDGETS_ENTRY as WIDGET_GROUP
-elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-    from Orange.canvas.config import WIDGETS_ENTRY as WIDGET_GROUP
 else:
     from orangewidget.workflow.config import WIDGETS_ENTRY as WIDGET_GROUP
 

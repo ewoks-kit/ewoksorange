@@ -36,10 +36,6 @@ def register_ewoks_example_addons(
 def global_cleanup_orange():
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         pass
-    elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-        from Orange.canvas.document.suggestions import Suggestions
-
-        Suggestions.instance = None
     else:
         from orangecanvas.document.suggestions import Suggestions
 

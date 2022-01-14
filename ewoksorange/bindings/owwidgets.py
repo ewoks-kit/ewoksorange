@@ -15,21 +15,22 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     OWBaseWidget = OWWidget
     summarize = None
     PartialSummary = None
-elif ORANGE_VERSION == ORANGE_VERSION.henri_fork:
-    from Orange.widgets.widget import OWWidget
-    from Orange.widgets.widget import WidgetMetaClass
-    from Orange.widgets.settings import Setting
-
-    OWBaseWidget = OWWidget
-    summarize = None
-    PartialSummary = None
+    has_progress_bar = True
 else:
-    from Orange.widgets.widget import OWWidget
-    from Orange.widgets.widget import WidgetMetaClass
     from orangewidget.widget import OWBaseWidget
     from orangewidget.settings import Setting
     from orangewidget.utils.signals import summarize
     from orangewidget.utils.signals import PartialSummary
+
+    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+        from Orange.widgets.widget import OWWidget
+        from Orange.widgets.widget import WidgetMetaClass
+
+        has_progress_bar = True
+    else:
+        OWWidget = OWBaseWidget
+        WidgetMetaClass = type(OWBaseWidget)
+        has_progress_bar = False
 
 from ewokscore.variable import Variable
 from ewokscore.variable import value_from_transfer
@@ -298,10 +299,12 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__taskProgress = QProgress()
-        self.__taskProgress.sigProgressChanged.connect(self.progressBarSet)
+        if has_progress_bar:
+            self.__taskProgress.sigProgressChanged.connect(self.progressBarSet)
 
     def onDeleteWidget(self):
-        self.__taskProgress.sigProgressChanged.disconnect(self.progressBarSet)
+        if has_progress_bar:
+            self.__taskProgress.sigProgressChanged.disconnect(self.progressBarSet)
         self._cleanupTaskExecutor()
         super().onDeleteWidget()
 
