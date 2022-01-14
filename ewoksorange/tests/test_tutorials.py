@@ -15,6 +15,9 @@ def test_sumtask_tutorial1_with_qt(ewoks_orange_canvas):
         assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename)
 
 
+@pytest.mark.skipif(
+    ORANGE_VERSION != ORANGE_VERSION.latest_orange, reason="Requires Orange3 widgets"
+)
 def test_sumtask_tutorial1_without_qt(register_ewoks_example_addons):
     from orangecontrib.ewoks_example_category import tutorials
 
@@ -69,8 +72,7 @@ def test_list_operations_without_qt(ewoks_orange_canvas):
 
 
 @pytest.mark.skipif(
-    ORANGE_VERSION == ORANGE_VERSION.oasys_fork,
-    reason="Oasys does not have Orange3 widgets",
+    ORANGE_VERSION != ORANGE_VERSION.latest_orange, reason="Requires Orange3 widgets"
 )
 def test_mixed_tutorial1_with_qt(ewoks_orange_canvas):
     from orangecontrib.ewoks_example_category import tutorials
@@ -80,8 +82,7 @@ def test_mixed_tutorial1_with_qt(ewoks_orange_canvas):
 
 
 @pytest.mark.skipif(
-    ORANGE_VERSION == ORANGE_VERSION.oasys_fork,
-    reason="Oasys does not have Orange3 widgets",
+    ORANGE_VERSION != ORANGE_VERSION.latest_orange, reason="Requires Orange3 widgets"
 )
 def test_mixed_tutorial1_without_qt(register_ewoks_example_addons):
     from orangecontrib.ewoks_example_category import tutorials
