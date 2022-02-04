@@ -1,6 +1,7 @@
 import pytest
 from ewoksorange.bindings import ows_to_ewoks
 from ewoksorange.orange_version import ORANGE_VERSION
+from ewokscore import execute_graph
 
 try:
     from importlib import resources
@@ -103,7 +104,7 @@ def assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename):
 def assert_sumtask_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
     graph = ows_to_ewoks(filename)
-    results = graph.execute()
+    results = execute_graph(graph)
     assert results["5"].output_values == {"result": 16}
 
 
@@ -141,7 +142,7 @@ def assert_sumlist_tutorial_without_qt(filename):
             if adict["name"] == "delay":
                 adict["value"] = 0
 
-    results = graph.execute(results_of_all_nodes=True)
+    results = execute_graph(graph, results_of_all_nodes=True)
     listsum = sum(results["0"].output_values["list"])
     for i in [4, 5, 6]:
         assert results[str(i)].input_values == {"sum": listsum}
@@ -159,5 +160,5 @@ def assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename):
 def assert_mixed_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
     graph = ows_to_ewoks(filename)
-    results = graph.execute()
+    results = execute_graph(graph)
     assert results["1"].output_values == {"result": 3}
