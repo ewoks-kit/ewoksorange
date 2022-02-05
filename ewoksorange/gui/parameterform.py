@@ -49,7 +49,7 @@ class ParameterForm(QtWidgets.QWidget):
         elif isinstance(value, numbers.Number):
             if isinstance(value, numbers.Integral):
                 field = QtWidgets.QSpinBox()
-                field.setRange(-(2 ** 31), 2 ** 31 - 1)
+                field.setRange(-(2**31), 2**31 - 1)
             else:
                 field = QtWidgets.QDoubleSpinBox()
             field.setValue(value)
