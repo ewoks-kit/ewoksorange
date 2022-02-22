@@ -1,7 +1,7 @@
 import os
 import sys
 import tempfile
-from typing import Optional
+from typing import Optional, List
 
 from ewokscore import load_graph
 from .owsconvert import ewoks_to_ows
@@ -11,10 +11,15 @@ from ..canvas.__main__ import main as launchcanvas
 __all__ = ["execute_graph"]
 
 
-def execute_graph(graph, load_options: Optional[dict] = None, **execute_options):
+def execute_graph(
+    graph,
+    load_options: Optional[dict] = None,
+    inputs: Optional[List[dict]] = None,
+    **execute_options
+):
     if load_options is None:
         load_options = dict()
-    ewoksgraph = load_graph(source=graph, **load_options)
+    ewoksgraph = load_graph(graph, inputs=inputs, **load_options)
     if ewoksgraph.is_cyclic:
         raise RuntimeError("Orange can only execute DAGs")
     if ewoksgraph.has_conditional_links:

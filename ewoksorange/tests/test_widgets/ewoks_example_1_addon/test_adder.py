@@ -22,7 +22,7 @@ def test_adder_missing_inputs(widget_qualname, register_ewoks_example_1_addon):
         "task_generator": OWWIDGET_TASKS_GENERATOR,
     }
     with pytest.raises(TaskInputError):
-        instantiate_task(node_attrs)
+        instantiate_task("node_id", node_attrs)
 
 
 @pytest.mark.parametrize(
@@ -42,6 +42,6 @@ def test_adder_all_inputs(widget_qualname, register_ewoks_example_1_addon):
         "task_identifier": widget_qualname,
         "task_generator": OWWIDGET_TASKS_GENERATOR,
     }
-    task = instantiate_task(node_attrs, inputs={"a": 1, "b": 2})
+    task = instantiate_task("node_id", node_attrs, inputs={"a": 1, "b": 2})
     task.execute()
     assert task.output_values == {"result": 3}

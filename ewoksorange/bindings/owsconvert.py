@@ -219,7 +219,7 @@ class OwsNodeWrapper:
     def __init__(self, node_attrs: dict):
         ows = node_attrs.get("ows", dict())
         node_id = node_attrs["id"]
-        node_label = get_node_label(node_attrs, node_id=node_id)
+        node_label = get_node_label(node_id, node_attrs)
         self.title = ows.get("title", node_label)
         self.position = ows.get("position", (0.0, 0.0))
         default_name = node_attrs["qualified_name"].split(".")[-1]
@@ -264,7 +264,7 @@ class OwsSchemeWrapper:
         self._nodes = dict()  # the keys of this dictionary never used
         self._widget_classes = dict()
         for node_attrs in graph["nodes"]:
-            task_type, task_info = task_executable_info(node_attrs)
+            task_type, task_info = task_executable_info(node_attrs["id"], node_attrs)
             if task_type != "class":
                 raise ValueError("Orange workflows only support task type 'class'")
             widget_class, node_attrs["project_name"] = task_to_widget(

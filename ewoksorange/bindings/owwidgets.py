@@ -41,6 +41,7 @@ from .taskexecutor import TaskExecutor
 from .taskexecutor import ThreadedTaskExecutor
 from .taskexecutor_queue import TaskExecutorQueue
 from . import owsignals
+from .events import scheme_ewoks_events
 
 
 _logger = logging.getLogger(__name__)
@@ -123,7 +124,20 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         return cls.ewokstaskclass.output_names()
 
     def _getTaskArguments(self):
-        return {"inputs": self.task_inputs, "varinfo": self.varinfo}
+        if self.signalManager is None:
+            execinfo = None
+            node_id = None
+        else:
+            scheme = self.signalManager.scheme()
+            execinfo = scheme_ewoks_events(scheme, None)
+            node = scheme.node_for_widget(self)
+            node_id = scheme.nodes.index(node)
+        return {
+            "inputs": self.task_inputs,
+            "varinfo": self.varinfo,
+            "execinfo": execinfo,
+            "node_id": node_id,
+        }
 
     @staticmethod
     def _get_value(value):
