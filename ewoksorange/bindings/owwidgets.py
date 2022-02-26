@@ -129,9 +129,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             node_id = None
         else:
             scheme = self.signalManager.scheme()
-            execinfo = scheme_ewoks_events(scheme, None)
             node = scheme.node_for_widget(self)
-            node_id = scheme.nodes.index(node)
+            node_id = node.title
+            if not node_id:
+                node_id = scheme.nodes.index(node)
+            execinfo = node.properties.get("execinfo", None)
+            execinfo = scheme_ewoks_events(scheme, execinfo)
         return {
             "inputs": self.task_inputs,
             "varinfo": self.varinfo,

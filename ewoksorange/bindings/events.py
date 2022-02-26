@@ -1,12 +1,10 @@
 from contextlib import ExitStack
-
-# import weakref
 from ewokscore import events
 from ewokscore.events.contexts import ExecInfoType
-from ewokscore.events.contexts import ExecInfoType0
+from ewokscore.events.contexts import RawExecInfoType
 
 
-def scheme_ewoks_events(scheme, execinfo: ExecInfoType0 = None) -> ExecInfoType:
+def scheme_ewoks_events(scheme, execinfo: RawExecInfoType = None) -> ExecInfoType:
     scheme_execinfo = getattr(scheme, "ewoks_execinfo", None)
     if scheme_execinfo is not None:
         return scheme_execinfo
@@ -14,11 +12,15 @@ def scheme_ewoks_events(scheme, execinfo: ExecInfoType0 = None) -> ExecInfoType:
     stack = exitstack.__enter__()
     ctx = events.job_context(execinfo)
     execinfo = stack.enter_context(ctx)
-    ctx = events.workflow_context(execinfo)
+    ctx = events.workflow_context(execinfo, workflow=scheme.title)
     execinfo = stack.enter_context(ctx)
-    if scheme.title:
-        execinfo["workflow_id"] = scheme.title
     scheme.ewoks_execinfo = execinfo
-    # TODO: find a way to execute the exit
-    # weakref.finalize(scheme, exitstack.__exit__)
+
+    def ewoks_finalize():
+        # TODO: job and workflow end event will never capture
+        #       node exceptions because they are absorbed by orange.
+        exitstack.close()
+
+    scheme.ewoks_finalize = ewoks_finalize
+    scheme.destroyed.connect(ewoks_finalize)
     return execinfo

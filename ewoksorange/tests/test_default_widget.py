@@ -1,5 +1,4 @@
 from ewokscore import Task
-from ewokscore import load_graph
 from ewokscore.utils import qualname
 from ewoksorange.bindings import ewoks_to_ows
 
@@ -34,7 +33,7 @@ def test_default_widgets(tmpdir, ewoks_orange_canvas):
     ]
 
     # Create an Orange workflows
-    graph = load_graph({"graph": {"id": "test_graph"}, "nodes": nodes, "links": links})
+    graph = {"graph": {"id": "test_graph"}, "nodes": nodes, "links": links}
     destination = str(tmpdir / "ewoksgraph.ows")
     ewoks_to_ows(graph, destination)
 

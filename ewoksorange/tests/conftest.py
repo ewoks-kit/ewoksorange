@@ -66,10 +66,19 @@ def qtapp():
 
 
 @pytest.fixture(scope="session")
-def ewoks_orange_canvas(qtapp, register_ewoks_example_addons):
+def raw_ewoks_orange_canvas(qtapp, register_ewoks_example_addons):
     register_addon_package(ewoks_addon)
     with OrangeCanvasHandler() as handler:
         yield handler
+
+
+@pytest.fixture()
+def ewoks_orange_canvas(raw_ewoks_orange_canvas):
+    yield raw_ewoks_orange_canvas
+    try:
+        raw_ewoks_orange_canvas.scheme.ewoks_finalize()
+    except AttributeError:
+        pass
 
 
 def warn_qtwidgets_alive():
