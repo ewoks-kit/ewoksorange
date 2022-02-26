@@ -30,6 +30,13 @@ pytest --pyargs ewoksorange.tests
 
 ## Getting started
 
+Launch the Orange canvas and load an Orange3 or Ewoks workflow with the ewoks CLI
+
+```bash
+ewoks execute /path/to/ewoks_wf.json --binding orange
+ewoks execute /path/to/orange_wf.ows --binding orange
+```
+
 Launch the Orange canvas with the examples Addon
 
 ```bash
