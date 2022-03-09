@@ -1,6 +1,7 @@
 """
 Orange widget base classes to execute Ewoks tasks
 """
+
 import inspect
 import logging
 from contextlib import contextmanager
@@ -300,8 +301,7 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         try:
             self.__taskExecutor.execute_task()
         except Exception:
-            self.clear_downstream()
-            raise
+            _logger.error("task failed", exc_info=True)
         if self.__taskExecutor.succeeded:
             self.trigger_downstream()
         else:
