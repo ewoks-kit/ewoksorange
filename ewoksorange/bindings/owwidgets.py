@@ -53,6 +53,7 @@ __all__ = [
     "OWEwoksWidgetOneThread",
     "OWEwoksWidgetOneThreadPerRun",
     "OWEwoksWidgetWithTaskStack",
+    "ow_build_opts",
 ]
 
 
