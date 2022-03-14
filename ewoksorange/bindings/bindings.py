@@ -18,7 +18,7 @@ def execute_graph(
     load_options: Optional[dict] = None,
     **execute_options
 ):
-    if isinstance(graph, str) and graph.endswith(".ows"):
+    if isinstance(graph, str) and graph.lower().endswith(".ows"):
         argv = [sys.argv[0], graph]
         launchcanvas(argv=argv)
     else:
