@@ -41,7 +41,7 @@ class TaskExecutor:
     def succeeded(self):
         if self.__task is None:
             return False
-        return self.__task.done and not self.__task.failed
+        return self.__task.succeeded
 
     @property
     def output_variables(self):
