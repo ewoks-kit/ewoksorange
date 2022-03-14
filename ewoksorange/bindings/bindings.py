@@ -5,7 +5,7 @@ from typing import Optional, List
 
 from ewokscore.events import job_decorator as execute_graph_decorator
 from .owsconvert import ewoks_to_ows
-from ..canvas.__main__ import main as launchcanvas
+from ..canvas.main import main as launchcanvas
 
 
 __all__ = ["execute_graph"]
