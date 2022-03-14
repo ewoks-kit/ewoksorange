@@ -1,6 +1,7 @@
 """
 Orange widget base classes to execute Ewoks tasks
 """
+
 import inspect
 import logging
 from contextlib import contextmanager
@@ -41,6 +42,7 @@ from .taskexecutor import TaskExecutor
 from .taskexecutor import ThreadedTaskExecutor
 from .taskexecutor_queue import TaskExecutorQueue
 from . import owsignals
+from .events import scheme_ewoks_events
 
 
 _logger = logging.getLogger(__name__)
@@ -123,7 +125,23 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         return cls.ewokstaskclass.output_names()
 
     def _getTaskArguments(self):
-        return {"inputs": self.task_inputs, "varinfo": self.varinfo}
+        if self.signalManager is None:
+            execinfo = None
+            node_id = None
+        else:
+            scheme = self.signalManager.scheme()
+            node = scheme.node_for_widget(self)
+            node_id = node.title
+            if not node_id:
+                node_id = scheme.nodes.index(node)
+            execinfo = node.properties.get("execinfo", None)
+            execinfo = scheme_ewoks_events(scheme, execinfo)
+        return {
+            "inputs": self.task_inputs,
+            "varinfo": self.varinfo,
+            "execinfo": execinfo,
+            "node_id": node_id,
+        }
 
     @staticmethod
     def _get_value(value):
@@ -283,8 +301,7 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         try:
             self.__taskExecutor.execute_task()
         except Exception:
-            self.clear_downstream()
-            raise
+            _logger.error("task failed", exc_info=True)
         if self.__taskExecutor.succeeded:
             self.trigger_downstream()
         else:

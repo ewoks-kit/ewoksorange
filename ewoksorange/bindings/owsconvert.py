@@ -105,6 +105,7 @@ def ows_to_ewoks(
     source: Union[str, IO],
     preserve_ows_info: bool = False,
     title_as_node_id: bool = False,
+    **load_graph_options
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
     ows = read_ows(source)
@@ -186,24 +187,31 @@ def ows_to_ewoks(
         "nodes": nodes,
     }
 
-    return load_graph(graph)
+    return load_graph(graph, **load_graph_options)
 
 
 def ewoks_to_ows(
-    ewoksgraph: TaskGraph,
+    graph,
     destination: Union[str, IO],
     varinfo: Optional[dict] = None,
+    execinfo: Optional[dict] = None,
     error_on_duplicates: bool = True,
+    results_of_all_nodes: Optional[bool] = False,
+    **load_graph_options
 ):
-    """Write a TaskGraph as an Orange Workflow Scheme file. The ewoks node id's
+    """Save an ewoks graph as an Orange Workflow Scheme file. The ewoks node id's
     are lost because Orange uses node index numbers as id's.
     """
+    ewoksgraph = load_graph(graph, **load_graph_options)
     if ewoksgraph.is_cyclic:
         raise RuntimeError("Orange can only execute DAGs")
     if ewoksgraph.has_conditional_links:
         raise RuntimeError("Orange cannot handle conditional links")
     owsgraph = OwsSchemeWrapper(
-        ewoksgraph, varinfo, error_on_duplicates=error_on_duplicates
+        ewoksgraph,
+        varinfo=varinfo,
+        execinfo=execinfo,
+        error_on_duplicates=error_on_duplicates,
     )
     write_ows(owsgraph, destination)
 
@@ -219,7 +227,7 @@ class OwsNodeWrapper:
     def __init__(self, node_attrs: dict):
         ows = node_attrs.get("ows", dict())
         node_id = node_attrs["id"]
-        node_label = get_node_label(node_attrs, node_id=node_id)
+        node_label = get_node_label(node_id, node_attrs)
         self.title = ows.get("title", node_label)
         self.position = ows.get("position", (0.0, 0.0))
         default_name = node_attrs["qualified_name"].split(".")[-1]
@@ -234,6 +242,7 @@ class OwsNodeWrapper:
         self.properties = {
             "default_inputs": default_inputs,
             "varinfo": node_attrs.get("varinfo", dict()),
+            "execinfo": node_attrs.get("execinfo", dict()),
         }
 
     def __str__(self):
@@ -252,11 +261,15 @@ class OwsSchemeWrapper:
         ["name"],
     )
 
-    def __init__(self, graph, varinfo, error_on_duplicates=True):
+    def __init__(
+        self,
+        graph,
+        varinfo: Optional[dict] = None,
+        execinfo: Optional[dict] = None,
+        error_on_duplicates: bool = True,
+    ):
         if isinstance(graph, TaskGraph):
             graph = graph.dump()
-        if varinfo is None:
-            varinfo = dict()
 
         self.title = graph["graph"].get("id", "")
         self._description = graph["graph"].get("label", "")
@@ -264,14 +277,17 @@ class OwsSchemeWrapper:
         self._nodes = dict()  # the keys of this dictionary never used
         self._widget_classes = dict()
         for node_attrs in graph["nodes"]:
-            task_type, task_info = task_executable_info(node_attrs)
+            task_type, task_info = task_executable_info(node_attrs["id"], node_attrs)
             if task_type != "class":
                 raise ValueError("Orange workflows only support task type 'class'")
             widget_class, node_attrs["project_name"] = task_to_widget(
                 task_info["task_identifier"], error_on_duplicates=error_on_duplicates
             )
             node_attrs["qualified_name"] = qualname(widget_class)
-            node_attrs["varinfo"] = varinfo
+            if varinfo:
+                node_attrs["varinfo"] = varinfo
+            if execinfo:
+                node_attrs["execinfo"] = execinfo
             self._nodes[node_attrs["id"]] = OwsNodeWrapper(node_attrs)
             self._widget_classes[node_attrs["id"]] = widget_class
 
@@ -308,7 +324,7 @@ class OwsSchemeWrapper:
         data_mapping = link.get("data_mapping", None)
         if not data_mapping:
             logger.warning(
-                "link '%s' -> '%s' cannot be created in Orange because it has not data transfer",
+                "link '%s' -> '%s' cannot be created in Orange because it has no data transfer",
                 source_node,
                 sink_node,
             )
