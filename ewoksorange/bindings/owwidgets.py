@@ -176,6 +176,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     @property
     def task_inputs(self) -> dict:
+        """Default inputs overwritten by inputs from previous tasks"""
         inputs = self.defined_default_input_values
         inputs.update(self.__dynamic_inputs)
         return inputs
@@ -278,12 +279,18 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def task_output_values(self):
         return {name: var.value for name, var in self.task_outputs.items()}
 
+    def get_task_output_value(self, name):
+        return self.task_outputs[name].value
+
     @property
     def task_input_values(self):
         return {
             name: value_from_transfer(var, varinfo=self.varinfo)
             for name, var in self.task_inputs.items()
         }
+
+    def get_task_input_value(self, name):
+        return value_from_transfer(self.task_inputs[name])
 
 
 def is_orange_widget_class(widget_class):
