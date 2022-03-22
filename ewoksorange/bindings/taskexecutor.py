@@ -20,16 +20,16 @@ class TaskExecutor:
         self.__task = None
         try:
             self.__task = self.__ewokstaskclass(**kwargs)
-        except TaskInputError:
-            pass
+        except TaskInputError as e:
+            _logger.info(e)
 
     def execute_task(self):
         if not self.is_ready_to_execute:
             return
         try:
             self.__task.execute()
-        except TaskInputError as e:
-            _logger.warning(e)
+        except Exception:
+            _logger.error("task failed", exc_info=True)
 
     @property
     def is_ready_to_execute(self):
