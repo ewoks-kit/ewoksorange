@@ -1,6 +1,6 @@
-"""Each Orange3 Addon install entry-points for widgets and tutorials.
+"""Each Orange3 add-on installs entry-points for widgets and tutorials.
 
-Widget discovery is done in `orangecanvas.registry.discovery.WidgetDiscovery`
+Widget and example discovery is done from these entry-points.
 """
 
 import pkgutil
@@ -148,7 +148,7 @@ def get_subpackages(package):
 
 
 def register_addon_package(package, distroname: Optional[str] = None):
-    """An Orange Addon package which has not been installed."""
+    """An Orange3 add-on package which has not been installed."""
     entry_points = dict()
     packages = list(get_subpackages(package))
     if not distroname:

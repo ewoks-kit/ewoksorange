@@ -1,20 +1,32 @@
-Examples
-========
+Orange canvas
+=============
 
-Launch the Orange canvas and load an Orange3 or Ewoks workflow with the ewoks CLI
+Launch the Orange canvas
+
+.. code-block:: bash
+
+    python -m orangecanvas /path/to/orange_wf.ows
+
+or when Orange3 is installed
+
+.. code-block:: bash
+
+    python -m Orange.canvas /path/to/orange_wf.ows
+
+Launch the Orange canvas using the Ewoks CLI
 
 .. code-block:: bash
 
     ewoks execute /path/to/ewoks_wf.json --binding orange
     ewoks execute /path/to/orange_wf.ows --binding orange
 
-Launch the Orange canvas with the examples Addon
+Launch the Orange canvas with the examples add-on
 
 .. code-block:: bash
 
     python -m ewoksorange.canvas --with_example
 
-or alternatively install the example Addon
+or alternatively install the example add-ons
 
 .. code-block:: bash
 

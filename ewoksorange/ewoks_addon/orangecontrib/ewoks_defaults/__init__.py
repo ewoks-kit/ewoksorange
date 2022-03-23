@@ -7,7 +7,7 @@ from ewoksorange.ewoks_addon import DEFAULT_WIDGET_CLASSES
 from . import widgets
 
 
-NAME = "Ewoks defaults category"
+NAME = "Ewoks defaults"
 
 DESCRIPTION = "Default widgets for Ewoks tasks"
 

@@ -13,6 +13,7 @@ ewoksorange has been developed by the `Software group <http://www.esrf.eu/Instru
 .. toctree::
     :maxdepth: 2
 
-    examples
+    canvas
+    addon
     note_on_designs
     API
