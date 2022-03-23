@@ -105,7 +105,7 @@ def ows_to_ewoks(
     source: Union[str, IO],
     preserve_ows_info: bool = False,
     title_as_node_id: bool = False,
-    **load_graph_options
+    **load_graph_options,
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
     ows = read_ows(source)
@@ -197,7 +197,7 @@ def ewoks_to_ows(
     execinfo: Optional[dict] = None,
     error_on_duplicates: bool = True,
     results_of_all_nodes: Optional[bool] = False,
-    **load_graph_options
+    **load_graph_options,
 ):
     """Save an ewoks graph as an Orange Workflow Scheme file. The ewoks node id's
     are lost because Orange uses node index numbers as id's.
@@ -317,36 +317,43 @@ class OwsSchemeWrapper:
 
     def _convert_link(self, link):
         """In Orange, a link must transfer data"""
-        source_node = self._nodes[link["source"]]
-        sink_node = self._nodes[link["target"]]
-        source_class = self._widget_classes[link["source"]]
-        sink_class = self._widget_classes[link["target"]]
-        data_mapping = link.get("data_mapping", None)
-        if not data_mapping:
-            logger.warning(
-                "link '%s' -> '%s' cannot be created in Orange because it has no data transfer",
-                source_node,
-                sink_node,
-            )
-            self.missing_links.append(link)
-            return
-        for item in data_mapping:
-            target_name = item["target_input"]
-            source_name = item["source_output"]
-            target_name = signal_ewoks_to_orange_name(sink_class, "inputs", target_name)
-            source_name = signal_ewoks_to_orange_name(
-                source_class, "outputs", source_name
-            )
-            sink_channel = self._link_channel(name=target_name)
-            source_channel = self._link_channel(name=source_name)
-            link = self._link(
-                source_node=source_node,
-                sink_node=sink_node,
-                source_channel=source_channel,
-                sink_channel=sink_channel,
-                enabled=True,
-            )
-            self.links.append(link)
+        try:
+            source_node = self._nodes[link["source"]]
+            sink_node = self._nodes[link["target"]]
+            source_class = self._widget_classes[link["source"]]
+            sink_class = self._widget_classes[link["target"]]
+            data_mapping = link.get("data_mapping", None)
+            if not data_mapping:
+                logger.warning(
+                    "link '%s' -> '%s' cannot be created in Orange because it has no data transfer",
+                    source_node,
+                    sink_node,
+                )
+                self.missing_links.append(link)
+                return
+            for item in data_mapping:
+                target_name = item["target_input"]
+                source_name = item["source_output"]
+                target_name = signal_ewoks_to_orange_name(
+                    sink_class, "inputs", target_name
+                )
+                source_name = signal_ewoks_to_orange_name(
+                    source_class, "outputs", source_name
+                )
+                sink_channel = self._link_channel(name=target_name)
+                source_channel = self._link_channel(name=source_name)
+                link2 = self._link(
+                    source_node=source_node,
+                    sink_node=sink_node,
+                    source_channel=source_channel,
+                    sink_channel=sink_channel,
+                    enabled=True,
+                )
+                self.links.append(link2)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to create link '{link['source']}' -> '{link['target']}'"
+            ) from e
 
     def window_group_presets(self):
         return list()

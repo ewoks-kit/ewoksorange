@@ -88,7 +88,9 @@ def signal_ewoks_to_orange_name(widget_class, direction: str, ewoksname: str) ->
         try:
             return getattr(signal_container, ewoksname).name
         except AttributeError:
-            raise RuntimeError(f"{ewoksname} is not a signal of {signal_container}")
+            raise RuntimeError(
+                f"{ewoksname} is not a signal of {signal_container} of {widget_class}"
+            ) from None
 
 
 def signal_orange_to_ewoks_name(widget_class, direction: str, orangename: str) -> str:
