@@ -7,6 +7,7 @@ test-3.6:
 test-3.6-orange:
   extends: .test-3.6_glx
   script:
+    - python -m pip install Orange3  # install without --pre
     - python -m pip install --pre .[test,orange]
     - python -m pytest --cov=./ -v .
 
