@@ -481,7 +481,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
                 taskExecutor = self.sender()
                 self.__last_output_variables = taskExecutor.output_variables
                 self.__last_task_succeeded = taskExecutor.succeeded
-                if self.__propagating_task_executor(taskExecutor):
+                if self.__is_task_executor_propagated(taskExecutor):
                     self.propagate_downstream(succeeded=taskExecutor.succeeded)
             finally:
                 self.__remove_task_executor(taskExecutor)
@@ -498,7 +498,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def __remove_task_executor(self, taskExecutor):
         self.__taskExecutors.pop(id(taskExecutor), None)
 
-    def __propagating_task_executor(self, taskExecutor) -> bool:
+    def __is_task_executor_propagated(self, taskExecutor) -> bool:
         return self.__taskExecutors.get(id(taskExecutor), (None, False))[1]
 
     @property
