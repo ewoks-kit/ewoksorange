@@ -11,13 +11,13 @@ else:
 
 from ewoksorange.bindings import OWEwoksWidgetNoThread
 from ewoksorange.gui.parameterform import ParameterForm
-from ewokscore.tests.examples.tasks.sumtask import SumTask
+from ewoks_example_addon import SumTaskSubCategory2
 
 
 __all__ = ["Adder2"]
 
 
-class Adder2(OWEwoksWidgetNoThread, ewokstaskclass=SumTask):
+class Adder2(OWEwoksWidgetNoThread, ewokstaskclass=SumTaskSubCategory2):
     name = "Adder2"
     description = "Adds two numbers"
     icon = "icons/mywidget.svg"
