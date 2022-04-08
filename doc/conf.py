@@ -1,6 +1,8 @@
 """rm -rf doc/_generated/; python setup.py build_sphinx -E -a
 """
 
+project = "ewoksorange"
+release = "0.1"
 copyright = "2021, ESRF"
 author = "ESRF"
 
