@@ -84,4 +84,4 @@ python -c "import site,os;os.unlink(os.path.join(site.getsitepackages()[0],'ewok
 
 ## Documentation
 
-https://workflow.gitlab-pages.esrf.fr/ewoks/ewoksorange/
+https://ewoksorange.readthedocs.io/
