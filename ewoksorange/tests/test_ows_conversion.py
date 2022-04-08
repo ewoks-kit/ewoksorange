@@ -5,6 +5,7 @@ except ImportError:
 import pytest
 from ewoksorange.bindings import ows_to_ewoks
 from ewoksorange.bindings import ewoks_to_ows
+from ewoksorange.bindings import graph_is_supported
 from ewokscore import load_graph
 from ewokscore.tests.examples.graphs import graph_names
 from ewokscore.tests.examples.graphs import get_graph
@@ -45,7 +46,7 @@ def test_ewoks_to_ows(graph_name, tmpdir):
         node_attrs["label"] = node_id
 
     destination = str(tmpdir / "ewoksgraph2.ows")
-    if ewoksgraph.is_cyclic or ewoksgraph.has_conditional_links:
+    if not graph_is_supported(ewoksgraph):
         with pytest.raises(RuntimeError):
             ewoks_to_ows(ewoksgraph, destination)
         return

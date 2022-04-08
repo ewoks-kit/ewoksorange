@@ -27,7 +27,7 @@ from .owsignals import signal_orange_to_ewoks_name
 from .owwidgets import is_ewoks_widget_class
 from ..ewoks_addon.orangecontrib.ewoks_defaults import default_owwidget_class
 
-__all__ = ["ows_to_ewoks", "ewoks_to_ows"]
+__all__ = ["ows_to_ewoks", "ewoks_to_ows", "graph_is_supported"]
 
 ReadSchemeType = readwrite._scheme
 
@@ -190,6 +190,17 @@ def ows_to_ewoks(
     return load_graph(graph, **load_graph_options)
 
 
+def graph_is_supported(graph: TaskGraph) -> bool:
+    all_explicit_datamapping = all(
+        link_attrs.get("data_mapping") for link_attrs in graph.graph.edges.values()
+    )
+    return (
+        not graph.is_cyclic
+        and not graph.has_conditional_links
+        and all_explicit_datamapping
+    )
+
+
 def ewoks_to_ows(
     graph,
     destination: Union[str, IO],
@@ -204,9 +215,13 @@ def ewoks_to_ows(
     """
     ewoksgraph = load_graph(graph, **load_graph_options)
     if ewoksgraph.is_cyclic:
-        raise RuntimeError("Orange can only execute DAGs")
+        raise RuntimeError("Orange can only handle DAGs")
     if ewoksgraph.has_conditional_links:
         raise RuntimeError("Orange cannot handle conditional links")
+    if not all(
+        link_attrs.get("data_mapping") for link_attrs in ewoksgraph.graph.edges.values()
+    ):
+        raise RuntimeError("Orange cannot handle links without explicit data mapping")
     owsgraph = OwsSchemeWrapper(
         ewoksgraph,
         varinfo=varinfo,
