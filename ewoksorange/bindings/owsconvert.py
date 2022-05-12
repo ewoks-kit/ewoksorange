@@ -207,7 +207,6 @@ def ewoks_to_ows(
     varinfo: Optional[dict] = None,
     execinfo: Optional[dict] = None,
     error_on_duplicates: bool = True,
-    results_of_all_nodes: Optional[bool] = False,
     **load_graph_options,
 ):
     """Save an ewoks graph as an Orange Workflow Scheme file. The ewoks node id's
