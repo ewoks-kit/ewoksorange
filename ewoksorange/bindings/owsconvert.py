@@ -1,5 +1,7 @@
+import os
 import json
 import logging
+from uuid import uuid4
 from collections import namedtuple
 from typing import IO, Iterator, List, Optional, Tuple, Type, Union
 
@@ -116,6 +118,18 @@ def ows_to_ewoks(
         description = ewoksinfo["description"]
     except Exception:
         ewoksinfo = dict()
+    if not description and isinstance(source, str):
+        description = (
+            "Ewoks workflow '%s'" % os.path.splitext(os.path.basename(source))[0]
+        )
+    if not description:
+        description = "Ewoks workflow"
+
+    title = ows.title
+    if not title and isinstance(source, str):
+        title = os.path.splitext(os.path.basename(source))[0]
+    if not title:
+        title = str(uuid4())
 
     nodes = list()
     widget_classes = dict()
@@ -177,9 +191,8 @@ def ows_to_ewoks(
     links += ewoksinfo.get("missing_links", list())
 
     graph_attrs = dict()
-    if ows.title:
-        graph_attrs["id"] = ows.title
-        graph_attrs["label"] = description
+    graph_attrs["id"] = title
+    graph_attrs["label"] = description
 
     graph = {
         "graph": graph_attrs,
