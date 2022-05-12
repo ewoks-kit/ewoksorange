@@ -22,8 +22,12 @@ def execute_graph(
     graph,
     inputs: Optional[List[dict]] = None,
     load_options: Optional[dict] = None,
+    outputs: Optional[List[dict]] = None,
+    merge_outputs: Optional[bool] = True,
     **execute_options,
-):
+) -> None:
+    if outputs:
+        raise ValueError("The Orange3 binding cannot return any results")
     if load_options is None:
         load_options = dict()
     representation = _get_representation(graph, options=load_options)

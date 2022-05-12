@@ -5,7 +5,7 @@ import pytest
 from ewokscore.tests.examples.graphs import graph_names
 from ewokscore.tests.examples.graphs import get_graph
 from ewokscore.tests.test_examples import assert_convert_graph
-from ewokscore.tests.utils.results import assert_execute_graph_all_tasks
+from ewokscore.tests.utils.results import assert_execute_graph_tasks
 from ewokscore import load_graph
 from ewoksorange.bindings import ewoks_to_ows
 from ewoksorange import convert_graph
@@ -27,7 +27,7 @@ def test_execute_graph(graph_name, tmpdir, ewoks_orange_canvas):
         ewoks_orange_canvas.load_ows(filename)
     ewoks_orange_canvas.wait_widgets(timeout=10)
 
-    assert_execute_graph_all_tasks(ewoksgraph, expected, varinfo=varinfo)
+    assert_execute_graph_tasks(ewoksgraph, dict(), expected, varinfo=varinfo)
 
 
 @pytest.mark.parametrize("graph_name", graph_names())
