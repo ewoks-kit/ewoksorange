@@ -1,6 +1,7 @@
 import os
 import numbers
 from typing import Any, Callable, Dict, List, Set, Union, Optional
+from AnyQt import QtCore
 from AnyQt import QtWidgets
 from silx.gui.dialog.DataFileDialog import DataFileDialog
 from ewoksorange.bindings import owwidgets
@@ -10,8 +11,12 @@ ParameterValueType = Any
 WidgetValueType = Union[str, numbers.Number, bool]
 
 
+def not_specified(value):
+    return value is owwidgets.INVALIDATION_DATA or value is owwidgets.MISSING_DATA
+
+
 def default_serialize(value: ParameterValueType) -> WidgetValueType:
-    if value is owwidgets.INVALIDATION_DATA or value is owwidgets.MISSING_DATA:
+    if not_specified(value):
         return ""
     else:
         return value
@@ -214,23 +219,30 @@ class ParameterForm(QtWidgets.QWidget):
         deserialize = self._fields[name]["deserialize"]
         try:
             return deserialize(value)
-        except Exception as e:
-            raise ValueError(f"Cannot deserialize parameter '{name}'") from e
+        except Exception:
+            return owwidgets.INVALIDATION_DATA
 
     def set_parameter_value(self, name: str, value: ParameterValueType):
         w = self._get_value_widget(name)
         if w is None:
             return
+        serialize = self._fields[name]["serialize"]
         try:
-            value = self._fields[name]["serialize"](value)
-        except Exception as e:
-            raise ValueError(f"Cannot serialize parameter '{name}'") from e
+            value = serialize(value)
+        except Exception:
+            return
+        null = not_specified(value)
         if isinstance(w, QtWidgets.QLineEdit):
-            w.setText(str(value))
+            if null:
+                w.setText("")
+            else:
+                w.setText(str(value))
         elif isinstance(w, QtWidgets.QCheckBox):
-            w.setChecked(value)
+            if not null:
+                w.setChecked(value)
         else:
-            w.setValue(value)
+            if not null:
+                w.setValue(value)
 
     def get_parameter_enabled(self, name: str) -> Optional[bool]:
         w = self._get_value_widget(name)
@@ -379,3 +391,8 @@ class ParameterForm(QtWidgets.QWidget):
             return lst[-1]
         else:
             raise TypeError(lst)
+
+    def keyPressEvent(self, event):
+        # TODO: Orange3 causes a button in focus to be pressed due to this.
+        if event.key() != QtCore.Qt.Key_Enter:
+            super().keyPressEvent(event)
