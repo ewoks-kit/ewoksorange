@@ -127,7 +127,7 @@ class QtEvent:
                     return False
         return True
 
-    def set(self):
+    def set(self):  # noqa A003
         self.__flag = True
 
     def clear(self):

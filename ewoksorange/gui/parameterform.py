@@ -1,6 +1,6 @@
 import os
 import numbers
-from typing import Any, Callable, Dict, List, Union, Optional
+from typing import Any, Callable, Dict, List, Set, Union, Optional
 from AnyQt import QtWidgets
 from silx.gui.dialog.DataFileDialog import DataFileDialog
 from ewoksorange.bindings import owwidgets
@@ -251,6 +251,9 @@ class ParameterForm(QtWidgets.QWidget):
         w = self._get_label_widget(name)
         if w is not None:
             w.setEnabled(value)
+
+    def get_parameter_names(self) -> Set[str]:
+        return set(self._fields)
 
     def get_parameter_values(self) -> Dict[str, ParameterValueType]:
         return {name: self.get_parameter_value(name) for name in self._fields}
