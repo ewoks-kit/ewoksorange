@@ -80,7 +80,10 @@ class ParameterForm(QtWidgets.QWidget):
             raise ValueError(f"Cannot serialize parameter '{name}'") from e
 
         label_widget = QtWidgets.QLabel(label)
-        last_widget = None
+        value_widget = None
+        select_widget = None
+        onoff_widget = None
+
         if isinstance(value, str):
             value_widget = QtWidgets.QLineEdit()
             value_widget.setText(value)
@@ -89,51 +92,51 @@ class ParameterForm(QtWidgets.QWidget):
             else:
                 value_widget.setReadOnly(True)
             if select == "file":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(
                     lambda: self._select_file(name, must_exist=True)
                 )
             elif select == "newfile":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(
                     lambda: self._select_file(name, must_exist=False)
                 )
             elif select == "directory":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(lambda: self._select_directory(name))
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(lambda: self._select_directory(name))
             elif select == "h5dataset":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(lambda: self._select_h5dataset(name))
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(lambda: self._select_h5dataset(name))
             elif select == "h5group":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(lambda: self._select_h5group(name))
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(lambda: self._select_h5group(name))
             elif select == "files":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(
                     lambda: self._select_file(name, must_exist=True, append=True)
                 )
             elif select == "newfiles":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(
                     lambda: self._select_file(name, must_exist=False, append=True)
                 )
             elif select == "directories":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(
                     lambda: self._select_directory(name, append=True)
                 )
             elif select == "h5datasets":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(
                     lambda: self._select_h5dataset(name, append=True)
                 )
             elif select == "h5groups":
-                last_widget = QtWidgets.QPushButton(select_label)
-                last_widget.pressed.connect(
+                select_widget = QtWidgets.QPushButton(select_label)
+                select_widget.pressed.connect(
                     lambda: self._select_h5dataset(name, append=True)
                 )
             else:
-                last_widget = None
+                select_widget = None
         elif isinstance(value, bool):
             value_widget = QtWidgets.QCheckBox(bool_label)
             value_widget.setChecked(value)
@@ -158,16 +161,16 @@ class ParameterForm(QtWidgets.QWidget):
             )
 
         if onoff is not None:
-            last_widget = QtWidgets.QCheckBox(onoff_label)
-            last_widget.stateChanged.connect(
+            onoff_widget = QtWidgets.QCheckBox(onoff_label)
+            onoff_widget.stateChanged.connect(
                 lambda: self.set_parameter_enabled(
-                    name, last_widget.isChecked() == enable_when_on
+                    name, onoff_widget.isChecked() == enable_when_on
                 )
             )
             if changeCallback:
-                last_widget.stateChanged.connect(changeCallback)
+                onoff_widget.stateChanged.connect(changeCallback)
             else:
-                last_widget.setReadOnly(True)
+                onoff_widget.setReadOnly(True)
 
         policy = QtWidgets.QSizePolicy.Expanding
         value_widget.setSizePolicy(policy, policy)
@@ -176,8 +179,10 @@ class ParameterForm(QtWidgets.QWidget):
         grid.addWidget(label_widget, row, 0)
         if value_widget:
             grid.addWidget(value_widget, row, 1)
-        if last_widget:
-            grid.addWidget(last_widget, row, 2)
+        if select_widget:
+            grid.addWidget(select_widget, row, 2)
+        if onoff_widget:
+            grid.addWidget(onoff_widget, row, 3)
 
         self._fields[name] = {
             "row": row,
@@ -186,7 +191,7 @@ class ParameterForm(QtWidgets.QWidget):
         }
 
         if onoff is not None:
-            last_widget.setChecked(onoff)
+            onoff_widget.setChecked(onoff)
 
     def _get_widget(self, name: str, col: int) -> QtWidgets.QWidget:
         if name not in self._fields:
@@ -323,6 +328,8 @@ class ParameterForm(QtWidgets.QWidget):
             return
 
         value = dialog.selectedUrl()
+        if value:
+            value = value.replace("?/", "?path=/")
         if append:
             value = self._list_value_append(name, value)
         self.set_parameter_value(name, value)
@@ -342,6 +349,8 @@ class ParameterForm(QtWidgets.QWidget):
             return
 
         value = dialog.selectedUrl()
+        if value:
+            value = value.replace("?/", "?path=/")
         if append:
             value = self._list_value_append(name, value)
         self.set_parameter_value(name, value)
