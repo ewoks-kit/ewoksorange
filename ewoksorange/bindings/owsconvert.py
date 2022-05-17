@@ -105,8 +105,8 @@ def node_data_to_default_inputs(
 
 def ows_to_ewoks(
     source: Union[str, IO],
-    preserve_ows_info: bool = False,
-    title_as_node_id: bool = False,
+    preserve_ows_info: Optional[bool] = True,
+    title_as_node_id: Optional[bool] = False,
     **load_graph_options,
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
@@ -147,7 +147,7 @@ def ows_to_ewoks(
         owsinfo = {
             "title": ows_node.title,
             "name": ows_node.name,
-            "position": ows_node.position,
+            "position": str(ows_node.position),
             "version": ows_node.version,
         }
         node_attrs["id"] = id_to_title.get(ows_node.id, ows_node.id)

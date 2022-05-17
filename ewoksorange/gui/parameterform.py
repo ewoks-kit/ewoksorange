@@ -11,12 +11,8 @@ ParameterValueType = Any
 WidgetValueType = Union[str, numbers.Number, bool]
 
 
-def not_specified(value):
-    return value is owwidgets.INVALIDATION_DATA or value is owwidgets.MISSING_DATA
-
-
 def default_serialize(value: ParameterValueType) -> WidgetValueType:
-    if not_specified(value):
+    if owwidgets.not_specified(value):
         return ""
     else:
         return value
@@ -76,7 +72,7 @@ class ParameterForm(QtWidgets.QWidget):
             label = name + ":"
         if isinstance(value, type(owwidgets.MISSING_DATA)):
             value = default
-        if value is owwidgets.INVALIDATION_DATA or value is owwidgets.MISSING_DATA:
+        if owwidgets.not_specified(value):
             value = default
         try:
             value = serialize(value)
@@ -220,7 +216,7 @@ class ParameterForm(QtWidgets.QWidget):
         try:
             return deserialize(value)
         except Exception:
-            return owwidgets.INVALIDATION_DATA
+            return owwidgets.MISSING_DATA
 
     def set_parameter_value(self, name: str, value: ParameterValueType):
         w = self._get_value_widget(name)
@@ -231,7 +227,7 @@ class ParameterForm(QtWidgets.QWidget):
             value = serialize(value)
         except Exception:
             return
-        null = not_specified(value)
+        null = owwidgets.not_specified(value)
         if isinstance(w, QtWidgets.QLineEdit):
             if null:
                 w.setText("")

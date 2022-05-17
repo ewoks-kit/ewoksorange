@@ -52,5 +52,7 @@ def test_ewoks_to_ows(graph_name, tmpdir):
         return
 
     ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
-    ewoksgraph2 = ows_to_ewoks(destination, title_as_node_id=True)
+    ewoksgraph2 = ows_to_ewoks(
+        destination, title_as_node_id=True, preserve_ows_info=False
+    )
     assert ewoksgraph == ewoksgraph2
