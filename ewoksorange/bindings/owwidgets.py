@@ -59,14 +59,21 @@ __all__ = [
 
 
 MISSING_DATA = UniversalHashable.MISSING_DATA
-INVALIDATION_DATA = None  # This means we cannot use `None` as a value
+
+# Settings needs python builtins as values.
+# This means we cannot use `None` as a value
+INVALIDATION_DATA = None
+
+
+def not_specified(value):
+    return value is INVALIDATION_DATA or isinstance(value, MissingData)
 
 
 if summarize is not None:
 
     @summarize.register(Variable)
     def summarize_variable(var: Variable):
-        if var.value is MISSING_DATA:
+        if not_specified(var.value):
             dtype = MISSING_DATA
         else:
             dtype = type(var.value).__name__
@@ -161,12 +168,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         return {
             name: value
             for name, value in self.default_inputs.items()
-            if value is not INVALIDATION_DATA
+            if not not_specified(value)
         }
 
     def update_default_inputs(self, inputs: Mapping):
         for name, value in inputs.items():
-            if value == self.MISSING_DATA:
+            if not_specified(value):
                 value = INVALIDATION_DATA
             self.default_inputs[name] = value
 
@@ -188,8 +195,8 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         return inputs
 
     def receiveDynamicInputs(self, name, value):
-        if value is INVALIDATION_DATA:
-            self.__dynamic_inputs.pop(name, INVALIDATION_DATA)
+        if not_specified(value):
+            self.__dynamic_inputs.pop(name, None)
         else:
             self.__dynamic_inputs[name] = value
 
@@ -213,14 +220,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                     type(self), "outputs"
                 )
                 orangename = ewoks_to_orange.get(ewoksname, ewoksname)
-                if var.value is MISSING_DATA:
+                if not_specified(var.value):
                     self.send(orangename, INVALIDATION_DATA)  # or channel.invalidate?
                 else:
                     self.send(orangename, var)
         else:
             for ewoksname, var in self.task_outputs.items():
                 channel = self._get_output_signal(ewoksname)
-                if var.value is MISSING_DATA:
+                if not_specified(var.value):
                     channel.send(INVALIDATION_DATA)  # or channel.invalidate?
                 else:
                     channel.send(var)
