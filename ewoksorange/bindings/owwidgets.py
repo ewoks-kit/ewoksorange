@@ -5,7 +5,7 @@ Orange widget base classes to execute Ewoks tasks
 import inspect
 import logging
 from contextlib import contextmanager
-from typing import Optional
+from typing import Mapping, Optional
 
 from ..orange_version import ORANGE_VERSION
 
@@ -163,6 +163,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             for name, value in self.default_inputs.items()
             if value is not INVALIDATION_DATA
         }
+
+    def update_default_inputs(self, inputs: Mapping):
+        for name, value in inputs.items():
+            if value == self.MISSING_DATA:
+                value = INVALIDATION_DATA
+            self.default_inputs[name] = value
 
     @property
     def default_input_values(self) -> dict:

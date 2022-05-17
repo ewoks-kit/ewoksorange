@@ -47,7 +47,7 @@ def include_documentation(local_dir, install_dir):
         sys.exit(0)
 
     doc_files = []
-    for dirpath, dirs, files in os.walk(local_dir):
+    for dirpath, _, files in os.walk(local_dir):
         doc_files.append(
             (
                 dirpath.replace(local_dir, install_dir),
