@@ -39,7 +39,11 @@ def test_convert_graph(graph_name, tmpdir):
 
     representations = [
         (
-            {"representation": "ows", "title_as_node_id": True},
+            {
+                "representation": "ows",
+                "title_as_node_id": True,
+                "preserve_ows_info": False,
+            },
             {"representation": "ows"},
             "ows",
         )

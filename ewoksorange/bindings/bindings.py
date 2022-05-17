@@ -64,12 +64,22 @@ def execute_graph(
 
 
 def load_graph(
-    graph: Any, inputs: Optional[List[dict]] = None, **load_options
+    graph: Any,
+    inputs: Optional[List[dict]] = None,
+    preserve_ows_info: Optional[bool] = True,
+    title_as_node_id: Optional[bool] = False,
+    **load_options,
 ) -> TaskGraph:
     representation = _get_representation(graph, options=load_options)
     if representation == "ows":
         load_options.pop("representation", None)
-        return owsconvert.ows_to_ewoks(graph, inputs=inputs, **load_options)
+        return owsconvert.ows_to_ewoks(
+            graph,
+            inputs=inputs,
+            preserve_ows_info=preserve_ows_info,
+            title_as_node_id=title_as_node_id,
+            **load_options,
+        )
     else:
         return ewokscore.load_graph(graph, inputs=inputs, **load_options)
 
