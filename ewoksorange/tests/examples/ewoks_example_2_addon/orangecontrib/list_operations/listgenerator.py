@@ -50,7 +50,7 @@ class ListGenerator(OWEwoksWidgetNoThread, ewokstaskclass=GenerateList):
         self._validateButton.released.connect(self.handleNewSignals)
 
     def defaultInputsHaveChanged(self):
-        self.default_inputs.update(self._default_inputs_form.get_parameter_values())
+        self.update_default_inputs(self._default_inputs_form.get_parameter_values())
         super().defaultInputsHaveChanged()
 
     def handleNewSignals(self):
