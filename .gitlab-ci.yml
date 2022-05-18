@@ -18,7 +18,7 @@ test-3.6-oasys:
     - python -m pip install ewokscore[test]
     - python -m pip install importlib_resources  # python_version < "3.7"
     - python -m pip install AnyQt
-    - python -m pip install oasys1==1.2.102
+    - python -m pip install oasys1
     - python -m pytest --cov=./ -v .
 
 build_sdist:
