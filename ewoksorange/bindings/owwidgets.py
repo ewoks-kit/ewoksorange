@@ -36,14 +36,13 @@ else:
 
 from ewokscore.variable import Variable
 from ewokscore.variable import value_from_transfer
-from ewokscore.hashing import UniversalHashable
-from ewokscore.hashing import MissingData
 from .progress import QProgress
 from .taskexecutor import TaskExecutor
 from .taskexecutor import ThreadedTaskExecutor
 from .taskexecutor_queue import TaskExecutorQueue
 from . import owsignals
 from .events import scheme_ewoks_events
+from . import invalid_data
 
 
 _logger = logging.getLogger(__name__)
@@ -58,23 +57,12 @@ __all__ = [
 ]
 
 
-MISSING_DATA = UniversalHashable.MISSING_DATA
-
-# Settings needs python builtins as values.
-# This means we cannot use `None` as a value
-INVALIDATION_DATA = None
-
-
-def not_specified(value):
-    return value is INVALIDATION_DATA or isinstance(value, MissingData)
-
-
 if summarize is not None:
 
     @summarize.register(Variable)
     def summarize_variable(var: Variable):
-        if not_specified(var.value):
-            dtype = MISSING_DATA
+        if var.is_missing():
+            dtype = var.value
         else:
             dtype = type(var.value).__name__
         desc = f"ewoks variable ({dtype})"
@@ -88,8 +76,10 @@ if summarize is not None:
 def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     """This needs to be called before signal and setting parsing"""
     namespace["ewokstaskclass"] = ewokstaskclass
+    # Warning: default_inputs should convert MISSING_DATA to INVALIDATION_DATA
+    #          when setting and convert INVALIDATION_DATA to MISSING_DATA when getting
     namespace["default_inputs"] = Setting(
-        {name: INVALIDATION_DATA for name in ewokstaskclass.input_names()},
+        {name: invalid_data.INVALIDATION_DATA for name in ewokstaskclass.input_names()},
         schema_only=True,
     )
     namespace["varinfo"] = Setting(dict(), schema_only=True)
@@ -117,8 +107,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     Base class to handle boiler plate code to interconnect ewoks and
     orange3
     """
-
-    MISSING_DATA = MISSING_DATA
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -154,34 +142,29 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     @staticmethod
     def _get_value(value):
+        """Value comes from the orange input settings or from the previous task"""
         if isinstance(value, Variable):
             return value.value
-        if isinstance(value, MissingData):
-            # `Setting` seems to make a copy of MISSING_DATA
-            return MISSING_DATA
         return value
 
     @property
-    def defined_default_input_values(self) -> dict:
-        # Warning: do not use default_inputs directly because it
-        #          messes up MISSING_DATA
+    def default_input_values(self) -> dict:
+        return {
+            name: invalid_data.as_missing(value)
+            for name, value in self.default_inputs.items()
+        }
+
+    @property
+    def valid_default_input_values(self) -> dict:
         return {
             name: value
             for name, value in self.default_inputs.items()
-            if not not_specified(value)
+            if not invalid_data.is_invalid_data(value)
         }
 
     def update_default_inputs(self, inputs: Mapping):
         for name, value in inputs.items():
-            if not_specified(value):
-                value = INVALIDATION_DATA
-            self.default_inputs[name] = value
-
-    @property
-    def default_input_values(self) -> dict:
-        values = {name: MISSING_DATA for name in self.input_names()}
-        values.update(self.defined_default_input_values)
-        return values
+            self.default_inputs[name] = invalid_data.as_invalidation(value)
 
     @property
     def dynamic_input_values(self) -> dict:
@@ -190,12 +173,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     @property
     def task_inputs(self) -> dict:
         """Default inputs overwritten by inputs from previous tasks"""
-        inputs = self.defined_default_input_values
+        inputs = self.valid_default_input_values
         inputs.update(self.__dynamic_inputs)
         return inputs
 
     def receiveDynamicInputs(self, name, value):
-        if not_specified(value):
+        if invalid_data.is_invalid_data(value):
             self.__dynamic_inputs.pop(name, None)
         else:
             self.__dynamic_inputs[name] = value
@@ -220,15 +203,19 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                     type(self), "outputs"
                 )
                 orangename = ewoks_to_orange.get(ewoksname, ewoksname)
-                if not_specified(var.value):
-                    self.send(orangename, INVALIDATION_DATA)  # or channel.invalidate?
+                if invalid_data.is_invalid_data(var.value):
+                    self.send(
+                        orangename, invalid_data.INVALIDATION_DATA
+                    )  # or channel.invalidate?
                 else:
                     self.send(orangename, var)
         else:
             for ewoksname, var in self.task_outputs.items():
                 channel = self._get_output_signal(ewoksname)
-                if not_specified(var.value):
-                    channel.send(INVALIDATION_DATA)  # or channel.invalidate?
+                if invalid_data.is_invalid_data(var.value):
+                    channel.send(
+                        invalid_data.INVALIDATION_DATA
+                    )  # or channel.invalidate?
                 else:
                     channel.send(var)
 
@@ -247,11 +234,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def clear_downstream(self):
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for name in self.task_outputs:
-                self.send(name, INVALIDATION_DATA)  # or channel.invalidate?
+                self.send(
+                    name, invalid_data.INVALIDATION_DATA
+                )  # or channel.invalidate?
         else:
             for name in self.task_outputs:
                 channel = self._get_output_signal(name)
-                channel.send(INVALIDATION_DATA)  # or channel.invalidate?
+                channel.send(invalid_data.INVALIDATION_DATA)  # or channel.invalidate?
 
     def propagate_downstream(self, succeeded: Optional[bool] = None):
         if succeeded is None:

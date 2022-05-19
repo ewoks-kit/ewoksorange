@@ -12,6 +12,7 @@ from .owwidgets import is_ewoks_widget_class
 from .owwidgets import is_native_widget_class
 from . import owsignals
 from . import owsettings
+from . import invalid_data
 from .owsignal_manager import SignalManagerWithoutScheme
 from .owsignal_manager import set_input_value
 from ..orange_version import ORANGE_VERSION
@@ -177,8 +178,7 @@ def _native_owwidget_task_wrapper(registry_name, widget_class) -> Task:
                     continue
                 used_values.add(ewoksname)
                 value = value_from_transfer(values[ewoksname])
-                if value is not self.MISSING_DATA:
-                    settings_dict[ewoksname] = value
+                settings_dict[ewoksname] = value
 
             # Values corresponding to inputs
             for signal in widget_class.get_signals("inputs"):
@@ -189,8 +189,6 @@ def _native_owwidget_task_wrapper(registry_name, widget_class) -> Task:
                     continue
                 used_values.add(ewoksname)
                 value = value_from_transfer(values[ewoksname])
-                if value is self.MISSING_DATA:
-                    value = None
                 input_list.append((signal, value))
 
             # Node properties not corresponding to settings or inputs
@@ -198,8 +196,7 @@ def _native_owwidget_task_wrapper(registry_name, widget_class) -> Task:
             unused_values = set(values.keys()) - used_values
             for ewoksname in unused_values:
                 value = value_from_transfer(values[ewoksname])
-                if value is not self.MISSING_DATA:
-                    settings_dict[ewoksname] = value
+                settings_dict[ewoksname] = value
 
             return input_list, settings_dict
 
@@ -207,6 +204,10 @@ def _native_owwidget_task_wrapper(registry_name, widget_class) -> Task:
 
 
 def instantiate_owwidget(widget_class, signal_manager=None, stored_settings=None):
+    if stored_settings:
+        stored_settings = {
+            k: invalid_data.as_invalidation(v) for k, v in stored_settings.items()
+        }
     widget = widget_class.__new__(
         widget_class, signal_manager=signal_manager, stored_settings=stored_settings
     )

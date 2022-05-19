@@ -95,7 +95,7 @@ def test_mixed_tutorial1_without_qt(register_ewoks_example_addons):
 def assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename):
     """Execute workflow using the Qt widgets and signals"""
     ewoks_orange_canvas.load_ows(str(filename))
-    ewoks_orange_canvas.wait_widgets()
+    ewoks_orange_canvas.wait_widgets(timeout=10)
     widgets = list(ewoks_orange_canvas.widgets_from_name("task6"))
     results = widgets[0].task_output_values
     assert results == {"result": 16}
@@ -122,7 +122,7 @@ def assert_sumlist_tutorial_with_qt(ewoks_orange_canvas, filename):
     results = wgenerator.task_output_values
     listsum = sum(results["list"])
 
-    ewoks_orange_canvas.wait_widgets()
+    ewoks_orange_canvas.wait_widgets(timeout=10)
 
     widgets = list(ewoks_orange_canvas.widgets_from_name("Print list sum"))
     widgets = list(ewoks_orange_canvas.widgets_from_name("Print list sum (1)"))
@@ -151,7 +151,7 @@ def assert_sumlist_tutorial_without_qt(filename):
 def assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename):
     """Execute workflow using the Qt widgets and signals"""
     ewoks_orange_canvas.load_ows(str(filename))
-    ewoks_orange_canvas.wait_widgets()
+    ewoks_orange_canvas.wait_widgets(timeout=10)
     widgets = list(ewoks_orange_canvas.widgets_from_name("Adder2"))
     results = widgets[0].task_output_values
     assert results == {"result": 3}
