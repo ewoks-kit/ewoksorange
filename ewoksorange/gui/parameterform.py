@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, List, Set, Union, Optional
 from AnyQt import QtCore
 from AnyQt import QtWidgets
 from silx.gui.dialog.DataFileDialog import DataFileDialog
-from ewoksorange.bindings import owwidgets
+from ewokscore import missing_data
 
 
 ParameterValueType = Any
@@ -12,7 +12,7 @@ WidgetValueType = Union[str, numbers.Number, bool]
 
 
 def default_serialize(value: ParameterValueType) -> WidgetValueType:
-    if owwidgets.not_specified(value):
+    if missing_data.is_missing_data(value):
         return ""
     else:
         return value
@@ -20,7 +20,7 @@ def default_serialize(value: ParameterValueType) -> WidgetValueType:
 
 def default_deserialize(value: WidgetValueType) -> ParameterValueType:
     if isinstance(value, str) and not value:
-        return owwidgets.MISSING_DATA
+        return missing_data.MISSING_DATA
     else:
         return value
 
@@ -51,8 +51,8 @@ class ParameterForm(QtWidgets.QWidget):
     def addParameter(
         self,
         name: str,
-        value: ParameterValueType = owwidgets.MISSING_DATA,
-        default: ParameterValueType = owwidgets.MISSING_DATA,
+        value: ParameterValueType = missing_data.MISSING_DATA,
+        default: ParameterValueType = missing_data.MISSING_DATA,
         label: Optional[str] = None,
         changeCallback: Optional[Callable] = None,
         select: Optional[str] = None,
@@ -70,9 +70,9 @@ class ParameterForm(QtWidgets.QWidget):
             label += ":"
         else:
             label = name + ":"
-        if isinstance(value, type(owwidgets.MISSING_DATA)):
+        if missing_data.is_missing_data(value):
             value = default
-        if owwidgets.not_specified(value):
+        if missing_data.is_missing_data(value):
             value = default
         try:
             value = serialize(value)
@@ -221,7 +221,7 @@ class ParameterForm(QtWidgets.QWidget):
         try:
             return deserialize(value)
         except Exception:
-            return owwidgets.MISSING_DATA
+            return missing_data.MISSING_DATA
 
     def set_parameter_value(self, name: str, value: ParameterValueType):
         w = self._get_value_widget(name)
@@ -232,7 +232,7 @@ class ParameterForm(QtWidgets.QWidget):
             value = serialize(value)
         except Exception:
             return
-        null = owwidgets.not_specified(value)
+        null = missing_data.is_missing_data(value)
         if isinstance(w, QtWidgets.QLineEdit):
             if null:
                 w.setText("")

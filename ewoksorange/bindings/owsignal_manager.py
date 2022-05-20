@@ -24,6 +24,7 @@ from ewokscore.variable import value_from_transfer
 from .owwidgets import is_native_widget
 from .qtapp import QtEvent
 from ..bindings.owsignals import get_input_names, get_output_names
+from . import invalid_data
 
 
 class _MissingSignalValue:
@@ -194,6 +195,7 @@ class SignalManagerWithScheme(
 
 
 def set_input_value(widget, signal, value, index):
+    value = invalid_data.as_invalidation(value)
     key = id(widget), signal.name, signal.id
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         handler = getattr(widget, signal.handler)
