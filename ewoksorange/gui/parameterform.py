@@ -88,7 +88,7 @@ class ParameterForm(QtWidgets.QWidget):
             value_widget = QtWidgets.QLineEdit()
             value_widget.setText(value)
             if changeCallback:
-                value_widget.textChanged.connect(changeCallback)
+                value_widget.editingFinished.connect(changeCallback)
             else:
                 value_widget.setReadOnly(True)
             if select == "file":
