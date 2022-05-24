@@ -1,7 +1,7 @@
 import os
 import sys
 import tempfile
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Union
 
 import ewokscore
 from ewokscore.graph import TaskGraph
@@ -9,12 +9,7 @@ from . import owsconvert
 from ..canvas.main import main as launchcanvas
 
 
-__all__ = [
-    "execute_graph",
-    "load_graph",
-    "save_graph",
-    "convert_graph",
-]
+__all__ = ["execute_graph", "load_graph", "save_graph", "convert_graph"]
 
 
 @ewokscore.execute_graph_decorator(binding="orange")
@@ -84,10 +79,11 @@ def load_graph(
         return ewokscore.load_graph(graph, inputs=inputs, **load_options)
 
 
-def save_graph(graph: TaskGraph, destination, **save_options) -> Optional[str]:
+def save_graph(graph: TaskGraph, destination, **save_options) -> Union[str, dict]:
     representation = _get_representation(destination, options=save_options)
     if representation == "ows":
-        return owsconvert.ewoks_to_ows(graph, destination, **save_options)
+        owsconvert.ewoks_to_ows(graph, destination, **save_options)
+        return destination
     else:
         return graph.dump(destination, **save_options)
 
@@ -98,7 +94,7 @@ def convert_graph(
     inputs: Optional[List[dict]] = None,
     load_options: Optional[dict] = None,
     save_options: Optional[dict] = None,
-):
+) -> Union[str, dict]:
     if load_options is None:
         load_options = dict()
     if save_options is None:
