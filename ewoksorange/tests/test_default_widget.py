@@ -39,6 +39,7 @@ def test_default_widgets(tmpdir, ewoks_orange_canvas):
 
     # Load and execute the orange workflow
     ewoks_orange_canvas.load_ows(destination)
+    ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)
     results = dict(ewoks_orange_canvas.iter_output_values())
 

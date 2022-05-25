@@ -12,6 +12,7 @@ def execute_graph(
         filename = str(tempdir / "test_graph.ows")
         ewoks_to_ows(graph, filename, execinfo=execinfo, error_on_duplicates=False)
         canvas_handler.load_ows(filename)
+        canvas_handler.start_workflow()
         canvas_handler.wait_widgets(timeout=10)
     finally:
         # Manually emit the end workflow and job event
@@ -45,10 +46,6 @@ def assert_succesfull_workfow_events(events):
         {"context": "node", "node_id": "node2", "type": "end"},
         {"context": "node", "node_id": "node3", "type": "start"},
         {"context": "node", "node_id": "node3", "type": "end"},
-        {"context": "node", "node_id": "node2", "type": "start"},  # TODO: double event
-        {"context": "node", "node_id": "node2", "type": "end"},  # TODO: double event
-        {"context": "node", "node_id": "node3", "type": "start"},  # TODO: double event
-        {"context": "node", "node_id": "node3", "type": "end"},  # TODO: double event
         {"context": "workflow", "node_id": None, "type": "end"},
         {"context": "job", "node_id": None, "type": "end"},
     ]
@@ -59,7 +56,6 @@ def assert_succesfull_workfow_events(events):
 
 
 def assert_failed_workfow_events(events):
-    # TODO: double event are caused by a handleNewSignals call in the widget constructor
     expected = [
         {"context": "job", "node_id": None, "type": "start", "error_message": None},
         {
@@ -84,30 +80,6 @@ def assert_failed_workfow_events(events):
             "type": "end",
             "error_message": None,
         },  # TODO: caused by clear_downstream
-        {
-            "context": "node",
-            "node_id": "node2",
-            "type": "start",
-            "error_message": None,
-        },  # TODO: double event
-        {
-            "context": "node",
-            "node_id": "node2",
-            "type": "end",
-            "error_message": "abc",
-        },  # TODO: double event
-        {
-            "context": "node",
-            "node_id": "node3",
-            "type": "start",
-            "error_message": None,
-        },  # TODO: double event
-        {
-            "context": "node",
-            "node_id": "node3",
-            "type": "end",
-            "error_message": None,
-        },  # TODO: double event
         {
             "context": "workflow",
             "node_id": None,

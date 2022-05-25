@@ -1,4 +1,5 @@
 import time
+import logging
 from AnyQt.QtCore import Qt
 
 from ..orange_version import ORANGE_VERSION
@@ -31,6 +32,9 @@ else:
 from .utils import get_orange_canvas
 from ..bindings import qtapp
 from ..bindings.owsignal_manager import SignalManagerWithOutputTracking
+
+
+_logger = logging.getLogger(__name__)
 
 
 class OrangeCanvasHandler:
@@ -129,6 +133,17 @@ class OrangeCanvasHandler:
     def iter_output_values(self):
         for name, widget in self.iter_widgets_with_name():
             yield name, widget.task_output_values
+
+    def start_workflow(self):
+        triggered = False
+        for node in self.iter_nodes():
+            if not any(self.scheme.find_links(sink_node=node)):
+                widget = self.scheme.widget_for_node(node)
+                triggered = True
+                _logger.info("Trigger workflow node %r", node.title)
+                widget.handleNewSignals()
+        if not triggered:
+            _logger.warning("This workflow has no widgets that can be triggered")
 
     def wait_widgets(self, timeout=None):
         signal_manager = self.signal_manager
