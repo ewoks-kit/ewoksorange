@@ -6,6 +6,7 @@ import inspect
 import logging
 from contextlib import contextmanager
 from typing import Mapping, Optional
+from AnyQt import QtWidgets
 
 from ..orange_version import ORANGE_VERSION
 
@@ -103,15 +104,28 @@ if "openclass" in inspect.signature(WidgetMetaClass).parameters:
 
 
 class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts):
-    """
-    Base class to handle boiler plate code to interconnect ewoks and
-    orange3
-    """
+    """Base class for boiler plate code to interconnect ewoks and orange3"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dynamic_inputs = dict()
         self.__task_output_changed_callbacks = {self.task_output_changed}
+
+    def _init_control_area(self):
+        """The control area is used for task inputs."""
+        layout = self.controlArea.layout()
+        if layout is None:
+            layout = QtWidgets.QVBoxLayout()
+            self.controlArea.setLayout(layout)
+        trigger = QtWidgets.QPushButton("Trigger")
+        layout.addWidget(trigger)
+        trigger.released.connect(self.executeEwoksTask)
+        trigger = QtWidgets.QPushButton("Execute")
+        layout.addWidget(trigger)
+        trigger.released.connect(self.executeEwoksTaskWithoutPropagation)
+
+    def _init_main_area(self):
+        """The main area is used to display results."""
 
     @classmethod
     def input_names(cls):
@@ -246,13 +260,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         if succeeded is None:
             succeeded = self.task_succeeded
         if succeeded:
+            _logger.debug("%s: trigger downstream", self)
             self.trigger_downstream()
         else:
+            _logger.debug("%s: clear downstream", self)
             self.clear_downstream()
-
-    def defaultInputsHaveChanged(self):
-        """Needs to be called when default inputs have changed"""
-        self.executeEwoksTask()
 
     def handleNewSignals(self):
         """Invoked by the workflow signal propagation manager after all
@@ -261,9 +273,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         self.executeEwoksTask()
 
     def executeEwoksTask(self):
+        _logger.debug("%s: execute ewoks task (with propagation)", self)
         self._executeEwoksTask(propagate=True)
 
     def executeEwoksTaskWithoutPropagation(self):
+        _logger.debug("%s: execute ewoks task (without propagation)", self)
         self._executeEwoksTask(propagate=False)
 
     def _executeEwoksTask(self, propagate: bool):
