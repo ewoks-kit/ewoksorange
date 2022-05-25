@@ -52,7 +52,7 @@ ewoks execute /path/to/orange_wf.ows --binding orange
 Launch the Orange canvas with the examples add-on
 
 ```bash
-python -m ewoksorange.canvas --with_example
+python -m ewoksorange.canvas --with-examples
 ```
 
 or alternatively install the example add-ons

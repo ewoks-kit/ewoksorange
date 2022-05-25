@@ -84,7 +84,7 @@ def temporary_log_handlers(log_level):
 def main(argv=None):
     parser = arg_parser()
     parser.add_argument(
-        "--with_example",
+        "--with-examples",
         action="store_true",
         help="Register example add-on's from ewoksorange.",
     )
@@ -93,8 +93,8 @@ def main(argv=None):
         argv = sys.argv
     options, _ = parser.parse_known_args(argv[1:])
 
-    if "--with_example" in argv:
-        argv.pop(argv.index("--with_example"))
+    if "--with-examples" in argv:
+        argv.pop(argv.index("--with-examples"))
 
     if "--force-discovery" not in argv:
         argv.append("--force-discovery")
@@ -102,7 +102,7 @@ def main(argv=None):
     with temporary_log_handlers(options.log_level):
         register_addon_package(ewoks_addon)
 
-        if options.with_example:
+        if options.with_examples:
             from ewoksorange.tests.examples import ewoks_example_1_addon
             from ewoksorange.tests.examples import ewoks_example_2_addon
 

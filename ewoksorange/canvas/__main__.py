@@ -2,7 +2,7 @@
 
 .. code: bash
 
-    python -m ewoksorange.canvas --with_example
+    python -m ewoksorange.canvas --with-examples
 
 Which is equivalent to
 
