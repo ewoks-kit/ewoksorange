@@ -41,7 +41,7 @@ def default_owwidget_class(task_class: Task) -> Tuple[OWEwoksBaseWidget, str]:
 
         def __init__(self, *args, **kw):
             super().__init__(*args, **kw)
-            self.handleNewSignals()
+            self._init_control_area()
 
     widget_class = DefaultOwWidget
 
