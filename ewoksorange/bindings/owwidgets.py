@@ -76,14 +76,32 @@ if summarize is not None:
 
 def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     """This needs to be called before signal and setting parsing"""
+    # Add the Ewoks class as an attribute to the Orange widget class
     namespace["ewokstaskclass"] = ewokstaskclass
+
+    # Default values for settings:
     # Warning: default_inputs should convert MISSING_DATA to INVALIDATION_DATA
     #          when setting and convert INVALIDATION_DATA to MISSING_DATA when getting
-    namespace["default_inputs"] = Setting(
-        {name: invalid_data.INVALIDATION_DATA for name in ewokstaskclass.input_names()},
-        schema_only=True,
-    )
-    namespace["varinfo"] = Setting(dict(), schema_only=True)
+    default_inputs = {
+        name: invalid_data.INVALIDATION_DATA for name in ewokstaskclass.input_names()
+    }
+    varinfo = dict()
+    execinfo = dict()
+
+    # Make sure the values above are always the default setting values:
+    # https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial-settings.html
+    # schema_only=False: when a widget is removed, its settings are stored to be used
+    #                    as defaults for future instances of this widget.
+    # schema_only=True: setting defaults should not change. Future instances of this widget
+    #                   have the default settings hard-coded in this function.
+    schema_only = True
+
+    # Add the settings as widget class attributes
+    namespace["default_inputs"] = Setting(default_inputs, schema_only=schema_only)
+    namespace["varinfo"] = Setting(varinfo, schema_only=schema_only)
+    namespace["execinfo"] = Setting(execinfo, schema_only=schema_only)
+
+    # Add missing inputs and outputs as widget class attributes
     owsignals.validate_inputs(namespace)
     owsignals.validate_outputs(namespace)
 
