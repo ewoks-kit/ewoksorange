@@ -6,6 +6,7 @@ import inspect
 import logging
 from contextlib import contextmanager
 from typing import Mapping, Optional
+from AnyQt import QtWidgets
 
 from ..orange_version import ORANGE_VERSION
 
@@ -75,14 +76,32 @@ if summarize is not None:
 
 def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     """This needs to be called before signal and setting parsing"""
+    # Add the Ewoks class as an attribute to the Orange widget class
     namespace["ewokstaskclass"] = ewokstaskclass
+
+    # Default values for settings:
     # Warning: default_inputs should convert MISSING_DATA to INVALIDATION_DATA
     #          when setting and convert INVALIDATION_DATA to MISSING_DATA when getting
-    namespace["default_inputs"] = Setting(
-        {name: invalid_data.INVALIDATION_DATA for name in ewokstaskclass.input_names()},
-        schema_only=True,
-    )
-    namespace["varinfo"] = Setting(dict(), schema_only=True)
+    default_inputs = {
+        name: invalid_data.INVALIDATION_DATA for name in ewokstaskclass.input_names()
+    }
+    varinfo = dict()
+    execinfo = dict()
+
+    # Make sure the values above are always the default setting values:
+    # https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial-settings.html
+    # schema_only=False: when a widget is removed, its settings are stored to be used
+    #                    as defaults for future instances of this widget.
+    # schema_only=True: setting defaults should not change. Future instances of this widget
+    #                   have the default settings hard-coded in this function.
+    schema_only = True
+
+    # Add the settings as widget class attributes
+    namespace["default_inputs"] = Setting(default_inputs, schema_only=schema_only)
+    namespace["varinfo"] = Setting(varinfo, schema_only=schema_only)
+    namespace["execinfo"] = Setting(execinfo, schema_only=schema_only)
+
+    # Add missing inputs and outputs as widget class attributes
     owsignals.validate_inputs(namespace)
     owsignals.validate_outputs(namespace)
 
@@ -103,15 +122,28 @@ if "openclass" in inspect.signature(WidgetMetaClass).parameters:
 
 
 class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts):
-    """
-    Base class to handle boiler plate code to interconnect ewoks and
-    orange3
-    """
+    """Base class for boiler plate code to interconnect ewoks and orange3"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dynamic_inputs = dict()
         self.__task_output_changed_callbacks = {self.task_output_changed}
+
+    def _init_control_area(self):
+        """The control area is used for task inputs."""
+        layout = self.controlArea.layout()
+        if layout is None:
+            layout = QtWidgets.QVBoxLayout()
+            self.controlArea.setLayout(layout)
+        trigger = QtWidgets.QPushButton("Trigger")
+        layout.addWidget(trigger)
+        trigger.released.connect(self.executeEwoksTask)
+        trigger = QtWidgets.QPushButton("Execute")
+        layout.addWidget(trigger)
+        trigger.released.connect(self.executeEwoksTaskWithoutPropagation)
+
+    def _init_main_area(self):
+        """The main area is used to display results."""
 
     @classmethod
     def input_names(cls):
@@ -246,13 +278,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         if succeeded is None:
             succeeded = self.task_succeeded
         if succeeded:
+            _logger.debug("%s: trigger downstream", self)
             self.trigger_downstream()
         else:
+            _logger.debug("%s: clear downstream", self)
             self.clear_downstream()
-
-    def defaultInputsHaveChanged(self):
-        """Needs to be called when default inputs have changed"""
-        self.executeEwoksTask()
 
     def handleNewSignals(self):
         """Invoked by the workflow signal propagation manager after all
@@ -261,9 +291,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         self.executeEwoksTask()
 
     def executeEwoksTask(self):
+        _logger.debug("%s: execute ewoks task (with propagation)", self)
         self._executeEwoksTask(propagate=True)
 
     def executeEwoksTaskWithoutPropagation(self):
+        _logger.debug("%s: execute ewoks task (without propagation)", self)
         self._executeEwoksTask(propagate=False)
 
     def _executeEwoksTask(self, propagate: bool):

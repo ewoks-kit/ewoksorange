@@ -28,7 +28,7 @@ def test_listgenerator(register_ewoks_example_2_addon):
         "task_identifier": "orangecontrib.list_operations.listgenerator.ListGenerator",
         "task_generator": OWWIDGET_TASKS_GENERATOR,
     }
-    task = instantiate_task("node_id", node_attrs, inputs={"length": [7]})
+    task = instantiate_task("node_id", node_attrs, inputs={"length": 7})
     task.execute()
     assert len(task.output_values["list"]) == 7
 

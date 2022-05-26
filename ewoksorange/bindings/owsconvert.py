@@ -266,6 +266,9 @@ class OwsNodeWrapper:
         )
         default_inputs = node_attrs.get("default_inputs", list())
         default_inputs = {item["name"]: item["value"] for item in default_inputs}
+        # Note: OWEwoksBaseWidget must have these settings in the Oasys fork
+        #       otherwise `WidgetsScheme.sync_node_properties` will remove the
+        #       unknown properties
         self.properties = {
             "default_inputs": default_inputs,
             "varinfo": node_attrs.get("varinfo", dict()),

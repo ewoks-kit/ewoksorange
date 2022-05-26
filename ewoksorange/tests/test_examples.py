@@ -25,6 +25,7 @@ def test_execute_graph(graph_name, tmpdir, ewoks_orange_canvas):
         filename = os.path.join(tmpdirname, graph_name + ".ows")
         ewoks_to_ows(ewoksgraph, filename, varinfo=varinfo, error_on_duplicates=False)
         ewoks_orange_canvas.load_ows(filename)
+    ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)
 
     assert_execute_graph_tasks(ewoksgraph, dict(), expected, varinfo=varinfo)

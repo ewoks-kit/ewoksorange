@@ -24,7 +24,7 @@ Launch the Orange canvas with the examples add-on
 
 .. code-block:: bash
 
-    python -m ewoksorange.canvas --with_example
+    python -m ewoksorange.canvas --with-examples
 
 or alternatively install the example add-ons
 

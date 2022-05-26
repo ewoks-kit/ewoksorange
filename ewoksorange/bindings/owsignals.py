@@ -177,6 +177,8 @@ def _validate_signals(namespace: dict, direction: str, names: List[str]) -> None
 
 
 def validate_inputs(namespace) -> None:
+    """Adds missing Orange inputs by compaing the existing Orange
+    inputs with the ewoks inputs."""
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         if "inputs" not in namespace:
             namespace["inputs"] = list()
@@ -201,6 +203,8 @@ def validate_inputs(namespace) -> None:
 
 
 def validate_outputs(namespace) -> None:
+    """Adds missing Orange outputs by compaing the existing Orange
+    outputs with the ewoks outputs."""
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         if "outputs" not in namespace:
             namespace["outputs"] = list()
