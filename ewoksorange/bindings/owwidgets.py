@@ -138,10 +138,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     def _init_control_area(self):
         """The control area is used for task inputs."""
-        layout = self.controlArea.layout()
-        if layout is None:
-            layout = QtWidgets.QVBoxLayout()
-            self.controlArea.setLayout(layout)
+        layout = self._get_control_layout()
         trigger = QtWidgets.QPushButton("Trigger")
         layout.addWidget(trigger)
         trigger.released.connect(self.executeEwoksTask)
@@ -151,10 +148,29 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     def _init_main_area(self):
         """The main area is used to display results."""
+        self._get_main_layout()
+
+    def _get_control_layout(self):
+        layout = self.controlArea.layout()
+        # sp = self.controlArea.sizePolicy()
+        # sp.setVerticalPolicy(QtWidgets.QSizePolicy.Expanding)
+        # self.controlArea.setSizePolicy(sp)
+        # print("changed the size policy")
+        if layout is None:
+            layout = QtWidgets.QVBoxLayout()
+            self.controlArea.setLayout(layout)
+        return layout
+
+    def _get_main_layout(self):
         if not self.want_main_area:
             raise RuntimeError(
                 f"{type(self).__name__} must have class attribute `want_main_area = True`"
             )
+        layout = self.mainArea.layout()
+        if layout is None:
+            layout = QtWidgets.QVBoxLayout()
+            self.mainArea.setLayout(layout)
+        return layout
 
     def _getTaskArguments(self):
         if self.signalManager is None:
