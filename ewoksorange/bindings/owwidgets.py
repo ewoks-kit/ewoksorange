@@ -4,8 +4,9 @@ Orange widget base classes to execute Ewoks tasks
 
 import inspect
 import logging
+import warnings
 from contextlib import contextmanager
-from typing import Mapping, Optional
+from typing import Any, Optional
 from AnyQt import QtWidgets
 
 from ..orange_version import ORANGE_VERSION
@@ -97,9 +98,14 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     schema_only = True
 
     # Add the settings as widget class attributes
+    namespace["_ewoks_default_inputs"] = Setting(
+        default_inputs, schema_only=schema_only
+    )
+    namespace["_ewoks_varinfo"] = Setting(varinfo, schema_only=schema_only)
+    namespace["_ewoks_execinfo"] = Setting(execinfo, schema_only=schema_only)
+
+    # Deprecated:
     namespace["default_inputs"] = Setting(default_inputs, schema_only=schema_only)
-    namespace["varinfo"] = Setting(varinfo, schema_only=schema_only)
-    namespace["execinfo"] = Setting(execinfo, schema_only=schema_only)
 
     # Add missing inputs and outputs as widget class attributes
     owsignals.validate_inputs(namespace)
@@ -144,14 +150,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     def _init_main_area(self):
         """The main area is used to display results."""
-
-    @classmethod
-    def input_names(cls):
-        return cls.ewokstaskclass.input_names()
-
-    @classmethod
-    def output_names(cls):
-        return cls.ewokstaskclass.output_names()
+        if not self.want_main_area:
+            raise RuntimeError(
+                f"{type(self).__name__} must have class attribute `want_main_area = True`"
+            )
 
     def _getTaskArguments(self):
         if self.signalManager is None:
@@ -163,44 +165,77 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             node_id = node.title
             if not node_id:
                 node_id = scheme.nodes.index(node)
-            execinfo = node.properties.get("execinfo", None)
-            execinfo = scheme_ewoks_events(scheme, execinfo)
+            execinfo = scheme_ewoks_events(scheme, self._ewoks_execinfo)
         return {
             "inputs": self.task_inputs,
-            "varinfo": self.varinfo,
+            "varinfo": self._ewoks_varinfo,
             "execinfo": execinfo,
             "node_id": node_id,
         }
 
-    @staticmethod
-    def _get_value(value):
-        """Value comes from the orange input settings or from the previous task"""
-        if isinstance(value, Variable):
-            return value.value
-        return value
+    @classmethod
+    def input_names(cls):
+        return cls.ewokstaskclass.input_names()
 
-    @property
-    def default_input_values(self) -> dict:
-        return {
-            name: invalid_data.as_missing(value)
-            for name, value in self.default_inputs.items()
-        }
+    @classmethod
+    def output_names(cls):
+        return cls.ewokstaskclass.output_names()
 
-    @property
-    def valid_default_input_values(self) -> dict:
-        return {
+    def _deprecated_default_inputs(self):
+        adict = {
             name: value
             for name, value in self.default_inputs.items()
             if not invalid_data.is_invalid_data(value)
         }
+        if adict:
+            warnings.warn(
+                ".ows file has deprecated node property 'default_inputs'",
+                DeprecationWarning,
+            )
+            self.update_default_inputs(**adict)
+            for k in self.default_inputs:
+                self.default_inputs[k] = invalid_data.INVALIDATION_DATA
 
-    def update_default_inputs(self, inputs: Mapping):
+    @property
+    def default_input_names(self) -> set:
+        self._deprecated_default_inputs()
+        return set(self._ewoks_default_inputs)
+
+    @property
+    def default_input_values(self) -> dict:
+        self._deprecated_default_inputs()
+        return {
+            name: invalid_data.as_missing(value)
+            for name, value in self._ewoks_default_inputs.items()
+        }
+
+    @property
+    def valid_default_input_name(self) -> set:
+        return set(self.valid_default_input_values)
+
+    @property
+    def valid_default_input_values(self) -> dict:
+        self._deprecated_default_inputs()
+        return {
+            name: value
+            for name, value in self._ewoks_default_inputs.items()
+            if not invalid_data.is_invalid_data(value)
+        }
+
+    def update_default_inputs(self, **inputs) -> None:
         for name, value in inputs.items():
-            self.default_inputs[name] = invalid_data.as_invalidation(value)
+            self._ewoks_default_inputs[name] = invalid_data.as_invalidation(value)
+
+    @property
+    def dynamic_input_names(self) -> set:
+        return set(self.__dynamic_inputs)
 
     @property
     def dynamic_input_values(self) -> dict:
-        return {k: self._get_value(v) for k, v in self.__dynamic_inputs.items()}
+        return {k: self._extract_value(v) for k, v in self.__dynamic_inputs.items()}
+
+    def _extract_value(self, data) -> Any:
+        return value_from_transfer(data, varinfo=self._ewoks_varinfo)
 
     @property
     def task_inputs(self) -> dict:
@@ -209,13 +244,31 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         inputs.update(self.__dynamic_inputs)
         return inputs
 
-    def receiveDynamicInputs(self, name, value):
+    @property
+    def task_outputs(self):
+        raise NotImplementedError("Base class")
+
+    @property
+    def task_output_values(self) -> dict:
+        return {k: self._extract_value(v) for k, v in self.task_outputs.items()}
+
+    def get_task_output_value(self, name) -> Any:
+        return self._extract_value(self.task_outputs[name])
+
+    @property
+    def task_input_values(self) -> dict:
+        return {k: self._extract_value(v) for k, v in self.task_inputs.items()}
+
+    def get_task_input_value(self, name: str) -> Any:
+        return self._extract_value(self.task_inputs[name])
+
+    def receiveDynamicInputs(self, name: str, value: Any):
         if invalid_data.is_invalid_data(value):
             self.__dynamic_inputs.pop(name, None)
         else:
             self.__dynamic_inputs[name] = value
 
-    def _get_output_signal(self, ewoksname):
+    def _get_output_signal(self, ewoksname: str):
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for signal in self.outputs:
                 if signal.name == ewoksname:
@@ -228,7 +281,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             raise RuntimeError(f"Output signal '{ewoksname}' does not exist")
         return signal
 
-    def trigger_downstream(self):
+    def trigger_downstream(self) -> None:
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for ewoksname, var in self.task_outputs.items():
                 ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
@@ -251,7 +304,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                 else:
                     channel.send(var)
 
-    def _output_changed(self):
+    def _output_changed(self) -> None:
         for cb in self.__task_output_changed_callbacks:
             cb()
 
@@ -259,11 +312,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def task_output_changed_callbacks(self) -> set:
         return self.__task_output_changed_callbacks
 
-    def task_output_changed(self):
+    def task_output_changed(self) -> None:
         """Called when the task output has changed"""
         pass
 
-    def clear_downstream(self):
+    def clear_downstream(self) -> None:
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for name in self.task_outputs:
                 self.send(
@@ -274,7 +327,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                 channel = self._get_output_signal(name)
                 channel.send(invalid_data.INVALIDATION_DATA)  # or channel.invalidate?
 
-    def propagate_downstream(self, succeeded: Optional[bool] = None):
+    def propagate_downstream(self, succeeded: Optional[bool] = None) -> None:
         if succeeded is None:
             succeeded = self.task_succeeded
         if succeeded:
@@ -284,47 +337,26 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             _logger.debug("%s: clear downstream", self)
             self.clear_downstream()
 
-    def handleNewSignals(self):
+    def handleNewSignals(self) -> None:
         """Invoked by the workflow signal propagation manager after all
         signals handlers have been called.
         """
         self.executeEwoksTask()
 
-    def executeEwoksTask(self):
+    def executeEwoksTask(self) -> None:
         _logger.debug("%s: execute ewoks task (with propagation)", self)
         self._executeEwoksTask(propagate=True)
 
-    def executeEwoksTaskWithoutPropagation(self):
+    def executeEwoksTaskWithoutPropagation(self) -> None:
         _logger.debug("%s: execute ewoks task (without propagation)", self)
         self._executeEwoksTask(propagate=False)
 
-    def _executeEwoksTask(self, propagate: bool):
+    def _executeEwoksTask(self, propagate: bool) -> None:
         raise NotImplementedError("Base class")
 
     @property
-    def task_succeeded(self):
+    def task_succeeded(self) -> bool:
         raise NotImplementedError("Base class")
-
-    @property
-    def task_outputs(self):
-        raise NotImplementedError("Base class")
-
-    @property
-    def task_output_values(self):
-        return {name: var.value for name, var in self.task_outputs.items()}
-
-    def get_task_output_value(self, name):
-        return self.task_outputs[name].value
-
-    @property
-    def task_input_values(self):
-        return {
-            name: value_from_transfer(var, varinfo=self.varinfo)
-            for name, var in self.task_inputs.items()
-        }
-
-    def get_task_input_value(self, name):
-        return value_from_transfer(self.task_inputs[name])
 
 
 def is_orange_widget_class(widget_class):

@@ -115,8 +115,8 @@ def assert_sumlist_tutorial_with_qt(ewoks_orange_canvas, filename):
 
     # Remove artificial delay for this test
     for widget in ewoks_orange_canvas.iter_widgets():
-        if "delay" in widget.default_inputs:
-            widget.default_inputs["delay"] = 0
+        if "delay" in widget.default_input_names:
+            widget.update_default_inputs(delay=0)
 
     ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)

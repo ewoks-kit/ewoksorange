@@ -55,7 +55,7 @@ class SimpleTypesWidgetMixin:
         return {}
 
     def _default_inputs_changed(self):
-        self.update_default_inputs(self._default_inputs_form.get_parameter_values())
+        self.update_default_inputs(**self._default_inputs_form.get_parameter_values())
 
     def handleNewSignals(self):
         names = set(self.input_names())
