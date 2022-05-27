@@ -38,6 +38,7 @@ else:
 
 from ewokscore.variable import Variable
 from ewokscore.variable import value_from_transfer
+from ewokscore import missing_data
 from .progress import QProgress
 from .taskexecutor import TaskExecutor
 from .taskexecutor import ThreadedTaskExecutor
@@ -253,14 +254,22 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         return {k: self._extract_value(v) for k, v in self.task_outputs.items()}
 
     def get_task_output_value(self, name) -> Any:
-        return self._extract_value(self.task_outputs[name])
+        try:
+            data = self.task_outputs[name]
+        except KeyError:
+            return missing_data.MISSING_DATA
+        return self._extract_value(data)
 
     @property
     def task_input_values(self) -> dict:
         return {k: self._extract_value(v) for k, v in self.task_inputs.items()}
 
     def get_task_input_value(self, name: str) -> Any:
-        return self._extract_value(self.task_inputs[name])
+        try:
+            data = self.task_inputs[name]
+        except KeyError:
+            return missing_data.MISSING_DATA
+        return self._extract_value(data)
 
     def receiveDynamicInputs(self, name: str, value: Any):
         if invalid_data.is_invalid_data(value):
