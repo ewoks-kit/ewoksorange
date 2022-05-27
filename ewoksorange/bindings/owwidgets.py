@@ -122,7 +122,7 @@ class _OWEwoksWidgetMetaClass(WidgetMetaClass):
 # insure compatibility between old orange widget and new
 # orangewidget.widget.WidgetMetaClass. This was before split of the two
 # projects. Parameter name "openclass" is undefined on the old version
-ow_build_opts = {}
+ow_build_opts = dict()
 if "openclass" in inspect.signature(WidgetMetaClass).parameters:
     ow_build_opts["openclass"] = True
 
@@ -189,7 +189,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         }
         if adict:
             warnings.warn(
-                ".ows file has deprecated node property 'default_inputs'",
+                ".ows file node property 'default_inputs' has been converted to '_ewoks_default_inputs'. Please save the workflow to keep this change.",
                 DeprecationWarning,
             )
             self.update_default_inputs(**adict)
