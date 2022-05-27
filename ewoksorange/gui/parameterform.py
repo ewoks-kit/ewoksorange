@@ -222,7 +222,10 @@ class ParameterForm(QtWidgets.QWidget):
         if name not in self._fields:
             return None
         row = self._fields[name]["row"]
-        return self.layout().itemAtPosition(row, col).widget()
+        item = self.layout().itemAtPosition(row, col)
+        if item is None:
+            return None
+        return item.widget()
 
     def _get_label_widget(self, name: str) -> QtWidgets.QWidget:
         return self._get_widget(name, 0)
@@ -334,6 +337,19 @@ class ParameterForm(QtWidgets.QWidget):
     def set_parameters_readonly(self, params: Dict[str, bool]) -> None:
         for name, value in params.items():
             self.set_parameter_readonly(name, value)
+
+    def get_parameters_checked(self) -> Dict[str, bool]:
+        result = dict()
+        for name in self._fields:
+            checked = self.get_parameter_checked(name)
+            if checked is None:
+                continue
+            result[name] = checked
+        return result
+
+    def set_parameters_checked(self, params: Dict[str, bool]) -> None:
+        for name, value in params.items():
+            self.set_parameter_checked(name, value)
 
     def get_parameters_enabled(self) -> Dict[str, bool]:
         return {name: self.get_parameter_enabled(name) for name in self._fields}

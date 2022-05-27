@@ -21,7 +21,7 @@ class SimpleTypesWidgetMixin:
         self._default_inputs_form = ParameterForm(parent=box)
 
         names = set(self.input_names())
-        for name, value in self.default_input_values.items():
+        for name, value in self.default_input_values().items():
             names.remove(name)
             options = self._get_parameter_options(name)
             self._default_inputs_form.addParameter(
@@ -59,7 +59,7 @@ class SimpleTypesWidgetMixin:
 
     def handleNewSignals(self):
         names = set(self.input_names())
-        for name, value in self.dynamic_input_values.items():
+        for name, value in self.dynamic_input_values().items():
             names.remove(name)
             self._dynamic_input_form.set_parameter_enabled(name, True)
             self._default_inputs_form.set_parameter_enabled(name, False)
@@ -70,6 +70,6 @@ class SimpleTypesWidgetMixin:
         super().handleNewSignals()
 
     def task_output_changed(self):
-        for name, value in self.task_output_values.items():
+        for name, value in self.task_output_values().items():
             self._output_form.set_parameter_value(name, value)
         super().task_output_changed()

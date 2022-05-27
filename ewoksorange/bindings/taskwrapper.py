@@ -104,7 +104,7 @@ def _ewoks_owwidget_task_wrapper(registry_name, widget_class) -> Task:
 
         def receiveOutputSend(self):
             try:
-                for name, value in self.widget.task_output_values.items():
+                for name, value in self.widget.task_output_values().items():
                     self.output_variables[name].value = value
             finally:
                 if self.outputsReceived is not None:
