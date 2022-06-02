@@ -17,8 +17,8 @@ class TaskExecutorQueue(QObject, Queue):
 
     def __init__(self, ewokstaskclass):
         super().__init__()
-        self._taskExecutor = _ThreadedTaskExecutor(ewokstaskclass=ewokstaskclass)
-        self._taskExecutor.finished.connect(self._process_ended)
+        self._task_executor = _ThreadedTaskExecutor(ewokstaskclass=ewokstaskclass)
+        self._task_executor.finished.connect(self._process_ended)
         self._available = True
         """Simple thread to know if we can do some processing
         and avoid to mix thinks with QSignals and different threads
@@ -38,14 +38,14 @@ class TaskExecutorQueue(QObject, Queue):
         if Queue.empty(self):
             return
         self._available = False
-        self._taskExecutor.create_task(**Queue.get(self))
-        if self._taskExecutor.is_ready_to_execute:
+        self._task_executor.create_task(**Queue.get(self))
+        if self._task_executor.is_ready_to_execute:
             self.sigComputationStarted.emit()
-            self._taskExecutor.start()
+            self._task_executor.start()
 
     def _process_ended(self):
-        taskExecutor = self.sender()
-        for callback in taskExecutor.callbacks:
+        task_executor = self.sender()
+        for callback in task_executor.callbacks:
             callback()
         self.sigComputationEnded.emit()
         self._available = True
@@ -53,11 +53,11 @@ class TaskExecutorQueue(QObject, Queue):
             self._process_next()
 
     def stop(self):
-        self._taskExecutor.finished.disconnect(self._process_ended)
+        self._task_executor.finished.disconnect(self._process_ended)
         while not self.empty():
             self.get()
-        self._taskExecutor.stop(wait=True)
-        self._taskExecutor = None
+        self._task_executor.stop(wait=True)
+        self._task_executor = None
 
 
 class _ThreadedTaskExecutor(ThreadedTaskExecutor):

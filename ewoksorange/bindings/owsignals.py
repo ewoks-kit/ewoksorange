@@ -108,13 +108,13 @@ def signal_orange_to_ewoks_name(widget_class, direction: str, orangename: str) -
         raise RuntimeError(f"{orangename} is not a signal of {signal_container}")
 
 
-def receiveDynamicInputs(name: str) -> Callable:
+def receive_dynamic_input(name: str) -> Callable:
     setter_name = f"{name}_ewoks_setter"
 
     def setter(self, value):
         # Called by the SignalManager as a result of calling
         # `send` on an upstream output.
-        self.receiveDynamicInputs(name, value)
+        self._receive_dynamic_input(name, value)
 
     setter.__name__ = setter_name
     return setter
@@ -137,7 +137,7 @@ def _validate_signals_oasys(namespace: dict, direction: str, names: List[str]) -
                 orangename, stype, handler = signal
 
             if not handler:
-                setter = receiveDynamicInputs(ewoksname)
+                setter = receive_dynamic_input(ewoksname)
                 namespace[setter.__name__] = setter
                 handler = setter.__name__
             signal = Input(
@@ -172,7 +172,7 @@ def _validate_signals(namespace: dict, direction: str, names: List[str]) -> None
             setattr(signal_container, ewoksname, signal)
         signal.ewoksname = ewoksname
         if is_inputs and not signal.handler:  # str
-            setter = receiveDynamicInputs(ewoksname)
+            setter = receive_dynamic_input(ewoksname)
             namespace[setter.__name__] = signal(setter)
 
 

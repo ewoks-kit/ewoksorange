@@ -27,12 +27,13 @@ class SimpleTypesWidgetMixin:
             self._default_inputs_form.addParameter(
                 name,
                 value=value,
-                changeCallback=self._default_inputs_changed,
+                value_change_callback=self._default_inputs_changed,
                 **options
             )
         for name in names:
+            options = self._get_parameter_options(name)
             self._default_inputs_form.addParameter(
-                name, changeCallback=self._default_inputs_changed, **options
+                name, value_change_callback=self._default_inputs_changed, **options
             )
 
         box = gui.widgetBox(self.controlArea, "Dynamic Inputs")

@@ -54,10 +54,10 @@ def test_threaded_task_executor_queue(qtapp):
             self.finished = QtEvent()
 
         def finished_callback(self):
-            # taskExecutor = self.sender()  # Doesn't work for unknown reasons
-            taskExecutor = executor._taskExecutor
+            # task_executor = self.sender()  # Doesn't work for unknown reasons
+            task_executor = executor._task_executor
             self.results = {
-                k: v.value for k, v in taskExecutor.output_variables.items()
+                k: v.value for k, v in task_executor.output_variables.items()
             }
             self.finished.set()
 

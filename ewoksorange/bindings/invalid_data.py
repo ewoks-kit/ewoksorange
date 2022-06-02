@@ -1,12 +1,7 @@
 from ewokscore import missing_data
 
 
-# This value is used by
-#  1. orange widgets to clear all downstream widgets
-#  2. orange widget settings to indicate an unspecified ewoks default input value.
-#
-# `Settings` needs python builtins as values.
-# This means we cannot use `None` as a value
+# Native Orange widgets use `None` as MISSING_DATA
 INVALIDATION_DATA = None
 
 

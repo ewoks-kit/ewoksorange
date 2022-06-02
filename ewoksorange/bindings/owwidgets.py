@@ -81,15 +81,6 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     # Add the Ewoks class as an attribute to the Orange widget class
     namespace["ewokstaskclass"] = ewokstaskclass
 
-    # Default values for settings:
-    # Warning: default_inputs should convert MISSING_DATA to INVALIDATION_DATA
-    #          when setting and convert INVALIDATION_DATA to MISSING_DATA when getting
-    default_inputs = {
-        name: invalid_data.INVALIDATION_DATA for name in ewokstaskclass.input_names()
-    }
-    varinfo = dict()
-    execinfo = dict()
-
     # Make sure the values above are always the default setting values:
     # https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial-settings.html
     # schema_only=False: when a widget is removed, its settings are stored to be used
@@ -99,14 +90,12 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     schema_only = True
 
     # Add the settings as widget class attributes
-    namespace["_ewoks_default_inputs"] = Setting(
-        default_inputs, schema_only=schema_only
-    )
-    namespace["_ewoks_varinfo"] = Setting(varinfo, schema_only=schema_only)
-    namespace["_ewoks_execinfo"] = Setting(execinfo, schema_only=schema_only)
+    namespace["_ewoks_default_inputs"] = Setting(dict(), schema_only=schema_only)
+    namespace["_ewoks_varinfo"] = Setting(dict(), schema_only=schema_only)
+    namespace["_ewoks_execinfo"] = Setting(dict(), schema_only=schema_only)
 
     # Deprecated:
-    namespace["default_inputs"] = Setting(default_inputs, schema_only=schema_only)
+    namespace["default_inputs"] = Setting(dict(), schema_only=schema_only)
 
     # Add missing inputs and outputs as widget class attributes
     owsignals.validate_inputs(namespace)
@@ -141,10 +130,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         layout = self._get_control_layout()
         trigger = QtWidgets.QPushButton("Trigger")
         layout.addWidget(trigger)
-        trigger.released.connect(self.executeEwoksTask)
+        trigger.released.connect(self.execute_ewoks_task)
         trigger = QtWidgets.QPushButton("Execute")
         layout.addWidget(trigger)
-        trigger.released.connect(self.executeEwoksTaskWithoutPropagation)
+        trigger.released.connect(self.execute_ewoks_task_without_propagation)
 
     def _init_main_area(self):
         """The main area is used to display results."""
@@ -172,7 +161,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             self.mainArea.setLayout(layout)
         return layout
 
-    def _getTaskArguments(self):
+    def _get_task_arguments(self):
         if self.signalManager is None:
             execinfo = None
             node_id = None
@@ -199,19 +188,21 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         return cls.ewokstaskclass.output_names()
 
     def _deprecated_default_inputs(self):
+        adict = dict(self.default_inputs)
+        if not adict:
+            return
+        self.default_inputs.clear()
         adict = {
             name: value
-            for name, value in self.default_inputs.items()
+            for name, value in adict.items()
             if not invalid_data.is_invalid_data(value)
+            and name not in self._ewoks_default_inputs
         }
-        if adict:
-            warnings.warn(
-                ".ows file node property 'default_inputs' has been converted to '_ewoks_default_inputs'. Please save the workflow to keep this change.",
-                DeprecationWarning,
-            )
-            self.update_default_inputs(**adict)
-            for k in self.default_inputs:
-                self.default_inputs[k] = invalid_data.INVALIDATION_DATA
+        warnings.warn(
+            ".ows file node property 'default_inputs' has been converted to '_ewoks_default_inputs'. Please save the workflow to keep this change.",
+            DeprecationWarning,
+        )
+        self.update_default_inputs(**adict)
 
     def default_input_names(self) -> set:
         self._deprecated_default_inputs()
@@ -224,20 +215,22 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             for name, value in self._ewoks_default_inputs.items()
         }
 
-    def valid_default_input_name(self) -> set:
-        return set(self.valid_default_input_values())
-
-    def valid_default_input_values(self) -> dict:
-        self._deprecated_default_inputs()
-        return {
-            name: value
-            for name, value in self._ewoks_default_inputs.items()
-            if not invalid_data.is_invalid_data(value)
-        }
-
     def update_default_inputs(self, **inputs) -> None:
         for name, value in inputs.items():
-            self._ewoks_default_inputs[name] = invalid_data.as_invalidation(value)
+            if invalid_data.is_invalid_data(value):
+                _logger.info("ewoks widget: remove default input %r", name)
+                self._ewoks_default_inputs.pop(name, None)
+            else:
+                _logger.info("ewoks widget: set default input %r = %s", name, value)
+                self._ewoks_default_inputs[name] = value
+
+    def _receive_dynamic_input(self, name: str, value: Any):
+        if invalid_data.is_invalid_data(value):
+            _logger.info("ewoks widget: remove dynamic input %r", name)
+            self.__dynamic_inputs.pop(name, None)
+        else:
+            _logger.info("ewoks widget: set dynamic input %r = %s", name, value)
+            self.__dynamic_inputs[name] = value
 
     def dynamic_input_names(self) -> set:
         return set(self.__dynamic_inputs)
@@ -250,7 +243,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     def task_inputs(self) -> dict:
         """Default inputs overwritten by inputs from previous tasks"""
-        inputs = self.valid_default_input_values()
+        inputs = self.default_input_values()
         inputs.update(self.__dynamic_inputs)
         return inputs
 
@@ -279,12 +272,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             return missing_data.MISSING_DATA
         return self._extract_value(data)
 
-    def receiveDynamicInputs(self, name: str, value: Any):
-        if invalid_data.is_invalid_data(value):
-            self.__dynamic_inputs.pop(name, None)
-        else:
-            self.__dynamic_inputs[name] = value
-
     def _get_output_signal(self, ewoksname: str):
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for signal in self.outputs:
@@ -308,7 +295,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                 if invalid_data.is_invalid_data(var.value):
                     self.send(
                         orangename, invalid_data.INVALIDATION_DATA
-                    )  # or channel.invalidate?
+                    )  # or self.invalidate?
                 else:
                     self.send(orangename, var)
         else:
@@ -336,9 +323,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def clear_downstream(self) -> None:
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for name in self.task_outputs():
-                self.send(
-                    name, invalid_data.INVALIDATION_DATA
-                )  # or channel.invalidate?
+                self.send(name, invalid_data.INVALIDATION_DATA)  # or self.invalidate?
         else:
             for name in self.task_outputs():
                 channel = self._get_output_signal(name)
@@ -358,17 +343,17 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         """Invoked by the workflow signal propagation manager after all
         signals handlers have been called.
         """
-        self.executeEwoksTask()
+        self.execute_ewoks_task()
 
-    def executeEwoksTask(self) -> None:
+    def execute_ewoks_task(self) -> None:
         _logger.debug("%s: execute ewoks task (with propagation)", self)
-        self._executeEwoksTask(propagate=True)
+        self._execute_ewoks_task(propagate=True)
 
-    def executeEwoksTaskWithoutPropagation(self) -> None:
+    def execute_ewoks_task_without_propagation(self) -> None:
         _logger.debug("%s: execute ewoks task (without propagation)", self)
-        self._executeEwoksTask(propagate=False)
+        self._execute_ewoks_task(propagate=False)
 
-    def _executeEwoksTask(self, propagate: bool) -> None:
+    def _execute_ewoks_task(self, propagate: bool) -> None:
         raise NotImplementedError("Base class")
 
     @property
@@ -403,16 +388,16 @@ def is_native_widget(widget_class):
 
 
 class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
-    """Widget which will executeEwoksTask the ewokscore.Task directly"""
+    """Widget which will execute_ewoks_task the ewokscore.Task directly"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__taskExecutor = TaskExecutor(self.ewokstaskclass)
+        self.__task_executor = TaskExecutor(self.ewokstaskclass)
 
-    def _executeEwoksTask(self, propagate: bool):
-        self.__taskExecutor.create_task(**self._getTaskArguments())
+    def _execute_ewoks_task(self, propagate: bool):
+        self.__task_executor.create_task(**self._get_task_arguments())
         try:
-            self.__taskExecutor.execute_task()
+            self.__task_executor.execute_task()
         except Exception:
             _logger.error("task failed", exc_info=True)
         finally:
@@ -422,10 +407,10 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
 
     @property
     def task_succeeded(self):
-        return self.__taskExecutor.succeeded
+        return self.__task_executor.succeeded
 
     def task_outputs(self):
-        return self.__taskExecutor.output_variables
+        return self.__task_executor.output_variables
 
 
 class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
@@ -438,37 +423,37 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
     def onDeleteWidget(self):
         if has_progress_bar:
             self.__taskProgress.sigProgressChanged.disconnect(self.progressBarSet)
-        self._cleanupTaskExecutor()
+        self._cleanup_task_executor()
         super().onDeleteWidget()
 
-    def _cleanupTaskExecutor(self):
+    def _cleanup_task_executor(self):
         raise NotImplementedError("Base class")
 
     @contextmanager
-    def _ewoksTaskStartContext(self):
+    def _ewoks_task_start_context(self):
         try:
-            self.__ewoksTaskInit()
+            self.__ewoks_task_init()
             yield
         except Exception:
-            self.__ewoksTaskFinished()
+            self.__ewoks_task_finished()
             raise
 
     @contextmanager
-    def _ewoksTaskFinishedContext(self):
+    def _ewoks_task_finished_context(self):
         try:
             yield
         finally:
-            self.__ewoksTaskFinished()
+            self.__ewoks_task_finished()
 
-    def __ewoksTaskInit(self):
+    def __ewoks_task_init(self):
         self.progressBarInit()
 
-    def __ewoksTaskFinished(self):
+    def __ewoks_task_finished(self):
         self.progressBarFinished()
         self._output_changed()
 
-    def _getTaskArguments(self):
-        adict = super()._getTaskArguments()
+    def _get_task_arguments(self):
+        adict = super()._get_task_arguments()
         adict["progress"] = self.__taskProgress
         return adict
 
@@ -482,37 +467,37 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__taskExecutor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
-        self.__taskExecutor.finished.connect(self._ewoksTaskFinishedCallback)
+        self.__task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
+        self.__task_executor.finished.connect(self._ewoks_task_finished_callback)
         self.__propagate = None
 
-    def _executeEwoksTask(self, propagate: bool):
-        if self.__taskExecutor.isRunning():
+    def _execute_ewoks_task(self, propagate: bool):
+        if self.__task_executor.isRunning():
             _logger.error("A processing is already ongoing")
             return
         else:
-            self.__taskExecutor.create_task(**self._getTaskArguments())
-            if self.__taskExecutor.is_ready_to_execute:
-                with self._ewoksTaskStartContext():
+            self.__task_executor.create_task(**self._get_task_arguments())
+            if self.__task_executor.is_ready_to_execute:
+                with self._ewoks_task_start_context():
                     self.__propagate = propagate
-                    self.__taskExecutor.start()
+                    self.__task_executor.start()
 
     @property
     def task_succeeded(self):
-        return self.__taskExecutor.succeeded
+        return self.__task_executor.succeeded
 
     def task_outputs(self):
-        return self.__taskExecutor.output_variables
+        return self.__task_executor.output_variables
 
-    def _ewoksTaskFinishedCallback(self):
-        with self._ewoksTaskFinishedContext():
+    def _ewoks_task_finished_callback(self):
+        with self._ewoks_task_finished_context():
             if self.__propagate:
                 self.propagate_downstream()
 
-    def _cleanupTaskExecutor(self):
-        self.__taskExecutor.finished.disconnect(self._ewoksTaskFinishedCallback)
-        self.__taskExecutor.stop()
-        self.__taskExecutor = None
+    def _cleanup_task_executor(self):
+        self.__task_executor.finished.disconnect(self._ewoks_task_finished_callback)
+        self.__task_executor.stop()
+        self.__task_executor = None
 
 
 class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
@@ -523,64 +508,64 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__taskExecutors = dict()
+        self.__task_executors = dict()
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
 
-    def _executeEwoksTask(self, propagate: bool):
-        taskExecutor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
-        taskExecutor.create_task(**self._getTaskArguments())
-        if not taskExecutor.is_ready_to_execute:
+    def _execute_ewoks_task(self, propagate: bool):
+        task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
+        task_executor.create_task(**self._get_task_arguments())
+        if not task_executor.is_ready_to_execute:
             return
-        with self.__init_task_executor(taskExecutor, propagate):
-            with self._ewoksTaskStartContext():
-                taskExecutor.start()
+        with self.__init_task_executor(task_executor, propagate):
+            with self._ewoks_task_start_context():
+                task_executor.start()
 
     @contextmanager
-    def __init_task_executor(self, taskExecutor, propagate: bool):
-        self.__disconnectAllTaskExecutors()
-        taskExecutor.finished.connect(self._ewoksTaskFinishedCallback)
-        self.__add_task_executor(taskExecutor, propagate)
+    def __init_task_executor(self, task_executor, propagate: bool):
+        self.__disconnect_all_task_executors()
+        task_executor.finished.connect(self._ewoks_task_finished_callback)
+        self.__add_task_executor(task_executor, propagate)
         try:
             yield
         except Exception:
-            taskExecutor.finished.disconnect(self._ewoksTaskFinishedCallback)
-            self.__remove_task_executor(taskExecutor)
+            task_executor.finished.disconnect(self._ewoks_task_finished_callback)
+            self.__remove_task_executor(task_executor)
             raise
 
-    def __disconnectAllTaskExecutors(self):
-        for taskExecutor, _ in self.__taskExecutors:
+    def __disconnect_all_task_executors(self):
+        for task_executor, _ in self.__task_executors:
             try:
-                taskExecutor.finished.disconnect(self._ewoksTaskFinishedCallback)
+                task_executor.finished.disconnect(self._ewoks_task_finished_callback)
             except KeyError:
                 pass
 
-    def _ewoksTaskFinishedCallback(self):
-        with self._ewoksTaskFinishedContext():
-            taskExecutor = None
+    def _ewoks_task_finished_callback(self):
+        with self._ewoks_task_finished_context():
+            task_executor = None
             try:
-                taskExecutor = self.sender()
-                self.__last_output_variables = taskExecutor.output_variables
-                self.__last_task_succeeded = taskExecutor.succeeded
-                if self.__is_task_executor_propagated(taskExecutor):
-                    self.propagate_downstream(succeeded=taskExecutor.succeeded)
+                task_executor = self.sender()
+                self.__last_output_variables = task_executor.output_variables
+                self.__last_task_succeeded = task_executor.succeeded
+                if self.__is_task_executor_propagated(task_executor):
+                    self.propagate_downstream(succeeded=task_executor.succeeded)
             finally:
-                self.__remove_task_executor(taskExecutor)
+                self.__remove_task_executor(task_executor)
 
-    def _cleanupTaskExecutor(self):
-        self.__disconnectAllTaskExecutors()
-        for taskExecutor, _ in self.__taskExecutors:
-            taskExecutor.quit()
-        self.__taskExecutors.clear()
+    def _cleanup_task_executor(self):
+        self.__disconnect_all_task_executors()
+        for task_executor, _ in self.__task_executors:
+            task_executor.quit()
+        self.__task_executors.clear()
 
-    def __add_task_executor(self, taskExecutor, propagate: bool):
-        self.__taskExecutors[id(taskExecutor)] = taskExecutor, propagate
+    def __add_task_executor(self, task_executor, propagate: bool):
+        self.__task_executors[id(task_executor)] = task_executor, propagate
 
-    def __remove_task_executor(self, taskExecutor):
-        self.__taskExecutors.pop(id(taskExecutor), None)
+    def __remove_task_executor(self, task_executor):
+        self.__task_executors.pop(id(task_executor), None)
 
-    def __is_task_executor_propagated(self, taskExecutor) -> bool:
-        return self.__taskExecutors.get(id(taskExecutor), (None, False))[1]
+    def __is_task_executor_propagated(self, task_executor) -> bool:
+        return self.__task_executors.get(id(task_executor), (None, False))[1]
 
     @property
     def task_succeeded(self):
@@ -597,18 +582,20 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__taskExecutorQueue = TaskExecutorQueue(ewokstaskclass=self.ewokstaskclass)
+        self.__task_executor_queue = TaskExecutorQueue(
+            ewokstaskclass=self.ewokstaskclass
+        )
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
 
-    def _executeEwoksTask(self, propagate):
+    def _execute_ewoks_task(self, propagate):
         def callback():
-            self._ewoksTaskFinishedCallback(propagate)
+            self._ewoks_task_finished_callback(propagate)
 
-        with self._ewoksTaskStartContext():
-            self.__taskExecutorQueue.add(
+        with self._ewoks_task_start_context():
+            self.__task_executor_queue.add(
                 _callbacks=(callback,),
-                **self._getTaskArguments(),
+                **self._get_task_arguments(),
             )
 
     @property
@@ -618,14 +605,14 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_outputs(self):
         return self.__last_output_variables
 
-    def _cleanupTaskExecutor(self):
-        self.__taskExecutorQueue.stop()
-        self.__taskExecutorQueue = None
+    def _cleanup_task_executor(self):
+        self.__task_executor_queue.stop()
+        self.__task_executor_queue = None
 
-    def _ewoksTaskFinishedCallback(self, propagate: bool):
-        with self._ewoksTaskFinishedContext():
-            taskExecutor = self.sender()
-            self.__last_output_variables = taskExecutor.output_variables
-            self.__last_task_succeeded = taskExecutor.succeeded
+    def _ewoks_task_finished_callback(self, propagate: bool):
+        with self._ewoks_task_finished_context():
+            task_executor = self.sender()
+            self.__last_output_variables = task_executor.output_variables
+            self.__last_task_succeeded = task_executor.succeeded
             if propagate:
                 self.propagate_downstream()
