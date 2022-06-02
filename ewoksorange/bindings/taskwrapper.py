@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from numbers import Number
+from typing import List, Mapping, Optional, Tuple, Type
 
 from ewokscore import Task
 from ewokscore.utils import qualname
@@ -10,6 +11,8 @@ from .qtapp import process_qtapp_events
 from .qtapp import QtEvent
 from .owwidgets import is_ewoks_widget_class
 from .owwidgets import is_native_widget_class
+from .owwidgets import OWEwoksBaseWidget
+from .owwidgets import OWBaseWidget
 from . import owsignals
 from . import owsettings
 from . import invalid_data
@@ -62,53 +65,12 @@ def _ewoks_owwidget_task_wrapper(registry_name, widget_class) -> Task:
         output_names=output_names,
         registry_name=registry_name,
     ):
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-            self.outputsReceived = None
-            self.widget = None
-
         def run(self):
-            ensure_qtapp()
-            self.outputsReceived = QtEvent()
-            self.widget = widget_class()
-            try:
-                self.widget.task_output_changed_callbacks.add(self.receiveOutputSend)
-
-                # Call the input setters
-                values = self.input_values
-
-                if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-                    signals = self.widget.inputs
-                else:
-                    signals = self.widget.get_signals("inputs")
-                orange_to_ewoks = owsignals.get_orange_to_ewoks_mapping(
-                    widget_class, "inputs"
-                )
-
-                for index, signal in enumerate(signals):
-                    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-                        key = orange_to_ewoks.get(signal.name, signal.name)
-                    else:
-                        key = signal.ewoksname
-                    set_input_value(self.widget, signal, values[key], index)
-
-                # Start calculation
-                self.widget.handleNewSignals()
-
-                # Wait for the result
-                self.outputsReceived.wait()
-            finally:
-                self.widget.close()
-                self.widget = None
-                self.outputsReceived = None
-
-        def receiveOutputSend(self):
-            try:
-                for name, value in self.widget.task_output_values().items():
-                    self.output_variables[name].value = value
-            finally:
-                if self.outputsReceived is not None:
-                    self.outputsReceived.set()
+            output_values = execute_ewoks_owwidget(
+                widget_class, inputs=self.input_values
+            )
+            for k, v in output_values.items():
+                self.output_variables[k].value = v
 
     return WrapperTask
 
@@ -119,11 +81,7 @@ def _native_owwidget_task_wrapper(registry_name, widget_class) -> Task:
     optional_input_names = set(input_signals.keys())
     output_signals = owsignals.get_signals(widget_class.Outputs)
     output_names = set(output_signals.keys())
-    orange_to_ewoks_namemap = {
-        ewoks_name: signal.name for ewoks_name, signal in output_signals.items()
-    }
     input_names = tuple()
-    setting_names = list(owsettings.get_settings(widget_class))
 
     class WrapperTask(
         Task,
@@ -132,84 +90,157 @@ def _native_owwidget_task_wrapper(registry_name, widget_class) -> Task:
         output_names=output_names,
         registry_name=registry_name,
     ):
-        def __init__(self, **kwargs):
-            super().__init__(**kwargs)
-            self.outputsReceived = None
-
         def run(self):
-            input_list, settings_dict = self._parse_input_values()
-
-            # Create widget with the proper settings
-            ensure_qtapp()
-            widget = instantiate_owwidget(
-                widget_class,
-                signal_manager=SignalManagerWithoutScheme(),
-                stored_settings=settings_dict,
+            output_values = execute_native_owwidget(
+                widget_class, inputs=self.input_values
             )
-            try:
-                # Call input setters
-                for index, (signal, value) in enumerate(input_list):
-                    set_input_value(widget, signal, value, index)
-
-                # Start calculation
-                widget.handleNewSignals()
-
-                # Wait for the result
-                process_qtapp_events()
-
-                for ewoks_name, orange_name in orange_to_ewoks_namemap.items():
-                    value = widget.signalManager.get_output_value(
-                        widget, orange_name, timeout=None
-                    )
-                    self.output_variables[ewoks_name].value = value
-            finally:
-                widget.close()
-
-        def _parse_input_values(self) -> Tuple[List, dict]:
-            values = self.input_values
-
-            used_values = set()
-            settings_dict = dict()
-            input_list = list()
-
-            # Values corresponding to settings
-            for ewoksname in setting_names:
-                if ewoksname not in values:
-                    continue
-                used_values.add(ewoksname)
-                value = value_from_transfer(values[ewoksname])
-                settings_dict[ewoksname] = value
-
-            # Values corresponding to inputs
-            for signal in widget_class.get_signals("inputs"):
-                ewoksname = owsignals.signal_orange_to_ewoks_name(
-                    widget_class, "inputs", signal.name
-                )
-                if ewoksname not in values:
-                    continue
-                used_values.add(ewoksname)
-                value = value_from_transfer(values[ewoksname])
-                input_list.append((signal, value))
-
-            # Node properties not corresponding to settings or inputs
-            # are used in settings migration
-            unused_values = set(values.keys()) - used_values
-            for ewoksname in unused_values:
-                value = value_from_transfer(values[ewoksname])
-                settings_dict[ewoksname] = value
-
-            return input_list, settings_dict
+            for k, v in output_values.items():
+                self.output_variables[k].value = v
 
     return WrapperTask
 
 
-def instantiate_owwidget(widget_class, signal_manager=None, stored_settings=None):
+def instantiate_owwidget(
+    widget_class: Type[OWBaseWidget],
+    signal_manager=None,
+    stored_settings: Optional[Mapping] = None,
+):
     if stored_settings:
         stored_settings = {
-            k: invalid_data.as_invalidation(v) for k, v in stored_settings.items()
+            k: v
+            for k, v in stored_settings.items()
+            if not invalid_data.is_invalid_data(v)
         }
     widget = widget_class.__new__(
         widget_class, signal_manager=signal_manager, stored_settings=stored_settings
     )
     widget.__init__()
     return widget
+
+
+def execute_ewoks_owwidget(
+    widget_class: Type[OWEwoksBaseWidget],
+    inputs: Optional[Mapping] = None,
+    timeout: Optional[Number] = None,
+) -> dict:
+    ensure_qtapp()
+    result = dict()
+    widget = instantiate_owwidget(widget_class)
+
+    try:
+        # Receive and store results
+        outputsReceived = QtEvent()
+
+        def _output_cb():
+            try:
+                result.update(widget.task_output_values())
+            finally:
+                outputsReceived.set()
+
+        widget.task_output_changed_callbacks.add(_output_cb)
+
+        # Call the input setters
+        if inputs:
+            if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+                signals = widget.inputs
+            else:
+                signals = widget.get_signals("inputs")
+            orange_to_ewoks = owsignals.get_orange_to_ewoks_mapping(
+                widget_class, "inputs"
+            )
+
+            for index, signal in enumerate(signals):
+                if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+                    key = orange_to_ewoks.get(signal.name, signal.name)
+                else:
+                    key = signal.ewoksname
+                if key in inputs:
+                    value = value_from_transfer(inputs[key])
+                    set_input_value(widget, signal, value, index)
+
+        # Start calculation
+        widget.handleNewSignals()
+
+        # Wait for the result
+        outputsReceived.wait(timeout=timeout)
+    finally:
+        widget.close()
+    return result
+
+
+def execute_native_owwidget(
+    widget_class: Type[OWBaseWidget], inputs: Optional[Mapping] = None
+):
+    ensure_qtapp()
+    result = dict()
+
+    output_signals = owsignals.get_signals(widget_class.Outputs)
+    orange_to_ewoks_namemap = {
+        ewoks_name: signal.name for ewoks_name, signal in output_signals.items()
+    }
+
+    input_list, stored_settings = _parse_input_values(widget_class, inputs)
+
+    # Create widget with the proper settings
+    widget = instantiate_owwidget(
+        widget_class,
+        signal_manager=SignalManagerWithoutScheme(),
+        stored_settings=stored_settings,
+    )
+    try:
+        # Call input setters
+        for index, (signal, value) in enumerate(input_list):
+            set_input_value(widget, signal, value, index)
+
+        # Start calculation
+        widget.handleNewSignals()
+
+        # Wait for the result
+        process_qtapp_events()
+
+        # Fetch outputs
+        for ewoks_name, orange_name in orange_to_ewoks_namemap.items():
+            value = widget.signalManager.get_output_value(
+                widget, orange_name, timeout=None
+            )
+            result[ewoks_name] = value
+    finally:
+        widget.close()
+    return result
+
+
+def _parse_input_values(
+    widget_class, inputs: Optional[Mapping] = None
+) -> Tuple[List, dict]:
+    used_values = set()
+    settings_dict = dict()
+    input_list = list()
+
+    # Values corresponding to settings
+    setting_names = list(owsettings.get_settings(widget_class))
+    for ewoksname in setting_names:
+        if ewoksname not in inputs:
+            continue
+        used_values.add(ewoksname)
+        value = value_from_transfer(inputs[ewoksname])
+        settings_dict[ewoksname] = value
+
+    # Values corresponding to inputs
+    for signal in widget_class.get_signals("inputs"):
+        ewoksname = owsignals.signal_orange_to_ewoks_name(
+            widget_class, "inputs", signal.name
+        )
+        if ewoksname not in inputs:
+            continue
+        used_values.add(ewoksname)
+        value = value_from_transfer(inputs[ewoksname])
+        input_list.append((signal, value))
+
+    # Node properties not corresponding to settings or inputs
+    # are used in settings migration
+    unused_values = set(inputs.keys()) - used_values
+    for ewoksname in unused_values:
+        value = value_from_transfer(inputs[ewoksname])
+        settings_dict[ewoksname] = value
+
+    return input_list, settings_dict

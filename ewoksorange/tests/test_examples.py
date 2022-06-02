@@ -1,13 +1,9 @@
-import os
-import tempfile
 import pytest
-
 from ewokscore.tests.examples.graphs import graph_names
 from ewokscore.tests.examples.graphs import get_graph
 from ewokscore.tests.test_examples import assert_convert_graph
 from ewokscore.tests.utils.results import assert_execute_graph_tasks
 from ewokscore import load_graph
-from ewoksorange.bindings import ewoks_to_ows
 from ewoksorange import convert_graph
 from ewoksorange import graph_is_supported
 
@@ -21,10 +17,9 @@ def test_execute_graph(graph_name, tmpdir, ewoks_orange_canvas):
     if not graph_is_supported(ewoksgraph):
         pytest.skip("graph not supported by orange")
 
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        filename = os.path.join(tmpdirname, graph_name + ".ows")
-        ewoks_to_ows(ewoksgraph, filename, varinfo=varinfo, error_on_duplicates=False)
-        ewoks_orange_canvas.load_ows(filename)
+    ewoks_orange_canvas.load_graph(
+        ewoksgraph, varinfo=varinfo, error_on_duplicates=False, tmpdir=tmpdir
+    )
     ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)
 

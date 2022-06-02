@@ -31,6 +31,7 @@ else:
 
 from .utils import get_orange_canvas
 from ..bindings import qtapp
+from ..bindings.bindings import ows_file_context
 from ..bindings.owsignal_manager import SignalManagerWithOutputTracking
 
 
@@ -38,6 +39,8 @@ _logger = logging.getLogger(__name__)
 
 
 class OrangeCanvasHandler:
+    """Run orange widget-based workflow manually (i.e. without executing the Qt application)"""
+
     def __init__(self):
         self.canvas = get_orange_canvas()
         self.__is_owner = self.canvas is None
@@ -88,6 +91,10 @@ class OrangeCanvasHandler:
         canvas.current_document().setModified(False)
         canvas.close()
         self.process_events()
+
+    def load_graph(self, graph, **kwargs):
+        with ows_file_context(graph, **kwargs) as filename:
+            self.load_ows(filename)
 
     def load_ows(self, filename: str):
         self.canvas.load_scheme(filename)
