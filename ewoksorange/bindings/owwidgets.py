@@ -173,18 +173,18 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                 node_id = scheme.nodes.index(node)
             execinfo = scheme_ewoks_events(scheme, self._ewoks_execinfo)
         return {
-            "inputs": self.task_inputs(),
+            "inputs": self.get_task_inputs(),
             "varinfo": self._ewoks_varinfo,
             "execinfo": execinfo,
             "node_id": node_id,
         }
 
     @classmethod
-    def input_names(cls):
+    def get_input_names(cls):
         return cls.ewokstaskclass.input_names()
 
     @classmethod
-    def output_names(cls):
+    def get_output_names(cls):
         return cls.ewokstaskclass.output_names()
 
     def _deprecated_default_inputs(self):
@@ -204,11 +204,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         )
         self.update_default_inputs(**adict)
 
-    def default_input_names(self) -> set:
+    def get_default_input_names(self) -> set:
         self._deprecated_default_inputs()
         return set(self._ewoks_default_inputs)
 
-    def default_input_values(self) -> dict:
+    def get_default_input_values(self) -> dict:
         self._deprecated_default_inputs()
         return {
             name: invalid_data.as_missing(value)
@@ -232,40 +232,40 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             _logger.info("ewoks widget: set dynamic input %r = %s", name, value)
             self.__dynamic_inputs[name] = value
 
-    def dynamic_input_names(self) -> set:
+    def get_dynamic_input_names(self) -> set:
         return set(self.__dynamic_inputs)
 
-    def dynamic_input_values(self) -> dict:
+    def get_dynamic_input_values(self) -> dict:
         return {k: self._extract_value(v) for k, v in self.__dynamic_inputs.items()}
 
     def _extract_value(self, data) -> Any:
         return value_from_transfer(data, varinfo=self._ewoks_varinfo)
 
-    def task_inputs(self) -> dict:
+    def get_task_inputs(self) -> dict:
         """Default inputs overwritten by inputs from previous tasks"""
-        inputs = self.default_input_values()
+        inputs = self.get_default_input_values()
         inputs.update(self.__dynamic_inputs)
         return inputs
 
-    def task_outputs(self):
+    def get_task_outputs(self):
         raise NotImplementedError("Base class")
 
-    def task_output_values(self) -> dict:
-        return {k: self._extract_value(v) for k, v in self.task_outputs().items()}
+    def get_task_output_values(self) -> dict:
+        return {k: self._extract_value(v) for k, v in self.get_task_outputs().items()}
 
     def get_task_output_value(self, name) -> Any:
-        adict = self.task_outputs()
+        adict = self.get_task_outputs()
         try:
             data = adict[name]
         except KeyError:
             return missing_data.MISSING_DATA
         return self._extract_value(data)
 
-    def task_input_values(self) -> dict:
-        return {k: self._extract_value(v) for k, v in self.task_inputs().items()}
+    def get_task_input_values(self) -> dict:
+        return {k: self._extract_value(v) for k, v in self.get_task_inputs().items()}
 
     def get_task_input_value(self, name: str) -> Any:
-        adict = self.task_inputs()
+        adict = self.get_task_inputs()
         try:
             data = adict[name]
         except KeyError:
@@ -287,7 +287,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     def trigger_downstream(self) -> None:
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for ewoksname, var in self.task_outputs().items():
+            for ewoksname, var in self.get_task_outputs().items():
                 ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
                     type(self), "outputs"
                 )
@@ -299,7 +299,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                 else:
                     self.send(orangename, var)
         else:
-            for ewoksname, var in self.task_outputs().items():
+            for ewoksname, var in self.get_task_outputs().items():
                 channel = self._get_output_signal(ewoksname)
                 if invalid_data.is_invalid_data(var.value):
                     channel.send(
@@ -322,10 +322,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     def clear_downstream(self) -> None:
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for name in self.task_outputs():
+            for name in self.get_task_outputs():
                 self.send(name, invalid_data.INVALIDATION_DATA)  # or self.invalidate?
         else:
-            for name in self.task_outputs():
+            for name in self.get_task_outputs():
                 channel = self._get_output_signal(name)
                 channel.send(invalid_data.INVALIDATION_DATA)  # or channel.invalidate?
 
@@ -409,7 +409,7 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
     def task_succeeded(self):
         return self.__task_executor.succeeded
 
-    def task_outputs(self):
+    def get_task_outputs(self):
         return self.__task_executor.output_variables
 
 
@@ -486,7 +486,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_succeeded(self):
         return self.__task_executor.succeeded
 
-    def task_outputs(self):
+    def get_task_outputs(self):
         return self.__task_executor.output_variables
 
     def _ewoks_task_finished_callback(self):
@@ -571,7 +571,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_succeeded(self):
         return self.__last_task_succeeded
 
-    def task_outputs(self):
+    def get_task_outputs(self):
         return self.__last_output_variables
 
 
@@ -602,7 +602,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_succeeded(self):
         return self.__last_task_succeeded
 
-    def task_outputs(self):
+    def get_task_outputs(self):
         return self.__last_output_variables
 
     def _cleanup_task_executor(self):

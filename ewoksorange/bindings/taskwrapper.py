@@ -46,7 +46,7 @@ OWWIDGET_TASKS_GENERATOR = qualname(owwidget_task_wrapper)
 
 def _ewoks_owwidget_task_wrapper(registry_name, widget_class) -> Task:
     """Wrap an Ewoks widget with an Ewoks task"""
-    all_input_names = widget_class.input_names()
+    all_input_names = widget_class.get_input_names()
     try:
         ewokstaskclass = widget_class.ewokstaskclass
         input_names = ewokstaskclass.required_input_names()
@@ -56,7 +56,7 @@ def _ewoks_owwidget_task_wrapper(registry_name, widget_class) -> Task:
     except AttributeError:
         input_names = all_input_names
         optional_input_names = tuple()
-    output_names = widget_class.output_names()
+    output_names = widget_class.get_output_names()
 
     class WrapperTask(
         Task,
@@ -133,7 +133,7 @@ def execute_ewoks_owwidget(
 
         def _output_cb():
             try:
-                result.update(widget.task_output_values())
+                result.update(widget.get_task_output_values())
             finally:
                 outputsReceived.set()
 

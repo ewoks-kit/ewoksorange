@@ -98,7 +98,7 @@ def assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename):
     ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)
     widgets = list(ewoks_orange_canvas.widgets_from_name("task6"))
-    results = widgets[0].task_output_values()
+    results = widgets[0].get_task_output_values()
     assert results == {"result": 16}
 
 
@@ -115,21 +115,21 @@ def assert_sumlist_tutorial_with_qt(ewoks_orange_canvas, filename):
 
     # Remove artificial delay for this test
     for widget in ewoks_orange_canvas.iter_widgets():
-        if "delay" in widget.default_input_names():
+        if "delay" in widget.get_default_input_names():
             widget.update_default_inputs(delay=0)
 
     ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)
 
     wgenerator = list(ewoks_orange_canvas.widgets_from_name("List generator"))[0]
-    results = wgenerator.task_output_values()
+    results = wgenerator.get_task_output_values()
     listsum = sum(results["list"])
 
     widgets = list(ewoks_orange_canvas.widgets_from_name("Print list sum"))
     widgets += list(ewoks_orange_canvas.widgets_from_name("Print list sum (1)"))
     widgets += list(ewoks_orange_canvas.widgets_from_name("Print list sum (2)"))
     for w in widgets:
-        results = {name: var.value for name, var in w.task_inputs().items()}
+        results = {name: var.value for name, var in w.get_task_inputs().items()}
         assert results == {"sum": listsum}
 
 
@@ -155,7 +155,7 @@ def assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename):
     ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)
     widgets = list(ewoks_orange_canvas.widgets_from_name("Adder2"))
-    results = widgets[0].task_output_values()
+    results = widgets[0].get_task_output_values()
     assert results == {"result": 3}
 
 

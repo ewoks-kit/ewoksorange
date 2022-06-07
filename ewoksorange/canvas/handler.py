@@ -139,7 +139,7 @@ class OrangeCanvasHandler:
 
     def iter_output_values(self):
         for name, widget in self.iter_widgets_with_name():
-            yield name, widget.task_output_values()
+            yield name, widget.get_task_output_values()
 
     def start_workflow(self):
         triggered = False
