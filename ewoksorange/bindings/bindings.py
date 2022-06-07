@@ -58,10 +58,10 @@ def ows_file_context(
         # Convert to an .ows file before launching the GUI
         if tmpdir:
             tmp_filename = os.path.abspath(
-                os.path.join(str(tmpdir), "ewoks_workflow.ows")
+                os.path.join(str(tmpdir), "ewoks_workflow_tmp.ows")
             )
         else:
-            tmp_filename = os.path.abspath("ewoks_workflow.ows")
+            tmp_filename = os.path.abspath("ewoks_workflow_tmp.ows")
         try:
             owsconvert.ewoks_to_ows(
                 graph, tmp_filename, inputs=inputs, **load_options, **execute_options
