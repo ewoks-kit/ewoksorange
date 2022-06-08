@@ -2,19 +2,25 @@
 
 .. code: bash
 
-    python -m ewoksorange.canvas --with-examples
+    ewoks-canvas --with-examples
 
 Which is equivalent to
 
 .. code: bash
 
-    python -m orangecanvas
+    python -m orangecanvas --config orangewidget.workflow.config.Config
 
 or
 
 .. code: bash
 
     python -m Orange.canvas
+
+or
+
+.. code: bash
+
+    orange-canvas
 
 but it registers the example add-on before launching.
 """

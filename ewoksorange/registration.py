@@ -72,10 +72,8 @@ else:
     from orangecanvas.registry import global_registry
     from orangecanvas.registry.utils import category_from_package_globals
 
-    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-        NATIVE_WIDGETS_PROJECT = "orange3"
-    else:
-        NATIVE_WIDGETS_PROJECT = "orange"
+    NATIVE_WIDGETS_PROJECT = "orange3"
+
 
 from ewoksorange import setuptools
 from .canvas.utils import get_orange_canvas
@@ -202,7 +200,7 @@ def local_discovery_object() -> WidgetDiscovery:
 def get_owwidget_descriptions():
     """Do not include native orange widgets"""
     disc = local_discovery_object()
-    disc.run(iter_entry_points(setuptools.WIDGET_GROUP))
+    disc.run(iter_entry_points(setuptools.WIDGETS_ENTRY))
     return disc.registry.widgets()
 
 

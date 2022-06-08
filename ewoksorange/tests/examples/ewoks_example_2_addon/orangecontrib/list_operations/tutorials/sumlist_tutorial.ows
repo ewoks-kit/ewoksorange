@@ -20,10 +20,10 @@
 	<annotations />
 	<thumbnail />
 	<node_properties>
-		<properties format="literal" node_id="0">{'default_inputs': {'length': 10}}</properties>
-		<properties format="literal" node_id="1">{'default_inputs': {'delay': 0.1}}</properties>
-		<properties format="literal" node_id="2">{'default_inputs': {'delay': 0.1}}</properties>
-		<properties format="literal" node_id="3">{'default_inputs': {'delay': 0.1}}</properties>
+		<properties format="literal" node_id="0">{'_ewoks_default_inputs': {'length': 10}}</properties>
+		<properties format="literal" node_id="1">{'_ewoks_default_inputs': {'delay': 0.1}}</properties>
+		<properties format="literal" node_id="2">{'_ewoks_default_inputs': {'delay': 0.1}}</properties>
+		<properties format="literal" node_id="3">{'_ewoks_default_inputs': {'delay': 0.1}}</properties>
 	</node_properties>
 	<session_state>
 		<window_groups />

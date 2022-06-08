@@ -20,24 +20,25 @@ class SimpleTypesWidgetMixin:
         box = gui.widgetBox(self.controlArea, "Default Inputs")
         self._default_inputs_form = ParameterForm(parent=box)
 
-        names = set(self.input_names())
-        for name, value in self.default_input_values.items():
+        names = set(self.get_input_names())
+        for name, value in self.get_default_input_values().items():
             names.remove(name)
             options = self._get_parameter_options(name)
             self._default_inputs_form.addParameter(
                 name,
                 value=value,
-                changeCallback=self._default_inputs_changed,
+                value_change_callback=self._default_inputs_changed,
                 **options
             )
         for name in names:
+            options = self._get_parameter_options(name)
             self._default_inputs_form.addParameter(
-                name, changeCallback=self._default_inputs_changed, **options
+                name, value_change_callback=self._default_inputs_changed, **options
             )
 
         box = gui.widgetBox(self.controlArea, "Dynamic Inputs")
         self._dynamic_input_form = ParameterForm(parent=box)
-        for name in self.input_names():
+        for name in self.get_input_names():
             options = self._get_parameter_options(name)
             self._dynamic_input_form.addParameter(
                 name, readonly=True, enabled=False, **options
@@ -47,7 +48,7 @@ class SimpleTypesWidgetMixin:
         super()._init_main_area()
         box = gui.widgetBox(self.mainArea, "Outputs")
         self._output_form = ParameterForm(parent=box)
-        for name in self.output_names():
+        for name in self.get_output_names():
             options = self._get_parameter_options(name)
             self._output_form.addParameter(name, readonly=True, **options)
 
@@ -55,11 +56,11 @@ class SimpleTypesWidgetMixin:
         return {}
 
     def _default_inputs_changed(self):
-        self.update_default_inputs(self._default_inputs_form.get_parameter_values())
+        self.update_default_inputs(**self._default_inputs_form.get_parameter_values())
 
     def handleNewSignals(self):
-        names = set(self.input_names())
-        for name, value in self.dynamic_input_values.items():
+        names = set(self.get_input_names())
+        for name, value in self.get_dynamic_input_values().items():
             names.remove(name)
             self._dynamic_input_form.set_parameter_enabled(name, True)
             self._default_inputs_form.set_parameter_enabled(name, False)
@@ -70,6 +71,6 @@ class SimpleTypesWidgetMixin:
         super().handleNewSignals()
 
     def task_output_changed(self):
-        for name, value in self.task_output_values.items():
+        for name, value in self.get_task_output_values().items():
             self._output_form.set_parameter_value(name, value)
         super().task_output_changed()

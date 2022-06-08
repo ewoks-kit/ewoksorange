@@ -1,7 +1,7 @@
 import os
 import sys
-import tempfile
-from typing import Any, Optional, List, Union
+from contextlib import contextmanager
+from typing import Any, Iterator, Optional, List, Union
 
 import ewokscore
 from ewokscore.graph import TaskGraph
@@ -12,15 +12,17 @@ from ..canvas.main import main as launchcanvas
 __all__ = ["execute_graph", "load_graph", "save_graph", "convert_graph"]
 
 
-@ewokscore.execute_graph_decorator(binding="orange")
-def execute_graph(
+@contextmanager
+def ows_file_context(
     graph,
     inputs: Optional[List[dict]] = None,
     load_options: Optional[dict] = None,
     outputs: Optional[List[dict]] = None,
     merge_outputs: Optional[bool] = True,
+    tmpdir: Optional[str] = None,
     **execute_options,
-) -> None:
+) -> Iterator[str]:
+    """Yields an .ows file path (temporary file when not alread an .ows file)"""
     if outputs:
         raise ValueError("The Orange3 binding cannot return any results")
     if load_options is None:
@@ -29,33 +31,51 @@ def execute_graph(
     if representation == "ows":
         ows_filename = graph
         if inputs or load_options or execute_options:
-            # Already an .ows file but modify it before launching the GUI
-            with tempfile.TemporaryDirectory(prefix="ewoksorange_") as tmpdirname:
-                basename = os.path.splitext(os.path.basename(ows_filename))[0]
-                ows_filename2 = os.path.join(tmpdirname, f"{basename}.ows")
-                graph = owsconvert.ows_to_ewoks(ows_filename)
+            # Already an .ows file but modify it before launching the GUI (default inputs, varinfo, execinfo)
+            graph = owsconvert.ows_to_ewoks(ows_filename)
+            basename = os.path.splitext(os.path.basename(ows_filename))[0]
+            if tmpdir:
+                tmp_filename = os.path.abspath(
+                    os.path.join(str(tmpdir), f"{basename}_mod.ows")
+                )
+            else:
+                tmp_filename = os.path.abspath(f"{basename}_mod.ows")
+            try:
                 owsconvert.ewoks_to_ows(
                     graph,
-                    ows_filename2,
+                    tmp_filename,
                     inputs=inputs,
                     **load_options,
                     **execute_options,
                 )
-                argv = [sys.argv[0], ows_filename2]
-                launchcanvas(argv=argv)
+                yield tmp_filename
+            finally:
+                os.remove(tmp_filename)
         else:
             # Already an .ows file
-            argv = [sys.argv[0], ows_filename]
-            launchcanvas(argv=argv)
+            yield ows_filename
     else:
         # Convert to an .ows file before launching the GUI
-        with tempfile.TemporaryDirectory(prefix="ewoksorange_") as tmpdirname:
-            ows_filename = os.path.join(tmpdirname, "graph.ows")
-            owsconvert.ewoks_to_ows(
-                graph, ows_filename, inputs=inputs, **load_options, **execute_options
+        if tmpdir:
+            tmp_filename = os.path.abspath(
+                os.path.join(str(tmpdir), "ewoks_workflow_tmp.ows")
             )
-            argv = [sys.argv[0], ows_filename]
-            launchcanvas(argv=argv)
+        else:
+            tmp_filename = os.path.abspath("ewoks_workflow_tmp.ows")
+        try:
+            owsconvert.ewoks_to_ows(
+                graph, tmp_filename, inputs=inputs, **load_options, **execute_options
+            )
+            yield tmp_filename
+        finally:
+            os.remove(tmp_filename)
+
+
+@ewokscore.execute_graph_decorator(binding="orange")
+def execute_graph(graph, **kwargs) -> None:
+    with ows_file_context(graph, **kwargs) as ows_filename:
+        argv = [sys.argv[0], ows_filename]
+        launchcanvas(argv=argv)
 
 
 def load_graph(

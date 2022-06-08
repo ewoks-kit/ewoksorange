@@ -2,7 +2,7 @@ import os
 import logging
 import numbers
 from typing import Any, Callable, Dict, List, Set, Union, Optional
-import numpy
+
 from AnyQt import QtCore
 from AnyQt import QtWidgets
 from silx.gui.dialog.DataFileDialog import DataFileDialog
@@ -50,10 +50,10 @@ class ParameterForm(QtWidgets.QWidget):
         name: str,
         value: ParameterValueType = missing_data.MISSING_DATA,
         value_for_type: str = "",
+        value_change_callback: Optional[Callable] = None,
         label: Optional[str] = None,
         readonly: Optional[bool] = None,
         enabled: Optional[bool] = None,
-        changeCallback: Optional[Callable] = None,
         select: Optional[str] = None,
         select_label: str = "...",
         checked: Optional[bool] = None,
@@ -67,14 +67,14 @@ class ParameterForm(QtWidgets.QWidget):
         """Each row has the following widgets:
 
         - label widget: name of the parameter by default
-        - edit widget: MISSING_DATA by default
+        - value widget: MISSING_DATA by default
         - select button (optional): select file/directory/HDF5 url
         - check box (optional): checked by default
 
         Parameters have folowing properties:
 
         - readonly: the means you can edit the value
-                    Default: False when changeCallback is provided, True otherwise
+                    Default: False when value_change_callback is provided, True otherwise
         - enabled: when False all widgets are disabled (grey color)
                    Default: True
         - checked: can mean whatever the user wants
@@ -83,96 +83,119 @@ class ParameterForm(QtWidgets.QWidget):
             label += ":"
         else:
             label = name + ":"
-        try:
-            value = serialize(value)
-        except Exception as e:
-            raise ValueError(f"Cannot serialize parameter '{name}'") from e
-        null = missing_data.is_missing_data(value)
-        if not null:
-            value_for_type = value
 
-        has_callback = bool(changeCallback)
+        has_callback = bool(value_change_callback)
         if readonly is None:
             readonly = not has_callback
         if enabled is None:
             enabled = True
 
         _logger.debug(
-            "Initialize parameter %r (readonly = %s, enabled = %s, type = %s, null = %s)",
+            "Parameter form: initialize parameter %r (readonly = %s, enabled = %s, type = %s, missing = %s)",
             name,
             readonly,
             enabled,
             type(value_for_type),
-            null,
+            missing_data.is_missing_data(value),
         )
 
         label_widget = QtWidgets.QLabel(label)
         value_widget = None
         select_widget = None
         check_widget = None
+        connections = list()
 
         if isinstance(value_for_type, str):
             value_widget = QtWidgets.QLineEdit()
-            if null:
-                value = ""
-            _logger.debug("Initialize string parameter %r = %r", name, value)
-            value_widget.setText(value)
-            if changeCallback:
-                value_widget.editingFinished.connect(changeCallback)
+            if value_change_callback:
+                connections.append(
+                    (value_widget.editingFinished.connect, value_change_callback)
+                )
             if select == "file":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(
-                    lambda: self._select_file(name, must_exist=True)
+                connections.append(
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_file(name, must_exist=True),
+                    )
                 )
             elif select == "newfile":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(
-                    lambda: self._select_file(name, must_exist=False)
+                connections.append(
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_file(name, must_exist=False),
+                    )
                 )
             elif select == "directory":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(lambda: self._select_directory(name))
+                connections.append(
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_directory(name),
+                    )
+                )
             elif select == "h5dataset":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(lambda: self._select_h5dataset(name))
+                connections.append(
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_h5dataset(name),
+                    )
+                )
             elif select == "h5group":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(lambda: self._select_h5group(name))
+                connections.append(
+                    (select_widget.pressed.connect, lambda: self._select_h5group(name))
+                )
             elif select == "files":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(
-                    lambda: self._select_file(name, must_exist=True, append=True)
+                connections.append(
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_file(name, must_exist=True, append=True),
+                    )
                 )
             elif select == "newfiles":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(
-                    lambda: self._select_file(name, must_exist=False, append=True)
+                connections.append(
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_file(name, must_exist=False, append=True),
+                    )
                 )
             elif select == "directories":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(
-                    lambda: self._select_directory(name, append=True)
+                connections.append(
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_directory(name, append=True),
+                    )
                 )
             elif select == "h5datasets":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(
-                    lambda: self._select_h5dataset(name, append=True)
+                connections.append(
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_h5dataset(name, append=True),
+                    )
                 )
             elif select == "h5groups":
                 select_widget = QtWidgets.QPushButton(select_label)
-                select_widget.pressed.connect(
-                    lambda: self._select_h5dataset(name, append=True)
+                connections.append(
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_h5group(name, append=True),
+                    )
                 )
             else:
                 select_widget = None
         elif isinstance(value_for_type, bool):
             value_widget = QtWidgets.QCheckBox(bool_label)
-            if null:
-                value = False
-            _logger.debug("Initialize boolean parameter %r = %r", name, value)
-            value_widget.setChecked(value)
-            if changeCallback:
-                value_widget.stateChanged.connect(changeCallback)
+            if value_change_callback:
+                connections.append(
+                    (value_widget.stateChanged.connect, value_change_callback)
+                )
         elif isinstance(value_for_type, numbers.Number):
             if isinstance(value_for_type, numbers.Integral):
                 value_widget = QtWidgets.QSpinBox()
@@ -180,12 +203,10 @@ class ParameterForm(QtWidgets.QWidget):
             else:
                 value_widget = QtWidgets.QDoubleSpinBox()
                 value_widget.setRange(-(2**52), 2**52 - 1)
-            if null:
-                value = 0
-            _logger.debug("Initialize numerical parameter %r = %r", name, value)
-            value_widget.setValue(value)
-            if changeCallback:
-                value_widget.editingFinished.connect(changeCallback)
+            if value_change_callback:
+                connections.append(
+                    (value_widget.editingFinished.connect, value_change_callback)
+                )
         else:
             raise TypeError(
                 f"Parameter '{name}' with type '{type(value)}' does not have a Qt widget"
@@ -194,8 +215,10 @@ class ParameterForm(QtWidgets.QWidget):
         if checked is not None:
             check_widget = QtWidgets.QCheckBox(checkbox_label)
             check_widget.setChecked(checked)
-            if changeCallback:
-                check_widget.stateChanged.connect(changeCallback)
+            if value_change_callback:
+                connections.append(
+                    (check_widget.stateChanged.connect, value_change_callback)
+                )
 
         policy = QtWidgets.QSizePolicy.Expanding
         value_widget.setSizePolicy(policy, policy)
@@ -215,14 +238,20 @@ class ParameterForm(QtWidgets.QWidget):
             "serialize": serialize,
         }
 
+        self.set_parameter_value(name, value)
         self.set_parameter_readonly(name, readonly)
         self.set_parameter_enabled(name, enabled)
+        for connect, func in connections:
+            connect(func)
 
     def _get_widget(self, name: str, col: int) -> QtWidgets.QWidget:
         if name not in self._fields:
             return None
         row = self._fields[name]["row"]
-        return self.layout().itemAtPosition(row, col).widget()
+        item = self.layout().itemAtPosition(row, col)
+        if item is None:
+            return None
+        return item.widget()
 
     def _get_label_widget(self, name: str) -> QtWidgets.QWidget:
         return self._get_widget(name, 0)
@@ -243,50 +272,84 @@ class ParameterForm(QtWidgets.QWidget):
     def get_parameter_value(self, name: str):
         w = self._get_value_widget(name)
         if w is None:
-            return
-        if isinstance(w, QtWidgets.QLineEdit):
-            value = w.text()
-            if not value:
-                value = missing_data.MISSING_DATA
-        else:
-            value = w.value()
-            if numpy.isnan(value):
-                value = missing_data.MISSING_DATA
-        deserialize = self._fields[name]["deserialize"]
-        try:
-            return deserialize(value)
-        except Exception:
-            try:
-                self.set_parameter_value(missing_data.MISSING_DATA)
-            except Exception:
-                pass
             return missing_data.MISSING_DATA
 
+        if isinstance(w, QtWidgets.QLineEdit):
+            wvalue = w.text()
+        else:
+            wvalue = w.value()
+
+        fdict = self._fields[name]
+        changed = wvalue != fdict["last_widget_value"]
+        if changed:
+            fdict["last_widget_value"] = wvalue
+        elif fdict["null"]:
+            return missing_data.MISSING_DATA
+
+        deserialize = fdict["deserialize"]
+        try:
+            value = deserialize(wvalue)
+        except Exception:
+            value = missing_data.MISSING_DATA
+            fdict["null"] = True
+        else:
+            fdict["null"] = missing_data.is_missing_data(value)
+
+        return value
+
     def set_parameter_value(self, name: str, value: ParameterValueType):
+        """When the value cannot be serialized or cannot be set to the widget,
+        the parameter value will set to MISSING_DATA.
+        """
         w = self._get_value_widget(name)
         if w is None:
             return
-        serialize = self._fields[name]["serialize"]
-        try:
-            value = serialize(value)
-        except Exception:
-            return
-        null = missing_data.is_missing_data(value)
-        if isinstance(w, QtWidgets.QLineEdit):
-            if null:
-                value = ""
-            _logger.debug("Set string parameter %r = %r", name, value)
-            w.setText(value)
-        elif isinstance(w, QtWidgets.QCheckBox):
-            if null:
-                value = False
-            _logger.debug("Set boolean parameter %r = %r", name, value)
-            w.setChecked(value)
+
+        fdict = self._fields[name]
+        serialize = fdict["serialize"]
+        if missing_data.is_missing_data(value):
+            set_value = missing_data.MISSING_DATA
         else:
-            if null:
-                value = 0
-            _logger.debug("Set numerical parameter %r = %r", name, value)
-            w.setValue(value)
+            try:
+                set_value = serialize(value)
+            except Exception:
+                set_value = missing_data.MISSING_DATA
+
+        if isinstance(w, QtWidgets.QLineEdit):
+            _logger.debug("Parameter form: set string parameter %r = %r", name, value)
+            try:
+                w.setText(set_value)
+            except TypeError:
+                w.setText("")
+                fdict["null"] = True
+                fdict["last_widget_value"] = ""
+            else:
+                fdict["null"] = False
+                fdict["last_widget_value"] = set_value
+        elif isinstance(w, QtWidgets.QCheckBox):
+            _logger.debug("Parameter form: set boolean parameter %r = %r", name, value)
+            try:
+                w.setChecked(set_value)
+            except TypeError:
+                w.setChecked(False)
+                fdict["null"] = True
+                fdict["last_widget_value"] = False
+            else:
+                fdict["null"] = False
+                fdict["last_widget_value"] = set_value
+        else:
+            _logger.debug(
+                "Parameter form: set numerical parameter %r = %r", name, value
+            )
+            try:
+                w.setValue(set_value)
+            except TypeError:
+                w.setValue(0)
+                fdict["null"] = True
+                fdict["last_widget_value"] = 0
+            else:
+                fdict["null"] = False
+                fdict["last_widget_value"] = set_value
 
     def get_parameter_readonly(self, name: str) -> Optional[bool]:
         w = self._get_value_widget(name)
@@ -334,6 +397,19 @@ class ParameterForm(QtWidgets.QWidget):
     def set_parameters_readonly(self, params: Dict[str, bool]) -> None:
         for name, value in params.items():
             self.set_parameter_readonly(name, value)
+
+    def get_parameters_checked(self) -> Dict[str, bool]:
+        result = dict()
+        for name in self._fields:
+            checked = self.get_parameter_checked(name)
+            if checked is None:
+                continue
+            result[name] = checked
+        return result
+
+    def set_parameters_checked(self, params: Dict[str, bool]) -> None:
+        for name, value in params.items():
+            self.set_parameter_checked(name, value)
 
     def get_parameters_enabled(self) -> Dict[str, bool]:
         return {name: self.get_parameter_enabled(name) for name in self._fields}

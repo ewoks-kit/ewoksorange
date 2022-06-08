@@ -28,6 +28,7 @@ from .owsignals import signal_ewoks_to_orange_name
 from .owsignals import signal_orange_to_ewoks_name
 from .owwidgets import is_ewoks_widget_class
 from ..ewoks_addon.orangecontrib.ewoks_defaults import default_owwidget_class
+from . import invalid_data
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows", "graph_is_supported"]
 
@@ -84,13 +85,13 @@ def task_to_widget(
 
 
 def node_data_to_default_inputs(
-    data: dict, widget_class: Type[OWBaseWidget], ewokstaskclass: Type[Task]
+    data, widget_class: Type[OWBaseWidget], ewokstaskclass: Type[Task]
 ) -> List[dict]:
     if data is None:
         return list()
     node_properties = readwrite.loads(data.data, data.format)
     if is_ewoks_widget_class(widget_class):
-        default_inputs = node_properties.get("default_inputs", dict())
+        default_inputs = node_properties.get("_ewoks_default_inputs", dict())
     else:
         if ewokstaskclass:
             default_inputs = {
@@ -100,7 +101,11 @@ def node_data_to_default_inputs(
             }
         else:
             default_inputs = node_properties
-    return [{"name": name, "value": value} for name, value in default_inputs.items()]
+    return [
+        {"name": name, "value": value}
+        for name, value in default_inputs.items()
+        if not invalid_data.is_invalid_data(value)
+    ]
 
 
 def ows_to_ewoks(
@@ -270,9 +275,9 @@ class OwsNodeWrapper:
         #       otherwise `WidgetsScheme.sync_node_properties` will remove the
         #       unknown properties
         self.properties = {
-            "default_inputs": default_inputs,
-            "varinfo": node_attrs.get("varinfo", dict()),
-            "execinfo": node_attrs.get("execinfo", dict()),
+            "_ewoks_default_inputs": default_inputs,
+            "_ewoks_varinfo": node_attrs.get("varinfo", dict()),
+            "_ewoks_execinfo": node_attrs.get("execinfo", dict()),
         }
 
     def __str__(self):

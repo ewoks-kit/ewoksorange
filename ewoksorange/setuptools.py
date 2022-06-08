@@ -19,18 +19,19 @@ from pprint import pprint
 from setuptools import find_packages
 from setuptools import setup as _setup
 
-
 from .orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.canvas.conf import WIDGETS_ENTRY as WIDGET_GROUP
-else:
-    from orangewidget.workflow.config import WIDGETS_ENTRY as WIDGET_GROUP
+    from oasys.canvas.conf import WIDGETS_ENTRY  # "oasys.widgets"
 
+    EXAMPLE_WORKFLOWS_ENTRY = WIDGETS_ENTRY + ".tutorials"
+else:
+    from orangewidget.workflow.config import WIDGETS_ENTRY  # "orange.widgets"
+
+    EXAMPLE_WORKFLOWS_ENTRY = WIDGETS_ENTRY + ".tutorials"
 
 NAMESPACE_PACKAGE = "orangecontrib"
 PYPI_KEYWORD = "orange3 add-on"
-TUTORIAL_GROUP = WIDGET_GROUP + ".tutorials"
 HELP_GROUP = "orange.canvas.help"
 TUTORIAL_EXT = ("*.ows",)
 ICON_EXT = ("*.png", "*.svg")
@@ -74,7 +75,7 @@ def register_category(cat_package, entry_points, defaultname=None):
             catname = qualname.split(".")[-1]
 
     # For auto-discovery of widgets in this package
-    eps = entry_points.setdefault(WIDGET_GROUP, list())
+    eps = entry_points.setdefault(WIDGETS_ENTRY, list())
     eps.append(f"{catname} = {qualname}")
 
     # For auto-discovery of help for the category
@@ -86,7 +87,7 @@ def register_tutorials(tut_package, entry_points):
     qualname = orangecontrib_qualname(tut_package.__name__)
 
     # For auto-discovery of tutorials in this package
-    eps = entry_points.setdefault(TUTORIAL_GROUP, list())
+    eps = entry_points.setdefault(EXAMPLE_WORKFLOWS_ENTRY, list())
     eps.append(f"{qualname} = {qualname}")
 
 

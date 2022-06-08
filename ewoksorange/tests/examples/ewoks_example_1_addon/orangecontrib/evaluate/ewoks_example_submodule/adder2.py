@@ -1,13 +1,5 @@
-from ewoksorange.orange_version import ORANGE_VERSION
-
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    pass
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from Orange.widgets.widget import Input, Output
-else:
-    from orangewidget.widget import Input, Output
-
 from ewoksorange.bindings import OWEwoksWidgetNoThread
+from ewoksorange.gui.orange_imports import Input, Output
 from ewoks_example_1_addon.tasks import SumTaskEvaluate2
 from ewoks_example_1_addon.widgets import IntegerAdderMixin
 
@@ -21,7 +13,7 @@ class Adder2(IntegerAdderMixin, OWEwoksWidgetNoThread, ewokstaskclass=SumTaskEva
     icon = "icons/mywidget.svg"
     want_main_area = True
 
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    if Input is None:
         inputs = [("A", object, ""), ("B", object, "")]
         outputs = [{"name": "A + B", "id": "A + B", "type": object}]
         inputs_orange_to_ewoks = {"A": "a", "B": "b"}
