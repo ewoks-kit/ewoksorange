@@ -153,7 +153,7 @@ def ows_to_ewoks(
             "title": ows_node.title,
             "name": ows_node.name,
             "position": str(ows_node.position),
-            "version": ows_node.version,
+            "version": ows_node.version,  # widget version
         }
         node_attrs["id"] = id_to_title.get(ows_node.id, ows_node.id)
         node_attrs["label"] = ows_node.title
@@ -267,7 +267,7 @@ class OwsNodeWrapper:
             name=ows.get("name", default_name),
             qualified_name=node_attrs["qualified_name"],
             project_name=node_attrs["project_name"],
-            version=ows.get("version", ""),
+            version=ows.get("version", ""),  # widget version
         )
         default_inputs = node_attrs.get("default_inputs", list())
         default_inputs = {item["name"]: item["value"] for item in default_inputs}

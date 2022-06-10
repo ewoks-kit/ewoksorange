@@ -79,10 +79,8 @@ class ParameterForm(QtWidgets.QWidget):
                    Default: True
         - checked: can mean whatever the user wants
         """
-        if label:
-            label += ":"
-        else:
-            label = name + ":"
+        if not label:
+            label = name
 
         has_callback = bool(value_change_callback)
         if readonly is None:
