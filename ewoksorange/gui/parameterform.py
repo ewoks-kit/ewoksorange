@@ -274,6 +274,8 @@ class ParameterForm(QtWidgets.QWidget):
 
         if isinstance(w, QtWidgets.QLineEdit):
             wvalue = w.text()
+        elif isinstance(w, QtWidgets.QCheckBox):
+            wvalue = w.isChecked()
         else:
             wvalue = w.value()
 
@@ -352,12 +354,18 @@ class ParameterForm(QtWidgets.QWidget):
     def get_parameter_readonly(self, name: str) -> Optional[bool]:
         w = self._get_value_widget(name)
         if w is not None:
-            return w.isReadOnly()
+            if isinstance(w, QtWidgets.QCheckBox):
+                return w.isEnabled()
+            else:
+                return w.isReadOnly()
 
     def set_parameter_readonly(self, name: str, value: bool) -> None:
         w = self._get_value_widget(name)
         if w is not None:
-            w.setReadOnly(value)
+            if isinstance(w, QtWidgets.QCheckBox):
+                return w.setEnabled(value)
+            else:
+                return w.setReadOnly(value)
 
     def get_parameter_enabled(self, name: str) -> Optional[bool]:
         w = self._get_value_widget(name)
