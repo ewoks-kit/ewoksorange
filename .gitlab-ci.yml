@@ -9,7 +9,7 @@ test-3.6-orange:
   script:
     - python -m pip install Orange3  # install without --pre
     - python -m pip install --pre .[test,orange]
-    - python -m pytest --cov=./ -v .
+    - python -m pytest -v .
 
 test-3.6-oasys:
   extends: .test-3.6_glx
@@ -19,7 +19,7 @@ test-3.6-oasys:
     - python -m pip install importlib_resources  # python_version < "3.7"
     - python -m pip install AnyQt
     - python -m pip install oasys1
-    - python -m pytest --cov=./ -v .
+    - python -m pytest -v .
 
 build_sdist:
   extends: .build_sdist
