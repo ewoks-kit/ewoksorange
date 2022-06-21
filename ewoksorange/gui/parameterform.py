@@ -1,7 +1,8 @@
 import os
 import logging
 import numbers
-from typing import Any, Callable, Dict, List, Set, Union, Optional
+from typing import Any, Callable, Dict, List, Sequence, Set, Union, Optional
+from contextlib import contextmanager
 
 from AnyQt import QtCore
 from AnyQt import QtWidgets
@@ -20,6 +21,15 @@ def default_serialize(value: ParameterValueType) -> WidgetValueType:
 
 def default_deserialize(value: WidgetValueType) -> ParameterValueType:
     return value
+
+
+@contextmanager
+def block_signals(w: QtWidgets.QWidget):
+    old = w.blockSignals(True)
+    try:
+        yield
+    finally:
+        w.blockSignals(old)
 
 
 class ParameterForm(QtWidgets.QWidget):
@@ -49,7 +59,7 @@ class ParameterForm(QtWidgets.QWidget):
         self,
         name: str,
         value: ParameterValueType = missing_data.MISSING_DATA,
-        value_for_type: str = "",
+        value_for_type: Any = "",
         value_change_callback: Optional[Callable] = None,
         label: Optional[str] = None,
         readonly: Optional[bool] = None,
@@ -205,6 +215,16 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (value_widget.editingFinished.connect, value_change_callback)
                 )
+        elif isinstance(value_for_type, Sequence):
+            value_widget = QtWidgets.QComboBox()
+            value_widget.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
+            value_widget.addItem("<missing>", missing_data.MISSING_DATA)
+            for data in value_for_type:
+                value_widget.addItem(str(data), data)
+            if value_change_callback:
+                connections.append(
+                    (value_widget.currentIndexChanged.connect, value_change_callback)
+                )
         else:
             raise TypeError(
                 f"Parameter '{name}' with type '{type(value)}' does not have a Qt widget"
@@ -276,6 +296,9 @@ class ParameterForm(QtWidgets.QWidget):
             wvalue = w.text()
         elif isinstance(w, QtWidgets.QCheckBox):
             wvalue = w.isChecked()
+        elif isinstance(w, QtWidgets.QComboBox):
+            wvalue = w.currentData()
+            # TODO: check what it returns when index is -1
         else:
             wvalue = w.value()
 
@@ -318,9 +341,11 @@ class ParameterForm(QtWidgets.QWidget):
         if isinstance(w, QtWidgets.QLineEdit):
             _logger.debug("Parameter form: set string parameter %r = %r", name, value)
             try:
-                w.setText(set_value)
+                with block_signals(w):
+                    w.setText(set_value)
             except TypeError:
-                w.setText("")
+                with block_signals(w):
+                    w.setText("")
                 fdict["null"] = True
                 fdict["last_widget_value"] = ""
             else:
@@ -329,12 +354,29 @@ class ParameterForm(QtWidgets.QWidget):
         elif isinstance(w, QtWidgets.QCheckBox):
             _logger.debug("Parameter form: set boolean parameter %r = %r", name, value)
             try:
-                w.setChecked(set_value)
+                with block_signals(w):
+                    w.setChecked(set_value)
             except TypeError:
-                w.setChecked(False)
+                with block_signals(w):
+                    w.setChecked(False)
                 fdict["null"] = True
                 fdict["last_widget_value"] = False
             else:
+                fdict["null"] = False
+                fdict["last_widget_value"] = set_value
+        elif isinstance(w, QtWidgets.QComboBox):
+            _logger.debug(
+                "Parameter form: select choice parameter %r = %r", name, value
+            )
+            idx = w.findData(set_value)
+            if idx == -1:
+                with block_signals(w):
+                    w.setCurrentIndex(0)
+                fdict["null"] = True
+                fdict["last_widget_value"] = missing_data.MISSING_DATA
+            else:
+                with block_signals(w):
+                    w.setCurrentIndex(idx)
                 fdict["null"] = False
                 fdict["last_widget_value"] = set_value
         else:
@@ -342,9 +384,11 @@ class ParameterForm(QtWidgets.QWidget):
                 "Parameter form: set numerical parameter %r = %r", name, value
             )
             try:
-                w.setValue(set_value)
+                with block_signals(w):
+                    w.setValue(set_value)
             except TypeError:
-                w.setValue(0)
+                with block_signals(w):
+                    w.setValue(0)
                 fdict["null"] = True
                 fdict["last_widget_value"] = 0
             else:
@@ -356,6 +400,8 @@ class ParameterForm(QtWidgets.QWidget):
         if w is not None:
             if isinstance(w, QtWidgets.QCheckBox):
                 return w.isEnabled()
+            elif isinstance(w, QtWidgets.QComboBox):
+                return w.isEnabled()
             else:
                 return w.isReadOnly()
 
@@ -363,6 +409,8 @@ class ParameterForm(QtWidgets.QWidget):
         w = self._get_value_widget(name)
         if w is not None:
             if isinstance(w, QtWidgets.QCheckBox):
+                return w.setEnabled(value)
+            elif isinstance(w, QtWidgets.QComboBox):
                 return w.setEnabled(value)
             else:
                 return w.setReadOnly(value)
