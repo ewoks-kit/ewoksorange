@@ -357,7 +357,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         raise NotImplementedError("Base class")
 
     @property
-    def task_succeeded(self) -> bool:
+    def task_succeeded(self) -> Optional[bool]:
+        raise NotImplementedError("Base class")
+
+    @property
+    def task_done(self) -> Optional[bool]:
         raise NotImplementedError("Base class")
 
 
@@ -406,8 +410,12 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
             self.propagate_downstream()
 
     @property
-    def task_succeeded(self):
+    def task_succeeded(self) -> Optional[bool]:
         return self.__task_executor.succeeded
+
+    @property
+    def task_done(self) -> Optional[bool]:
+        return self.__task_executor.done
 
     def get_task_outputs(self):
         return self.__task_executor.output_variables
@@ -483,8 +491,12 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
                     self.__task_executor.start()
 
     @property
-    def task_succeeded(self):
+    def task_succeeded(self) -> Optional[bool]:
         return self.__task_executor.succeeded
+
+    @property
+    def task_done(self) -> Optional[bool]:
+        return self.__task_executor.done
 
     def get_task_outputs(self):
         return self.__task_executor.output_variables
@@ -511,6 +523,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executors = dict()
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
+        self.__last_task_done = None
 
     def _execute_ewoks_task(self, propagate: bool):
         task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
@@ -547,6 +560,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
                 task_executor = self.sender()
                 self.__last_output_variables = task_executor.output_variables
                 self.__last_task_succeeded = task_executor.succeeded
+                self.__last_task_done = task_executor.done
                 if self.__is_task_executor_propagated(task_executor):
                     self.propagate_downstream(succeeded=task_executor.succeeded)
             finally:
@@ -568,8 +582,12 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         return self.__task_executors.get(id(task_executor), (None, False))[1]
 
     @property
-    def task_succeeded(self):
+    def task_succeeded(self) -> Optional[bool]:
         return self.__last_task_succeeded
+
+    @property
+    def task_done(self) -> Optional[bool]:
+        return self.__last_task_done
 
     def get_task_outputs(self):
         return self.__last_output_variables
@@ -587,6 +605,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         )
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
+        self.__last_task_done = None
 
     def _execute_ewoks_task(self, propagate):
         def callback():
@@ -599,8 +618,12 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             )
 
     @property
-    def task_succeeded(self):
+    def task_succeeded(self) -> Optional[bool]:
         return self.__last_task_succeeded
+
+    @property
+    def task_done(self) -> Optional[bool]:
+        return self.__last_task_done
 
     def get_task_outputs(self):
         return self.__last_output_variables
@@ -614,5 +637,6 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             task_executor = self.sender()
             self.__last_output_variables = task_executor.output_variables
             self.__last_task_succeeded = task_executor.succeeded
+            self.__last_task_done = task_executor.done
             if propagate:
                 self.propagate_downstream()

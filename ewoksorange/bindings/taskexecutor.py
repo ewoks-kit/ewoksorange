@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from AnyQt.QtCore import QThread
 from ewokscore.task import TaskInputError
 from ewokscore import TaskWithProgress
@@ -32,16 +33,22 @@ class TaskExecutor:
             _logger.error("task failed", exc_info=True)
 
     @property
-    def is_ready_to_execute(self):
+    def is_ready_to_execute(self) -> bool:
         if self.__task is None:
             return False
         return self.__task.is_ready_to_execute
 
     @property
-    def succeeded(self):
+    def succeeded(self) -> Optional[bool]:
         if self.__task is None:
-            return False
+            return None
         return self.__task.succeeded
+
+    @property
+    def done(self) -> Optional[bool]:
+        if self.__task is None:
+            return None
+        return self.__task.done
 
     @property
     def output_variables(self):
