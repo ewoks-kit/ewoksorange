@@ -14,7 +14,10 @@ extensions = [
 templates_path = ["_templates"]
 source_suffix = [".rst", ".md"]
 exclude_patterns = ["build", "**.ipynb_checkpoints"]
+
 pygments_style = "sphinx"
+autodoc_typehints = "description"
+autodoc_typehints_description_target = "all"
 
 autosummary_generate = True
 autodoc_default_flags = [

@@ -6,9 +6,34 @@
 |ewoksimg|   ewoksorange
 ========================
 
-ewoksorange is the Orange bindings for Ewoks.
+*ewoksorange* provides desktop graphical interface for `ewoks <https://ewoks.readthedocs.io/>`_.
 
-ewoksorange has been developed by the `Software group <http://www.esrf.eu/Instrumentation/software>`_ of the `European Synchrotron <https://www.esrf.eu/>`_.
+*ewoksorange* has been developed by the `Software group <http://www.esrf.eu/Instrumentation/software>`_ of the `European Synchrotron <https://www.esrf.eu/>`_.
+
+Getting started
+---------------
+
+Install requirements
+
+.. code:: bash
+
+    python -m pip install ewoksorange[orange]
+
+Launch to graphical interface
+
+.. code:: bash
+
+    ewoks-canvas
+
+Run the tests
+
+.. code:: bash
+
+    python -m pip install ewoksorange[test]
+    pytest --pyargs ewoksorange.tests
+
+Documentation
+-------------
 
 .. toctree::
     :maxdepth: 2
