@@ -1,4 +1,6 @@
-# EwoksOrange: Orange binding for Ewoks
+# ewoksorange
+
+*ewoksorange* provides s desktop graphical interface for [ewoks](https://ewoks.readthedocs.io/).
 
 ## Install
 

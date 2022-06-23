@@ -189,7 +189,7 @@ def ows_to_ewoks(
         link = {
             "source": id_to_title.get(ows_link.source_node_id, ows_link.source_node_id),
             "target": id_to_title.get(ows_link.sink_node_id, ows_link.sink_node_id),
-            "data_mapping": [{"target_input": sink_name, "source_output": source_name}],
+            "data_mapping": [{"source_output": source_name, "target_input": sink_name}],
         }
         links.append(link)
 
