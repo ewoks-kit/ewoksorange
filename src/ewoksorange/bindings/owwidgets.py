@@ -607,6 +607,10 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_succeeded = None
         self.__last_task_done = None
 
+    @property
+    def task_executor_queue(self):
+        return self.__task_executor_queue
+
     def _execute_ewoks_task(self, propagate):
         def callback():
             self._ewoks_task_finished_callback(propagate)

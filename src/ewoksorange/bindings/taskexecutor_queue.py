@@ -59,6 +59,10 @@ class TaskExecutorQueue(QObject, Queue):
         self._task_executor.stop(wait=True)
         self._task_executor = None
 
+    @property
+    def current_task(self):
+        return self._task_executor.current_task
+
 
 class _ThreadedTaskExecutor(ThreadedTaskExecutor):
     """Processing thread with some information on callbacks to be executed"""
