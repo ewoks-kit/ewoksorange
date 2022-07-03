@@ -1,5 +1,5 @@
+from ewoksutils.import_utils import qualname
 from ewokscore import Task
-from ewokscore.utils import qualname
 from ewoksorange.bindings import ewoks_to_ows
 
 

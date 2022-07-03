@@ -14,9 +14,9 @@ else:
     from orangewidget.widget import OWBaseWidget
     from orangecanvas.scheme import readwrite
 
+from ewoksutils.import_utils import qualname
+from ewoksutils.import_utils import import_qualname
 from ewokscore import load_graph
-from ewokscore.utils import qualname
-from ewokscore.utils import import_qualname
 from ewokscore.graph import TaskGraph
 from ewokscore.inittask import task_executable_info
 from ewokscore.task import Task

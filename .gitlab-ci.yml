@@ -15,6 +15,7 @@ test-3.6-oasys:
   extends: .test-3.6_glx
   script:
     - python -m pip install --no-deps .
+    - python -m pip install ewoksutils
     - python -m pip install ewokscore[test]
     - python -m pip install importlib_resources  # python_version < "3.7"
     - python -m pip install AnyQt
