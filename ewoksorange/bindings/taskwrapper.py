@@ -1,9 +1,9 @@
 from numbers import Number
 from typing import List, Mapping, Optional, Tuple, Type
 
+from ewoksutils.import_utils import qualname
+from ewoksutils.import_utils import import_qualname
 from ewokscore import Task
-from ewokscore.utils import qualname
-from ewokscore.utils import import_qualname
 from ewokscore.variable import value_from_transfer
 
 from .qtapp import ensure_qtapp
