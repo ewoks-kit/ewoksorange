@@ -7,11 +7,25 @@ Launch the Orange canvas
 
     ewoks-canvas /path/to/orange_wf.ows
 
+or for an installation with the system python
+
+.. code-block:: bash
+
+    python3 -m ewoksorange.canvas /path/to/orange_wf.ows
+
 or when Orange3 is installed
 
 .. code-block:: bash
 
     orange-canvas /path/to/orange_wf.ows
+
+or for an installation with the system python
+
+.. code-block:: bash
+
+    python3 -m orangecanvas /path/to/orange_wf.ows
+
+or for an installation with the system python
 
 Launch the Orange canvas using the Ewoks CLI
 
@@ -19,6 +33,13 @@ Launch the Orange canvas using the Ewoks CLI
 
     ewoks execute /path/to/ewoks_wf.json --binding orange
     ewoks execute /path/to/orange_wf.ows --binding orange
+
+or for an installation with the system python
+
+.. code-block:: bash
+
+    python3 -m ewoks execute /path/to/ewoks_wf.json --binding orange
+    python3 -m ewoks execute /path/to/orange_wf.ows --binding orange
 
 Launch the Orange canvas with the examples add-on
 
@@ -30,14 +51,14 @@ or alternatively install the example add-ons
 
 .. code-block:: bash
 
-    python -m pip install ewoksorange/tests/examples/ewoks_example_1_addon
-    python -m pip install ewoksorange/tests/examples/ewoks_example_2_addon
+    python3 -m pip install ewoksorange/tests/examples/ewoks_example_1_addon
+    python3 -m pip install ewoksorange/tests/examples/ewoks_example_2_addon
 
 and launch the Orange canvas with
 
 .. code-block:: bash
 
-    python -m orangecanvas
+    python3 -m orangecanvas
 
 or when Orange3 is installed
 

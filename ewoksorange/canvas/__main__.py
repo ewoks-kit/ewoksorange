@@ -8,13 +8,13 @@ Which is equivalent to
 
 .. code: bash
 
-    python -m orangecanvas --config orangewidget.workflow.config.Config
+    python3 -m orangecanvas --config orangewidget.workflow.config.Config
 
 or
 
 .. code: bash
 
-    python -m Orange.canvas
+    python3 -m Orange.canvas
 
 or
 
