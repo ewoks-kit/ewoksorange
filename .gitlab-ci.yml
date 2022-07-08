@@ -7,20 +7,20 @@ test-3.6:
 test-3.6-orange:
   extends: .test-3.6_glx
   script:
-    - python -m pip install Orange3  # install without --pre
-    - python -m pip install --pre .[test,orange]
-    - python -m pytest -v .
+    - python3 -m pip install Orange3  # install without --pre
+    - python3 -m pip install --pre .[test,orange]
+    - python3 -m pytest -v .
 
 test-3.6-oasys:
   extends: .test-3.6_glx
   script:
-    - python -m pip install --no-deps .
-    - python -m pip install ewoksutils
-    - python -m pip install ewokscore[test]
-    - python -m pip install importlib_resources  # python_version < "3.7"
-    - python -m pip install AnyQt
-    - python -m pip install oasys1
-    - python -m pytest -v .
+    - python3 -m pip install --no-deps .
+    - python3 -m pip install ewoksutils
+    - python3 -m pip install ewokscore[test]
+    - python3 -m pip install importlib_resources  # python_version < "3.7"
+    - python3 -m pip install AnyQt
+    - python3 -m pip install oasys1
+    - python3 -m pytest -v .
 
 build_sdist:
   extends: .build_sdist
