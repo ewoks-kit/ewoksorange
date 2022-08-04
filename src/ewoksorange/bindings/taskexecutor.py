@@ -56,6 +56,10 @@ class TaskExecutor:
             return dict()
         return self.__task.output_variables
 
+    @property
+    def current_task(self):
+        return self.__task
+
 
 class ThreadedTaskExecutor(QThread, TaskExecutor):
     """Create and execute an Ewoks task in a dedicated thread."""
