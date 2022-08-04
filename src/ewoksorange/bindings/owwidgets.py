@@ -424,9 +424,11 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
 class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__taskProgress = QProgress()
         if has_progress_bar:
+            self.__taskProgress = QProgress()
             self.__taskProgress.sigProgressChanged.connect(self.progressBarSet)
+        else:
+            self.__taskProgress = None
 
     def onDeleteWidget(self):
         if has_progress_bar:
@@ -454,10 +456,12 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
             self.__ewoks_task_finished()
 
     def __ewoks_task_init(self):
-        self.progressBarInit()
+        if has_progress_bar:
+            self.progressBarInit()
 
     def __ewoks_task_finished(self):
-        self.progressBarFinished()
+        if has_progress_bar:
+            self.progressBarFinished()
         self._output_changed()
 
     def _get_task_arguments(self):
