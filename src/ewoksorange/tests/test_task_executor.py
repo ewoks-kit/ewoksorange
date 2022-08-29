@@ -9,11 +9,11 @@ from ewokscore.tests.examples.tasks.sumtask import SumTask
 
 def test_task_executor():
     executor = TaskExecutor(SumTask)
-    assert not executor.is_ready_to_execute
+    assert not executor.has_task
     assert not executor.succeeded
 
     executor.create_task(inputs={"a": 1, "b": 2})
-    assert executor.is_ready_to_execute
+    assert executor.has_task
     assert not executor.succeeded
 
     executor.execute_task()
@@ -31,11 +31,11 @@ def test_threaded_task_executor(qtapp):
     executor = ThreadedTaskExecutor(ewokstaskclass=SumTask)
 
     executor.finished.connect(finished_callback)
-    assert not executor.is_ready_to_execute
+    assert not executor.has_task
     assert not executor.succeeded
 
     executor.create_task(inputs={"a": 1, "b": 2})
-    assert executor.is_ready_to_execute
+    assert executor.has_task
     assert not executor.succeeded
 
     executor.start()

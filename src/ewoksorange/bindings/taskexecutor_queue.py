@@ -39,12 +39,11 @@ class TaskExecutorQueue(QObject, Queue):
             return
         self._available = False
         self._task_executor.create_task(**Queue.get(self))
-        if not self._task_executor.is_ready_to_execute:
-            self._process_ended()
+        if self._task_executor.has_task:
+            self.sigComputationStarted.emit()
+            self._task_executor.start()
         else:
-            if self._task_executor.is_ready_to_execute:
-                self.sigComputationStarted.emit()
-                self._task_executor.start()
+            self._process_ended()
 
     def _process_ended(self):
         task_executor = self.sender()

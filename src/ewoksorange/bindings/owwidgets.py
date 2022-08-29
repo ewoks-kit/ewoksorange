@@ -489,7 +489,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             return
         else:
             self.__task_executor.create_task(**self._get_task_arguments())
-            if self.__task_executor.is_ready_to_execute:
+            if self.__task_executor.has_task:
                 with self._ewoks_task_start_context():
                     self.__propagate = propagate
                     self.__task_executor.start()
@@ -532,7 +532,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def _execute_ewoks_task(self, propagate: bool):
         task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
         task_executor.create_task(**self._get_task_arguments())
-        if not task_executor.is_ready_to_execute:
+        if not task_executor.has_task:
             return
         with self.__init_task_executor(task_executor, propagate):
             with self._ewoks_task_start_context():

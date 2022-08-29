@@ -25,7 +25,7 @@ class TaskExecutor:
             _logger.info(e)
 
     def execute_task(self):
-        if not self.is_ready_to_execute:
+        if not self.has_task:
             return
         try:
             self.__task.execute()
@@ -33,10 +33,8 @@ class TaskExecutor:
             _logger.error("task failed", exc_info=True)
 
     @property
-    def is_ready_to_execute(self) -> bool:
-        if self.__task is None:
-            return False
-        return True
+    def has_task(self) -> bool:
+        return self.__task is not None
 
     @property
     def succeeded(self) -> Optional[bool]:
