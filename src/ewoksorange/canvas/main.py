@@ -91,7 +91,7 @@ def main(argv=None):
 
     if argv is None:
         argv = sys.argv
-    options, _ = parser.parse_known_args(argv[1:])
+    options = parser.parse_args(argv[1:])
 
     if "--with-examples" in argv:
         argv.pop(argv.index("--with-examples"))
