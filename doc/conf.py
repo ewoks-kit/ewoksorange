@@ -3,7 +3,7 @@
 
 project = "ewoksorange"
 release = "0.1"
-copyright = "2021, ESRF"  # noqa A001
+copyright = "2021, ESRF"
 author = "ESRF"
 
 extensions = [
