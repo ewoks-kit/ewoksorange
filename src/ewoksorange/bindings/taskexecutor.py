@@ -36,7 +36,7 @@ class TaskExecutor:
     def is_ready_to_execute(self) -> bool:
         if self.__task is None:
             return False
-        return self.__task.is_ready_to_execute
+        return True
 
     @property
     def succeeded(self) -> Optional[bool]:
