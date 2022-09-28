@@ -10,6 +10,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
+    "sphinx.ext.viewcode",
 ]
 templates_path = ["_templates"]
 source_suffix = [".rst", ".md"]
@@ -26,5 +27,5 @@ autodoc_default_flags = [
     "show-inheritance",
 ]
 
-html_theme = "alabaster"
+html_theme = "classic"
 html_logo = "img/ewoksorange.png"
