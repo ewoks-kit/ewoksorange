@@ -79,8 +79,8 @@ ewoks-canvas --with-examples
 or alternatively install the example add-ons
 
 ```bash
-python3 -m pip install ewoksorange/tests/examples/ewoks_example_1_addon
-python3 -m pip install ewoksorange/tests/examples/ewoks_example_2_addon
+python3 -m pip install src/ewoksorange/tests/examples/ewoks_example_1_addon
+python3 -m pip install src/ewoksorange/tests/examples/ewoks_example_2_addon
 ```
 
 and launch the Orange canvas with
@@ -98,7 +98,7 @@ orange-canvas /path/to/orange_wf.ows
 When removing an editable install, you may need to delete one file manually:
 
 ```bash
-python3 -m pip install -e ewoksorange/tests/examples/ewoks_example_1_addon
+python3 -m pip install -e src/ewoksorange/tests/examples/ewoks_example_1_addon
 python3 -m pip uninstall ewoks-example-1-addon
 python3 -c "import site,os;os.unlink(os.path.join(site.getsitepackages()[0],'ewoks-example-1-addon-nspkg.pth'))"
 ```
