@@ -83,6 +83,7 @@ def temporary_log_handlers(log_level):
 
 def main(argv=None):
     parser = arg_parser()
+
     parser.add_argument(
         "--with-examples",
         action="store_true",
@@ -91,7 +92,7 @@ def main(argv=None):
 
     if argv is None:
         argv = sys.argv
-    options = parser.parse_args(argv[1:])
+    options, _ = parser.parse_known_args(argv[1:])
 
     if "--with-examples" in argv:
         argv.pop(argv.index("--with-examples"))
