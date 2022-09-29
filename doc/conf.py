@@ -11,14 +11,13 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
+    "sphinx_autodoc_typehints",
 ]
 templates_path = ["_templates"]
 source_suffix = [".rst", ".md"]
 exclude_patterns = ["build", "**.ipynb_checkpoints"]
 
-pygments_style = "sphinx"
-autodoc_typehints = "description"
-autodoc_typehints_description_target = "all"
+always_document_param_types = True
 
 autosummary_generate = True
 autodoc_default_flags = [
