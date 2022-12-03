@@ -1,8 +1,10 @@
 # CHANGELOG.md
 
-## 0.1.0 (unreleased)
+## 0.2.0 (unreleased)
 
-Added:
+## 0.1.0
+
+New features:
   - Bases classes for Orange Widgets natively compliant with ewoks
     - OWEwoksWidgetNoThread: will execute ewoks task directly
     - OWEwoksWidgetOneThread: will execute ewoks task on a thread. Refuse job is the thread is already running
