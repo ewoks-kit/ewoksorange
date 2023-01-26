@@ -2,6 +2,11 @@
 
 ## 0.2.0 (unreleased)
 
+## 0.1.1
+
+New features:
+  - Test utility to run an ewoks task with or without the widget
+
 ## 0.1.0
 
 New features:
