@@ -1,12 +1,5 @@
 from ewoksorange.gui.parameterform import ParameterForm
-from ewoksorange.orange_version import ORANGE_VERSION
-
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.widgets import gui
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from Orange.widgets import gui
-else:
-    from orangewidget import gui
+from ewoksorange.gui.orange_imports import gui
 
 
 class SimpleTypesWidgetMixin:
