@@ -262,24 +262,30 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def get_task_output_values(self) -> dict:
         return {k: self._extract_value(v) for k, v in self.get_task_outputs().items()}
 
-    def get_task_output_value(self, name) -> Any:
+    def get_task_output_value(self, name, default=missing_data.MISSING_DATA) -> Any:
         adict = self.get_task_outputs()
         try:
-            data = adict[name]
+            value = adict[name]
         except KeyError:
-            return missing_data.MISSING_DATA
-        return self._extract_value(data)
+            return default
+        value = self._extract_value(value)
+        if missing_data.is_missing_data(value):
+            return default
+        return value
 
     def get_task_input_values(self) -> dict:
         return {k: self._extract_value(v) for k, v in self.get_task_inputs().items()}
 
-    def get_task_input_value(self, name: str) -> Any:
+    def get_task_input_value(self, name: str, default=missing_data.MISSING_DATA) -> Any:
         adict = self.get_task_inputs()
         try:
-            data = adict[name]
+            value = adict[name]
         except KeyError:
-            return missing_data.MISSING_DATA
-        return self._extract_value(data)
+            return default
+        value = self._extract_value(value)
+        if missing_data.is_missing_data(value):
+            return default
+        return value
 
     def _get_output_signal(self, ewoksname: str):
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
