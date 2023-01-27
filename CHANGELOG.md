@@ -2,6 +2,14 @@
 
 ## 0.2.0 (unreleased)
 
+## 0.1.2
+
+Bug fixes:
+  - ParameterForm: fix serialization for sequences
+
+New features:
+  - OWEwoksBaseWidget: get default inputs with or without missing values
+
 ## 0.1.1
 
 New features:
