@@ -13,20 +13,13 @@ class SimpleTypesWidgetMixin:
         box = gui.widgetBox(self.controlArea, "Default Inputs")
         self._default_inputs_form = ParameterForm(parent=box)
 
-        names = set(self.get_input_names())
-        for name, value in self.get_default_input_values().items():
-            names.remove(name)
+        for name, value in self.get_default_input_values(include_missing=True).items():
             options = self._get_parameter_options(name)
             self._default_inputs_form.addParameter(
                 name,
                 value=value,
                 value_change_callback=self._default_inputs_changed,
                 **options
-            )
-        for name in names:
-            options = self._get_parameter_options(name)
-            self._default_inputs_form.addParameter(
-                name, value_change_callback=self._default_inputs_changed, **options
             )
 
         box = gui.widgetBox(self.controlArea, "Dynamic Inputs")

@@ -204,16 +204,25 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         )
         self.update_default_inputs(**adict)
 
-    def get_default_input_names(self) -> set:
+    def get_default_input_names(self, include_missing: bool = False) -> set:
         self._deprecated_default_inputs()
-        return set(self._ewoks_default_inputs)
+        if include_missing:
+            return self.get_input_names()
+        else:
+            return set(self._ewoks_default_inputs)
 
-    def get_default_input_values(self) -> dict:
+    def get_default_input_values(self, include_missing: bool = False) -> dict:
         self._deprecated_default_inputs()
-        return {
-            name: invalid_data.as_missing(value)
-            for name, value in self._ewoks_default_inputs.items()
-        }
+        if include_missing:
+            values = {
+                name: invalid_data.INVALIDATION_DATA for name in self.get_input_names()
+            }
+            values.update(self._ewoks_default_inputs)
+            return {
+                name: invalid_data.as_missing(value) for name, value in values.items()
+            }
+        else:
+            return dict(self._ewoks_default_inputs)
 
     def update_default_inputs(self, **inputs) -> None:
         for name, value in inputs.items():
@@ -253,24 +262,30 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def get_task_output_values(self) -> dict:
         return {k: self._extract_value(v) for k, v in self.get_task_outputs().items()}
 
-    def get_task_output_value(self, name) -> Any:
+    def get_task_output_value(self, name, default=missing_data.MISSING_DATA) -> Any:
         adict = self.get_task_outputs()
         try:
-            data = adict[name]
+            value = adict[name]
         except KeyError:
-            return missing_data.MISSING_DATA
-        return self._extract_value(data)
+            return default
+        value = self._extract_value(value)
+        if missing_data.is_missing_data(value):
+            return default
+        return value
 
     def get_task_input_values(self) -> dict:
         return {k: self._extract_value(v) for k, v in self.get_task_inputs().items()}
 
-    def get_task_input_value(self, name: str) -> Any:
+    def get_task_input_value(self, name: str, default=missing_data.MISSING_DATA) -> Any:
         adict = self.get_task_inputs()
         try:
-            data = adict[name]
+            value = adict[name]
         except KeyError:
-            return missing_data.MISSING_DATA
-        return self._extract_value(data)
+            return default
+        value = self._extract_value(value)
+        if missing_data.is_missing_data(value):
+            return default
+        return value
 
     def _get_output_signal(self, ewoksname: str):
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
