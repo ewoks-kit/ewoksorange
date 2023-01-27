@@ -204,16 +204,25 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         )
         self.update_default_inputs(**adict)
 
-    def get_default_input_names(self) -> set:
+    def get_default_input_names(self, include_missing: bool = False) -> set:
         self._deprecated_default_inputs()
-        return set(self._ewoks_default_inputs)
+        if include_missing:
+            return self.get_input_names()
+        else:
+            return set(self._ewoks_default_inputs)
 
-    def get_default_input_values(self) -> dict:
+    def get_default_input_values(self, include_missing: bool = False) -> dict:
         self._deprecated_default_inputs()
-        return {
-            name: invalid_data.as_missing(value)
-            for name, value in self._ewoks_default_inputs.items()
-        }
+        if include_missing:
+            values = {
+                name: invalid_data.INVALIDATION_DATA for name in self.get_input_names()
+            }
+            values.update(self._ewoks_default_inputs)
+            return {
+                name: invalid_data.as_missing(value) for name, value in values.items()
+            }
+        else:
+            return dict(self._ewoks_default_inputs)
 
     def update_default_inputs(self, **inputs) -> None:
         for name, value in inputs.items():
