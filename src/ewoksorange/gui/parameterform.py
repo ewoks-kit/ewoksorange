@@ -220,6 +220,7 @@ class ParameterForm(QtWidgets.QWidget):
             value_widget.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
             value_widget.addItem("<missing>", missing_data.MISSING_DATA)
             for data in value_for_type:
+                data = serialize(data)
                 value_widget.addItem(str(data), data)
             if value_change_callback:
                 connections.append(
