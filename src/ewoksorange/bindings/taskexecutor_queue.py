@@ -3,6 +3,7 @@ from queue import Queue
 
 from AnyQt.QtCore import QObject
 from AnyQt.QtCore import pyqtSignal as Signal
+from ewoksorange.gui.parameterform import block_signals
 
 from .taskexecutor import ThreadedTaskExecutor
 
@@ -55,6 +56,15 @@ class TaskExecutorQueue(QObject, Queue):
         self._available = True
         if self.is_available:
             self._process_next()
+
+    def stop_current_task(self, wait=False):
+        """
+        will stop current task and if possible start the next one.
+        task_executor signal 'finished' will be blocked but callbacks will be executed to ensure a safe processing
+        """
+        with block_signals(self._task_executor):
+            self._task_executor.stop(wait=wait)
+        self._process_ended()
 
     def stop(self):
         self._task_executor.finished.disconnect(self._process_ended)

@@ -786,3 +786,8 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             self.__post_task_exception = None
             if propagate:
                 self.propagate_downstream()
+
+    def stop_current_task(self, wait=False, process_next=True):
+        self.__task_executor_queue.stop_current_task(
+            wait=wait, process_next=process_next
+        )
