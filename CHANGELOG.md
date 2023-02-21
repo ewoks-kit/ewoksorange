@@ -2,6 +2,11 @@
 
 ## 0.2.0 (unreleased)
 
+## 0.1.3
+
+New features:
+  - Support widgets that do not derive from OWEwoksBaseWidget for headless execution
+
 ## 0.1.2
 
 Bug fixes:
