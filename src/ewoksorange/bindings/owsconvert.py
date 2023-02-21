@@ -92,6 +92,8 @@ def node_data_to_default_inputs(
     node_properties = readwrite.loads(data.data, data.format)
     if is_ewoks_widget_class(widget_class):
         default_inputs = node_properties.get("_ewoks_default_inputs", dict())
+    elif "_ewoks_default_inputs" in node_properties:
+        default_inputs = node_properties["_ewoks_default_inputs"]
     else:
         if ewokstaskclass:
             default_inputs = {
