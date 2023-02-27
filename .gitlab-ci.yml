@@ -15,11 +15,11 @@ test-3.7-orange:
 test-3.7-oasys:
   extends: .test-3.7_glx
   script:
-    - python -m pip install --no-deps .
-    - python -m pip install ewoksutils
-    - python -m pip install ewokscore[test]
-    - python -m pip install importlib_resources  # python_version < "3.7"
-    - python -m pip install AnyQt
+    - python -m pip install Orange3  # install without --pre
+    - python -m pip install --pre .[test,orange]
+    - python -m pip uninstall orange3 -y
+    - python -m pip uninstall orange-canvas-core -y
+    - python -m pip uninstall orange-widget-base -y
     - python -m pip install oasys1
     - python -m pytest -v .
 
