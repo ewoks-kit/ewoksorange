@@ -2,32 +2,32 @@ include:
   - project: workflow/ewoksadmin/ewoksci
     file: .gitlab-ci-template.yml
 
-test-3.6:
-  extends: .test-3.6_glx
+test-3.7:
+  extends: .test-3.7_glx
 
-test-3.6-orange:
-  extends: .test-3.6_glx
+test-3.7-orange:
+  extends: .test-3.7_glx
   script:
     - python -m pip install Orange3  # install without --pre
     - python -m pip install --pre .[test,orange]
     - python -m pytest -v .
 
-test-3.6-oasys:
-  extends: .test-3.6_glx
+test-3.7-oasys:
+  extends: .test-3.7_glx
   script:
-    - python -m pip install --no-deps .
-    - python -m pip install ewoksutils
-    - python -m pip install ewokscore[test]
-    - python -m pip install importlib_resources  # python_version < "3.7"
-    - python -m pip install AnyQt
+    - python -m pip install Orange3  # install without --pre
+    - python -m pip install --pre .[test,orange]
+    - python -m pip uninstall orange3 -y
+    - python -m pip uninstall orange-canvas-core -y
+    - python -m pip uninstall orange-widget-base -y
     - python -m pip install oasys1
     - python -m pytest -v .
 
 build_sdist:
   extends: .build_sdist
 
-test_sdist-3.6:
-  extends: .test_sdist-3.6_glx
+test_sdist-3.7:
+  extends: .test_sdist-3.7_glx
 
 build_doc:
   extends: .build_doc
