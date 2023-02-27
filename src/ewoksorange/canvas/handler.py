@@ -1,3 +1,4 @@
+import os
 import time
 import logging
 from AnyQt.QtCore import Qt
@@ -14,6 +15,11 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     class MainWindow(_MainWindow):
         def show_scheme_properties_for(self, scheme, window_title=None):
             return QDialog.Accepted
+
+    try:
+        from oasys.canvas.mainwindow import MainWindowRegistry
+    except ImportError:
+        MainWindowRegistry = None
 
 else:
     from orangecanvas.registry import set_global_registry
@@ -79,6 +85,15 @@ class OrangeCanvasHandler:
         canvas = MainWindow()
         canvas.setAttribute(Qt.WA_DeleteOnClose)
         canvas.set_widget_registry(widget_registry)  # makes a copy of the registry
+
+        if (
+            ORANGE_VERSION == ORANGE_VERSION.oasys_fork
+            and MainWindowRegistry is not None
+        ):
+            MainWindowRegistry.Instance().register_instance(
+                instance=canvas, application_name=str(os.getpid())
+            )  # need it for finding the canvas from the widgets
+
         self.canvas = canvas
         self.process_events()
 
