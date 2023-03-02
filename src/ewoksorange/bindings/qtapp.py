@@ -3,7 +3,7 @@ import sys
 import time
 import signal
 import logging
-from typing import Optional
+from typing import Optional, Iterator
 from contextlib import contextmanager
 from AnyQt import QtCore
 from AnyQt.QtWidgets import QApplication
@@ -16,15 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 def ensure_qtapp() -> Optional[QApplication]:
-    """Create a Qt application without event loop when no application is running"""
+    """Create a Qt application without event loop when no application is running.
+    Returns None when the application already exists."""
     global _APP
     if _APP is not None:
         return
 
     # GUI application
-    _APP = QApplication.instance()
+    _APP = get_qtapp()
     if _APP is not None:
-        return _APP
+        return
 
     # Install signal, exception and Qt message handlers
     _install_handlers()
@@ -34,7 +35,7 @@ def ensure_qtapp() -> Optional[QApplication]:
     return _APP
 
 
-def _install_handlers():
+def _install_handlers() -> None:
     """Install signal, exception and Qt message handlers"""
     global _OLD_HANDLERS
     if _OLD_HANDLERS is not None:
@@ -52,7 +53,7 @@ def _install_handlers():
     _OLD_HANDLERS = old_signal, old_qtmsg_handler, old_ex_handler
 
 
-def _remove_handlers():
+def _remove_handlers() -> None:
     """Undo _install_handlers"""
     global _OLD_HANDLERS
     if _OLD_HANDLERS is None:
@@ -69,7 +70,7 @@ def _remove_handlers():
     _OLD_HANDLERS = None
 
 
-def close_qtapp():
+def close_qtapp() -> None:
     """Close the Qt application created by ensure_qtapp"""
     global _APP
     if _APP is None:
@@ -83,19 +84,21 @@ def close_qtapp():
 
 
 @contextmanager
-def qtapp_context():
+def qtapp_context() -> Iterator[Optional[QApplication]]:
+    """Yields None when the Qt application already exists"""
     qtapp = ensure_qtapp()
     try:
         yield qtapp
     finally:
-        close_qtapp()
+        if qtapp is not None:
+            close_qtapp()
 
 
 def get_qtapp() -> Optional[QApplication]:
     return QApplication.instance()
 
 
-def process_qtapp_events():
+def process_qtapp_events() -> None:
     """Process all pending Qt events when a Qt event loop is running"""
     global _APP
     if _APP is None:
@@ -134,7 +137,7 @@ class QtEvent:
         self.__flag = False
 
 
-def get_all_qtwidgets():
+def get_all_qtwidgets() -> list:
     app = get_qtapp()
     if app is None:
         return list()
@@ -150,7 +153,7 @@ def get_all_qtwidgets():
     return [widget for widget in app.allWidgets() if createdByPython(widget)]
 
 
-def qt_message_handler(level, context, message):
+def qt_message_handler(level, context, message) -> None:
     if level == QtCore.QtInfoMsg:
         log = logger.info
     elif level == QtCore.QtWarningMsg:
@@ -170,7 +173,7 @@ def qt_message_handler(level, context, message):
     )
 
 
-def absorb_nonbase_exception(exc_type, exc_value, exc_traceback):
+def absorb_nonbase_exception(exc_type, exc_value, exc_traceback) -> None:
     if not issubclass(exc_type, Exception):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
