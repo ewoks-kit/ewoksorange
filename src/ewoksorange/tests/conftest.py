@@ -57,6 +57,7 @@ def collect_garbage(app):
 @pytest.fixture(scope="session")
 def qtapp():
     with qtapp_context() as app:
+        assert app is not None
         yield app
     collect_garbage(app)
     global_cleanup_orange()
