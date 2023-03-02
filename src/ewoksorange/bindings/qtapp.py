@@ -3,7 +3,7 @@ import sys
 import time
 import signal
 import logging
-from typing import Optional
+from typing import Optional, Iterator
 from contextlib import contextmanager
 from AnyQt import QtCore
 from AnyQt.QtWidgets import QApplication
@@ -35,7 +35,7 @@ def ensure_qtapp() -> Optional[QApplication]:
     return _APP
 
 
-def _install_handlers():
+def _install_handlers() -> None:
     """Install signal, exception and Qt message handlers"""
     global _OLD_HANDLERS
     if _OLD_HANDLERS is not None:
@@ -53,7 +53,7 @@ def _install_handlers():
     _OLD_HANDLERS = old_signal, old_qtmsg_handler, old_ex_handler
 
 
-def _remove_handlers():
+def _remove_handlers() -> None:
     """Undo _install_handlers"""
     global _OLD_HANDLERS
     if _OLD_HANDLERS is None:
@@ -70,7 +70,7 @@ def _remove_handlers():
     _OLD_HANDLERS = None
 
 
-def close_qtapp():
+def close_qtapp() -> None:
     """Close the Qt application created by ensure_qtapp"""
     global _APP
     if _APP is None:
@@ -84,7 +84,7 @@ def close_qtapp():
 
 
 @contextmanager
-def qtapp_context():
+def qtapp_context() -> Iterator[Optional[QApplication]]:
     qtapp = ensure_qtapp()
     try:
         yield qtapp
@@ -97,7 +97,7 @@ def get_qtapp() -> Optional[QApplication]:
     return QApplication.instance()
 
 
-def process_qtapp_events():
+def process_qtapp_events() -> None:
     """Process all pending Qt events when a Qt event loop is running"""
     global _APP
     if _APP is None:
@@ -136,7 +136,7 @@ class QtEvent:
         self.__flag = False
 
 
-def get_all_qtwidgets():
+def get_all_qtwidgets() -> list:
     app = get_qtapp()
     if app is None:
         return list()
@@ -152,7 +152,7 @@ def get_all_qtwidgets():
     return [widget for widget in app.allWidgets() if createdByPython(widget)]
 
 
-def qt_message_handler(level, context, message):
+def qt_message_handler(level, context, message) -> None:
     if level == QtCore.QtInfoMsg:
         log = logger.info
     elif level == QtCore.QtWarningMsg:
@@ -172,7 +172,7 @@ def qt_message_handler(level, context, message):
     )
 
 
-def absorb_nonbase_exception(exc_type, exc_value, exc_traceback):
+def absorb_nonbase_exception(exc_type, exc_value, exc_traceback) -> None:
     if not issubclass(exc_type, Exception):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
