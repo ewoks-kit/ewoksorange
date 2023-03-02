@@ -16,15 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 def ensure_qtapp() -> Optional[QApplication]:
-    """Create a Qt application without event loop when no application is running"""
+    """Create a Qt application without event loop when no application is running.
+    Returns None when the application already exists."""
     global _APP
     if _APP is not None:
         return
 
     # GUI application
-    _APP = QApplication.instance()
+    _APP = get_qtapp()
     if _APP is not None:
-        return _APP
+        return
 
     # Install signal, exception and Qt message handlers
     _install_handlers()
@@ -88,7 +89,8 @@ def qtapp_context():
     try:
         yield qtapp
     finally:
-        close_qtapp()
+        if qtapp is not None:
+            close_qtapp()
 
 
 def get_qtapp() -> Optional[QApplication]:
