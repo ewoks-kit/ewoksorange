@@ -85,6 +85,7 @@ def close_qtapp() -> None:
 
 @contextmanager
 def qtapp_context() -> Iterator[Optional[QApplication]]:
+    """Yields None when the Qt application already exists"""
     qtapp = ensure_qtapp()
     try:
         yield qtapp
