@@ -72,12 +72,17 @@ package-data to the configuration
         xrpd-pipelines=orangecontrib.xrpd_pipelines
     orange.widgets =
         XRPD=orangecontrib.xrpd_pipelines
+    orangecanvas.examples =
+        XRPD=orangecontrib.xrpd_pipelines.tutorials
     orange.widgets.tutorials =
         XRPD=orangecontrib.xrpd_pipelines.tutorials
     orange.canvas.help =
         html-index=orangecontrib.xrpd_pipelines:WIDGET_HELP_PATH
 
 Note that _XRPD_ must equal to the category name `orangecontrib.xrpd.NAME`.
+
+Tutorials must be set in both `orangecanvas.examples` and `orange.widgets.tutorials` to be able
+to be discovered whatever the Orange installation.
 
 Alternatively tutorials and widgets can the discovered automatically but this requires installing
 all dependencies *before* installing the project
