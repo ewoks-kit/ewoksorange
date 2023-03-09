@@ -71,7 +71,7 @@ def ows_file_context(
             os.remove(tmp_filename)
 
 
-@ewokscore.execute_graph_decorator(binding="orange")
+@ewokscore.execute_graph_decorator(engine="orange")
 def execute_graph(graph, **kwargs) -> None:
     with ows_file_context(graph, **kwargs) as ows_filename:
         argv = [sys.argv[0], ows_filename]
