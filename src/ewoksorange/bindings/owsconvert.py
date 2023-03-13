@@ -3,16 +3,18 @@ import json
 import logging
 from uuid import uuid4
 from collections import namedtuple
-from typing import IO, Iterator, List, Optional, Tuple, Type, Union
+from typing import IO, Iterator, List, Optional, Tuple, Type, Union, NamedTuple
 
 from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.widgets.widget import OWWidget as OWBaseWidget
     from orangecanvas.scheme import readwrite
+    from orangecanvas.scheme import annotations
 else:
     from orangewidget.widget import OWBaseWidget
     from orangecanvas.scheme import readwrite
+    from orangecanvas.scheme import annotations
 
 from ewoksutils.import_utils import qualname
 from ewoksutils.import_utils import import_qualname
@@ -201,6 +203,11 @@ def ows_to_ewoks(
     graph_attrs = dict()
     graph_attrs["id"] = title
     graph_attrs["label"] = description
+    graph_attrs["ows"] = {
+        "annotations": [
+            _serialize_annotation(annotation) for annotation in ows.annotations
+        ]
+    }
 
     graph = {
         "graph": graph_attrs,
@@ -313,6 +320,12 @@ class OwsSchemeWrapper:
         self.title = graph["graph"].get("id", "")
         self._description = graph["graph"].get("label", "")
 
+        ows = graph["graph"].get("ows", dict())
+        self._annotations = [
+            _deserialize_annotation(annotation)
+            for annotation in ows.get("annotations", list())
+        ]
+
         self._nodes = dict()  # the keys of this dictionary never used
         self._widget_classes = dict()
         for orangeid, node_attrs in enumerate(graph["nodes"]):
@@ -341,7 +354,7 @@ class OwsSchemeWrapper:
 
     @property
     def annotations(self):
-        return list()
+        return self._annotations
 
     @property
     def description(self):
@@ -416,3 +429,26 @@ def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):
     if isinstance(destination, str):
         os.makedirs(os.path.dirname(destination), exist_ok=True)
     tree.write(destination, encoding="utf-8", xml_declaration=True)
+
+
+def _serialize_annotation(annotation: readwrite._annotation) -> dict:
+    data = _serialize_namedtuple(annotation)
+    data["params"] = _serialize_namedtuple(data["params"])
+    return data
+
+
+def _serialize_namedtuple(ntuple: NamedTuple):
+    return dict(zip(ntuple._fields, ntuple))
+
+
+def _deserialize_annotation(annotation: dict) -> annotations.BaseSchemeAnnotation:
+    params = annotation["params"]
+    if annotation["type"] == "text":
+        params["rect"] = tuple(params.pop("geometry"))
+        return annotations.SchemeTextAnnotation(**params)
+    if annotation["type"] == "arrow":
+        start, end = params.pop("geometry")
+        start = tuple(start)
+        end = tuple(end)
+        return annotations.SchemeArrowAnnotation(start, end, **params)
+    raise ValueError("cannot deserialize annotation params")
