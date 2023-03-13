@@ -426,7 +426,7 @@ def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):
     for node in tree.getroot().find("nodes"):
         del node.attrib["scheme_node_type"]
     readwrite.indent(tree.getroot(), 0)
-    if isinstance(destination, str):
+    if isinstance(destination, str) and os.path.dirname(destination):
         os.makedirs(os.path.dirname(destination), exist_ok=True)
     tree.write(destination, encoding="utf-8", xml_declaration=True)
 
