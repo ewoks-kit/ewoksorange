@@ -10,7 +10,7 @@ __all__ = ["Adder1"]
 class Adder1(IntegerAdderMixin, OWEwoksWidgetNoThread, ewokstaskclass=SumTaskEvaluate1):
     name = "Adder1"
     description = "Adds two numbers"
-    icon = "icons/mywidget.svg"
+    icon = "icons/sum.png"
     want_main_area = True
 
     if Input is None:

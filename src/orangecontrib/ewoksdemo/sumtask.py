@@ -11,7 +11,7 @@ __all__ = ["SumTask"]
 class OWSumTask(IntegerAdderMixin, OWEwoksWidgetOneThread, ewokstaskclass=SumTask):
     name = "SumTask"
     description = "Adds two numbers"
-    icon = "icons/mywidget.svg"
+    icon = "icons/sum.png"
     want_main_area = True
 
     if Input is None:
