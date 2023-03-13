@@ -65,7 +65,6 @@ else:
     from orangecanvas.main import arg_parser
 
 from ewoksorange.registration import register_addon_package
-from ewoksorange import ewoks_addon
 
 
 @contextmanager
@@ -101,8 +100,6 @@ def main(argv=None):
         argv.append("--force-discovery")
 
     with temporary_log_handlers(options.log_level):
-        register_addon_package(ewoks_addon)
-
         if options.with_examples:
             from ewoksorange.tests.examples import ewoks_example_1_addon
             from ewoksorange.tests.examples import ewoks_example_2_addon

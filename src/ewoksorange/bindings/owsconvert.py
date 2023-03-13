@@ -27,7 +27,6 @@ from .taskwrapper import OWWIDGET_TASKS_GENERATOR
 from .owsignals import signal_ewoks_to_orange_name
 from .owsignals import signal_orange_to_ewoks_name
 from .owwidgets import is_ewoks_widget_class
-from ..ewoks_addon.orangecontrib.ewoks_defaults import default_owwidget_class
 from . import invalid_data
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows", "graph_is_supported"]
@@ -78,6 +77,8 @@ def task_to_widget(
     """The `task_qualname` could be an ewoks task or an orange widget"""
     all_widgets = list(task_to_widgets(task_qualname))
     if not all_widgets:
+        from orangecontrib.ewoksnowidget import default_owwidget_class
+
         return default_owwidget_class(import_qualname(task_qualname))
     if len(all_widgets) == 1 or not error_on_duplicates:
         return all_widgets[0]
@@ -258,7 +259,8 @@ class OwsNodeWrapper:
         ["name", "qualified_name", "version", "project_name"],
     )
 
-    def __init__(self, node_attrs: dict):
+    def __init__(self, orangeid: int, node_attrs: dict):
+        self.id = str(orangeid)
         ows = node_attrs.get("ows", dict())
         node_id = node_attrs["id"]
         node_label = get_node_label(node_id, node_attrs)
@@ -295,7 +297,7 @@ class OwsSchemeWrapper:
     )
     _link_channel = namedtuple(
         "Linkchannel",
-        ["name"],
+        ["name", "id"],
     )
 
     def __init__(
@@ -313,7 +315,7 @@ class OwsSchemeWrapper:
 
         self._nodes = dict()  # the keys of this dictionary never used
         self._widget_classes = dict()
-        for node_attrs in graph["nodes"]:
+        for orangeid, node_attrs in enumerate(graph["nodes"]):
             task_type, task_info = task_executable_info(node_attrs["id"], node_attrs)
             if task_type != "class":
                 raise ValueError("Orange workflows only support task type 'class'")
@@ -325,7 +327,7 @@ class OwsSchemeWrapper:
                 node_attrs["varinfo"] = varinfo
             if execinfo:
                 node_attrs["execinfo"] = execinfo
-            self._nodes[node_attrs["id"]] = OwsNodeWrapper(node_attrs)
+            self._nodes[node_attrs["id"]] = OwsNodeWrapper(orangeid, node_attrs)
             self._widget_classes[node_attrs["id"]] = widget_class
 
         self.links = list()
@@ -377,8 +379,8 @@ class OwsSchemeWrapper:
                 source_name = signal_ewoks_to_orange_name(
                     source_class, "outputs", source_name
                 )
-                sink_channel = self._link_channel(name=target_name)
-                source_channel = self._link_channel(name=source_name)
+                sink_channel = self._link_channel(name=target_name, id=sink_node.id)
+                source_channel = self._link_channel(name=source_name, id=source_node.id)
                 link2 = self._link(
                     source_node=source_node,
                     sink_node=sink_node,
