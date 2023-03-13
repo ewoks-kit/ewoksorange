@@ -23,7 +23,7 @@
 		<arrow id="3" start="(217.0, 319.0)" end="(275.0, 319.0)" fill="#C1272D" />
 		<text id="4" type="text/plain" rect="(369.0, 10.0, 499.0, 68.0)" font-family="Ubuntu" font-size="16">Double-click any node to see the
  - "Execute" button: execute only the task
- - "Trigger" button: execute the task end all downstream tasks</text>
+ - "Trigger" button: execute the task and all downstream tasks</text>
 	</annotations>
 	<thumbnail />
 	<node_properties>
