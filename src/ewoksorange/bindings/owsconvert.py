@@ -203,11 +203,12 @@ def ows_to_ewoks(
     graph_attrs = dict()
     graph_attrs["id"] = title
     graph_attrs["label"] = description
-    graph_attrs["ows"] = {
-        "annotations": [
-            _serialize_annotation(annotation) for annotation in ows.annotations
-        ]
-    }
+    if ows.annotations:
+        graph_attrs["ows"] = {
+            "annotations": [
+                _serialize_annotation(annotation) for annotation in ows.annotations
+            ]
+        }
 
     graph = {
         "graph": graph_attrs,
@@ -442,7 +443,7 @@ def _serialize_namedtuple(ntuple: NamedTuple):
 
 
 def _deserialize_annotation(annotation: dict) -> annotations.BaseSchemeAnnotation:
-    params = annotation["params"]
+    params = dict(annotation["params"])
     if annotation["type"] == "text":
         params["rect"] = tuple(params.pop("geometry"))
         return annotations.SchemeTextAnnotation(**params)
