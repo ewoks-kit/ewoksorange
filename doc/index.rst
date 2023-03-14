@@ -17,7 +17,7 @@ Install requirements
 
 .. code:: bash
 
-    python3 -m pip install ewoksorange[orange]
+    pip install ewoksorange[orange]
 
 Launch to graphical interface
 
@@ -29,8 +29,8 @@ Run the tests
 
 .. code:: bash
 
-    python3 -m pip install ewoksorange[test]
-    python3 -m pytest --pyargs ewoksorange.tests
+    pip install ewoksorange[test]
+    pytest --pyargs ewoksorange.tests
 
 Documentation
 -------------

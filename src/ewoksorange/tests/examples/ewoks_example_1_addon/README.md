@@ -5,7 +5,7 @@ An example Orange3 addon project which uses Ewoks.
 ## Install distribution
 
 ```bash
-python3 -m pip install ewoksorange/tests/examples/ewoks_example_1_addon/ -vv
+pip install ewoksorange/tests/examples/ewoks_example_1_addon/ -vv
 ```
 
 ## Register without installation
