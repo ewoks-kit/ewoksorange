@@ -5,29 +5,29 @@
 ## Install
 
 ```bash
-python3 -m pip install ewoksorange[test]
+pip install ewoksorange[test]
 ```
 
 When using Oasys instead of Orange3
 
 ```bash
-python3 -m pip install --no-deps ewoksorange
-python3 -m pip install ewokscore
-python3 -m pip install AnyQt
-python3 -m pip install oasys1
+pip install --no-deps ewoksorange
+pip install ewokscore
+pip install AnyQt
+pip install oasys1
 ```
 
 For the tests in an Oasys environment
 
 ```bash
-python3 -m pip install ewokscore[test]
-python3 -m pip install importlib_resources  # python_version < "3.7"
+pip install ewokscore[test]
+pip install importlib_resources  # python_version < "3.7"
 ```
 
 ## Test
 
 ```bash
-python3 -m pytest --pyargs ewoksorange.tests
+pytest --pyargs ewoksorange.tests
 ```
 
 ## Getting started
@@ -79,8 +79,8 @@ ewoks-canvas --with-examples
 or alternatively install the example add-ons
 
 ```bash
-python3 -m pip install src/ewoksorange/tests/examples/ewoks_example_1_addon
-python3 -m pip install src/ewoksorange/tests/examples/ewoks_example_2_addon
+pip install src/ewoksorange/tests/examples/ewoks_example_1_addon
+pip install src/ewoksorange/tests/examples/ewoks_example_2_addon
 ```
 
 and launch the Orange canvas with
@@ -98,8 +98,8 @@ orange-canvas /path/to/orange_wf.ows
 When removing an editable install, you may need to delete one file manually:
 
 ```bash
-python3 -m pip install -e src/ewoksorange/tests/examples/ewoks_example_1_addon
-python3 -m pip uninstall ewoks-example-1-addon
+pip install -e src/ewoksorange/tests/examples/ewoks_example_1_addon
+pip uninstall ewoks-example-1-addon
 python3 -c "import site,os;os.unlink(os.path.join(site.getsitepackages()[0],'ewoks-example-1-addon-nspkg.pth'))"
 ```
 
