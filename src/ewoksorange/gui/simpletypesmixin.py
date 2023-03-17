@@ -22,7 +22,7 @@ class SimpleTypesWidgetMixin:
                 **options
             )
 
-        box = gui.widgetBox(self.controlArea, "Dynamic Inputs")
+        box = gui.widgetBox(self.controlArea, "Inputs From Previous Task")
         self._dynamic_input_form = ParameterForm(parent=box)
         for name in self.get_input_names():
             options = self._get_parameter_options(name)
@@ -60,3 +60,8 @@ class SimpleTypesWidgetMixin:
         for name, value in self.get_task_output_values().items():
             self._output_form.set_parameter_value(name, value)
         super().task_output_changed()
+
+
+class IntegerAdderMixin(SimpleTypesWidgetMixin):
+    def _get_parameter_options(self, name):
+        return {"value_for_type": 0}

@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scheme version="2.0" title="Ewoks demo: acyclic1" description="Ewoks demo: acyclic1">
+	<nodes>
+		<node id="0" name="SumTask" qualified_name="orangecontrib.ewoksdemo.sumtask.OWSumTask" project_name="ewoksorange" version="" title="task1" position="(323.0, 166.0)" />
+		<node id="1" name="SumTask" qualified_name="orangecontrib.ewoksdemo.sumtask.OWSumTask" project_name="ewoksorange" version="" title="task2" position="(317.0, 320.0)" />
+		<node id="2" name="SumTask" qualified_name="orangecontrib.ewoksdemo.sumtask.OWSumTask" project_name="ewoksorange" version="" title="task3" position="(575.0, 164.0)" />
+		<node id="3" name="SumTask" qualified_name="orangecontrib.ewoksdemo.sumtask.OWSumTask" project_name="ewoksorange" version="" title="task4" position="(577.0, 321.0)" />
+		<node id="4" name="SumTask" qualified_name="orangecontrib.ewoksdemo.sumtask.OWSumTask" project_name="ewoksorange" version="" title="task5" position="(808.0, 231.0)" />
+		<node id="5" name="SumTask" qualified_name="orangecontrib.ewoksdemo.sumtask.OWSumTask" project_name="ewoksorange" version="" title="task6" position="(1042.0, 234.0)" />
+	</nodes>
+	<links>
+		<link id="0" source_node_id="0" sink_node_id="2" source_channel="A + B" sink_channel="A" enabled="true" source_channel_id="result" sink_channel_id="a" />
+		<link id="1" source_node_id="1" sink_node_id="3" source_channel="A + B" sink_channel="A" enabled="true" source_channel_id="result" sink_channel_id="a" />
+		<link id="2" source_node_id="2" sink_node_id="4" source_channel="A + B" sink_channel="A" enabled="true" source_channel_id="result" sink_channel_id="a" />
+		<link id="3" source_node_id="3" sink_node_id="4" source_channel="A + B" sink_channel="B" enabled="true" source_channel_id="result" sink_channel_id="b" />
+		<link id="4" source_node_id="4" sink_node_id="5" source_channel="A + B" sink_channel="A" enabled="true" source_channel_id="result" sink_channel_id="a" />
+	</links>
+	<annotations>
+		<text id="0" type="text/plain" rect="(92.0, 137.0, 150.0, 67.0)" font-family="Ubuntu" font-size="16">Double-click to "trigger" the workflow</text>
+		<arrow id="1" start="(222.0, 167.0)" end="(281.0, 168.0)" fill="#C1272D" />
+		<text id="2" type="text/plain" rect="(84.0, 299.0, 150.0, 68.0)" font-family="Ubuntu" font-size="16">Double-click to
+"trigger" the workflow</text>
+		<arrow id="3" start="(217.0, 319.0)" end="(275.0, 319.0)" fill="#C1272D" />
+		<text id="4" type="text/plain" rect="(369.0, 10.0, 499.0, 68.0)" font-family="Ubuntu" font-size="16">Double-click any node to see the
+ - "Execute" button: execute only the task
+ - "Trigger" button: execute the task and all downstream tasks</text>
+	</annotations>
+	<thumbnail />
+	<node_properties>
+		<properties node_id="0" format="literal">{'_ewoks_default_inputs': {'a': 1}, '__version__': 1}</properties>
+		<properties node_id="1" format="literal">{'_ewoks_default_inputs': {'a': 2}, '__version__': 1}</properties>
+		<properties node_id="2" format="literal">{'_ewoks_default_inputs': {'b': 3}, '__version__': 1}</properties>
+		<properties node_id="3" format="literal">{'_ewoks_default_inputs': {'b': 4}, '__version__': 1}</properties>
+		<properties node_id="4" format="literal">{'_ewoks_default_inputs': {'b': 5, 'delay':3}, '__version__': 1}</properties>
+		<properties node_id="5" format="literal">{'_ewoks_default_inputs': {'b': 6}, '__version__': 1}</properties>
+	</node_properties>
+	<session_state>
+		<window_groups />
+	</session_state>
+</scheme>

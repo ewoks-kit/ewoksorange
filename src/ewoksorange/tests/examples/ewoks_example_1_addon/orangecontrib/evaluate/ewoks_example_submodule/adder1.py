@@ -1,7 +1,7 @@
 from ewoksorange.gui.orange_imports import Input, Output
 from ewoksorange.bindings import OWEwoksWidgetNoThread
+from ewoksorange.gui.simpletypesmixin import IntegerAdderMixin
 from ewoks_example_1_addon.tasks import SumTaskEvaluate1
-from ewoks_example_1_addon.widgets import IntegerAdderMixin
 
 
 __all__ = ["Adder1"]
@@ -10,7 +10,7 @@ __all__ = ["Adder1"]
 class Adder1(IntegerAdderMixin, OWEwoksWidgetNoThread, ewokstaskclass=SumTaskEvaluate1):
     name = "Adder1"
     description = "Adds two numbers"
-    icon = "icons/mywidget.svg"
+    icon = "icons/sum.png"
     want_main_area = True
 
     if Input is None:

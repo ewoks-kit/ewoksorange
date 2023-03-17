@@ -1,14 +1,15 @@
-from ewoksorange.bindings import OWEwoksWidgetNoThread
+from ewokscore.tests.examples.tasks.sumtask import SumTask
+
 from ewoksorange.gui.orange_imports import Input, Output
+from ewoksorange.bindings import OWEwoksWidgetOneThread
 from ewoksorange.gui.simpletypesmixin import IntegerAdderMixin
-from ewoks_example_1_addon.tasks import SumTaskEvaluate2
 
 
-__all__ = ["Adder2"]
+__all__ = ["SumTask"]
 
 
-class Adder2(IntegerAdderMixin, OWEwoksWidgetNoThread, ewokstaskclass=SumTaskEvaluate2):
-    name = "Adder2"
+class OWSumTask(IntegerAdderMixin, OWEwoksWidgetOneThread, ewokstaskclass=SumTask):
+    name = "SumTask"
     description = "Adds two numbers"
     icon = "icons/sum.png"
     want_main_area = True

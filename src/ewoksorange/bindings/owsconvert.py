@@ -3,16 +3,18 @@ import json
 import logging
 from uuid import uuid4
 from collections import namedtuple
-from typing import IO, Iterator, List, Optional, Tuple, Type, Union
+from typing import IO, Iterator, List, Optional, Tuple, Type, Union, NamedTuple
 
 from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.widgets.widget import OWWidget as OWBaseWidget
     from orangecanvas.scheme import readwrite
+    from orangecanvas.scheme import annotations
 else:
     from orangewidget.widget import OWBaseWidget
     from orangecanvas.scheme import readwrite
+    from orangecanvas.scheme import annotations
 
 from ewoksutils.import_utils import qualname
 from ewoksutils.import_utils import import_qualname
@@ -27,7 +29,6 @@ from .taskwrapper import OWWIDGET_TASKS_GENERATOR
 from .owsignals import signal_ewoks_to_orange_name
 from .owsignals import signal_orange_to_ewoks_name
 from .owwidgets import is_ewoks_widget_class
-from ..ewoks_addon.orangecontrib.ewoks_defaults import default_owwidget_class
 from . import invalid_data
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows", "graph_is_supported"]
@@ -78,6 +79,8 @@ def task_to_widget(
     """The `task_qualname` could be an ewoks task or an orange widget"""
     all_widgets = list(task_to_widgets(task_qualname))
     if not all_widgets:
+        from orangecontrib.ewoksnowidget import default_owwidget_class
+
         return default_owwidget_class(import_qualname(task_qualname))
     if len(all_widgets) == 1 or not error_on_duplicates:
         return all_widgets[0]
@@ -200,6 +203,12 @@ def ows_to_ewoks(
     graph_attrs = dict()
     graph_attrs["id"] = title
     graph_attrs["label"] = description
+    if ows.annotations:
+        graph_attrs["ows"] = {
+            "annotations": [
+                _serialize_annotation(annotation) for annotation in ows.annotations
+            ]
+        }
 
     graph = {
         "graph": graph_attrs,
@@ -258,7 +267,8 @@ class OwsNodeWrapper:
         ["name", "qualified_name", "version", "project_name"],
     )
 
-    def __init__(self, node_attrs: dict):
+    def __init__(self, orangeid: int, node_attrs: dict):
+        self.id = str(orangeid)
         ows = node_attrs.get("ows", dict())
         node_id = node_attrs["id"]
         node_label = get_node_label(node_id, node_attrs)
@@ -295,7 +305,7 @@ class OwsSchemeWrapper:
     )
     _link_channel = namedtuple(
         "Linkchannel",
-        ["name"],
+        ["name", "id"],
     )
 
     def __init__(
@@ -311,9 +321,15 @@ class OwsSchemeWrapper:
         self.title = graph["graph"].get("id", "")
         self._description = graph["graph"].get("label", "")
 
+        ows = graph["graph"].get("ows", dict())
+        self._annotations = [
+            _deserialize_annotation(annotation)
+            for annotation in ows.get("annotations", list())
+        ]
+
         self._nodes = dict()  # the keys of this dictionary never used
         self._widget_classes = dict()
-        for node_attrs in graph["nodes"]:
+        for orangeid, node_attrs in enumerate(graph["nodes"]):
             task_type, task_info = task_executable_info(node_attrs["id"], node_attrs)
             if task_type != "class":
                 raise ValueError("Orange workflows only support task type 'class'")
@@ -325,7 +341,7 @@ class OwsSchemeWrapper:
                 node_attrs["varinfo"] = varinfo
             if execinfo:
                 node_attrs["execinfo"] = execinfo
-            self._nodes[node_attrs["id"]] = OwsNodeWrapper(node_attrs)
+            self._nodes[node_attrs["id"]] = OwsNodeWrapper(orangeid, node_attrs)
             self._widget_classes[node_attrs["id"]] = widget_class
 
         self.links = list()
@@ -339,7 +355,7 @@ class OwsSchemeWrapper:
 
     @property
     def annotations(self):
-        return list()
+        return self._annotations
 
     @property
     def description(self):
@@ -377,8 +393,8 @@ class OwsSchemeWrapper:
                 source_name = signal_ewoks_to_orange_name(
                     source_class, "outputs", source_name
                 )
-                sink_channel = self._link_channel(name=target_name)
-                source_channel = self._link_channel(name=source_name)
+                sink_channel = self._link_channel(name=target_name, id=sink_node.id)
+                source_channel = self._link_channel(name=source_name, id=source_node.id)
                 link2 = self._link(
                     source_node=source_node,
                     sink_node=sink_node,
@@ -411,6 +427,29 @@ def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):
     for node in tree.getroot().find("nodes"):
         del node.attrib["scheme_node_type"]
     readwrite.indent(tree.getroot(), 0)
-    if isinstance(destination, str):
+    if isinstance(destination, str) and os.path.dirname(destination):
         os.makedirs(os.path.dirname(destination), exist_ok=True)
     tree.write(destination, encoding="utf-8", xml_declaration=True)
+
+
+def _serialize_annotation(annotation: readwrite._annotation) -> dict:
+    data = _serialize_namedtuple(annotation)
+    data["params"] = _serialize_namedtuple(data["params"])
+    return data
+
+
+def _serialize_namedtuple(ntuple: NamedTuple):
+    return dict(zip(ntuple._fields, ntuple))
+
+
+def _deserialize_annotation(annotation: dict) -> annotations.BaseSchemeAnnotation:
+    params = dict(annotation["params"])
+    if annotation["type"] == "text":
+        params["rect"] = tuple(params.pop("geometry"))
+        return annotations.SchemeTextAnnotation(**params)
+    if annotation["type"] == "arrow":
+        start, end = params.pop("geometry")
+        start = tuple(start)
+        end = tuple(end)
+        return annotations.SchemeArrowAnnotation(start, end, **params)
+    raise ValueError("cannot deserialize annotation params")

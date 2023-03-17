@@ -42,8 +42,10 @@ def test_ewoks_to_ows(graph_name, tmpdir):
     """Test conversion of ewoks to orange worflow files and back"""
     graph, _ = get_graph(graph_name)
     ewoksgraph = load_graph(graph)
+    ewoksgraph.graph.graph.pop("ows", None)
     for node_id, node_attrs in ewoksgraph.graph.nodes.items():
         node_attrs["label"] = node_id
+        node_attrs.pop("ows", None)
 
     destination = str(tmpdir / "ewoksgraph2.ows")
     if not graph_is_supported(ewoksgraph):
