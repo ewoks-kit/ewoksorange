@@ -2,6 +2,12 @@
 
 ## 0.2.0 (unreleased)
 
+## 0.1.5
+
+Changes:
+  - add demo widgets
+  - fix ewoks_to_ows for orange-canvas-core>=0.1.30
+
 ## 0.1.4
 
 Changes:
