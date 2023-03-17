@@ -22,15 +22,15 @@ class TaskExecutor:
         try:
             self.__task = self.__ewokstaskclass(**kwargs)
         except TaskInputError as e:
-            _logger.info(e)
+            _logger.info(f"task initialization failed: {e}")
 
     def execute_task(self):
         if not self.has_task:
             return
         try:
             self.__task.execute()
-        except Exception:
-            _logger.error("task failed", exc_info=True)
+        except Exception as e:
+            _logger.error(f"task failed: {e}", exc_info=True)
 
     @property
     def has_task(self) -> bool:

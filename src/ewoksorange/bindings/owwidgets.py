@@ -238,7 +238,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             _logger.info("ewoks widget: remove dynamic input %r", name)
             self.__dynamic_inputs.pop(name, None)
         else:
-            _logger.info("ewoks widget: set dynamic input %r = %s", name, value)
+            _logger.info(
+                "ewoks widget: set dynamic input %r = %s",
+                name,
+                value_from_transfer(value, varinfo=self._ewoks_varinfo),
+            )
             self.__dynamic_inputs[name] = value
 
     def get_dynamic_input_names(self) -> set:
@@ -417,8 +421,8 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         self.__task_executor.create_task(**self._get_task_arguments())
         try:
             self.__task_executor.execute_task()
-        except Exception:
-            _logger.error("task failed", exc_info=True)
+        except Exception as e:
+            _logger.error(f"task failed: {e}", exc_info=True)
         finally:
             self._output_changed()
         if propagate:
