@@ -446,6 +446,8 @@ def _deserialize_annotation(annotation: dict) -> annotations.BaseSchemeAnnotatio
     params = dict(annotation["params"])
     if annotation["type"] == "text":
         params["rect"] = tuple(params.pop("geometry"))
+        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+            params.pop("content_type", None)
         return annotations.SchemeTextAnnotation(**params)
     if annotation["type"] == "arrow":
         start, end = params.pop("geometry")
