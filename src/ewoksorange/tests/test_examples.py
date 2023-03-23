@@ -34,6 +34,7 @@ def test_convert_graph(graph_name, tmpdir):
     for node_id, node_attrs in ewoksgraph.graph.nodes.items():
         node_attrs["label"] = node_id
         node_attrs.pop("ows", None)
+        node_attrs.pop("uiProps", None)
 
     representations = [
         (

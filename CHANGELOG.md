@@ -2,6 +2,11 @@
 
 ## 0.2.0 (unreleased)
 
+## 0.1.6
+
+Bug fixes:
+  - fix graph comparison tests
+
 ## 0.1.5
 
 Changes:
