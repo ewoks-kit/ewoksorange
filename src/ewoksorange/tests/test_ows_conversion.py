@@ -46,6 +46,7 @@ def test_ewoks_to_ows(graph_name, tmpdir):
     for node_id, node_attrs in ewoksgraph.graph.nodes.items():
         node_attrs["label"] = node_id
         node_attrs.pop("ows", None)
+        node_attrs.pop("uiProps", None)
 
     destination = str(tmpdir / "ewoksgraph2.ows")
     if not graph_is_supported(ewoksgraph):
