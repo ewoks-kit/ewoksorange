@@ -83,8 +83,4 @@ def ewoks_orange_canvas(raw_ewoks_orange_canvas):
 def warn_qtwidgets_alive():
     widgets = get_all_qtwidgets()
     if widgets:
-        logger.warning(
-            "%d remaining widgets after tests:\n %s",
-            len(widgets),
-            "\n ".join(map(str, widgets)),
-        )
+        logger.warning("%d remaining widgets after tests", len(widgets))

@@ -2,6 +2,11 @@
 
 ## 0.2.0 (unreleased)
 
+## 0.1.7
+
+Changes:
+  - add more test utilities for projects to provide ewoks widgets
+
 ## 0.1.6
 
 Bug fixes:
