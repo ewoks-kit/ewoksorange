@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+from typing import Dict
 from AnyQt.QtCore import Qt
 
 from ..orange_version import ORANGE_VERSION
@@ -155,6 +156,15 @@ class OrangeCanvasHandler:
     def iter_output_values(self):
         for name, widget in self.iter_widgets_with_name():
             yield name, widget.get_task_output_values()
+
+    def get_output_values(self) -> Dict[str, dict]:
+        return dict(self.iter_output_values())
+
+    def set_input_values(self, inputs: Dict[str, dict]) -> None:
+        for name, widget in self.iter_widgets_with_name():
+            for adict in inputs:
+                if adict["label"] == name:
+                    widget.update_default_inputs(**{adict["name"]: adict["value"]})
 
     def start_workflow(self):
         triggered = False
