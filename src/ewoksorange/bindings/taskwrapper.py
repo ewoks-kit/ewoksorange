@@ -67,7 +67,7 @@ def _ewoks_owwidget_task_wrapper(registry_name, widget_class) -> Task:
     ):
         def run(self):
             output_values = execute_ewoks_owwidget(
-                widget_class, inputs=self.input_values
+                widget_class, inputs=self.get_input_values()
             )
             for k, v in output_values.items():
                 self.output_variables[k].value = v
@@ -92,7 +92,7 @@ def _native_owwidget_task_wrapper(registry_name, widget_class) -> Task:
     ):
         def run(self):
             output_values = execute_native_owwidget(
-                widget_class, inputs=self.input_values
+                widget_class, inputs=self.get_input_values()
             )
             for k, v in output_values.items():
                 self.output_variables[k].value = v
