@@ -15,5 +15,5 @@ def execute_task(
     if issubclass(task_cls, Task):
         task = task_cls(inputs=inputs)
         task.execute()
-        return task.output_values
+        return task.get_output_values()
     raise TypeError("task")

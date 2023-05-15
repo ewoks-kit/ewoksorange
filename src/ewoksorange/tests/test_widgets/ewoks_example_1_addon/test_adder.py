@@ -33,7 +33,7 @@ def test_adder_task_generator(widget_qualname, register_ewoks_example_1_addon):
     }
     task = instantiate_task("node_id", node_attrs, inputs={"a": 1, "b": 2})
     task.execute()
-    assert task.output_values == {"result": 3}
+    assert task.get_output_values() == {"result": 3}
 
 
 @pytest.mark.parametrize("widget_qualname", _WIDGETS)

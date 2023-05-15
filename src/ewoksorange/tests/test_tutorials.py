@@ -106,7 +106,7 @@ def assert_sumtask_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
     graph = ows_to_ewoks(filename)
     results = execute_graph(graph, output_tasks=True)
-    assert results["5"].output_values == {"result": 16}
+    assert results["5"].get_output_values() == {"result": 16}
 
 
 def assert_sumlist_tutorial_with_qt(ewoks_orange_canvas, filename):
@@ -144,9 +144,9 @@ def assert_sumlist_tutorial_without_qt(filename):
                 adict["value"] = 0
 
     results = execute_graph(graph, output_tasks=True)
-    listsum = sum(results["0"].output_values["list"])
+    listsum = sum(results["0"].get_output_values()["list"])
     for i in [4, 5, 6]:
-        assert results[str(i)].input_values == {"sum": listsum}
+        assert results[str(i)].get_input_values() == {"sum": listsum}
 
 
 def assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename):
@@ -163,4 +163,4 @@ def assert_mixed_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
     graph = ows_to_ewoks(filename)
     results = execute_graph(graph, output_tasks=True)
-    assert results["1"].output_values == {"result": 3}
+    assert results["1"].get_output_values() == {"result": 3}
