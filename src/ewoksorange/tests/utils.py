@@ -1,4 +1,4 @@
-from typing import List, Mapping, Optional, Union, Type
+from typing import Mapping, Optional, Union, Type
 from ewokscore.task import Task
 from ..bindings.owwidgets import OWEwoksBaseWidget
 from ..bindings.taskwrapper import execute_ewoks_owwidget
@@ -6,7 +6,7 @@ from ..bindings.taskwrapper import execute_ewoks_owwidget
 
 def execute_task(
     task_cls: Union[Type[Task], Type[OWEwoksBaseWidget]],
-    inputs: Optional[List[Mapping]] = None,
+    inputs: Optional[Mapping] = None,
     timeout: int = 60,
 ) -> dict:
     """Execute the task (use the orange widget or ewoks task class) and return the results"""
