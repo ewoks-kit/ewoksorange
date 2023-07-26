@@ -32,6 +32,13 @@ Run the tests
     pip install ewoksorange[test]
     pytest --pyargs ewoksorange.tests
 
+Implement Orange Widgets
+------------------------
+
+An Ewoks project that implements `Orange <https://orangedatamining.com/>`_ widgets associated to the Ewoks tasks it provides, needs
+to be setup as an *Orange Add-on* project. A template project can be found `here <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksorangetemplate/>`_.
+Further documentation can be found `here <https://ewoksorangetemplate.readthedocs.io/>`_.
+
 Documentation
 -------------
 
@@ -39,6 +46,5 @@ Documentation
     :maxdepth: 2
 
     canvas
-    addon
     note_on_designs
     API
