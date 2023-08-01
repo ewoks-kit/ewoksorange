@@ -6,7 +6,7 @@ import inspect
 import logging
 import warnings
 from contextlib import contextmanager
-from typing import Any, Optional
+from typing import Any, Optional, Mapping
 from AnyQt import QtWidgets
 
 from ..orange_version import ORANGE_VERSION
@@ -211,18 +211,20 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         else:
             return set(self._ewoks_default_inputs)
 
-    def get_default_input_values(self, include_missing: bool = False) -> dict:
+    def get_default_input_values(
+        self, include_missing: bool = False, defaults: Optional[Mapping] = None
+    ) -> dict:
         self._deprecated_default_inputs()
         if include_missing:
             values = {
                 name: invalid_data.INVALIDATION_DATA for name in self.get_input_names()
             }
-            values.update(self._ewoks_default_inputs)
-            return {
-                name: invalid_data.as_missing(value) for name, value in values.items()
-            }
         else:
-            return dict(self._ewoks_default_inputs)
+            values = dict()
+        if defaults:
+            values.update(defaults)
+        values.update(self._ewoks_default_inputs)
+        return {name: invalid_data.as_missing(value) for name, value in values.items()}
 
     def update_default_inputs(self, **inputs) -> None:
         for name, value in inputs.items():
