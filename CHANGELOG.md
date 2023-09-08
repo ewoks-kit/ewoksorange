@@ -1,6 +1,12 @@
 # CHANGELOG.md
 
-## 0.2.0 (unreleased)
+## 0.3.0 (unreleased)
+
+## 0.2.0
+
+Changes:
+  - PyQt5 is only install with the `full` option
+  - `OWWidget.get_default_input_values` accepts defaults
 
 ## 0.1.8
 
