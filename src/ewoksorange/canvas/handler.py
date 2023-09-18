@@ -188,9 +188,6 @@ class OrangeCanvasHandler:
             if all(executed):
                 break
             if timeout is not None:
-                t1 = time.time()
-                timeout -= t1 - t0
-                if timeout < 0:
-                    raise TimeoutError
-                t0 = t1
+                if (time.time() - t0) > timeout:
+                    raise TimeoutError(timeout)
             time.sleep(0.1)

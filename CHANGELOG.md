@@ -2,6 +2,11 @@
 
 ## 0.3.0 (unreleased)
 
+## 0.2.1
+
+Bug fixes:
+  - `ParameterForm` callback on value change was not called when selecting files/datasets from a dialog
+
 ## 0.2.0
 
 Changes:
