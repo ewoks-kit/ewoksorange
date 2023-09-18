@@ -124,7 +124,11 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (
                         select_widget.pressed.connect,
-                        lambda: self._select_file(name, must_exist=True),
+                        lambda: self._select_file(
+                            name,
+                            must_exist=True,
+                            value_change_callback=value_change_callback,
+                        ),
                     )
                 )
             elif select == "newfile":
@@ -132,7 +136,11 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (
                         select_widget.pressed.connect,
-                        lambda: self._select_file(name, must_exist=False),
+                        lambda: self._select_file(
+                            name,
+                            must_exist=False,
+                            value_change_callback=value_change_callback,
+                        ),
                     )
                 )
             elif select == "directory":
@@ -140,7 +148,9 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (
                         select_widget.pressed.connect,
-                        lambda: self._select_directory(name),
+                        lambda: self._select_directory(
+                            name, value_change_callback=value_change_callback
+                        ),
                     )
                 )
             elif select == "h5dataset":
@@ -148,20 +158,32 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (
                         select_widget.pressed.connect,
-                        lambda: self._select_h5dataset(name),
+                        lambda: self._select_h5dataset(
+                            name, value_change_callback=value_change_callback
+                        ),
                     )
                 )
             elif select == "h5group":
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
-                    (select_widget.pressed.connect, lambda: self._select_h5group(name))
+                    (
+                        select_widget.pressed.connect,
+                        lambda: self._select_h5group(
+                            name, value_change_callback=value_change_callback
+                        ),
+                    )
                 )
             elif select == "files":
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
                         select_widget.pressed.connect,
-                        lambda: self._select_file(name, must_exist=True, append=True),
+                        lambda: self._select_file(
+                            name,
+                            must_exist=True,
+                            append=True,
+                            value_change_callback=value_change_callback,
+                        ),
                     )
                 )
             elif select == "newfiles":
@@ -169,7 +191,12 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (
                         select_widget.pressed.connect,
-                        lambda: self._select_file(name, must_exist=False, append=True),
+                        lambda: self._select_file(
+                            name,
+                            must_exist=False,
+                            append=True,
+                            value_change_callback=value_change_callback,
+                        ),
                     )
                 )
             elif select == "directories":
@@ -177,7 +204,11 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (
                         select_widget.pressed.connect,
-                        lambda: self._select_directory(name, append=True),
+                        lambda: self._select_directory(
+                            name,
+                            append=True,
+                            value_change_callback=value_change_callback,
+                        ),
                     )
                 )
             elif select == "h5datasets":
@@ -185,7 +216,11 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (
                         select_widget.pressed.connect,
-                        lambda: self._select_h5dataset(name, append=True),
+                        lambda: self._select_h5dataset(
+                            name,
+                            append=True,
+                            value_change_callback=value_change_callback,
+                        ),
                     )
                 )
             elif select == "h5groups":
@@ -193,7 +228,11 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (
                         select_widget.pressed.connect,
-                        lambda: self._select_h5group(name, append=True),
+                        lambda: self._select_h5group(
+                            name,
+                            append=True,
+                            value_change_callback=value_change_callback,
+                        ),
                     )
                 )
             else:
@@ -474,7 +513,11 @@ class ParameterForm(QtWidgets.QWidget):
             self.set_parameter_enabled(name, value)
 
     def _select_file(
-        self, name: str, must_exist: bool = True, append: bool = False
+        self,
+        name: str,
+        must_exist: bool = True,
+        append: bool = False,
+        value_change_callback=Optional[Callable[[], None]],
     ) -> None:
         if append:
             filename = self._list_value_first(name)
@@ -496,8 +539,15 @@ class ParameterForm(QtWidgets.QWidget):
         if append:
             value = self._list_value_append(name, value)
         self.set_parameter_value(name, value)
+        if value_change_callback:
+            value_change_callback()
 
-    def _select_h5dataset(self, name: str, append: bool = False) -> None:
+    def _select_h5dataset(
+        self,
+        name: str,
+        append: bool = False,
+        value_change_callback=Optional[Callable[[], None]],
+    ) -> None:
         if append:
             url = self._list_value_first(name)
         else:
@@ -517,8 +567,15 @@ class ParameterForm(QtWidgets.QWidget):
         if append:
             value = self._list_value_append(name, value)
         self.set_parameter_value(name, value)
+        if value_change_callback:
+            value_change_callback()
 
-    def _select_h5group(self, name: str, append: bool = False) -> None:
+    def _select_h5group(
+        self,
+        name: str,
+        append: bool = False,
+        value_change_callback=Optional[Callable[[], None]],
+    ) -> None:
         if append:
             url = self._list_value_first(name)
         else:
@@ -538,8 +595,15 @@ class ParameterForm(QtWidgets.QWidget):
         if append:
             value = self._list_value_append(name, value)
         self.set_parameter_value(name, value)
+        if value_change_callback:
+            value_change_callback()
 
-    def _select_directory(self, name: str, append: bool = False) -> None:
+    def _select_directory(
+        self,
+        name: str,
+        append: bool = False,
+        value_change_callback=Optional[Callable[[], None]],
+    ) -> None:
         if append:
             directory = self._list_value_first(name)
         else:
@@ -557,6 +621,8 @@ class ParameterForm(QtWidgets.QWidget):
         if append:
             value = self._list_value_append(name, value)
         self.set_parameter_value(name, value)
+        if value_change_callback:
+            value_change_callback()
 
     def _list_value_append(self, name: str, value: str) -> List[str]:
         lst = self.get_parameter_value(name)
