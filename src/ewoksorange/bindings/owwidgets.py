@@ -204,12 +204,74 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         )
         self.update_default_inputs(**adict)
 
+    def set_default_input(self, name: str, value: Any) -> None:
+        if invalid_data.is_invalid_data(value):
+            _logger.info("ewoks widget: remove default input %r", name)
+            self._ewoks_default_inputs.pop(name, None)
+        else:
+            _logger.info("ewoks widget: set default input %r = %s", name, value)
+            self._ewoks_default_inputs[name] = value
+
+    def set_dynamic_input(self, name: str, value: Any):
+        if invalid_data.is_invalid_data(value):
+            _logger.info("ewoks widget: remove dynamic input %r", name)
+            self.__dynamic_inputs.pop(name, None)
+        else:
+            _logger.info(
+                "ewoks widget: set dynamic input %r = %s",
+                name,
+                value_from_transfer(value, varinfo=self._ewoks_varinfo),
+            )
+            self.__dynamic_inputs[name] = value
+
+    def get_default_input_value(self, name: str, default=None) -> Any:
+        return self._ewoks_default_inputs.get(name, default=default)
+
+    def get_dynamic_input_value(self, name: str, default=None) -> Any:
+        return self.__dynamic_inputs.get(name, default=default)
+
+    def get_task_output_value(self, name, default=missing_data.MISSING_DATA) -> Any:
+        adict = self.get_task_outputs()
+        try:
+            value = adict[name]
+        except KeyError:
+            return default
+        value = self._extract_value(value)
+        if missing_data.is_missing_data(value):
+            return default
+        return value
+
+    def get_task_input_value(self, name: str, default=missing_data.MISSING_DATA) -> Any:
+        adict = self.get_task_inputs()
+        try:
+            value = adict[name]
+        except KeyError:
+            return default
+        value = self._extract_value(value)
+        if missing_data.is_missing_data(value):
+            return default
+        return value
+
     def get_default_input_names(self, include_missing: bool = False) -> set:
         self._deprecated_default_inputs()
         if include_missing:
             return self.get_input_names()
         else:
             return set(self._ewoks_default_inputs)
+
+    def get_dynamic_input_names(self, include_missing: bool = False) -> set:
+        if include_missing:
+            return self.get_input_names()
+        else:
+            return set(self.__dynamic_inputs)
+
+    def update_default_inputs(self, **inputs) -> None:
+        for name, value in inputs.items():
+            self.set_default_input(name, value)
+
+    def update_dynamic_inputs(self, **inputs) -> None:
+        for name, value in inputs.items():
+            self.set_dynamic_input(name, value)
 
     def get_default_input_values(
         self, include_missing: bool = False, defaults: Optional[Mapping] = None
@@ -226,32 +288,27 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         values.update(self._ewoks_default_inputs)
         return {name: invalid_data.as_missing(value) for name, value in values.items()}
 
-    def update_default_inputs(self, **inputs) -> None:
-        for name, value in inputs.items():
-            if invalid_data.is_invalid_data(value):
-                _logger.info("ewoks widget: remove default input %r", name)
-                self._ewoks_default_inputs.pop(name, None)
-            else:
-                _logger.info("ewoks widget: set default input %r = %s", name, value)
-                self._ewoks_default_inputs[name] = value
-
-    def _receive_dynamic_input(self, name: str, value: Any):
-        if invalid_data.is_invalid_data(value):
-            _logger.info("ewoks widget: remove dynamic input %r", name)
-            self.__dynamic_inputs.pop(name, None)
+    def get_dynamic_input_values(
+        self, include_missing: bool = False, defaults: Optional[Mapping] = None
+    ) -> dict:
+        if include_missing:
+            values = {
+                name: invalid_data.INVALIDATION_DATA for name in self.get_input_names()
+            }
         else:
-            _logger.info(
-                "ewoks widget: set dynamic input %r = %s",
-                name,
-                value_from_transfer(value, varinfo=self._ewoks_varinfo),
-            )
-            self.__dynamic_inputs[name] = value
+            values = dict()
+        if defaults:
+            values.update(defaults)
+        values.update(
+            {k: self._extract_value(v) for k, v in self.__dynamic_inputs.items()}
+        )
+        return {name: invalid_data.as_missing(value) for name, value in values.items()}
 
-    def get_dynamic_input_names(self) -> set:
-        return set(self.__dynamic_inputs)
+    def get_task_output_values(self) -> dict:
+        return {k: self._extract_value(v) for k, v in self.get_task_outputs().items()}
 
-    def get_dynamic_input_values(self) -> dict:
-        return {k: self._extract_value(v) for k, v in self.__dynamic_inputs.items()}
+    def get_task_input_values(self) -> dict:
+        return {k: self._extract_value(v) for k, v in self.get_task_inputs().items()}
 
     def _extract_value(self, data) -> Any:
         return value_from_transfer(data, varinfo=self._ewoks_varinfo)
@@ -264,34 +321,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     def get_task_outputs(self):
         raise NotImplementedError("Base class")
-
-    def get_task_output_values(self) -> dict:
-        return {k: self._extract_value(v) for k, v in self.get_task_outputs().items()}
-
-    def get_task_output_value(self, name, default=missing_data.MISSING_DATA) -> Any:
-        adict = self.get_task_outputs()
-        try:
-            value = adict[name]
-        except KeyError:
-            return default
-        value = self._extract_value(value)
-        if missing_data.is_missing_data(value):
-            return default
-        return value
-
-    def get_task_input_values(self) -> dict:
-        return {k: self._extract_value(v) for k, v in self.get_task_inputs().items()}
-
-    def get_task_input_value(self, name: str, default=missing_data.MISSING_DATA) -> Any:
-        adict = self.get_task_inputs()
-        try:
-            value = adict[name]
-        except KeyError:
-            return default
-        value = self._extract_value(value)
-        if missing_data.is_missing_data(value):
-            return default
-        return value
 
     def _get_output_signal(self, ewoksname: str):
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
