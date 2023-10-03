@@ -212,7 +212,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             _logger.info("ewoks widget: set default input %r = %s", name, value)
             self._ewoks_default_inputs[name] = value
 
-    def set_dynamic_input(self, name: str, value: Any):
+    def set_dynamic_input(self, name: str, value: Any) -> None:
         if invalid_data.is_invalid_data(value):
             _logger.info("ewoks widget: remove dynamic input %r", name)
             self.__dynamic_inputs.pop(name, None)
@@ -223,6 +223,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                 value_from_transfer(value, varinfo=self._ewoks_varinfo),
             )
             self.__dynamic_inputs[name] = value
+
+    def _receive_dynamic_input(self, name: str, value: Any) -> None:
+        warnings.warn(
+            "`_receive_dynamic_input` is deprecated in favor of `set_dynamic_input`.",
+            DeprecationWarning,
+        )
+        self.set_dynamic_input(name, value)
 
     def get_default_input_value(self, name: str, default=None) -> Any:
         return self._ewoks_default_inputs.get(name, default=default)
