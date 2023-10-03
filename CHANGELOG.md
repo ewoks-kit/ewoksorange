@@ -1,6 +1,11 @@
 # CHANGELOG.md
 
-## 0.3.0 (unreleased)
+## 0.4.0 (unreleased)
+
+## 0.3.0
+
+Changes:
+  - `OWWidget` homogenize getting/setting values of default and dynamic inputs
 
 ## 0.2.1
 
