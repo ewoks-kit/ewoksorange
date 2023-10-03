@@ -114,7 +114,7 @@ def receive_dynamic_input(name: str) -> Callable:
     def setter(self, value):
         # Called by the SignalManager as a result of calling
         # `send` on an upstream output.
-        self._receive_dynamic_input(name, value)
+        self.set_dynamic_input(name, value)
 
     setter.__name__ = setter_name
     return setter
