@@ -2,6 +2,11 @@
 
 ## 0.4.0 (unreleased)
 
+## 0.3.1
+
+Changes:
+  - remove prints
+
 ## 0.3.0
 
 Changes:

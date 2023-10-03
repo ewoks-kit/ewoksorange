@@ -132,11 +132,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         trigger = QtWidgets.QPushButton("Trigger")
         execute = QtWidgets.QPushButton("Execute")
 
-        print("default:", trigger.isDefault())
-        print("auto default:", trigger.autoDefault())
-        print("default:", execute.isDefault())
-        print("auto default:", execute.autoDefault())
-
         layout.addWidget(trigger)
         trigger.released.connect(self.execute_ewoks_task)
         self._trigger_button = trigger
@@ -144,11 +139,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         layout.addWidget(execute)
         execute.released.connect(self.execute_ewoks_task_without_propagation)
         self._execute_button = execute
-
-        print("default:", trigger.isDefault())
-        print("auto default:", trigger.autoDefault())
-        print("default:", execute.isDefault())
-        print("auto default:", execute.autoDefault())
 
     def _init_main_area(self):
         """The main area is used to display results."""
