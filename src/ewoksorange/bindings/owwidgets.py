@@ -98,8 +98,14 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     namespace["default_inputs"] = Setting(dict(), schema_only=schema_only)
 
     # Add missing inputs and outputs as widget class attributes
-    owsignals.validate_inputs(namespace)
-    owsignals.validate_outputs(namespace)
+    owsignals.validate_inputs(
+        namespace,
+        name_to_ignore=namespace.get("_ewoks_inputs_to_hide_from_orange", tuple()),
+    )
+    owsignals.validate_outputs(
+        namespace,
+        name_to_ignore=namespace.get("_ewoks_outputs_to_hide_from_orange", tuple()),
+    )
 
 
 class _OWEwoksWidgetMetaClass(WidgetMetaClass):
