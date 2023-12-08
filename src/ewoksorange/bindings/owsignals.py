@@ -156,6 +156,9 @@ def _validate_signals_oasys(namespace: dict, direction: str, names: List[str]) -
 
 
 def _validate_signals(namespace: dict, direction: str, names: List[str]) -> None:
+    """
+    convert ewoks inputs or outputs to orange Input and or Output
+    """
     signals_class_name = direction.title()
     is_inputs = direction == "inputs"
     signal_container = namespace[signals_class_name]
@@ -176,7 +179,7 @@ def _validate_signals(namespace: dict, direction: str, names: List[str]) -> None
             namespace[setter.__name__] = signal(setter)
 
 
-def validate_inputs(namespace) -> None:
+def validate_inputs(namespace, name_to_ignore=tuple()) -> None:
     """Adds missing Orange inputs by compaing the existing Orange
     inputs with the ewoks inputs."""
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
@@ -198,11 +201,18 @@ def validate_inputs(namespace) -> None:
             namespace["Inputs"] = Inputs
 
         _validate_signals(
-            namespace, "inputs", namespace["ewokstaskclass"].input_names()
+            namespace=namespace,
+            direction="inputs",
+            names=tuple(
+                filter(
+                    lambda name: name not in name_to_ignore,
+                    namespace["ewokstaskclass"].input_names(),
+                )
+            ),
         )
 
 
-def validate_outputs(namespace) -> None:
+def validate_outputs(namespace, name_to_ignore=tuple()) -> None:
     """Adds missing Orange outputs by compaing the existing Orange
     outputs with the ewoks outputs."""
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
@@ -224,7 +234,14 @@ def validate_outputs(namespace) -> None:
             namespace["Outputs"] = Outputs
 
         _validate_signals(
-            namespace, "outputs", namespace["ewokstaskclass"].output_names()
+            namespace=namespace,
+            direction="outputs",
+            names=tuple(
+                filter(
+                    lambda name: name not in name_to_ignore,
+                    namespace["ewokstaskclass"].output_names(),
+                )
+            ),
         )
 
 
