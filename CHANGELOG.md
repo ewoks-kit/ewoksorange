@@ -1,6 +1,14 @@
 # CHANGELOG.md
 
-## 0.4.0 (unreleased)
+## 0.5.0 (unreleased)
+
+## 0.4.0
+
+New Features:
+  - Allow hiding inputs/outputs from the canvas when making a link
+
+Bug fixes:
+  - Exclude buggy orange project release from the requirement
 
 ## 0.3.1
 
