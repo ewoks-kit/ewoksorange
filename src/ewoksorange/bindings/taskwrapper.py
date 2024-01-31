@@ -123,8 +123,21 @@ def execute_ewoks_owwidget(
     inputs: Optional[Mapping] = None,
     timeout: Optional[Number] = None,
 ) -> dict:
+    """This is the equivalent of the execution of the associated Ewoks task
+
+    .. code::python
+
+        task = task_cls(inputs=inputs)
+        task.execute()
+        return task.get_output_values()
+
+    but instead execute it like Orange would do it (using Qt signals).
+
+    It is used for testing Ewoks Orange widgets.
+    """
     ensure_qtapp()
     result = dict()
+    exception = None
     widget = instantiate_owwidget(widget_class)
 
     try:
@@ -132,12 +145,15 @@ def execute_ewoks_owwidget(
         outputsReceived = QtEvent()
 
         def _output_cb():
+            nonlocal exception
+
             try:
+                exception = widget.task_exception or widget.post_task_exception
                 result.update(widget.get_task_output_values())
             finally:
                 outputsReceived.set()
 
-        widget.task_output_changed_callbacks.add(_output_cb)
+        widget.task_output_changed_callbacks.append(_output_cb)
 
         # Call the input setters
         if inputs:
@@ -162,7 +178,12 @@ def execute_ewoks_owwidget(
         widget.handleNewSignals()
 
         # Wait for the result
-        outputsReceived.wait(timeout=timeout)
+        if not outputsReceived.wait(timeout=timeout):
+            raise TimeoutError(f"{timeout} sec")
+
+        # Raise task exception
+        if exception is not None:
+            raise exception
     finally:
         widget.close()
     return result
@@ -171,6 +192,11 @@ def execute_ewoks_owwidget(
 def execute_native_owwidget(
     widget_class: Type[OWBaseWidget], inputs: Optional[Mapping] = None
 ):
+    """This is the equivalent of `execute_ewoks_owwidget` but then for native Orange widget
+    instead of Ewoks Orange Widgets.
+
+    It is used to execute native Orange widgets with another Ewoks execution engine than Orange.
+    """
     ensure_qtapp()
     result = dict()
 
@@ -199,6 +225,7 @@ def execute_native_owwidget(
         process_qtapp_events()
 
         # Fetch outputs
+        # TODO: how to re-raise exceptions?
         for ewoks_name, orange_name in orange_to_ewoks_namemap.items():
             value = widget.signalManager.get_output_value(
                 widget, orange_name, timeout=None
