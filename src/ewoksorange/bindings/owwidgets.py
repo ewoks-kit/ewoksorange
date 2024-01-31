@@ -6,7 +6,7 @@ import inspect
 import logging
 import warnings
 from contextlib import contextmanager
-from typing import Any, Optional, Mapping
+from typing import Any, Optional, Mapping, List, Callable
 from AnyQt import QtWidgets
 
 from ..orange_version import ORANGE_VERSION
@@ -129,7 +129,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dynamic_inputs = dict()
-        self.__task_output_changed_callbacks = {self.task_output_changed}
+        self.__task_output_changed_callbacks: List[Callable[[], None]] = [
+            self.task_output_changed
+        ]
+        self.__post_task_exception: Optional[Exception] = None
 
     def _init_control_area(self) -> None:
         """The control area is used for task inputs."""
@@ -354,6 +357,8 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         return signal
 
     def trigger_downstream(self) -> None:
+        _logger.debug("%s: trigger downstream", self)
+
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for ewoksname, var in self.get_task_outputs().items():
                 ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
@@ -377,11 +382,20 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                     channel.send(var)
 
     def _output_changed(self) -> None:
-        for cb in self.__task_output_changed_callbacks:
-            cb()
+        self.__post_task_execute(self.__task_output_changed_callbacks)
+
+    def __post_task_execute(self, callbacks: List[Callable[[], None]]) -> None:
+        try:
+            callbacks[0]()
+        except Exception as e:
+            self.__post_task_exception = e
+            raise
+        finally:
+            if len(callbacks) > 1:
+                self.__post_task_execute(callbacks[1:])
 
     @property
-    def task_output_changed_callbacks(self) -> set:
+    def task_output_changed_callbacks(self) -> list:
         return self.__task_output_changed_callbacks
 
     def task_output_changed(self) -> None:
@@ -389,6 +403,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         pass
 
     def clear_downstream(self) -> None:
+        _logger.debug("%s: clear downstream", self)
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for name in self.get_task_outputs():
                 self.send(name, invalid_data.INVALIDATION_DATA)  # or self.invalidate?
@@ -401,11 +416,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         if succeeded is None:
             succeeded = self.task_succeeded
         if succeeded:
-            _logger.debug("%s: trigger downstream", self)
-            self.trigger_downstream()
+            self.__post_task_execute([self.trigger_downstream])
         else:
-            _logger.debug("%s: clear downstream", self)
-            self.clear_downstream()
+            self.__post_task_execute([self.clear_downstream])
 
     def handleNewSignals(self) -> None:
         """Invoked by the workflow signal propagation manager after all
@@ -431,6 +444,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     @property
     def task_done(self) -> Optional[bool]:
         raise NotImplementedError("Base class")
+
+    @property
+    def task_exception(self) -> Optional[Exception]:
+        raise NotImplementedError("Base class")
+
+    @property
+    def post_task_exception(self) -> Optional[Exception]:
+        return self.__post_task_exception
 
 
 def is_orange_widget_class(widget_class):
@@ -472,10 +493,12 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
             self.__task_executor.execute_task()
         except Exception as e:
             _logger.error(f"task failed: {e}", exc_info=True)
+        try:
+            self.__post_task_exception = None
+            if propagate:
+                self.propagate_downstream()
         finally:
             self._output_changed()
-        if propagate:
-            self.propagate_downstream()
 
     @property
     def task_succeeded(self) -> Optional[bool]:
@@ -484,6 +507,10 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
     @property
     def task_done(self) -> Optional[bool]:
         return self.__task_executor.done
+
+    @property
+    def task_exception(self) -> Optional[Exception]:
+        return self.__task_executor.exception
 
     def get_task_outputs(self):
         return self.__task_executor.output_variables
@@ -555,12 +582,14 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         if self.__task_executor.isRunning():
             _logger.error("A processing is already ongoing")
             return
+        self.__task_executor.create_task(**self._get_task_arguments())
+        if self.__task_executor.has_task:
+            with self._ewoks_task_start_context():
+                self.__propagate = propagate
+                self.__task_executor.start()
         else:
-            self.__task_executor.create_task(**self._get_task_arguments())
-            if self.__task_executor.has_task:
-                with self._ewoks_task_start_context():
-                    self.__propagate = propagate
-                    self.__task_executor.start()
+            self.__propagate = propagate
+            self.__task_executor.finished.emit()
 
     @property
     def task_succeeded(self) -> Optional[bool]:
@@ -570,11 +599,16 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_done(self) -> Optional[bool]:
         return self.__task_executor.done
 
+    @property
+    def task_exception(self) -> Optional[Exception]:
+        return self.__task_executor.exception
+
     def get_task_outputs(self):
         return self.__task_executor.output_variables
 
     def _ewoks_task_finished_callback(self):
         with self._ewoks_task_finished_context():
+            self.__post_task_exception = None
             if self.__propagate:
                 self.propagate_downstream()
 
@@ -596,15 +630,17 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
         self.__last_task_done = None
+        self.__last_task_exception = None
 
     def _execute_ewoks_task(self, propagate: bool):
         task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
         task_executor.create_task(**self._get_task_arguments())
-        if not task_executor.has_task:
-            return
         with self.__init_task_executor(task_executor, propagate):
-            with self._ewoks_task_start_context():
-                task_executor.start()
+            if task_executor.has_task:
+                with self._ewoks_task_start_context():
+                    task_executor.start()
+            else:
+                task_executor.finished.emit()
 
     @contextmanager
     def __init_task_executor(self, task_executor, propagate: bool):
@@ -633,7 +669,10 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
                 self.__last_output_variables = task_executor.output_variables
                 self.__last_task_succeeded = task_executor.succeeded
                 self.__last_task_done = task_executor.done
-                if self.__is_task_executor_propagated(task_executor):
+                self.__last_task_exception = task_executor.exception
+                self.__post_task_exception = None
+                propagate = self.__is_task_executor_propagated(task_executor)
+                if propagate:
                     self.propagate_downstream(succeeded=task_executor.succeeded)
             finally:
                 self.__remove_task_executor(task_executor)
@@ -661,6 +700,10 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_done(self) -> Optional[bool]:
         return self.__last_task_done
 
+    @property
+    def task_exception(self) -> Optional[Exception]:
+        return self.__last_task_exception
+
     def get_task_outputs(self):
         return self.__last_output_variables
 
@@ -678,6 +721,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
         self.__last_task_done = None
+        self.__last_task_exception = None
 
     @property
     def task_executor_queue(self):
@@ -701,6 +745,10 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_done(self) -> Optional[bool]:
         return self.__last_task_done
 
+    @property
+    def task_exception(self) -> Optional[bool]:
+        return self.__last_task_exception
+
     def get_task_outputs(self):
         return self.__last_output_variables
 
@@ -714,5 +762,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             self.__last_output_variables = task_executor.output_variables
             self.__last_task_succeeded = task_executor.succeeded
             self.__last_task_done = task_executor.done
+            self.__last_task_exception = task_executor.exception
+            self.__post_task_exception = None
             if propagate:
                 self.propagate_downstream()
