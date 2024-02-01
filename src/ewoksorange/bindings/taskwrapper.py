@@ -177,7 +177,14 @@ def execute_ewoks_owwidget(
                     set_input_value(widget, signal, value, index)
 
         # Start calculation
-        widget.handleNewSignals()
+        try:
+            widget.handleNewSignals()
+        except Exception:
+            # Widget executes everything in the current thread
+            # The exception should have been captured by _output_cb
+            # If not there is an implementation problem and we raise
+            if exception is None:
+                raise
 
         # Wait for the result
         if not outputsReceived.wait(timeout=timeout):
