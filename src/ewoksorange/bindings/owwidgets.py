@@ -749,7 +749,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         return self.__last_task_done
 
     @property
-    def task_exception(self) -> Optional[bool]:
+    def task_exception(self) -> Optional[Exception]:
         return self.__last_task_exception
 
     def get_task_outputs(self):
