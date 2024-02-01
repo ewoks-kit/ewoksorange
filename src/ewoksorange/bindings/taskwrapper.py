@@ -104,6 +104,7 @@ def instantiate_owwidget(
     widget_class: Type[OWBaseWidget],
     signal_manager=None,
     stored_settings: Optional[Mapping] = None,
+    **widget_init_params,
 ):
     if stored_settings:
         stored_settings = {
@@ -114,7 +115,7 @@ def instantiate_owwidget(
     widget = widget_class.__new__(
         widget_class, signal_manager=signal_manager, stored_settings=stored_settings
     )
-    widget.__init__()
+    widget.__init__(**widget_init_params)
     return widget
 
 
@@ -122,6 +123,7 @@ def execute_ewoks_owwidget(
     widget_class: Type[OWEwoksBaseWidget],
     inputs: Optional[Mapping] = None,
     timeout: Optional[Number] = None,
+    **widget_init_params,
 ) -> dict:
     """This is the equivalent of the execution of the associated Ewoks task
 
@@ -138,7 +140,7 @@ def execute_ewoks_owwidget(
     ensure_qtapp()
     result = dict()
     exception = None
-    widget = instantiate_owwidget(widget_class)
+    widget = instantiate_owwidget(widget_class, **widget_init_params)
 
     try:
         # Receive and store results
