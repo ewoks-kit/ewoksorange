@@ -385,13 +385,16 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         self.__post_task_execute(self.__task_output_changed_callbacks)
 
     def __post_task_execute(self, callbacks: List[Callable[[], None]]) -> None:
+        ncallbacks = len(callbacks)
+        if ncallbacks == 0:
+            return
         try:
             callbacks[0]()
         except Exception as e:
             self.__post_task_exception = e
             raise
         finally:
-            if len(callbacks) > 1:
+            if ncallbacks > 1:
                 self.__post_task_execute(callbacks[1:])
 
     @property
