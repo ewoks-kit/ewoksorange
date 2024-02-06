@@ -1,6 +1,12 @@
 # CHANGELOG.md
 
-## 0.5.0 (unreleased)
+## 0.6.0 (unreleased)
+
+## 0.5.0
+
+Changes:
+  - Make post task execution (output changed callbacks and downstream propagation)
+    equivalent for all widget types (no thread, single thread, multi thread).
 
 ## 0.4.0
 
