@@ -13,7 +13,7 @@ def execute_graph(
         ewoks_to_ows(graph, filename, execinfo=execinfo, error_on_duplicates=False)
         canvas_handler.load_ows(filename)
         canvas_handler.start_workflow()
-        canvas_handler.wait_widgets(timeout=10)
+        canvas_handler.wait_widgets(timeout=10, raise_error=False)
     finally:
         # Manually emit the end workflow and job event
         canvas_handler.scheme.ewoks_finalize()

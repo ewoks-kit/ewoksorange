@@ -39,6 +39,7 @@ else:
 from .utils import get_orange_canvas
 from ..bindings import qtapp
 from ..bindings.bindings import ows_file_context
+from ..bindings.owwidgets import OWEwoksBaseWidget
 from ..bindings.owsignal_manager import SignalManagerWithOutputTracking
 
 
@@ -177,14 +178,21 @@ class OrangeCanvasHandler:
         if not triggered:
             _logger.warning("This workflow has no widgets that can be triggered")
 
-    def wait_widgets(self, timeout=None):
+    def wait_widgets(self, timeout=None, raise_error: bool = True):
+        """Wait for all widgets to be executed. Widget failures are re-raised."""
         signal_manager = self.signal_manager
         widgets = list(self.iter_widgets())
         t0 = time.time()
         while True:
             self.process_events()
-            executed = (signal_manager.widget_is_executed(widget) for widget in widgets)
-            executed = list(executed)
+            executed = list()
+            for widget in widgets:
+                if raise_error and isinstance(widget, OWEwoksBaseWidget):
+                    exception = widget.task_exception or widget.post_task_exception
+                    if exception is not None:
+                        raise exception
+                is_executed = signal_manager.widget_is_executed(widget)
+                executed.append(is_executed)
             if all(executed):
                 break
             if timeout is not None:

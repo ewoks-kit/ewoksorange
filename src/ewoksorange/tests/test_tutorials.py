@@ -101,6 +101,15 @@ def assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename):
     results = widgets[0].get_task_output_values()
     assert results == {"result": 16}
 
+    ewoks_orange_canvas.load_ows(str(filename))
+    ewoks_orange_canvas.set_input_values(
+        [{"label": "task1", "name": "b", "value": "wrongtype"}]
+    )
+    ewoks_orange_canvas.start_workflow()
+    with pytest.raises(TypeError):
+        # Note: we get the original error, not "RuntimeError: Task 'task1' failed"
+        ewoks_orange_canvas.wait_widgets(timeout=10)
+
 
 def assert_sumtask_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
