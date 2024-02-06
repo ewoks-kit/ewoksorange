@@ -109,12 +109,12 @@ def process_qtapp_events() -> None:
 
 class QtEvent:
     """Event that also works for Qt applications with an event loop
-    that need to run manually"""
+    that needs to run manually"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__flag = False
 
-    def wait(self, timeout=None):
+    def wait(self, timeout: Optional[float] = None) -> bool:
         """Processes events associated to the calling thread while waiting"""
         global _APP
         if timeout is not None:
@@ -125,15 +125,14 @@ class QtEvent:
             else:
                 _APP.processEvents(QtCore.QEventLoop.AllEvents, 100)
             if timeout is not None:
-                secs = time.time() - t0
-                if secs <= 0:
+                if (time.time() - t0) > timeout:
                     return False
         return True
 
-    def set(self):
+    def set(self) -> None:
         self.__flag = True
 
-    def clear(self):
+    def clear(self) -> None:
         self.__flag = False
 
 

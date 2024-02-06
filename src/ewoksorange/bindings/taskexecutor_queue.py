@@ -43,13 +43,14 @@ class TaskExecutorQueue(QObject, Queue):
             self.sigComputationStarted.emit()
             self._task_executor.start()
         else:
-            self._process_ended()
+            self._task_executor.finished.emit()
 
     def _process_ended(self):
-        task_executor = self.sender()
-        if task_executor is not None:
-            for callback in task_executor.callbacks:
-                callback()
+        self._process_ended_direct(self.sender())
+
+    def _process_ended_direct(self, task_executor: "_ThreadedTaskExecutor"):
+        for callback in task_executor.callbacks:
+            callback()
         self.sigComputationEnded.emit()
         self._available = True
         if self.is_available:

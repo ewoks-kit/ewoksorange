@@ -104,6 +104,7 @@ def instantiate_owwidget(
     widget_class: Type[OWBaseWidget],
     signal_manager=None,
     stored_settings: Optional[Mapping] = None,
+    **widget_init_params,
 ):
     if stored_settings:
         stored_settings = {
@@ -114,7 +115,7 @@ def instantiate_owwidget(
     widget = widget_class.__new__(
         widget_class, signal_manager=signal_manager, stored_settings=stored_settings
     )
-    widget.__init__()
+    widget.__init__(**widget_init_params)
     return widget
 
 
@@ -122,22 +123,39 @@ def execute_ewoks_owwidget(
     widget_class: Type[OWEwoksBaseWidget],
     inputs: Optional[Mapping] = None,
     timeout: Optional[Number] = None,
+    **widget_init_params,
 ) -> dict:
+    """This is the equivalent of the execution of the associated Ewoks task
+
+    .. code::python
+
+        task = task_cls(inputs=inputs)
+        task.execute()
+        return task.get_output_values()
+
+    but instead execute it like Orange would do it (using Qt signals).
+
+    It is used for testing Ewoks Orange widgets.
+    """
     ensure_qtapp()
     result = dict()
-    widget = instantiate_owwidget(widget_class)
+    exception = None
+    widget = instantiate_owwidget(widget_class, **widget_init_params)
 
     try:
         # Receive and store results
         outputsReceived = QtEvent()
 
         def _output_cb():
+            nonlocal exception
+
             try:
+                exception = widget.task_exception or widget.post_task_exception
                 result.update(widget.get_task_output_values())
             finally:
                 outputsReceived.set()
 
-        widget.task_output_changed_callbacks.add(_output_cb)
+        widget.task_output_changed_callbacks.append(_output_cb)
 
         # Call the input setters
         if inputs:
@@ -159,10 +177,22 @@ def execute_ewoks_owwidget(
                     set_input_value(widget, signal, value, index)
 
         # Start calculation
-        widget.handleNewSignals()
+        try:
+            widget.handleNewSignals()
+        except Exception:
+            # Widget executes everything in the current thread
+            # The exception should have been captured by _output_cb
+            # If not there is an implementation problem and we raise
+            if exception is None:
+                raise
 
         # Wait for the result
-        outputsReceived.wait(timeout=timeout)
+        if not outputsReceived.wait(timeout=timeout):
+            raise TimeoutError(f"{timeout} sec")
+
+        # Raise task exception
+        if exception is not None:
+            raise exception
     finally:
         widget.close()
     return result
@@ -171,6 +201,11 @@ def execute_ewoks_owwidget(
 def execute_native_owwidget(
     widget_class: Type[OWBaseWidget], inputs: Optional[Mapping] = None
 ):
+    """This is the equivalent of `execute_ewoks_owwidget` but then for native Orange widget
+    instead of Ewoks Orange Widgets.
+
+    It is used to execute native Orange widgets with another Ewoks execution engine than Orange.
+    """
     ensure_qtapp()
     result = dict()
 
@@ -199,6 +234,7 @@ def execute_native_owwidget(
         process_qtapp_events()
 
         # Fetch outputs
+        # TODO: how to re-raise exceptions?
         for ewoks_name, orange_name in orange_to_ewoks_namemap.items():
             value = widget.signalManager.get_output_value(
                 widget, orange_name, timeout=None
