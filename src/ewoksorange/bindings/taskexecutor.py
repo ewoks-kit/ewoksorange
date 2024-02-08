@@ -26,7 +26,7 @@ class TaskExecutor:
             self.__task = self.__ewokstaskclass(**kwargs)
         except TaskInputError as e:
             self.__task_init_exception = e
-            _logger.info(f"task initialization failed: {e}")
+            _logger.error(f"task initialization failed: {e}")
 
     def execute_task(self) -> None:
         if not self.has_task:
