@@ -17,7 +17,7 @@ class TaskExecutor:
         self.__task = None
         self.__task_init_exception = None
 
-    def create_task(self, **kwargs) -> None:
+    def create_task(self, log_failure: bool = False, **kwargs) -> None:
         if not issubclass(self.__ewokstaskclass, TaskWithProgress):
             kwargs.pop("progress", None)
         self.__task = None
@@ -26,7 +26,10 @@ class TaskExecutor:
             self.__task = self.__ewokstaskclass(**kwargs)
         except TaskInputError as e:
             self.__task_init_exception = e
-            _logger.info(f"task initialization failed: {e}")
+            if log_failure:
+                _logger.error(f"task initialization failed: {e}", exc_info=True)
+            else:
+                _logger.info(f"task initialization failed: {e}")
 
     def execute_task(self) -> None:
         if not self.has_task:

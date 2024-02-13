@@ -427,17 +427,17 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         """Invoked by the workflow signal propagation manager after all
         signals handlers have been called.
         """
-        self.execute_ewoks_task()
+        self.execute_ewoks_task(from_signal=True)
 
-    def execute_ewoks_task(self) -> None:
+    def execute_ewoks_task(self, from_signal: bool = False) -> None:
         _logger.debug("%s: execute ewoks task (with propagation)", self)
-        self._execute_ewoks_task(propagate=True)
+        self._execute_ewoks_task(propagate=True, from_signal=from_signal)
 
     def execute_ewoks_task_without_propagation(self) -> None:
         _logger.debug("%s: execute ewoks task (without propagation)", self)
-        self._execute_ewoks_task(propagate=False)
+        self._execute_ewoks_task(propagate=False, from_signal=False)
 
-    def _execute_ewoks_task(self, propagate: bool) -> None:
+    def _execute_ewoks_task(self, propagate: bool, from_signal: bool) -> None:
         raise NotImplementedError("Base class")
 
     @property
@@ -490,8 +490,10 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         super().__init__(*args, **kwargs)
         self.__task_executor = TaskExecutor(self.ewokstaskclass)
 
-    def _execute_ewoks_task(self, propagate: bool):
-        self.__task_executor.create_task(**self._get_task_arguments())
+    def _execute_ewoks_task(self, propagate: bool, from_signal: bool) -> None:
+        self.__task_executor.create_task(
+            log_failure=not from_signal, **self._get_task_arguments()
+        )
         try:
             self.__task_executor.execute_task()
         except Exception as e:
@@ -581,11 +583,13 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executor.finished.connect(self._ewoks_task_finished_callback)
         self.__propagate = None
 
-    def _execute_ewoks_task(self, propagate: bool):
+    def _execute_ewoks_task(self, propagate: bool, from_signal: bool) -> None:
         if self.__task_executor.isRunning():
             _logger.error("A processing is already ongoing")
             return
-        self.__task_executor.create_task(**self._get_task_arguments())
+        self.__task_executor.create_task(
+            log_failure=not from_signal, **self._get_task_arguments()
+        )
         if self.__task_executor.has_task:
             with self._ewoks_task_start_context():
                 self.__propagate = propagate
@@ -635,9 +639,11 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_done = None
         self.__last_task_exception = None
 
-    def _execute_ewoks_task(self, propagate: bool):
+    def _execute_ewoks_task(self, propagate: bool, from_signal: bool) -> None:
         task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
-        task_executor.create_task(**self._get_task_arguments())
+        task_executor.create_task(
+            log_failure=not from_signal, **self._get_task_arguments()
+        )
         with self.__init_task_executor(task_executor, propagate):
             if task_executor.has_task:
                 with self._ewoks_task_start_context():
@@ -730,13 +736,14 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_executor_queue(self):
         return self.__task_executor_queue
 
-    def _execute_ewoks_task(self, propagate):
+    def _execute_ewoks_task(self, propagate: bool, from_signal: bool) -> None:
         def callback():
             self._ewoks_task_finished_callback(propagate)
 
         with self._ewoks_task_start_context():
             self.__task_executor_queue.add(
                 _callbacks=(callback,),
+                _log_create_failure=not from_signal,
                 **self._get_task_arguments(),
             )
 

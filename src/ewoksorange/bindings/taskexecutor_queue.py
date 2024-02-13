@@ -75,7 +75,13 @@ class _ThreadedTaskExecutor(ThreadedTaskExecutor):
         super().__init__(*args, **kwargs)
         self.__callbacks = tuple()
 
-    def create_task(self, _callbacks: Iterable = tuple(), **kwargs):
+    def create_task(
+        self,
+        _callbacks: Iterable = tuple(),
+        _log_create_failure: bool = False,
+        **kwargs
+    ):
+        kwargs["log_failure"] = _log_create_failure
         super().create_task(**kwargs)
         self.__callbacks = _callbacks
 
