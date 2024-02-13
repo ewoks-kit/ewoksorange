@@ -12,6 +12,34 @@ test-3.7-orange:
     - python -m pip install --pre .[test,orange]
     - python -m pytest -v .
 
+test-3.8-orange:
+  extends: .test-3.8_glx
+  script:
+    - python -m pip install Orange3  # install without --pre
+    - python -m pip install --pre .[test,orange]
+    - python -m pytest -v .
+
+test-3.9-orange:
+  extends: .test-3.9_glx
+  script:
+    - python -m pip install Orange3  # install without --pre
+    - python -m pip install --pre .[test,orange]
+    - python -m pytest -v .
+
+test-3.10-orange:
+  extends: .test-3.10_glx
+  script:
+    - python -m pip install Orange3  # install without --pre
+    - python -m pip install --pre .[test,orange]
+    - python -m pytest -v .
+
+test-3.11-orange:
+  extends: .test-3.11_glx
+  script:
+    - python -m pip install Orange3  # install without --pre
+    - python -m pip install --pre .[test,orange]
+    - python -m pytest -v .
+
 test-3.7-oasys:
   extends: .test-3.7_glx
   script:
