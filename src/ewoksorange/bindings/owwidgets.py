@@ -408,8 +408,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def clear_downstream(self) -> None:
         _logger.debug("%s: clear downstream", self)
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for name in self.get_task_outputs():
-                self.send(name, invalid_data.INVALIDATION_DATA)  # or self.invalidate?
+            for ewoksname in self.get_task_outputs():
+                ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
+                    type(self), "outputs"
+                )
+                orangename = ewoks_to_orange.get(ewoksname, ewoksname)
+                self.send(
+                    orangename, invalid_data.INVALIDATION_DATA
+                )  # or self.invalidate?
         else:
             for name in self.get_task_outputs():
                 channel = self._get_output_signal(name)
