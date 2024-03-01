@@ -78,10 +78,10 @@ class _ThreadedTaskExecutor(ThreadedTaskExecutor):
     def create_task(
         self,
         _callbacks: Iterable = tuple(),
-        _log_create_failure: bool = False,
+        _log_missing_inputs: bool = False,
         **kwargs
     ):
-        kwargs["log_failure"] = _log_create_failure
+        kwargs["log_missing_inputs"] = _log_missing_inputs
         super().create_task(**kwargs)
         self.__callbacks = _callbacks
 
