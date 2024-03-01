@@ -75,7 +75,13 @@ class _ThreadedTaskExecutor(ThreadedTaskExecutor):
         super().__init__(*args, **kwargs)
         self.__callbacks = tuple()
 
-    def create_task(self, _callbacks: Iterable = tuple(), **kwargs):
+    def create_task(
+        self,
+        _callbacks: Iterable = tuple(),
+        _log_missing_inputs: bool = False,
+        **kwargs
+    ):
+        kwargs["log_missing_inputs"] = _log_missing_inputs
         super().create_task(**kwargs)
         self.__callbacks = _callbacks
 
