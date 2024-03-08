@@ -1,7 +1,7 @@
 try:
-    from importlib import resources
+    from importlib.resources import files as resource_files
 except ImportError:
-    import importlib_resources as resources
+    from importlib_resources import files as resource_files
 import pytest
 from ewoksorange.bindings import ows_to_ewoks
 from ewoksorange.bindings import ewoks_to_ows
@@ -11,12 +11,12 @@ from ewokscore.tests.examples.graphs import graph_names
 from ewokscore.tests.examples.graphs import get_graph
 
 
-def test_ows_to_ewoks_example_1(tmpdir, register_ewoks_example_addons):
+def test_ows_to_ewoks_sumtask_tutorial(tmpdir):
     """Test conversion of orange worflow files to ewoks and back"""
-    from orangecontrib.evaluate.ewoks_example_submodule import tutorials
+    from orangecontrib.ewokstest import tutorials
 
-    with resources.path(tutorials, "sumtask_tutorial2.ows") as filename:
-        ewoksgraph = ows_to_ewoks(str(filename))
+    filename = resource_files(tutorials).joinpath("sumtask_tutorial.ows")
+    ewoksgraph = ows_to_ewoks(str(filename))
 
     destination = str(tmpdir / "ewoksgraph.ows")
     ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
@@ -24,12 +24,12 @@ def test_ows_to_ewoks_example_1(tmpdir, register_ewoks_example_addons):
     assert ewoksgraph == ewoksgraph2
 
 
-def test_ows_to_ewoks_example_2(tmpdir, register_ewoks_example_addons):
+def test_ows_to_ewoks_sumlist_tutorial(tmpdir):
     """Test conversion of orange worflow files to ewoks and back"""
-    from orangecontrib.list_operations import tutorials
+    from orangecontrib.ewokstest import tutorials
 
-    with resources.path(tutorials, "sumlist_tutorial.ows") as filename:
-        ewoksgraph = ows_to_ewoks(str(filename))
+    filename = resource_files(tutorials).joinpath("sumlist_tutorial.ows")
+    ewoksgraph = ows_to_ewoks(str(filename))
 
     destination = str(tmpdir / "ewoksgraph.ows")
     ewoks_to_ows(ewoksgraph, destination)

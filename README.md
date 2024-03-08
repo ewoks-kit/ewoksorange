@@ -11,17 +11,12 @@ pip install ewoksorange[test]
 When using Oasys instead of Orange3
 
 ```bash
-pip install --no-deps ewoksorange
-pip install ewokscore
-pip install AnyQt
 pip install oasys1
-```
-
-For the tests in an Oasys environment
-
-```bash
-pip install ewokscore[test]
-pip install importlib_resources  # python_version < "3.7"
+pip install AnyQt
+pip install importlib_resources  # python_version < "3.9"
+pip install ewokscore
+pip install pytest
+pip install --no-deps ewoksorange
 ```
 
 ## Test
@@ -76,13 +71,6 @@ Launch the Orange canvas with the examples add-on
 ewoks-canvas --with-examples
 ```
 
-or alternatively install the example add-ons
-
-```bash
-pip install src/ewoksorange/tests/examples/ewoks_example_1_addon
-pip install src/ewoksorange/tests/examples/ewoks_example_2_addon
-```
-
 and launch the Orange canvas with
 
 ```bash
@@ -93,14 +81,6 @@ or when Orange3 is installed
 
 ```bash
 orange-canvas /path/to/orange_wf.ows
-```
-
-When removing an editable install, you may need to delete one file manually:
-
-```bash
-pip install -e src/ewoksorange/tests/examples/ewoks_example_1_addon
-pip uninstall ewoks-example-1-addon
-python3 -c "import site,os;os.unlink(os.path.join(site.getsitepackages()[0],'ewoks-example-1-addon-nspkg.pth'))"
 ```
 
 ## Documentation

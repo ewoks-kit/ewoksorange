@@ -1,35 +1,13 @@
 import gc
 import logging
 import pytest
-from ewoksorange.registration import register_addon_package
 from ewoksorange.bindings.qtapp import qtapp_context
 from ewoksorange.bindings.qtapp import get_all_qtwidgets
 from ewoksorange.canvas.handler import OrangeCanvasHandler
-from .examples import ewoks_example_1_addon
-from .examples import ewoks_example_2_addon
 from ewoksorange.orange_version import ORANGE_VERSION
-
+from orangecontrib.ewokstest import enable_ewokstest_category
 
 logger = logging.getLogger(__name__)
-
-
-@pytest.fixture(scope="session")
-def register_ewoks_example_1_addon():
-    register_addon_package(ewoks_example_1_addon)
-    yield
-
-
-@pytest.fixture(scope="session")
-def register_ewoks_example_2_addon():
-    register_addon_package(ewoks_example_2_addon)
-    yield
-
-
-@pytest.fixture(scope="session")
-def register_ewoks_example_addons(
-    register_ewoks_example_1_addon, register_ewoks_example_2_addon
-):
-    yield
 
 
 def global_cleanup_orange():
@@ -55,6 +33,7 @@ def collect_garbage(app):
 
 @pytest.fixture(scope="session")
 def qtapp():
+    enable_ewokstest_category()
     with qtapp_context() as app:
         assert app is not None
         yield app
@@ -66,7 +45,7 @@ def qtapp():
 
 
 @pytest.fixture(scope="session")
-def raw_ewoks_orange_canvas(qtapp, register_ewoks_example_addons):
+def raw_ewoks_orange_canvas(qtapp):
     with OrangeCanvasHandler() as handler:
         yield handler
 

@@ -15,5 +15,3 @@ __pycache__/
 *.egg-info/
 .eggs/
 /doc/_generated
-/src/ewoksorange/tests/examples/ewoks_example_1_addon/build/
-/src/ewoksorange/tests/examples/ewoks_example_2_addon/build/

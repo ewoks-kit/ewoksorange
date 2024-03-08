@@ -129,8 +129,7 @@ class OrangeCanvasHandler:
         return signal_manager
 
     def iter_nodes(self):
-        scheme = self.scheme
-        for node in scheme.nodes:
+        for node in self.scheme.nodes:
             yield node
 
     def process_events(self):
@@ -145,6 +144,9 @@ class OrangeCanvasHandler:
         for node in self.iter_nodes():
             if node.title == name:
                 yield self.scheme.widget_for_node(node)
+
+    def widget_from_id(self, id: str):
+        return self.scheme.widget_for_node(self.scheme.nodes[int(id)])
 
     def iter_widgets(self):
         for node in self.iter_nodes():

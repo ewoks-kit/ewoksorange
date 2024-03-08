@@ -1,12 +1,13 @@
 """Copy parts of Orange.canvas.config to be used when Orange3 is not installed.
 """
 
-import pkg_resources
-from orangewidget.workflow import config as orangeconfig
+from orangewidget.workflow.config import Config as _Config
 from orangewidget.workflow.config import WIDGETS_ENTRY
 
+from ..pkg_meta import iter_entry_points
 
-class Config(orangeconfig.Config):
+
+class Config(_Config):
     @staticmethod
     def widgets_entry_points():
         """
@@ -15,8 +16,7 @@ class Config(orangeconfig.Config):
         """
         # Ensure the 'this' distribution's ep is the first. iter_entry_points
         # yields them in unspecified order.
-        all_eps = pkg_resources.iter_entry_points(WIDGETS_ENTRY)
-        return iter(all_eps)
+        return iter_entry_points(group=WIDGETS_ENTRY)
 
     @staticmethod
     def addon_entry_points():
