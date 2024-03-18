@@ -4,92 +4,57 @@ from ewoksorange.orange_version import ORANGE_VERSION
 from ewokscore import execute_graph
 
 try:
-    from importlib import resources
+    from importlib.resources import files as resource_files
 except ImportError:
-    import importlib_resources as resources
+    from importlib_resources import files as resource_files
 
 
-def test_sumtask_tutorial1_with_qt(ewoks_orange_canvas):
-    from orangecontrib.ewoks_example_category import tutorials
+def test_sumtask_tutorial_with_qt(ewoks_orange_canvas):
+    from orangecontrib.ewokstest import tutorials
 
-    with resources.path(tutorials, "sumtask_tutorial1.ows") as filename:
-        assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename)
-
-
-@pytest.mark.skipif(
-    ORANGE_VERSION != ORANGE_VERSION.latest_orange, reason="Requires Orange3 widgets"
-)
-def test_sumtask_tutorial1_without_qt(register_ewoks_example_addons):
-    from orangecontrib.ewoks_example_category import tutorials
-
-    with resources.path(tutorials, "sumtask_tutorial1.ows") as filename:
-        assert_sumtask_tutorial_without_qt(filename)
+    filename = resource_files(tutorials).joinpath("sumtask_tutorial.ows")
+    assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename)
 
 
-def test_sumtask_tutorial2_with_qt(ewoks_orange_canvas):
-    from orangecontrib.evaluate.ewoks_example_submodule import tutorials
+def test_sumtask_tutorial_without_qt(qtapp):
+    from orangecontrib.ewokstest import tutorials
 
-    with resources.path(tutorials, "sumtask_tutorial2.ows") as filename:
-        assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename)
-
-
-def test_sumtask_tutorial2_without_qt(ewoks_orange_canvas):
-    from orangecontrib.evaluate.ewoks_example_submodule import tutorials
-
-    with resources.path(tutorials, "sumtask_tutorial2.ows") as filename:
-        assert_sumtask_tutorial_without_qt(filename)
-
-
-def test_sumtask_tutorial3_with_qt(ewoks_orange_canvas):
-    from orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory import (
-        tutorials,
-    )
-
-    with resources.path(tutorials, "sumtask_tutorial3.ows") as filename:
-        assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename)
-
-
-def test_sumtask_tutorial3_without_qt(ewoks_orange_canvas):
-    from orangecontrib.ewoks_example_supercategory.ewoks_example_subcategory import (
-        tutorials,
-    )
-
-    with resources.path(tutorials, "sumtask_tutorial3.ows") as filename:
-        assert_sumtask_tutorial_without_qt(filename)
+    filename = resource_files(tutorials).joinpath("sumtask_tutorial.ows")
+    assert_sumtask_tutorial_without_qt(filename)
 
 
 def test_list_operations_with_qt(ewoks_orange_canvas):
-    from orangecontrib.list_operations import tutorials
+    from orangecontrib.ewokstest import tutorials
 
-    with resources.path(tutorials, "sumlist_tutorial.ows") as filename:
-        assert_sumlist_tutorial_with_qt(ewoks_orange_canvas, filename)
-
-
-def test_list_operations_without_qt(ewoks_orange_canvas):
-    from orangecontrib.list_operations import tutorials
-
-    with resources.path(tutorials, "sumlist_tutorial.ows") as filename:
-        assert_sumlist_tutorial_without_qt(filename)
+    filename = resource_files(tutorials).joinpath("sumlist_tutorial.ows")
+    assert_sumlist_tutorial_with_qt(ewoks_orange_canvas, filename)
 
 
-@pytest.mark.skipif(
-    ORANGE_VERSION != ORANGE_VERSION.latest_orange, reason="Requires Orange3 widgets"
-)
-def test_mixed_tutorial1_with_qt(ewoks_orange_canvas):
-    from orangecontrib.ewoks_example_category import tutorials
+def test_list_operations_without_qt(qtapp):
+    from orangecontrib.ewokstest import tutorials
 
-    with resources.path(tutorials, "mixed_tutorial1.ows") as filename:
-        assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename)
+    filename = resource_files(tutorials).joinpath("sumlist_tutorial.ows")
+    assert_sumlist_tutorial_without_qt(filename)
 
 
 @pytest.mark.skipif(
     ORANGE_VERSION != ORANGE_VERSION.latest_orange, reason="Requires Orange3 widgets"
 )
-def test_mixed_tutorial1_without_qt(register_ewoks_example_addons):
-    from orangecontrib.ewoks_example_category import tutorials
+def test_mixed_tutorial_with_qt(ewoks_orange_canvas):
+    from orangecontrib.ewokstest import tutorials
 
-    with resources.path(tutorials, "mixed_tutorial1.ows") as filename:
-        assert_mixed_tutorial_without_qt(filename)
+    filename = resource_files(tutorials).joinpath("mixed_tutorial.ows")
+    assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename)
+
+
+@pytest.mark.skipif(
+    ORANGE_VERSION != ORANGE_VERSION.latest_orange, reason="Requires Orange3 widgets"
+)
+def test_mixed_tutorial_without_qt(qtapp):
+    from orangecontrib.ewokstest import tutorials
+
+    filename = resource_files(tutorials).joinpath("mixed_tutorial.ows")
+    assert_mixed_tutorial_without_qt(filename)
 
 
 def assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename):
@@ -163,13 +128,14 @@ def assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename):
     ewoks_orange_canvas.load_ows(str(filename))
     ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)
-    widgets = list(ewoks_orange_canvas.widgets_from_name("Adder2"))
-    results = widgets[0].get_task_output_values()
+    widget = ewoks_orange_canvas.widget_from_id("1")
+    results = widget.get_task_output_values()
     assert results == {"result": 3}
 
 
 def assert_mixed_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
     graph = ows_to_ewoks(filename)
-    results = execute_graph(graph, output_tasks=True)
-    assert results["1"].get_output_values() == {"result": 3}
+    tasks = execute_graph(graph, output_tasks=True)
+    results = tasks["1"].get_output_values()
+    assert results == {"result": 3}

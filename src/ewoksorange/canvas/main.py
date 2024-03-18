@@ -64,8 +64,6 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 else:
     from orangecanvas.main import arg_parser
 
-from ewoksorange.registration import register_addon_package
-
 
 @contextmanager
 def temporary_log_handlers(log_level):
@@ -101,10 +99,8 @@ def main(argv=None):
 
     with temporary_log_handlers(options.log_level):
         if options.with_examples:
-            from ewoksorange.tests.examples import ewoks_example_1_addon
-            from ewoksorange.tests.examples import ewoks_example_2_addon
+            from orangecontrib.ewokstest import enable_ewokstest_category
 
-            register_addon_package(ewoks_example_1_addon)
-            register_addon_package(ewoks_example_2_addon)
+            enable_ewokstest_category()
 
     orange_main(argv)

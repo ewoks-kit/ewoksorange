@@ -21,7 +21,6 @@ class TaskForTesting(
 
 
 class PatchCalls:
-
     def __init__(
         self, *args, recorded_calls: List[str], failures: Dict[str, Exception], **kw
     ) -> None:

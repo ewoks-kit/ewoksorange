@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scheme title="Ewoks example (threading)" description="threading" version="2.0">
+	<nodes>
+		<node id="0" name="List generator" position="(150, 150)" project_name="ewoksorange" qualified_name="orangecontrib.ewokstest.listgenerator.ListGenerator" title="List generator" version="" />
+		<node id="1" name="SumList one thread" position="(426.0, 154.0)" project_name="ewoksorange" qualified_name="orangecontrib.ewokstest.sumlist_one_thread.SumListOneThread" title="SumList one thread" version="" />
+		<node id="2" name="SumList on several thread" position="(417.0, 307.0)" project_name="ewoksorange" qualified_name="orangecontrib.ewokstest.sumlist_several_thread.SumListSeveralThread" title="SumList on several thread" version="" />
+		<node id="3" name="SumList with one thread and a stack" position="(399.0, 455.0)" project_name="ewoksorange" qualified_name="orangecontrib.ewokstest.sumlist_stack.SumListWithTaskStack" title="SumList with one thread and a stack" version="" />
+		<node id="4" name="Print list sum" position="(594.0, 166.0)" project_name="ewoksorange" qualified_name="orangecontrib.ewokstest.print_sum.PrintSumOW" title="Print list sum" version="" />
+		<node id="5" name="Print list sum" position="(565.0, 334.0)" project_name="ewoksorange" qualified_name="orangecontrib.ewokstest.print_sum.PrintSumOW" title="Print list sum (1)" version="" />
+		<node id="6" name="Print list sum" position="(548.0, 489.0)" project_name="ewoksorange" qualified_name="orangecontrib.ewokstest.print_sum.PrintSumOW" title="Print list sum (2)" version="" />
+	</nodes>
+	<links>
+		<link enabled="true" id="0" sink_channel="list" sink_node_id="1" source_channel="list" source_node_id="0" />
+		<link enabled="true" id="1" sink_channel="list" sink_node_id="2" source_channel="list" source_node_id="0" />
+		<link enabled="true" id="2" sink_channel="list" sink_node_id="3" source_channel="list" source_node_id="0" />
+		<link enabled="true" id="3" sink_channel="sum" sink_node_id="4" source_channel="sum" source_node_id="1" />
+		<link enabled="true" id="4" sink_channel="sum" sink_node_id="5" source_channel="sum" source_node_id="2" />
+		<link enabled="true" id="5" sink_channel="sum" sink_node_id="6" source_channel="sum" source_node_id="3" />
+	</links>
+	<annotations />
+	<thumbnail />
+	<node_properties>
+		<properties format="literal" node_id="0">{'_ewoks_default_inputs': {'length': 10}}</properties>
+		<properties format="literal" node_id="1">{'_ewoks_default_inputs': {'delay': 0.1}}</properties>
+		<properties format="literal" node_id="2">{'_ewoks_default_inputs': {'delay': 0.1}}</properties>
+		<properties format="literal" node_id="3">{'_ewoks_default_inputs': {'delay': 0.1}}</properties>
+	</node_properties>
+	<session_state>
+		<window_groups />
+	</session_state>
+</scheme>

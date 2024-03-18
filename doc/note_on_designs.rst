@@ -25,7 +25,7 @@ On this case we made Orange Widget inherit from :class:`OWEwoksWidgetNoThread` a
     from ewoksorange.gui.parameterform import ParameterForm
     from ewokscore.tests.examples.tasks.sumtask import SumTask
 
-    class Adder1(
+    class OWSumTask(
         OWEwoksWidgetNoThread,
         ewokstaskclass=SumTask,
     ):

@@ -10,7 +10,7 @@ NAME = "No widgets"
 
 DESCRIPTION = "Ewoks tasks without widgets"
 
-LONG_DESCRIPTION = "Widgets for Ewoks tasks the come with a bare Ewoks installation"
+LONG_DESCRIPTION = "Widgets for Ewoks tasks that come with a bare Ewoks installation"
 
 ICON = "icons/category.png"
 
@@ -49,7 +49,7 @@ def default_owwidget_class(task_class: Task) -> Tuple[OWEwoksBaseWidget, str]:
     class DefaultOwWidget(basecls, ewokstaskclass=task_class):
         name = f"DefaultOwWidget({task_class.__name__})"
         description = f"Orange widget is missing for Ewoks task {task_class.__name__}"
-        icon = "icons/mywidget.svg"
+        icon = "icons/nowidget.svg"
         want_main_area = False
 
         def __init__(self, *args, **kw):

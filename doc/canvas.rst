@@ -47,13 +47,6 @@ Launch the Orange canvas with the examples add-on
 
     ewoks-canvas --with-examples
 
-or alternatively install the example add-ons
-
-.. code-block:: bash
-
-    pip install ewoksorange/tests/examples/ewoks_example_1_addon
-    pip install ewoksorange/tests/examples/ewoks_example_2_addon
-
 and launch the Orange canvas with
 
 .. code-block:: bash

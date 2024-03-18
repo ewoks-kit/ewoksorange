@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scheme version="2.0" title="Ewoks example (widgets in new category)" description="acyclic1">
+	<nodes>
+		<node id="0" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" title="task1" position="(0.0, 0.0)" />
+		<node id="1" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" title="task2" position="(155.0, 308.0)" />
+		<node id="2" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" title="task3" position="(402.0, 134.0)" />
+		<node id="3" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" title="task4" position="(415.0, 300.0)" />
+		<node id="4" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" title="task5" position="(649.0, 197.0)" />
+		<node id="5" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" title="task6" position="(857.0, 202.0)" />
+	</nodes>
+	<links>
+		<link id="0" source_node_id="0" sink_node_id="2" source_channel="A + B" sink_channel="A" enabled="true" />
+		<link id="1" source_node_id="1" sink_node_id="3" source_channel="A + B" sink_channel="A" enabled="true" />
+		<link id="2" source_node_id="2" sink_node_id="4" source_channel="A + B" sink_channel="A" enabled="true" />
+		<link id="3" source_node_id="3" sink_node_id="4" source_channel="A + B" sink_channel="B" enabled="true" />
+		<link id="4" source_node_id="4" sink_node_id="5" source_channel="A + B" sink_channel="A" enabled="true" />
+	</links>
+	<annotations />
+	<thumbnail />
+	<node_properties>
+		<properties node_id="0" format="literal">{'_ewoks_default_inputs': {'a': 1}}</properties>
+		<properties node_id="1" format="literal">{'_ewoks_default_inputs': {'a': 2}}</properties>
+		<properties node_id="2" format="literal">{'_ewoks_default_inputs': {'b': 3}}</properties>
+		<properties node_id="3" format="literal">{'_ewoks_default_inputs': {'b': 4}}</properties>
+		<properties node_id="4" format="literal">{'_ewoks_default_inputs': {'b': 5}}</properties>
+		<properties node_id="5" format="literal">{'_ewoks_default_inputs': {'b': 6}}</properties>
+	</node_properties>
+	<session_state>
+		<window_groups />
+	</session_state>
+</scheme>
