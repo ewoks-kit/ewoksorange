@@ -21,12 +21,12 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         parser.add_option(
             "--no-discovery",
             action="store_true",
-            help="Don't run widget discovery " "(use full cache instead)",
+            help="Don't run widget discovery (use full cache instead)",
         )
         parser.add_option(
             "--force-discovery",
             action="store_true",
-            help="Force full widget discovery " "(invalidate cache)",
+            help="Force full widget discovery (invalidate cache)",
         )
         parser.add_option(
             "--clear-widget-settings",
