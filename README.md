@@ -33,22 +33,22 @@ Launch the Orange canvas
 ewoks-canvas /path/to/orange_wf.ows
 ```
 
-or for an installation with the system python
+or equivalently
 
 ```bash
-python3 -m ewoksorange.canvas
+python3 -m ewoksorange.canvas /path/to/orange_wf.ows
 ```
 
-or when Orange3 is installed
+When Orange3 is installed you can also launch the native Orange CLI
 
 ```bash
-orange-canvas /path/to/orange_wf.ows --config orangewidget.workflow.config.Config
+orange-canvas /path/to/orange_wf.ows [--config ewoksorange.canvas.config.Config]
 ```
 
-or for an installation with the system python
+or equivalently
 
 ```bash
-python3 -m orangecanvas /path/to/orange_wf.ows --config orangewidget.workflow.config.Config
+python3 -m Orange.canvas /path/to/orange_wf.ows [--config ewoksorange.canvas.config.Config]
 ```
 
 Launch the Orange canvas using the Ewoks CLI
@@ -58,7 +58,7 @@ ewoks execute /path/to/ewoks_wf.json --engine orange
 ewoks execute /path/to/orange_wf.ows --engine orange
 ```
 
-or for an installation with the system python
+or equivalently
 
 ```bash
 python3 -m ewoks execute /path/to/ewoks_wf.json --engine orange
@@ -69,18 +69,6 @@ Launch the Orange canvas with the examples add-on
 
 ```bash
 ewoks-canvas --with-examples
-```
-
-and launch the Orange canvas with
-
-```bash
-ewoks-canvas /path/to/orange_wf.ows
-```
-
-or when Orange3 is installed
-
-```bash
-orange-canvas /path/to/orange_wf.ows
 ```
 
 ## Documentation
