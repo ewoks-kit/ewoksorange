@@ -4,65 +4,79 @@ from contextlib import contextmanager
 
 from ..orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.canvas.__main__ import main as orange_main
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from Orange.canvas.__main__ import main as orange_main
-else:
-    from orangecanvas.main import Main as OrangeCanvasMain
-
-    class Main(OrangeCanvasMain):
-        DefaultConfig = "ewoksorange.canvas.config.Config"
-
-    def orange_main(argv):
-        main_instance = Main()
-        return main_instance.run(argv)
-
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    import argparse
+    from oasys.canvas import conf as _oasys_conf_module
+    from oasys.canvas.__main__ import main as _main
+
+    from ewoksorange.canvas.config import Config as _Config
+
+    _oasys_conf_module.oasysconf = _Config
 
     def arg_parser():
+        import argparse
+
         parser = argparse.ArgumentParser()
-        parser.add_argument(
+
+        parser.add_option(
             "--no-discovery",
             action="store_true",
             help="Don't run widget discovery (use full cache instead)",
         )
-        parser.add_argument(
+        parser.add_option(
             "--force-discovery",
             action="store_true",
             help="Force full widget discovery (invalidate cache)",
         )
-        parser.add_argument(
+        parser.add_option(
+            "--clear-widget-settings",
+            action="store_true",
+            help="Remove stored widget setting",
+        )
+        parser.add_option(
             "--no-welcome", action="store_true", help="Don't show welcome dialog."
         )
-        parser.add_argument(
+        parser.add_option(
             "--no-splash", action="store_true", help="Don't show splash screen."
         )
-        parser.add_argument(
-            "--stylesheet",
-            help="Application level CSS style sheet to use",
-            type=str,
-            default=None,
-        )
-        parser.add_argument(
-            "--config",
-            help="Configuration namespace",
-            type=str,
-            default=None,
-        )
-        parser.add_argument(
+        parser.add_option(
             "-l",
             "--log-level",
             help="Logging level (0, 1, 2, 3, 4)",
-            type=int,
+            type="int",
             default=1,
+        )
+        parser.add_option(
+            "--no-redirect",
+            action="store_true",
+            help="Do not redirect stdout/err to canvas output view.",
+        )
+        parser.add_option("--style", help="QStyle to use", type="str", default="Fusion")
+        parser.add_option(
+            "--stylesheet",
+            help="Application level CSS style sheet to use",
+            type="str",
+            default="orange.qss",
+        )
+        parser.add_option(
+            "--qt",
+            help="Additional arguments for QApplication",
+            type="str",
+            default=None,
+        )
+        parser.add_option(
+            "--no-update",
+            action="store_true",
+            help="Stop automatic update internal libraries",
         )
         return parser
 
+elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+    from orangecanvas.main import arg_parser
+    from Orange.canvas.__main__ import main as _main
 else:
     from orangecanvas.main import arg_parser
+    from orangecanvas.main import main as _main
 
 
 @contextmanager
@@ -97,10 +111,13 @@ def main(argv=None):
     if "--force-discovery" not in argv:
         argv.append("--force-discovery")
 
+    if "--config" not in argv:
+        argv += ["--config", "ewoksorange.canvas.config.Config"]
+
     with temporary_log_handlers(options.log_level):
         if options.with_examples:
             from orangecontrib.ewokstest import enable_ewokstest_category
 
             enable_ewokstest_category()
 
-    orange_main(argv)
+    _main(argv)
