@@ -1,6 +1,20 @@
 # CHANGELOG.md
 
-## 0.7.0 (unreleased)
+## 0.8.0 (unreleased)
+
+## 0.7.0
+
+Changes:
+
+- Task creation exception error log when non created by an upstream signal
+- Remove deprecated `pkg_resources` usage
+- Remove support for runtime installation of Orange add-ons and replace with
+  a hidden "ewokstest" widget category. This category is visible only when
+  the canvas is launched with `ewoks-canvas --with-examples`.
+- Provide Orange configuration of all supported Orange forks
+- Declare `orangecontrib` as an implicit namespace package
+- Provide a helper function `widget_discovery` to be used in add-ons that
+  need to avoid using `pkg_resources`
 
 ## 0.6.0
 
