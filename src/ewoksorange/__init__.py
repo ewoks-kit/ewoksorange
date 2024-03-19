@@ -9,4 +9,4 @@ from .oasys_patch import oasys_patch
 oasys_patch()
 patch_signal_manager()
 
-__version__ = "0.7.0rc"
+__version__ = "0.7.0rc1"
