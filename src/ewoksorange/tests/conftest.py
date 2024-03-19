@@ -1,6 +1,9 @@
 import gc
 import logging
+import warnings
+
 import pytest
+
 from ewoksorange.bindings.qtapp import qtapp_context
 from ewoksorange.bindings.qtapp import get_all_qtwidgets
 from ewoksorange.canvas.handler import OrangeCanvasHandler
@@ -20,9 +23,11 @@ def global_cleanup_orange():
 
 
 def global_cleanup_pytest():
-    for obj in gc.get_objects():
-        if isinstance(obj, logging.LogRecord):
-            obj.exc_info = None  # traceback keeps frames which keep locals
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        for obj in gc.get_objects():
+            if isinstance(obj, logging.LogRecord):
+                obj.exc_info = None  # traceback keeps frames which keep locals
 
 
 def collect_garbage(app):
