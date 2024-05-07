@@ -1,14 +1,10 @@
-.. |ewoksimg| image:: img/ewoksorange.png
-    :scale: 100 %
+===========
+ewoksorange
+===========
 
+*ewoksorange* provides a desktop graphical interface for `ewoks <https://ewoks.readthedocs.io/>`_.
 
-========================
-|ewoksimg|   ewoksorange
-========================
-
-*ewoksorange* provides desktop graphical interface for `ewoks <https://ewoks.readthedocs.io/>`_.
-
-*ewoksorange* has been developed by the `Software group <http://www.esrf.eu/Instrumentation/software>`_ of the `European Synchrotron <https://www.esrf.eu/>`_.
+*ewoksorange* is developed by the `Software group <http://www.esrf.eu/Instrumentation/software>`_ of the `European Synchrotron <https://www.esrf.eu/>`_.
 
 Getting started
 ---------------
@@ -19,7 +15,7 @@ Install requirements
 
     pip install ewoksorange[orange]
 
-Launch to graphical interface
+Launch the graphical interface
 
 .. code:: bash
 
@@ -35,8 +31,11 @@ Run the tests
 Implement Orange Widgets
 ------------------------
 
-An Ewoks project that implements `Orange <https://orangedatamining.com/>`_ widgets associated to the Ewoks tasks it provides, needs
-to be setup as an *Orange Add-on* project. A template project can be found `here <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksorangetemplate/>`_.
+`Orange <https://orangedatamining.com/>`_ widgets associated to the Ewoks tasks provided by an Ewoks project.
+
+For this, the Ewoks project needs to be setup as an *Orange Add-on* project. 
+A template project can be found `here <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksorangetemplate/>`_.
+
 Further documentation can be found `here <https://ewoksorangetemplate.readthedocs.io/>`_.
 
 Documentation
