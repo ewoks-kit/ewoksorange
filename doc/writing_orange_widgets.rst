@@ -11,12 +11,20 @@ A template project can be found `here <https://gitlab.esrf.fr/workflow/ewoksapps
 
 Further documentation can be found `here <https://ewoksorangetemplate.readthedocs.io/>`_.
 
+You can also draw inspiration from the existing Ewoks projects that provide Orange bindings:
+
+* `est <https://gitlab.esrf.fr/workflow/ewoksapps/est>`_
+* `ewoksfluo <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksfluo>`_
+* `ewoksndreg <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksndreg>`_
+* `ewoksxrpd <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksxrpd>`_
+
 Note on designs
 ===============
 
 See the following pages for help when designing Orange widgets
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     deal_with_execution
+    different_inputs_outputs
