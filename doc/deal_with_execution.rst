@@ -1,15 +1,16 @@
 Deal with execution
 ===================
 
-There are several ways of defining how your Orange Widget will handle the execution of its associated Ewoks task. 
-
-The choice of design depends on your usecase: for example, if you deal with small processing times, the first design (the simplest one) is the best. Other designs allow more flexibility but are more complex. 
+There are several ways of defining how your Orange Widget will handle the execution of its associated Ewoks task.
 
 * :ref:`design qt main thread`: simple, robust. Long processings can prevent the GUI from responding.
 * :ref:`design single thread no stack`: Execution is separate from the GUI thread. Can only handle one task at once.
 * :ref:`design several thread`: Execution is separate from the GUI thread. Can handle multiple tasks at once. Cannot give information on task progress.
 * :ref:`design single thread and stack`: Execution is separate from the GUI thread. Can give information on task progress.
 * :ref:`design free implementation`: For expert users who want to handle the execution themselves.
+
+The choice of design depends on your usecase: for example, if you deal with small processing times, the first design (the simplest one) is the best. Other designs allow more flexibility but are more complex. 
+
 
 .. _design qt main thread:
 
@@ -24,7 +25,6 @@ To use it, make your Orange widget inherit from :class:`OWEwoksWidgetNoThread` a
 .. code-block:: python
 
     from ewoksorange.bindings import OWEwoksWidgetNoThread
-    from ewoksorange.gui.parameterform import ParameterForm
     from ewokscore.tests.examples.tasks.sumtask import SumTask
 
     class OWSumTask(
@@ -114,6 +114,9 @@ See the example below of the :class:`SumListSeveralThread` of `ewoks example 2 a
 
 .. code-block:: python
 
+    from ewoksorange.bindings import OWEwoksWidgetOneThreadPerRun
+    from ewoksorange.tests.examples.tasks import SumList2
+
     class SumListSeveralThread(
         OWEwoksWidgetOneThreadPerRun,
         ewokstaskclass=SumList2,
@@ -141,6 +144,9 @@ To access it you can create a widget inheriting from :class:`OWEwoksWidgetWithTa
 This is what is on in `ewoks example 2 addon` / :class:`SumListWithTaskStack`
 
 .. code-block:: python
+
+    from ewoksorange.bindings import OWEwoksWidgetWithTaskStack
+    from ewoksorange.tests.examples.tasks import SumList3
 
     class SumListWithTaskStack(
         OWEwoksWidgetWithTaskStack,
@@ -170,7 +176,6 @@ For this, inherit directly from :class:`OWWidget` and provide the `ewokstaskclas
 .. code-block:: python
 
     from Orange.widgets.widget import OWWidget
-    import ewokscore.tests.examples.tasks.sumtask import SumTask
 
     class SumListFreeImplementation(
         OWWidget,

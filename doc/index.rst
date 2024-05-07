@@ -15,28 +15,30 @@ Install requirements
 
     pip install ewoksorange[orange]
 
+.. note::
+    
+    When using Oasys instead of Orange3, install the requirements like this instead
+
+    .. code::
+
+        pip install oasys1
+        pip install AnyQt
+        pip install importlib_resources  # python_version < "3.9"
+        pip install ewokscore
+        pip install pytest
+        pip install --no-deps ewoksorange
+
+
 Launch the graphical interface
 
 .. code:: bash
 
     ewoks-canvas
 
-Run the tests
 
-.. code:: bash
 
-    pip install ewoksorange[test]
-    pytest --pyargs ewoksorange.tests
 
-Implement Orange Widgets
-------------------------
 
-`Orange <https://orangedatamining.com/>`_ widgets associated to the Ewoks tasks provided by an Ewoks project.
-
-For this, the Ewoks project needs to be setup as an *Orange Add-on* project. 
-A template project can be found `here <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksorangetemplate/>`_.
-
-Further documentation can be found `here <https://ewoksorangetemplate.readthedocs.io/>`_.
 
 Documentation
 -------------
@@ -45,5 +47,5 @@ Documentation
     :maxdepth: 2
 
     canvas
-    note_on_designs
+    writing_orange_widgets
     API
