@@ -1,23 +1,25 @@
-Note on designs
-===============
+Deal with execution
+===================
 
-There is several design possible to define your Orange Widget and insure compatibility with ewoks orange.
+There are several ways of defining how your Orange Widget will handle the execution of its associated Ewoks task. 
 
-* :ref:`design qt main thread`
-* :ref:`design single thread no stack`
-* :ref:`design several thread`
-* :ref:`design single thread and stack`
-* :ref:`design free implementation`
+The choice of design depends on your usecase: for example, if you deal with small processing times, the first design (the simplest one) is the best. Other designs allow more flexibility but are more complex. 
+
+* :ref:`design qt main thread`: simple, robust. Long processings can prevent the GUI from responding.
+* :ref:`design single thread no stack`: Execution is separate from the GUI thread. Can only handle one task at once.
+* :ref:`design several thread`: Execution is separate from the GUI thread. Can handle multiple tasks at once. Cannot give information on task progress.
+* :ref:`design single thread and stack`: Execution is separate from the GUI thread. Can give information on task progress.
+* :ref:`design free implementation`: For expert users who want to handle the execution themselves.
 
 .. _design qt main thread:
 
-Processing `ewokstaskclass` on the Qt main thread
--------------------------------------------------
+Execute the associated Ewoks task in the Qt main thread
+-------------------------------------------------------
 
 This is the the simplest case and the most robust one.
-This is the designed used in the `ewoks example 1 addon`.
+This is the design used in the `ewoks example 1 addon`.
 
-On this case we made Orange Widget inherit from :class:`OWEwoksWidgetNoThread` and with we define the ewoks :class:Task to be used.
+To use it, make your Orange widget inherit from :class:`OWEwoksWidgetNoThread` and specify the ewoks task to execute in `ewokstaskclass`
 
 .. code-block:: python
 
@@ -31,9 +33,9 @@ On this case we made Orange Widget inherit from :class:`OWEwoksWidgetNoThread` a
     ):
         pass
 
-This will enforce the execution of the :class:`Task`.run() when a signal is received.
+This will trigger the execution of the method ``run()`` of the Ewoks task :class:`SumTask` when a signal is received.
 
-The :class:`SumTask` is defined as :
+In this case, the :class:`SumTask` is defined as
 
 .. code-block:: python
 
@@ -44,23 +46,32 @@ The :class:`SumTask` is defined as :
             pass
 
 
-Each input_names, optional_input_names and output_names will be converted to orange InputSignal, OutputSignal by the :class:`OWEwoksWidgetNoThread` constructor.
+Each input/output in ``input_names``, ``optional_input_names`` and ``output_names`` will be converted to Orange `Inputs/Outputs <https://orange3.readthedocs.io/projects/orange-development/en/latest/widget.html#input-output-signal-definitions>`_ by the :class:`OWEwoksWidgetNoThread` constructor.
 
 
-.. note:: the Input and Output values must be defined in SumTask
+.. note:: 
+    
+    The inputs and outputs of the Orange widget, that can be linked to other widgets, are the same as the ones of the underlying Ewoks task (in this case ``SumTask``). 
+    
+    See `this page for how to define additional inputs/outputs for the Orange widget <different_inputs_outputs>`_. 
 
-.. warning:: As both processing and display are done in the main thread this will bring gui freeze. If your processing takes time wnd if you want to avoid gui freeze look at other proposed designs.
+.. warning:: 
+    
+    Since the processing and display are done in the same thread, the processing can block the GUI freezing the Orange widget. 
+    
+    If this is a problem (e.g. long processing), look at the other designs.
 
 .. _design single thread no stack:
 
-Processing `ewokstaskclass` on a single (dedicated) thread without stack
-------------------------------------------------------------------------
+Execute the associated Ewoks task in a single dedicated thread
+----------------------------------------------------------------
 
-If you want to have a single thread that will process the ewoks.task then you can inherite from :class:`OWEwoksWidgetOneThread`
+The Ewoks task can be run in a different thread than the main Qt/display thread. 
 
-This is what is done in the `ewoks example 2 addon` class: :class:`SumListOneThread`
+For this, make the Orange widget inherit from :class:`OWEwoksWidgetOneThread`.
 
-You just have to provide task description and link to the ewoks task class:
+See the `ewoks example 2 addon` class: :class:`SumListOneThread` below for an example
+
 
 .. code-block:: python
 
@@ -78,21 +89,28 @@ You just have to provide task description and link to the ewoks task class:
         want_main_area = False
 
 
-The Orange widget is containing a processing thread (`_processingThread`) that will execute the `ewokstaskclass`.
 
-.. note:: if a request for processing is done when the thread is already processing it will refuse the processing request. See other design for more advance use case.
+The Orange widget is holding a processing thread (`_processingThread`) that will execute the `ewokstaskclass`.
+
+.. note:: 
+    
+    The thread can only execute one task at a time: it will refuse to execute further tasks if the current task is still executing. 
+    
+    The other designs below allow to circumvent this.
 
 .. note:: TODO: speak about progress.
 
 
 .. _design several thread:
 
-One (dedicated) thread per task no stack
-----------------------------------------
+Execute each Ewoks task in a dedicated thread per task
+------------------------------------------------------
 
-You can have an Orange widget that will create a new thread for each new `run`.
+You can have an Orange widget that will create a new thread for each task execution.
 
-For this you should inherit from the :class:`OWEwoksWidgetOneThreadPerRun` widget like this done by the :class:`SumListSeveralThread` of `ewoks example 2 addon`
+For this, make your Orange widget inherit from the :class:`OWEwoksWidgetOneThreadPerRun` widget.
+
+See the example below of the :class:`SumListSeveralThread` of `ewoks example 2 addon`
 
 .. code-block:: python
 
@@ -101,21 +119,20 @@ For this you should inherit from the :class:`OWEwoksWidgetOneThreadPerRun` widge
         ewokstaskclass=SumList2,
     ):
 
-        name = "SumList on several thread"
+        name = "SumList on several threads"
 
-        description = "Sum all elements of a list using a new thread for each" "summation"
+        description = "Sum all elements of a list using a new thread for each sum"
 
         category = "esrfWidgets"
 
         want_main_area = False
 
 
-.. note:: when a new thread is created each time a processing is requested this usually prevent from providing a progress.
 
 .. _design single thread and stack:
 
-One dedicated thread for the task and with a stack
---------------------------------------------------
+Execute Ewoks tasks in dedicated threads handled with a stack
+-------------------------------------------------------------
 
 Last design for which we propose an automatic binding is an Orange widget containing a Stack.
 The stack is associated with a processing thread and has a first in first out (FIFO) behavior.
@@ -130,7 +147,7 @@ This is what is on in `ewoks example 2 addon` / :class:`SumListWithTaskStack`
         ewokstaskclass=SumList3,
     ):
         name = "SumList with one thread and a stack"
-
+OWEwoksWidgetWithTaskStack
         description = "Sum all elements of a list using a thread and a stack"
 
         category = "esrfWidgets"
@@ -138,7 +155,7 @@ This is what is on in `ewoks example 2 addon` / :class:`SumListWithTaskStack`
         want_main_area = False
 
 
-The SumListWithTaskStack also include an instance of `QProgress`. So you will be able to display the progress of each task.
+The :class:`SumListWithTaskStack` holds an instance of `progress` in its task arguments.
 
 .. _design free implementation:
 
@@ -146,9 +163,9 @@ The SumListWithTaskStack also include an instance of `QProgress`. So you will be
 Handling everything yourself
 ----------------------------
 
-In some cases you might want to execute one :class:`Task` with ewoks and another with orange.
+In some cases you might want to execute one :class:`Task` with ewoks and another with Orange.
 
-Here the simplest way is to inherit directly from :class:`OWWidget` and provide the `ewokstaskclass` pointing to the Task to be executed by ewoks when converted.
+For this, inherit directly from :class:`OWWidget` and provide the `ewokstaskclass` pointing to the Task to be executed by ewoks.
 
 .. code-block:: python
 
@@ -161,7 +178,7 @@ Here the simplest way is to inherit directly from :class:`OWWidget` and provide 
         ewokstaskclass=ewokscore.tests.examples.tasks.sumtask.SumTask
 
 
-Then you can define standard orange `Input` and `Output` to connect it to the workflow.
+Then you can define standard Orange `Input` and `Output`:
 
 .. code-block:: python
 
@@ -174,7 +191,7 @@ Then you can define standard orange `Input` and `Output` to connect it to the wo
         class Outputs:
             sum_ = Output("sum", float)
 
-As usual `Inputs` and `Outputs` have to be connected somehow:
+`Inputs` and `Outputs` can be retrieved and used using the same strategies described in the `additional inputs/outputs page <different_inputs_outputs>`_
 
 .. code-block:: python
 
@@ -187,5 +204,3 @@ As usual `Inputs` and `Outputs` have to be connected somehow:
         self.Outputs.sum_.send(...)
 
 
-Orange will use the `@Inputs.[input]` decorator and `Outputs.output` to insure connection between widget.
-Ewoks will use the provided `ewokstaskclass` to know which class to execut and the `INPUT_NAMES`, `OUTPUT_NAMES` to insure connection between classes.
