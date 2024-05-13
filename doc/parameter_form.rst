@@ -1,9 +1,9 @@
 Use ``ParameterForm`` to easily create Orange widget forms
---------------------------------------------------------
+----------------------------------------------------------
 
 Often, an Orange widget boils down to a form to specify inputs for its associated Ewoks task.
 
-For this common usecase, `ewoksorange` provides a ``ParameterForm`` class. Once instanciated, it can generate graphical input elements based on the given input name and types.
+For this common use case, `ewoksorange` provides a ``ParameterForm`` class. Once instantiated, it can generate graphical input elements based on the given input name and types.
 
 For example, let's take a simple Ewoks task ``SumList`` and say we want to write an Orange widget that will allow the user to specify the inputs of this task.
 
@@ -33,7 +33,7 @@ For example, let's take a simple Ewoks task ``SumList`` and say we want to write
                 _sleep(delay)
             self.outputs.sum = sum_
 
-This task takes a ``list`` as input and iterates over it to sum its elements with an optional ``delay``. We then want the Orange widget to provide us two GUI elements: one textbox to write the list, and a numeric spinbox to specify the delay.
+This task takes a ``list`` as input and iterates over it to sum its elements with an optional ``delay``. We then want the Orange widget to provide us two GUI elements: one textbox to specify the list, and a numeric spinbox to specify the delay.
 
 The Orange widget will then look like this:
 
@@ -82,7 +82,7 @@ The Orange widget will then look like this:
     The full example can be found in `src/orangecontrib/ewokstest/sumlist_parameter_form.py`
 
 
-There is a lot to unpack so let's do this part by part:
+There is a lot to unpack so let's do this step by step:
 
 ------
 
@@ -90,7 +90,7 @@ There is a lot to unpack so let's do this part by part:
     
     self._parameter_form = ParameterForm(parent=self.controlArea)
 
-This line creates the ``ParameterForm`` in the ``controlArea`` of the widget. The ``controlArea`` (by opposition of the ``mainArea``) is the widget area where control elements (e.g. buttons) are located so it makes sense to put our form there.
+This line creates the ``ParameterForm`` in the ``controlArea`` of the widget. The ``controlArea`` (as opposed to the ``mainArea``) is the widget area where control elements (e.g. buttons) are located so it makes sense to put our form there.
 
 ------
 
@@ -130,7 +130,7 @@ This part calls ``addParameter`` a second time to generate the second element of
 
 We already saw the ``label`` and ``value_change_callback`` arguments. 
 
-Since on the GUI side, a user can only input numbers of strings, this parameter will be a ``string`` (hence the ``string`` in ``value_for_type`` so that the GUI will have a textbox). 
+Since on the GUI side, a user can only input numbers or strings, this parameter will be a ``string`` (hence the ``string`` in ``value_for_type`` so that the GUI will have a textbox). 
 
 However, we can apply a transformation to the value when retrieving it from the GUI: this is the role of the function given as ``deserialize`` argument. By doing ``json.loads`` on the string representing a ``list``, we can get a list as parameter value instead not a string. The ``serialize`` is the inverse operation (when setting the value from the widget to the GUI).
 
@@ -148,7 +148,7 @@ For these values to be used a inputs of the Ewoks task, we must update the defau
 
 .. warning::
 
-    The parameter values are set as **default inputs**. It means they will be overwritten by **dynamic inputs** that comes from upstream connections or by execution inputs. 
+    The parameter values are set as **default inputs**. It means they will be overwritten by **dynamic inputs** that come from upstream connections or by execution inputs. 
 
 ------
 

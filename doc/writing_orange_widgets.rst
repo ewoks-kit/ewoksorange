@@ -7,9 +7,8 @@ Getting started
 `Orange <https://orangedatamining.com/>`_ widgets can be written and associated to the Ewoks tasks provided by an Ewoks project.
 
 For this, the Ewoks project needs to be setup as an *Orange Add-on* project. 
-A template project can be found `here <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksorangetemplate/>`_.
-
-Further documentation can be found `here <https://ewoksorangetemplate.readthedocs.io/>`_.
+A template project can be found `here <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksorangetemplate/>`_
+with additional documentation `here <https://ewoksorangetemplate.readthedocs.io/>`_.
 
 You can also draw inspiration from the existing Ewoks projects that provide Orange bindings:
 
