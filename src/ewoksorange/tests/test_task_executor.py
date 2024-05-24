@@ -6,6 +6,7 @@ from ewoksorange.bindings.taskexecutor_queue import TaskExecutorQueue
 from ewoksorange.bindings.qtapp import QtEvent
 from ewokscore import Task
 from ewokscore.tests.examples.tasks.sumtask import SumTask
+from ewokscore.missing_data import MISSING_DATA
 
 
 def test_task_executor():
@@ -90,15 +91,19 @@ def test_threaded_task_executor_queue_stop_current_task(qtapp):
             time.sleep(self.inputs.duration)
             self.outputs.result = f"have waited {self.inputs.duration}s"
 
+        def cancel(self):
+            self._cancel = True
+
     executor = TaskExecutorQueue(ewokstaskclass=InfinitProcess)
 
     obj1 = MyObject()
     obj2 = MyObject()
+    obj3 = MyObject()
 
     # test adding two jobs first
     executor.add(
         inputs={
-            "duration": 10,
+            "duration": 100,
         },
         _callbacks=(obj1.finished_callback,),
     )
@@ -109,9 +114,11 @@ def test_threaded_task_executor_queue_stop_current_task(qtapp):
         _callbacks=(obj2.finished_callback,),
     )
     assert not executor.is_available
-    executor.stop_current_task(wait=False)
-    assert obj2.finished.wait(timeout=3)
-    assert obj1.results is None
+    # cancel obj 1
+    executor.cancel_current_task(wait=False)
+    assert obj2.finished.wait(timeout=6)
+    assert obj1.results["result"] is MISSING_DATA
+    assert executor.is_available
     assert obj2.results["result"] == "have waited 1s"
 
     # then try to resend the job with obj1
@@ -119,9 +126,9 @@ def test_threaded_task_executor_queue_stop_current_task(qtapp):
         inputs={
             "duration": 0.2,
         },
-        _callbacks=(obj1.finished_callback,),
+        _callbacks=(obj3.finished_callback,),
     )
-    assert obj1.finished.wait(timeout=3)
-    assert obj1.results["result"] == "have waited 0.2s"
+    assert obj3.finished.wait()
+    assert obj3.results["result"] == "have waited 0.2s"
 
     assert executor.is_available

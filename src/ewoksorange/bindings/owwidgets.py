@@ -634,6 +634,9 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executor.stop()
         self.__task_executor = None
 
+    def cancel_current_task(self):
+        self.__task_executor.cancel_current_task()
+
 
 class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     """
@@ -787,7 +790,5 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             if propagate:
                 self.propagate_downstream()
 
-    def stop_current_task(self, wait=False, process_next=True):
-        self.__task_executor_queue.stop_current_task(
-            wait=wait, process_next=process_next
-        )
+    def stop_current_task(self):
+        self.__task_executor_queue.cancel_current_task()

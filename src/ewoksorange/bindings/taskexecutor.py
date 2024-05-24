@@ -84,6 +84,7 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
         self.execute_task()
 
     def stop(self, timeout: Optional[float] = None, wait: bool = False) -> None:
+        """Stop the current thread"""
         self.blockSignals(True)
         if wait:
             if timeout:
@@ -92,3 +93,11 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
                 self.wait()
         if self.isRunning():
             self.quit()
+
+    def cancel_current_task(self):
+        """
+        cancel current processing.
+        The targetted EwoksTask must have implemented the 'cancel' function
+        """
+        if self.current_task is not None:
+            self.current_task.cancel()
