@@ -391,6 +391,8 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                     channel.send(
                         invalid_data.INVALIDATION_DATA
                     )  # or channel.invalidate?
+                elif isinstance(var, Variable):
+                    channel.send(var.value)
                 else:
                     channel.send(var)
 

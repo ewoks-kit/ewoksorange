@@ -103,7 +103,7 @@ def assert_sumlist_tutorial_with_qt(ewoks_orange_canvas, filename):
     widgets += list(ewoks_orange_canvas.widgets_from_name("Print list sum (1)"))
     widgets += list(ewoks_orange_canvas.widgets_from_name("Print list sum (2)"))
     for w in widgets:
-        results = {name: var.value for name, var in w.get_task_inputs().items()}
+        results = {name: value for name, value in w.get_task_inputs().items()}
         assert results == {"sum": listsum}
 
 
