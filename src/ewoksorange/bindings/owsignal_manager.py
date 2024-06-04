@@ -149,8 +149,8 @@ class SignalManagerWithoutScheme(SignalManagerWithOutputTracking):
     is passed by the Ewoks mechanism, not the Orange mechanism (signal manager).
     """
 
-    def send(self, widget, signal_name, value, *args, **kwargs):
-        self.set_output_value(widget, signal_name, value)
+    def send(self, owwidget, signal_name, value, *args, **kwargs):
+        self.set_output_value(owwidget, signal_name, value)
 
 
 class SignalManagerWithScheme(
@@ -161,47 +161,47 @@ class SignalManagerWithScheme(
     Dereference `Variable` types for native Orange widget inputs.
     """
 
-    def send(self, widget, signal_name, value, *args, **kwargs):
-        super().send(widget, signal_name, value, *args, **kwargs)
-        self.set_output_value(widget, signal_name, value)
+    def send(self, owwidget, signal_name, value, *args, **kwargs):
+        super().send(owwidget, signal_name, value, *args, **kwargs)
+        self.set_output_value(owwidget, signal_name, value)
 
-    def process_signals_for_widget(self, node, widget, signals):
+    def process_signals_for_widget(self, node, owwidget, signals):
         for signal in signals:
             if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
                 signal_name = signal.link.sink_channel
             else:
                 signal_name = signal.channel.name
-            self.set_input_value(widget, signal_name, signal.value)
-        if is_native_widget(widget):
+            self.set_input_value(owwidget, signal_name, signal.value)
+        if is_native_widget(owwidget):
             modified_signals = list()
             for signal in signals:
                 sinfo = signal._asdict()
                 sinfo["value"] = value_from_transfer(sinfo["value"])
                 modified_signals.append(type(signal)(**sinfo))
             signals = modified_signals
-        super().process_signals_for_widget(node, widget, signals)
+        super().process_signals_for_widget(node, owwidget, signals)
 
     def invalidate(self, node, channel):
         super().invalidate(node, channel)
-        widget = self.scheme().widget_for_node(node)
-        if widget is None:
+        owwidget = self.scheme().widget_for_node(node)
+        if owwidget is None:
             return
-        self.invalidate_input_value(widget, channel.name, _MissingSignalValue())
+        self.invalidate_input_value(owwidget, channel.name, _MissingSignalValue())
 
-    def widget_is_executed(self, widget):
+    def widget_is_executed(self, owwidget):
         if self.has_pending():
             return False  # The widget might be executed again
-        return super().widget_is_executed(widget)
+        return super().widget_is_executed(owwidget)
 
 
-def set_input_value(widget, signal, value, index):
+def set_input_value(owwidget, signal, value, index):
     value = invalid_data.as_invalidation(value)
-    key = id(widget), signal.name, signal.id
+    key = id(owwidget), signal.name, signal.id
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        handler = getattr(widget, signal.handler)
+        handler = getattr(owwidget, signal.handler)
         handler(value)
     else:
-        notify_input_helper(signal, widget, value, key=key, index=index)
+        notify_input_helper(signal, owwidget, value, key=key, index=index)
 
 
 def patch_signal_manager():
