@@ -182,23 +182,32 @@ class OrangeCanvasHandler:
             _logger.warning("This workflow has no widgets that can be triggered")
 
     def wait_widgets(self, timeout=None, raise_error: bool = True):
-        """Wait for all widgets to be executed. Widget failures are re-raised."""
+        """Wait for all widgets to be "finished". Widget failures are re-raised."""
         signal_manager = self.signal_manager
         widgets = list(self.iter_widgets())
         t0 = time.time()
+
         while True:
             self.process_events()
-            executed = list()
+            finished = list()
+            exceptions = dict()
             for widget in widgets:
+                is_finished = signal_manager.widget_is_finished(widget)
                 if raise_error and isinstance(widget, OWEwoksBaseWidget):
                     exception = widget.task_exception or widget.post_task_exception
                     if exception is not None:
-                        raise exception
-                is_executed = signal_manager.widget_is_finished(widget)
-                executed.append(is_executed)
-            if all(executed):
+                        if is_finished:
+                            raise exception
+                        else:
+                            exceptions[widget] = exception
+                finished.append(is_finished)
+            if all(finished):
+                if exceptions:
+                    raise next(iter(exceptions.values()))
                 break
             if timeout is not None:
                 if (time.time() - t0) > timeout:
+                    if exceptions:
+                        raise next(iter(exceptions.values()))
                     raise TimeoutError(timeout)
             time.sleep(0.1)
