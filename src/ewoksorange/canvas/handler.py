@@ -194,7 +194,7 @@ class OrangeCanvasHandler:
                     exception = widget.task_exception or widget.post_task_exception
                     if exception is not None:
                         raise exception
-                is_executed = signal_manager.widget_is_executed(widget)
+                is_executed = signal_manager.widget_is_finished(widget)
                 executed.append(is_executed)
             if all(executed):
                 break
