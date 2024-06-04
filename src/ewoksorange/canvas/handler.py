@@ -3,24 +3,25 @@ import time
 import logging
 from typing import Dict
 from AnyQt.QtCore import Qt
+from AnyQt import QtWidgets
 
 from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.canvas.mainwindow import OASYSMainWindow as _MainWindow, QDialog
+    from oasys.canvas.mainwindow import OASYSMainWindow as _OWCanvasMainWindow
     from orangecanvas.registry import set_global_registry
     from orangecanvas.registry.qt import QtWidgetRegistry
     from oasys.canvas import conf as orangeconfig
     from orangecanvas import config as canvasconfig
 
-    class MainWindow(_MainWindow):
+    class OWCanvasMainWindow(_OWCanvasMainWindow):
         def show_scheme_properties_for(self, scheme, window_title=None):
-            return QDialog.Accepted
+            return QtWidgets.QDialog.Accepted
 
     try:
-        from oasys.canvas.mainwindow import MainWindowRegistry
+        from oasys.canvas.mainwindow import _MainWindowRegistry
     except ImportError:
-        MainWindowRegistry = None
+        _MainWindowRegistry = None
 
 else:
     from orangecanvas.registry import set_global_registry
@@ -29,11 +30,11 @@ else:
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
         # load MainWindow and config from Orange if installed
-        from Orange.canvas.mainwindow import MainWindow
+        from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
         from Orange.canvas import config as orangeconfig
     else:
         # else use the base one from orangewidget
-        from orangewidget.workflow.mainwindow import OWCanvasMainWindow as MainWindow
+        from orangewidget.workflow.mainwindow import OWCanvasMainWindow
         from ewoksorange.canvas import config as orangeconfig
 
 from .utils import get_orange_canvas
@@ -62,7 +63,7 @@ class OrangeCanvasHandler:
             self.__is_owner = True
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *_):
         self.close()
 
     def _init_canvas(self):
@@ -84,15 +85,15 @@ class OrangeCanvasHandler:
             widget_discovery = config.widget_discovery(widget_registry)
             widget_discovery.run(orangeconfig.widgets_entry_points())
 
-        canvas = MainWindow()
+        canvas = OWCanvasMainWindow()
         canvas.setAttribute(Qt.WA_DeleteOnClose)
         canvas.set_widget_registry(widget_registry)  # makes a copy of the registry
 
         if (
             ORANGE_VERSION == ORANGE_VERSION.oasys_fork
-            and MainWindowRegistry is not None
+            and _MainWindowRegistry is not None
         ):
-            MainWindowRegistry.Instance().register_instance(
+            _MainWindowRegistry.Instance().register_instance(
                 instance=canvas, application_name=str(os.getpid())
             )  # need it for finding the canvas from the widgets
 

@@ -95,6 +95,7 @@ def qtapp_context() -> Iterator[Optional[QApplication]]:
 
 
 def get_qtapp() -> Optional[QApplication]:
+    """Get the QApplication in the current process (if any)."""
     return QApplication.instance()
 
 
