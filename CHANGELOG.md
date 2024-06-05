@@ -16,6 +16,11 @@ Changes:
 - Provide a helper function `widget_discovery` to be used in add-ons that
   need to avoid using `pkg_resources`
 
+Bug fixes:
+
+- `OWEwoksBaseWidget.get_default_input_value` and `OWEwoksBaseWidget.get_dynamic_input_value`
+- `OrangeCanvasHandler.wait_widgets` should raise task exception only when the workflow is finished
+
 ## 0.6.0
 
 New Features:
