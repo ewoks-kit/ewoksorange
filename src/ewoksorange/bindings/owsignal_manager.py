@@ -237,7 +237,7 @@ class SignalManagerWithScheme(
         self.invalidate_input_value(owwidget, channel.name, _MissingSignalValue())
 
     def widget_is_finished(self, owwidget) -> bool:
-        """Widget is executed and will not be execute again"""
+        """Widget is executed for the last time and will not be execute again"""
         if self.has_pending():
             return False  # The widget might be executed again
         return super().widget_is_executed(owwidget)
