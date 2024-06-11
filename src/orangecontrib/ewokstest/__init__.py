@@ -28,7 +28,10 @@ def widget_discovery(discovery):
 def enable_ewokstest_category():
     global widget_discovery
 
-    del widget_discovery
+    if globals().get("widget_discovery") is not None:
+        # widget_discovery is defined by the OrangeCanvasHandler
+        # but the qtapp fixture can be used without orange
+        del widget_discovery
 
 
 def is_ewokstest_category_enabled() -> bool:
