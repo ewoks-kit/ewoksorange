@@ -1,6 +1,7 @@
 import gc
 import logging
 import warnings
+import functools
 
 import pytest
 
@@ -36,7 +37,31 @@ def collect_garbage(app):
         app.processEvents()
 
 
-@pytest.fixture(scope="session")
+def safe_session_fixture(fixture):
+    """Use instead of `pytest.fixture` to ensure the session fixture is executed only once."""
+    return_value = None
+
+    @functools.wraps(fixture)
+    def wrapper(*args, **kw):
+        nonlocal return_value
+
+        if return_value is None:
+            gen = fixture(*args, **kw)
+            return_value = next(gen)
+            try:
+                yield return_value
+            finally:
+                try:
+                    next(gen)
+                except StopIteration:
+                    pass
+        else:
+            yield return_value
+
+    return pytest.fixture(scope="session")(wrapper)
+
+
+@safe_session_fixture
 def qtapp():
     enable_ewokstest_category()
     with qtapp_context() as app:
