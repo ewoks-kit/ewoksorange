@@ -1,6 +1,13 @@
 # CHANGELOG.md
 
-## 0.8.0 (unreleased)
+## unreleased
+
+## 0.7.1
+
+Bug fixes:
+
+- `enable_ewokstest_category` failed when called more than once
+- `qtapp` session fixture for tests failed when called more than once
 
 ## 0.7.0
 
