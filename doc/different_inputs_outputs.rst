@@ -1,6 +1,10 @@
 Specifying different inputs/outputs for Orange widgets
 ------------------------------------------------------
 
+
+Adding inputs/outputs to Orange widgets
+=======================================
+
 In advanced designs of Orange widgets, it can happen that the widget (GUI) does more work than simply executing the Ewoks task. For example, the Ewoks task could take a filename as input and the Orange widget could provide a GUI with a file browser to select this filename.
 
 In this case, it may be useful to specify additional parameters **only for the Orange widget** (in our example,  the Orange widget could take a root directory as input to know where the file browser should start browsing, but the Ewoks task does not need to have this input).
@@ -68,4 +72,41 @@ The output value must be updated manually via the `.send` function:
 
         def update_output(self, new_value: str):
             self.Outputs.filename.send(new_value)
-            
+
+
+Hiding Ewoks inputs/outputs from Orange widgets
+===============================================
+
+.. note:: 
+
+    Added in version 0.4.0
+
+When linking two Orange tasks, it is possible to link any output of the source Ewoks task to any input of the target Ewoks task.
+
+.. image:: img/data_mapping.png
+    :alt: A image of a link between two tasks showing one output choice on the left and multiple input choices on the right.
+
+
+To hide some of these inputs/outputs, we need to specify their name in the ``_ewoks_inputs_to_hide_from_orange``/``_ewoks_outputs_to_hide_from_orange`` class members.
+
+In this example, we hide inputs from the target task:
+
+.. code:: python
+
+    class RawDataScreenshotCreatorOW(
+        ...
+    ):
+        _ewoks_inputs_to_hide_from_orange = (
+            "__process__",
+            "raw_projections_required",
+            "raw_projections_each",
+            "raw_darks_required",
+            "raw_flats_required",
+        )
+
+        ...
+
+We can then verify that the specified inputs are absent when trying to using this task as a link target:
+
+.. image:: img/data_mapping_with_hidden_inputs.png
+    :alt: A image of a link between two tasks showing one output choice on the left and one input choice on the right.
