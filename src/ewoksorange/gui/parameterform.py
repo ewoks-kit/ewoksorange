@@ -609,7 +609,8 @@ class ParameterForm(QtWidgets.QWidget):
         else:
             directory = self.get_parameter_value(name)
         dialog = QtWidgets.QFileDialog(self)
-        dialog.setFileMode(QtWidgets.QFileDialog.DirectoryOnly)
+        dialog.setFileMode(QtWidgets.QFileDialog.Directory)
+        dialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly)
         if directory:
             dialog.setDirectory(directory)
 
