@@ -1,6 +1,12 @@
 # CHANGELOG.md
 
-## unreleased
+## (unreleased)
+
+## 0.7.2
+
+Bug fixes:
+
+- support pip 24.1
 
 ## 0.7.1
 
