@@ -605,6 +605,10 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             self.__task_executor.finished.emit()
 
     @property
+    def task_executor(self):
+        return self.__task_executor
+
+    @property
     def task_succeeded(self) -> Optional[bool]:
         return self.__task_executor.succeeded
 
