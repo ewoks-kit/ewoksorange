@@ -2,12 +2,12 @@ import os
 import logging
 import numbers
 from typing import Any, Callable, Dict, List, Sequence, Set, Union, Optional
-from contextlib import contextmanager
 
 from AnyQt import QtCore
 from AnyQt import QtWidgets
 from silx.gui.dialog.DataFileDialog import DataFileDialog
 from ewokscore import missing_data
+from ewoksorange.gui.qtsignals import block_signals
 
 _logger = logging.getLogger(__name__)
 
@@ -21,15 +21,6 @@ def default_serialize(value: ParameterValueType) -> WidgetValueType:
 
 def default_deserialize(value: WidgetValueType) -> ParameterValueType:
     return value
-
-
-@contextmanager
-def block_signals(w: QtWidgets.QWidget):
-    old = w.blockSignals(True)
-    try:
-        yield
-    finally:
-        w.blockSignals(old)
 
 
 class ParameterForm(QtWidgets.QWidget):

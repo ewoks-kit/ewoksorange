@@ -3,7 +3,7 @@ from queue import Queue
 
 from AnyQt.QtCore import QObject
 from AnyQt.QtCore import pyqtSignal as Signal
-from ewoksorange.gui.parameterform import block_signals
+from ewoksorange.gui.qtsignals import block_signals
 
 from .taskexecutor import ThreadedTaskExecutor
 
