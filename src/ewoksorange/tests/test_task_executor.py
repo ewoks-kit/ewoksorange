@@ -70,7 +70,7 @@ def test_threaded_task_executor_queue(qtapp):
     assert obj.results == {"result": 3}
 
 
-def test_threaded_task_executor_queue_stop_current_task(qtapp):
+def test_threaded_task_executor_queue_cancel_current_task(qtapp):
     """test an 'infinite' task that we want to kill and launch another task behind"""
 
     class MyObject(QObject):

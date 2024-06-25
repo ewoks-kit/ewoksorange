@@ -790,5 +790,6 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             if propagate:
                 self.propagate_downstream()
 
-    def stop_current_task(self):
+    # expose task executor queue
+    def cancel_current_task(self):
         self.__task_executor_queue.cancel_current_task()
