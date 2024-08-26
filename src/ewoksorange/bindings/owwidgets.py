@@ -2,6 +2,9 @@
 Orange widget base classes to execute Ewoks tasks
 """
 
+from __future__ import annotations
+
+
 import inspect
 import logging
 import warnings
