@@ -2,6 +2,9 @@
 Orange widget base classes to execute Ewoks tasks
 """
 
+from __future__ import annotations
+
+
 import inspect
 import logging
 import warnings
@@ -643,7 +646,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__task_executors = dict()
+        self.__task_executors: dict[int, ThreadedTaskExecutor] = dict()
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
         self.__last_task_done = None
@@ -698,7 +701,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def _cleanup_task_executor(self):
         self.__disconnect_all_task_executors()
-        for task_executor, _ in self.__task_executors:
+        for task_executor in self.__task_executors.values():
             task_executor.quit()
         self.__task_executors.clear()
 
