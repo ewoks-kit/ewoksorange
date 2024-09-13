@@ -3,10 +3,10 @@ include:
     file: .gitlab-ci-template.yml
 
 variables:
-  WARNING1: "ignore::DeprecationWarning:silx.resources"  # Fix in https://github.com/silx-kit/silx/pull/4078
-  WARNING2: "ignore::DeprecationWarning:pkg_resources"  # Distribution.activate
-  WARNING3: "ignore::DeprecationWarning:Orange.util"  # Fix in https://github.com/biolab/orange3/commit/671f184be00169e0a5196e9871ee0156dd35c19f
-  WARNING4: "ignore::DeprecationWarning:orangewidget.gui"  # Fix in https://github.com/biolab/orange-widget-base/commit/2c6b4cfbba035f7f89bb886a02d8330f2710ce7d
+  WARNING1: "ignore::DeprecationWarning:silx.resources" # Fix in https://github.com/silx-kit/silx/pull/4078
+  WARNING2: "ignore::DeprecationWarning:pkg_resources" # Distribution.activate
+  WARNING3: "ignore::DeprecationWarning:Orange.util" # Fix in https://github.com/biolab/orange3/commit/671f184be00169e0a5196e9871ee0156dd35c19f
+  WARNING4: "ignore::DeprecationWarning:orangewidget.gui" # Fix in https://github.com/biolab/orange-widget-base/commit/2c6b4cfbba035f7f89bb886a02d8330f2710ce7d
   IGNORE_WARNINGS: "-W ${WARNING1} -W ${WARNING2} -W ${WARNING3} -W ${WARNING4}"
 
 test-3.7:
@@ -73,7 +73,7 @@ test-3.8-oasys:
   extends: .test-3.8_glx
   script:
     - python -m pip install oasys1 AnyQt
-    - python -m pip install ewokscore importlib-resources pytest
+    - python -m pip install ewokscore!=0.8.0 importlib-resources pytest
     - python -m pip install --no-deps .
     - python -m pip list
     - python -m pytest -v .
@@ -95,4 +95,3 @@ pages:
 
 assets:
   extends: .assets
-
