@@ -65,7 +65,7 @@ class TaskExecutorQueue(QObject, Queue):
         if not self.is_available:
             with block_signals(self._task_executor):
                 self._task_executor.cancel_current_task()
-                # stop and remove curent task from the stack
+                # stop and remove the current task from the stack
                 self._task_executor.stop(wait=wait)
                 # signal that processing is done
                 self._process_ended_direct(task_executor=self._task_executor)
