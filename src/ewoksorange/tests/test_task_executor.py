@@ -86,7 +86,7 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
             }
             self.finished.set()
 
-    class InfinitProcess(Task, input_names=["duration"], output_names=["result"]):
+    class InfiniteTask(Task, input_names=["duration"], output_names=["result"]):
         def run(self):
             time.sleep(self.inputs.duration)
             self.outputs.result = f"have waited {self.inputs.duration}s"
@@ -94,7 +94,7 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
         def cancel(self):
             self._cancel = True
 
-    executor = TaskExecutorQueue(ewokstaskclass=InfinitProcess)
+    executor = TaskExecutorQueue(ewokstaskclass=InfiniteTask)
 
     obj1 = MyObject()
     obj2 = MyObject()
