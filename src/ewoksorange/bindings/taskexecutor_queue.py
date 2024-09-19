@@ -57,14 +57,14 @@ class TaskExecutorQueue(QObject, Queue):
         if self.is_available:
             self._process_next()
 
-    def cancel_current_task(self, wait=True):
+    def cancel_running_task(self, wait=True):
         """
         will cancel current task.
         task_executor signal 'finished' will be blocked but callbacks will be executed to ensure a safe processing
         """
         if not self.is_available:
             with block_signals(self._task_executor):
-                self._task_executor.cancel_current_task()
+                self._task_executor.cancel_running_task()
                 # stop and remove the current task from the stack
                 self._task_executor.stop(wait=wait)
                 # signal that processing is done

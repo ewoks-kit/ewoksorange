@@ -634,8 +634,8 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executor.stop()
         self.__task_executor = None
 
-    def cancel_current_task(self):
-        self.__task_executor.cancel_current_task()
+    def cancel_running_task(self):
+        self.__task_executor.cancel_running_task()
 
 
 class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
@@ -791,5 +791,5 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
                 self.propagate_downstream()
 
     # expose task executor queue
-    def cancel_current_task(self):
-        self.__task_executor_queue.cancel_current_task()
+    def cancel_running_task(self):
+        self.__task_executor_queue.cancel_running_task()

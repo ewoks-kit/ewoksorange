@@ -70,7 +70,7 @@ def test_threaded_task_executor_queue(qtapp):
     assert obj.results == {"result": 3}
 
 
-def test_threaded_task_executor_queue_cancel_current_task(qtapp):
+def test_cancel_current_task_in_task_executor_queue(qtapp):
     """test an 'infinite' task that we want to kill and launch another task behind"""
 
     class MyObject(QObject):
@@ -115,7 +115,7 @@ def test_threaded_task_executor_queue_cancel_current_task(qtapp):
     )
     assert not executor.is_available
     # cancel obj 1
-    executor.cancel_current_task(wait=False)
+    executor.cancel_running_task(wait=False)
     assert obj2.finished.wait(timeout=6)
     assert obj1.results["result"] is MISSING_DATA
     assert executor.is_available
