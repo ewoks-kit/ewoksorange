@@ -74,6 +74,10 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
     """test an 'infinite' task that we want to kill and launch another task behind"""
 
     class MyObject(QObject):
+        """
+        Object containing a callback function ('finished_callback'). This callback function is called when the task has been executed by the task executor
+        """
+
         def __init__(self):
             self.results = None
             self.finished = QtEvent()
@@ -81,6 +85,7 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
         def finished_callback(self):
             # task_executor = self.sender()  # Doesn't work for unknown reasons
             task_executor = executor._task_executor
+            # copy the task output variables
             self.results = {
                 k: v.value for k, v in task_executor.output_variables.items()
             }
@@ -100,7 +105,10 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
     obj2 = MyObject()
     obj3 = MyObject()
 
-    # test adding two jobs first
+    # test adding two tasks to the executor.
+    # expected behavior:
+    # the first task is cancelled (so result is MISSING_DATA)
+    # then the second task is executed (results is 'have waited 1s')
     executor.add(
         inputs={
             "duration": 100,
@@ -121,7 +129,7 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
     assert executor.is_available
     assert obj2.results["result"] == "have waited 1s"
 
-    # then try to resend the job with obj1
+    # then try to sending an new job
     executor.add(
         inputs={
             "duration": 0.2,
