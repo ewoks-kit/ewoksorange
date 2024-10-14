@@ -3,35 +3,8 @@ include:
     file: .gitlab-ci-template.yml
 
 variables:
-  WARNING1: "ignore::DeprecationWarning:silx.resources"  # Fix in https://github.com/silx-kit/silx/pull/4078
-  WARNING2: "ignore::DeprecationWarning:pkg_resources"  # Distribution.activate
-  WARNING3: "ignore::DeprecationWarning:Orange.util"  # Fix in https://github.com/biolab/orange3/commit/671f184be00169e0a5196e9871ee0156dd35c19f
-  WARNING4: "ignore::DeprecationWarning:orangewidget.gui"  # Fix in https://github.com/biolab/orange-widget-base/commit/2c6b4cfbba035f7f89bb886a02d8330f2710ce7d
-  IGNORE_WARNINGS: "-W ${WARNING1} -W ${WARNING2} -W ${WARNING3} -W ${WARNING4}"
-
-test-3.7:
-  extends: .test-3.7_glx
-  variables:
-    JUPYTER_PLATFORM_DIRS: 1
-    PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
-
-test-3.7-old-orange:
-  extends: .test-3.7_glx
-  script:
-    - python -m pip install "orange-canvas-core<0.2.0" "orange-widget-base<4.23.0"
-    - !reference [.test-3.7_glx, script]
-  variables:
-    JUPYTER_PLATFORM_DIRS: 1
-    PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
-
-test-3.7-orange:
-  extends: .test-3.7_glx
-  script:
-    - python -m pip install Orange3
-    - !reference [.test-3.7_glx, script]
-  variables:
-    JUPYTER_PLATFORM_DIRS: 1
-    PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+  WARNING1: "ignore::ResourceWarning:orangecanvas.utils.localization" # https://github.com/biolab/orange-canvas-core/pull/312
+  IGNORE_WARNINGS: "-W ${WARNING1}"
 
 test-3.8-orange:
   extends: .test-3.8_glx
@@ -51,20 +24,11 @@ test-3.9-orange:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 
-test-3.10-orange:
-  extends: .test-3.10_glx
-  script:
-    - python -m pip install Orange3
-    - !reference [.test-3.10_glx, script]
-  variables:
-    JUPYTER_PLATFORM_DIRS: 1
-    PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
-
-test-3.11-orange:
+test-3.12-orange:
   extends: .test-3.11_glx
   script:
     - python -m pip install Orange3
-    - !reference [.test-3.11_glx, script]
+    - !reference [.test-3.12_glx, script]
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
@@ -95,4 +59,3 @@ pages:
 
 assets:
   extends: .assets
-
