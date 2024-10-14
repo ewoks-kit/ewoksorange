@@ -144,7 +144,7 @@ However, we can apply a transformation to the value when retrieving it from the 
 
 This is the function that will be called when the ``ParameterForm`` values change. ``get_parameter_values`` allows us to retrieve the dictionnary of parameter values (the keys being the ``name`` specified in ``addParameter``).
 
-For these values to be used a inputs of the Ewoks task, we must update the default inputs of the task. This is done by ``update_default_inputs`` that takes arguments ``key=value``, the keys being the names of the Ewoks task inputs. Since the names of the parameters and of the Ewoks task inputs are the same (``list`` and ``delay``), we can directly use the ``new_values`` dictionnary coming from the ``ParameterForm``.
+For these values to be used as inputs of the Ewoks task, we must update the default inputs of the task. This is done by ``update_default_inputs`` that takes arguments ``key=value``, the keys being the names of the Ewoks task inputs. Since the names of the parameters and of the Ewoks task inputs are the same (``list`` and ``delay``), we can directly use the ``new_values`` dictionnary coming from the ``ParameterForm``.
 
 .. warning::
 
@@ -158,7 +158,7 @@ For these values to be used a inputs of the Ewoks task, we must update the defau
         initial_values = self.get_default_inputs()
         self._parameter_form.set_parameter_values(**initial_values)
 
-A saved workflow can hold default values for each task. By calling this function when creating the Orange widget, we ensure that these initial default values are propagated the parameter form so that it is initialized with the right values.
+A saved workflow can hold default values for each task. By calling this function when creating the Orange widget, we ensure that these initial default values are propagated to the parameter form so that it is initialized with the right values.
 
 
 Possible `value_for_type` and their associated GUI elements
