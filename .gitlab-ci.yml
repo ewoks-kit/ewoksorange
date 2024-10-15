@@ -27,7 +27,7 @@ test-3.9-orange:
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 
 test-3.12-orange:
-  extends: .test-3.11_glx
+  extends: .test-3.12_glx
   script:
     - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
     - python -m pip install $PIP_INSTALL_OPTIONS .[test,orange]
