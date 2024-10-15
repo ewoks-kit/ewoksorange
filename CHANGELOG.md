@@ -2,6 +2,13 @@
 
 ## (unreleased)
 
+## 0.8.0
+
+Changes:
+
+- `OWEwoksWidgetOneThread`, `OWEwoksWidgetOneThreadPerRun`, `OWEwoksWidgetWithTaskStack`: new method `cancel_running_task` to cancel the current task
+- Usage with Python 3.6 and 3.7 is deprecated. These versions will not be supported by the next major release.
+
 ## 0.7.2
 
 Bug fixes:
