@@ -9,7 +9,8 @@ variables:
 test-3.8-orange:
   extends: .test-3.8_glx
   script:
-    - python -m pip install Orange3
+    - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
+    - python -m pip install $PIP_INSTALL_OPTIONS .[test,orange]
     - !reference [.test-3.8_glx, script]
   variables:
     JUPYTER_PLATFORM_DIRS: 1
@@ -18,7 +19,8 @@ test-3.8-orange:
 test-3.9-orange:
   extends: .test-3.9_glx
   script:
-    - python -m pip install Orange3
+    - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
+    - python -m pip install $PIP_INSTALL_OPTIONS .[test,orange]
     - !reference [.test-3.9_glx, script]
   variables:
     JUPYTER_PLATFORM_DIRS: 1
@@ -27,7 +29,8 @@ test-3.9-orange:
 test-3.12-orange:
   extends: .test-3.11_glx
   script:
-    - python -m pip install Orange3
+    - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
+    - python -m pip install $PIP_INSTALL_OPTIONS .[test,orange]
     - !reference [.test-3.12_glx, script]
   variables:
     JUPYTER_PLATFORM_DIRS: 1
@@ -47,6 +50,12 @@ build_sdist:
 
 test_sdist-3.8:
   extends: .test_sdist-3.8_glx
+  variables:
+    JUPYTER_PLATFORM_DIRS: 1
+    PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+
+test_sdist-3.12:
+  extends: .test_sdist-3.12_glx
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
