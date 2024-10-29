@@ -649,7 +649,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__task_executors: dict[int, ThreadedTaskExecutor] = dict()
+        self.__task_executors: dict[int, tuple[ThreadedTaskExecutor, bool]] = dict()
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
         self.__last_task_done = None
@@ -680,11 +680,8 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             raise
 
     def __disconnect_all_task_executors(self):
-        for task_executor, _ in self.__task_executors:
-            try:
-                task_executor.finished.disconnect(self._ewoks_task_finished_callback)
-            except KeyError:
-                pass
+        for task_executor, _ in self.__task_executors.values():
+            task_executor.finished.disconnect(self._ewoks_task_finished_callback)
 
     def _ewoks_task_finished_callback(self):
         with self._ewoks_task_finished_context():
