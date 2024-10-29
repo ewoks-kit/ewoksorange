@@ -649,7 +649,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__task_executors: dict[int, ThreadedTaskExecutor] = dict()
+        self.__task_executors: dict[int, tuple[ThreadedTaskExecutor, bool]] = dict()
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
         self.__last_task_done = None
