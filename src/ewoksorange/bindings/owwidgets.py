@@ -681,10 +681,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __disconnect_all_task_executors(self):
         for task_executor, _ in self.__task_executors.values():
-            try:
-                task_executor.finished.disconnect(self._ewoks_task_finished_callback)
-            except KeyError:
-                pass
+            task_executor.finished.disconnect(self._ewoks_task_finished_callback)
 
     def _ewoks_task_finished_callback(self):
         with self._ewoks_task_finished_context():
