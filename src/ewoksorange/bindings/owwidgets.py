@@ -129,6 +129,11 @@ if "openclass" in inspect.signature(WidgetMetaClass).parameters:
 class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_opts):
     """Base class for boiler plate code to interconnect ewoks and orange3"""
 
+    _ewoks_inputs_to_hide_from_orange = tuple()
+    """some task input that shouldn't be exposed to orange. Then this is developer duty to make sure those are provided to the task"""
+    _ewoks_outputs_to_hide_from_orange = tuple()
+    """some task output that shouldn't be exposed to orange. Then this is developer duty to handle this out"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__dynamic_inputs = dict()
@@ -362,8 +367,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def trigger_downstream(self) -> None:
         _logger.debug("%s: trigger downstream", self)
 
+        task_outputs_items = filter(
+            lambda item: item[0] not in self._ewoks_outputs_to_hide_from_orange,
+            self.get_task_outputs().items(),
+        )
+
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for ewoksname, var in self.get_task_outputs().items():
+            for ewoksname, var in task_outputs_items:
                 ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
                     type(self), "outputs"
                 )
@@ -375,7 +385,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                 else:
                     self.send(orangename, var)
         else:
-            for ewoksname, var in self.get_task_outputs().items():
+            for ewoksname, var in task_outputs_items:
                 channel = self._get_output_signal(ewoksname)
                 if invalid_data.is_invalid_data(var.value):
                     channel.send(
