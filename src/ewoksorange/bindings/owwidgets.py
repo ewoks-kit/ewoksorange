@@ -351,6 +351,19 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def get_task_outputs(self):
         raise NotImplementedError("Base class")
 
+    def get_task_outputs_visible_by_orange(self):
+        """
+        Some output can be hidden by orange. This function only return the output that should be visible by orange / end user.
+        Other should be handle by the developer defining the `_ewoks_outputs_to_hide_from_orange` field
+        (you must know what you are doing)
+        """
+        return dict(
+            filter(
+                lambda item: item[0] not in self._ewoks_outputs_to_hide_from_orange,
+                self.get_task_outputs().items(),
+            )
+        )
+
     def _get_output_signal(self, ewoksname: str):
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for signal in self.outputs:
@@ -367,13 +380,8 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def trigger_downstream(self) -> None:
         _logger.debug("%s: trigger downstream", self)
 
-        task_outputs_items = filter(
-            lambda item: item[0] not in self._ewoks_outputs_to_hide_from_orange,
-            self.get_task_outputs().items(),
-        )
-
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for ewoksname, var in task_outputs_items:
+            for ewoksname, var in self.get_task_outputs_visible_by_orange().items():
                 ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
                     type(self), "outputs"
                 )
@@ -385,7 +393,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                 else:
                     self.send(orangename, var)
         else:
-            for ewoksname, var in task_outputs_items:
+            for ewoksname, var in self.get_task_outputs_visible_by_orange().items():
                 channel = self._get_output_signal(ewoksname)
                 if invalid_data.is_invalid_data(var.value):
                     channel.send(
@@ -421,7 +429,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
     def clear_downstream(self) -> None:
         _logger.debug("%s: clear downstream", self)
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for ewoksname in self.get_task_outputs():
+            for ewoksname in self.get_task_outputs_visible_by_orange():
                 ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
                     type(self), "outputs"
                 )
@@ -430,7 +438,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                     orangename, invalid_data.INVALIDATION_DATA
                 )  # or self.invalidate?
         else:
-            for name in self.get_task_outputs():
+            for name in self.get_task_outputs_visible_by_orange():
                 channel = self._get_output_signal(name)
                 channel.send(invalid_data.INVALIDATION_DATA)  # or channel.invalidate?
 
