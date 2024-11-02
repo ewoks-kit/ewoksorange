@@ -96,6 +96,7 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     namespace["_ewoks_default_inputs"] = Setting(dict(), schema_only=schema_only)
     namespace["_ewoks_varinfo"] = Setting(dict(), schema_only=schema_only)
     namespace["_ewoks_execinfo"] = Setting(dict(), schema_only=schema_only)
+    namespace["_ewoks_profile_directory"] = Setting(dict(), schema_only=schema_only)
 
     # Deprecated:
     namespace["default_inputs"] = Setting(dict(), schema_only=schema_only)
@@ -193,6 +194,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             "inputs": self.get_task_inputs(),
             "varinfo": self._ewoks_varinfo,
             "execinfo": execinfo,
+            "profile_directory": self._ewoks_profile_directory,
             "node_id": node_id,
         }
 
