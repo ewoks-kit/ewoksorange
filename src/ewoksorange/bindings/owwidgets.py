@@ -96,7 +96,7 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
     namespace["_ewoks_default_inputs"] = Setting(dict(), schema_only=schema_only)
     namespace["_ewoks_varinfo"] = Setting(dict(), schema_only=schema_only)
     namespace["_ewoks_execinfo"] = Setting(dict(), schema_only=schema_only)
-    namespace["_ewoks_profile_directory"] = Setting(dict(), schema_only=schema_only)
+    namespace["_ewoks_task_options"] = Setting(dict(), schema_only=schema_only)
 
     # Deprecated:
     namespace["default_inputs"] = Setting(dict(), schema_only=schema_only)
@@ -190,13 +190,17 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             if not node_id:
                 node_id = scheme.nodes.index(node)
             execinfo = scheme_ewoks_events(scheme, self._ewoks_execinfo)
-        return {
-            "inputs": self.get_task_inputs(),
-            "varinfo": self._ewoks_varinfo,
-            "execinfo": execinfo,
-            "profile_directory": self._ewoks_profile_directory,
-            "node_id": node_id,
-        }
+        if self._ewoks_task_options:
+            task_arguments = dict(self._ewoks_task_options)
+        else:
+            task_arguments = dict()
+        task_arguments.update(
+            inputs=self.get_task_inputs(),
+            varinfo=self._ewoks_varinfo,
+            execinfo=execinfo,
+            node_id=node_id,
+        )
+        return task_arguments
 
     @classmethod
     def get_input_names(cls):

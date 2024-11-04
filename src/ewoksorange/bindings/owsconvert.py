@@ -235,7 +235,7 @@ def ewoks_to_ows(
     destination: Union[str, IO],
     varinfo: Optional[dict] = None,
     execinfo: Optional[dict] = None,
-    profile_directory: Optional[str] = None,
+    task_options: Optional[dict] = None,
     error_on_duplicates: bool = True,
     **load_graph_options,
 ):
@@ -255,7 +255,7 @@ def ewoks_to_ows(
         ewoksgraph,
         varinfo=varinfo,
         execinfo=execinfo,
-        profile_directory=profile_directory,
+        task_options=task_options,
         error_on_duplicates=error_on_duplicates,
     )
     write_ows(owsgraph, destination)
@@ -292,7 +292,7 @@ class OwsNodeWrapper:
             "_ewoks_default_inputs": default_inputs,
             "_ewoks_varinfo": node_attrs.get("varinfo", dict()),
             "_ewoks_execinfo": node_attrs.get("execinfo", dict()),
-            "_ewoks_profile_directory": node_attrs.get("profile_directory", dict()),
+            "_ewoks_task_options": node_attrs.get("task_options", dict()),
         }
 
     def __str__(self):
@@ -316,7 +316,7 @@ class OwsSchemeWrapper:
         graph,
         varinfo: Optional[dict] = None,
         execinfo: Optional[dict] = None,
-        profile_directory: Optional[str] = None,
+        task_options: Optional[dict] = None,
         error_on_duplicates: bool = True,
     ):
         if isinstance(graph, TaskGraph):
@@ -345,8 +345,8 @@ class OwsSchemeWrapper:
                 node_attrs["varinfo"] = varinfo
             if execinfo:
                 node_attrs["execinfo"] = execinfo
-            if profile_directory:
-                node_attrs["profile_directory"] = profile_directory
+            if task_options:
+                node_attrs["task_options"] = task_options
             self._nodes[node_attrs["id"]] = OwsNodeWrapper(orangeid, node_attrs)
             self._widget_classes[node_attrs["id"]] = widget_class
 
