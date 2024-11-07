@@ -4,4 +4,6 @@ Development
 .. toctree::
     :maxdepth: 1
 
-    design/index
+    parameter_form
+    ewoks_widgets
+    inputs_outputs

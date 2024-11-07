@@ -1,18 +1,32 @@
-Deal with execution
-===================
+Ewoks widgets and execution
+===========================
 
 There are several ways of defining how your Orange Widget will handle the execution of its associated Ewoks task.
 
-* :ref:`design qt main thread`: simple, robust. Long processings can prevent the GUI from responding.
-* :ref:`design single thread no stack`: execution is separate from the GUI thread. Can only handle one task at once.
-* :ref:`design several thread`: execution is separate from the GUI thread. Can handle multiple tasks at once. Cannot give information on task progress.
-* :ref:`design single thread and stack`: execution is separate from the GUI thread. Can give information on task progress.
-* :ref:`design free implementation`: for expert users who want to handle the execution themselves.
+* :ref:`design qt main thread (OWEwoksWidgetNoThread)`: simple, robust. Long processings can prevent the GUI from responding.
+* :ref:`design single thread no stack (OWEwoksWidgetOneThread)`: execution is separate from the GUI thread. Can only handle one task at once.
+* :ref:`design several thread (OWEwoksWidgetOneThreadPerRun)`: execution is separate from the GUI thread. Can handle multiple tasks at once. Cannot give information on task progress.
+* :ref:`design single thread and stack (OWEwoksWidgetWithTaskStack)`: execution is separate from the GUI thread. Can give information on task progress.
+* :ref:`design free implementation (No direct ewoks inheritance)`: for expert users who want to handle the execution themselves.
 
-The choice of design depends on your use case: for example, if you deal with small processing times, the first design (the simplest one) is the best. Other designs allow more flexibility but are more complex. 
+The choice of design depends on your use case: for example, if you deal with small processing times, the first design (the simplest one) is the best. Other designs allow more flexibility but are more complex.
 
 
-.. _design qt main thread:
+.. table:: Differences between the ewoks widget and execution
+   :widths: auto
+
+   ============================  =======================================  ==========================  ==============================  
+     Widget                       might freeze the gui during execution    allow parallel execution    strong connection with ewoks
+   ============================  =======================================  ==========================  ==============================
+   OWEwoksWidgetNoThread            True                                    False                       True
+   OWEwoksWidgetOneThread           False                                   False                       True
+   OWEwoksWidgetOneThreadPerRun     False                                   True                        True
+   OWEwoksWidgetWithTaskStack       False                                   True                        True
+   No direct ewoks inheritance      ???                                     ???                         False
+   ============================  =======================================  ==========================  ==============================
+
+
+.. _design qt main thread (OWEwoksWidgetNoThread):
 
 Execute the associated Ewoks task in the Qt main thread
 -------------------------------------------------------
@@ -60,7 +74,7 @@ Each input/output in ``input_names``, ``optional_input_names`` and ``output_name
     
     If this is a problem (e.g. long processing), look at the other designs.
 
-.. _design single thread no stack:
+.. _design single thread no stack (OWEwoksWidgetOneThread):
 
 Execute the associated Ewoks task in a single dedicated thread
 ----------------------------------------------------------------
@@ -101,7 +115,7 @@ The Orange widget is holding a processing thread (`_processingThread`) that will
           at `0%` until the task is finished.
 
 
-.. _design several thread:
+.. _design several thread (OWEwoksWidgetOneThreadPerRun):
 
 Execute each Ewoks task in a dedicated thread per task
 ------------------------------------------------------
@@ -130,7 +144,7 @@ For this, make your Orange widget inherit from the :class:`OWEwoksWidgetOneThrea
 
 
 
-.. _design single thread and stack:
+.. _design single thread and stack (OWEwoksWidgetWithTaskStack):
 
 Execute Ewoks tasks in dedicated threads handled with a stack
 -------------------------------------------------------------
@@ -159,7 +173,7 @@ To access it you can create a widget inheriting from :class:`OWEwoksWidgetWithTa
 
 The :class:`SumListWithTaskStack` holds an instance of `progress` in its task arguments.
 
-.. _design free implementation:
+.. _design free implementation (No direct ewoks inheritance):
 
 
 Handling everything yourself
@@ -205,3 +219,5 @@ Then you can define standard Orange `Input` and `Output`:
         self.Outputs.sum_.send(...)
 
 
+In this case there is no strong connection between ewoks and orange.
+So it will be up to you to make sure there is coherence between the orange widget and the 'ewokstaskclass'. Like making sure input and output (names) are coherent.
