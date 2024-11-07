@@ -1,5 +1,5 @@
-Orange canvas
-=============
+How to launch Orange canvas ?
+=============================
 
 `Orange canvas <https://orange-canvas-core.readthedocs.io/en/latest/>`_ is a GUI allowing users to define and tune a workflow. It is used by several projects like `est <https://gitlab.esrf.fr/workflow/ewoksapps/est>`_, `ewoksfluo <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksfluo>`_ or `ewoksndreg <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksndreg>`_ 
 There is several ways to launch this canvas.
