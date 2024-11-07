@@ -50,6 +50,6 @@ Launch the graphical interface
     :maxdepth: 2
     :hidden:
 
-    canvas
+    tutorials/index
     writing_orange_widgets
     API
