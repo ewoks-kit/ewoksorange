@@ -4,4 +4,6 @@ Tutorials
 .. toctree::
     :maxdepth: 1
 
-    writing_orange_widgets
+    starting_from_scratch
+    getting_inspiration
+

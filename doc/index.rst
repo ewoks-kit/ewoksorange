@@ -52,4 +52,5 @@ Launch the graphical interface
 
     how_to_guides/index
     tutorials/index
+    development/index
     API
