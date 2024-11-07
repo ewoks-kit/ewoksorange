@@ -8,8 +8,6 @@ New features:
 
 - Add `task_options` to `execute_graph`.
 
-## 0.8.1
-
 Bug fixes:
 
 - `OWEwoksWidgetOneThreadPerRun`: fix `__disconnect_all_task_executors`
