@@ -9,4 +9,4 @@ from .oasys_patch import oasys_patch
 oasys_patch()
 patch_signal_manager()
 
-__version__ = "0.8.1"
+__version__ = "0.9.0"
