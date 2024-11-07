@@ -51,5 +51,5 @@ Launch the graphical interface
     :hidden:
 
     how_to_guides/index
-    writing_orange_widgets
+    tutorials/index
     API
