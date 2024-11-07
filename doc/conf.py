@@ -15,6 +15,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx_autodoc_typehints",
+    "sphinx_togglebutton",
 ]
 templates_path = ["_templates"]
 source_suffix = [".rst", ".md"]

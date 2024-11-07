@@ -24,8 +24,9 @@ Install requirements
 
         pip install pyqt5
 
-.. note::
-    
+.. admonition:: Oasys use case
+    :class: dropdown
+
     When using Oasys instead of Orange3, install the requirements like this instead
 
     .. code::
