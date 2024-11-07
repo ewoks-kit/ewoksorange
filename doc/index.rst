@@ -2,7 +2,7 @@
 ewoksorange
 ===========
 
-*ewoksorange* provides a desktop graphical interface for `ewoks <https://ewoks.readthedocs.io/>`_.
+*ewoksorange* provides a desktop graphical interface for `ewoks <https://ewoks.readthedocs.io/>`_ based on `biolab <https://github.com/biolab>`_ the `orange-canvas-core <https://github.com/biolab/orange-canvas-core>`_ and the `orange-base-widget <https://github.com/biolab/orange-widget-base>`_.
 
 *ewoksorange* is developed by the `Software group <http://www.esrf.eu/Instrumentation/software>`_ of the `European Synchrotron <https://www.esrf.eu/>`_.
 
@@ -15,8 +15,18 @@ Install requirements
 
     pip install ewoksorange[orange]
 
-.. note::
-    
+.. warning::
+
+    ewoksorange comes without any predefined Qt binding. You will need to install one to use `ewoksorange`
+    Possible bindings are PyQt5, PyQt6, PySide2. For example, to use PyQt5:
+
+    .. code:: bash
+
+        pip install pyqt5
+
+.. admonition:: Oasys use case
+    :class: dropdown
+
     When using Oasys instead of Orange3, install the requirements like this instead
 
     .. code::
@@ -36,16 +46,11 @@ Launch the graphical interface
     ewoks-canvas
 
 
-
-
-
-
-Documentation
--------------
-
 .. toctree::
     :maxdepth: 2
+    :hidden:
 
-    canvas
-    writing_orange_widgets
+    how_to_guides/index
+    tutorials/index
+    development/index
     API
