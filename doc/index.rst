@@ -18,7 +18,7 @@ Install requirements
 .. warning::
 
     ewoksorange comes without any predefined Qt binding. You will need to install one to use `ewoksorange`
-    For example if you want to add pyqt5 to your environment you can use:
+    Possible bindings are PyQt5, PyQt6, PySide2. For example, to use PyQt5:
 
     .. code:: bash
 
