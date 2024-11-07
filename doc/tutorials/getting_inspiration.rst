@@ -1,7 +1,7 @@
 Getting inspiration from existing projects
 ==========================================
 
-Several existing Ewoks projects are providing a dedicated Orange bindings and be a source of inspiration.
+Several existing Ewoks projects are providing dedicated Orange bindings
 
 * `est <https://gitlab.esrf.fr/workflow/ewoksapps/est>`_
 * `ewoksfluo <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksfluo>`_
