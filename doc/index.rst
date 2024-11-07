@@ -46,15 +46,9 @@ Launch the graphical interface
     ewoks-canvas
 
 
-
-
-
-
-Documentation
--------------
-
 .. toctree::
     :maxdepth: 2
+    :hidden:
 
     canvas
     writing_orange_widgets
