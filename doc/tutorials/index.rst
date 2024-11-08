@@ -6,5 +6,5 @@ Tutorials
 
     starting_from_scratch
     getting_inspiration
-    my_first_widget
+    my_first_widget/index
 
