@@ -1,3 +1,5 @@
+.. _Starting a new project from scratch:
+
 Starting a new project from scratch
 ===================================
 
@@ -30,4 +32,3 @@ If you want to simply include a new EwoksWidget to an existing orangecontrib pro
             Ewoks Without Widgets=orangecontrib.ewoksnowidget
             Ewoks Test=orangecontrib.ewokstest
         +    Test Tuto=orangecontrib.testtuto
-

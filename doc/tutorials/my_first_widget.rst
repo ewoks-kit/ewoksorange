@@ -9,18 +9,24 @@ In this tutorial we will explain you how to create your first orange widget for 
      prerequisites: we consider that you are already fluent in python and experienced with ewoks and qt concepts.
 
 
+Setting up ewoksorange
+----------------------
+
+Please make sure you already have `ewoksorange` install on your python environment. Else please see `installation`
+
+
 Defining an ewoks task
 ----------------------
 
-For this tutorial we would like to add
+For this tutorial we would like to add a dedicated interface for the a task performing some data clipping from percentiles.
+We already have implemented it with `ewokscore <https://gitlab.esrf.fr/workflow/ewoks/ewokscore>`_.
 
 .. code-block:: python
 
     from ewokscore.task import Task
     import numpy
 
-
-    class RescaleDataTask(
+    class ClipDataTask(
         Task,
         input_names=["data", "percentiles"],
         output_names=["data"],
@@ -35,27 +41,22 @@ For this tutorial we would like to add
             percentiles = self.inputs.percentiles
             assert isinstance(percentiles, tuple) and len(percentiles) == 2, "incoherent input"
             assert percentiles[0] <= percentiles[1], "incoherent percentiles value"
-            data_min = numpy.percentile(data, percentiles[0])
-            data_max = numpy.percentile(data, percentiles[1])
 
-            self.outputs.data = self.rescale_data(
-                data=data,
-                data_min=data_min,
-                data_max=data_max,
+            self.outputs.data = numpy.clip(
+                data,
+                a_min=numpy.percentile(data, percentiles[0]),
+                a_max=numpy.percentile(data, percentiles[1]),
             )
-
-        def rescale_data(data, new_min, new_max, data_min=None, data_max=None):
-            if data_min is None:
-                data_min = numpy.min(data)
-            if data_max is None:
-                data_max = numpy.max(data)
-            return (new_max - new_min) / (data_max - data_min) * (data - data_min) + new_min
 
 
 Associate a task to a dedicated orange widget
 ---------------------------------------------
 
-Here we want to create a widget which contains two `QSlider <https://doc.qt.io/qt-6/qslider.html>`_. One for each percentiles.
+Now we want to create a widget that will display the values of the percentiles range received.
+
+For this we want to use the two user friendly sliders using `QSlider <https://doc.qt.io/qt-6/qslider.html>`_ (one for each percentiles)
+
+The behavior will be the following:
 
 * when the 'percentiles' inputs arrive it will update the sliders
 * when the data arrives it will execute the task and provide 'data' to the next widget
@@ -70,14 +71,14 @@ Widget 'skeleton' is the following:
 .. code-block:: python
     :linenos:
 
-    class RescaleDataOW(
+    class ClipDataOW(
         OWEwoksWidgetOneThread,
-        ewokstaskclass=RescaleDataTask,
+        ewokstaskclass=ClipDataTask,
     ):
         name = "rescale data"
-        id = "orange.widgets.my_project.RescaleDataWidget"
+        id = "orange.widgets.my_project.ClipDataTask"
         description = (
-            "widget to rescale data (numpy array) within a percentile range."
+            "widget to clip data (numpy array) within a percentile range."
         )
         pass
 
@@ -95,7 +96,8 @@ Widget 'skeleton' is the following:
 How to test this first widget ?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Include the task in an `orangecontrib` module.
+Including the code in an orangecontrib section
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Orange offers a mechanism to include widget to the orange canvas. For this your library must offer an 'orangecontrib' module.
 For this you can refer to the :ref:`Starting a new project from scratch` chapter.
@@ -113,3 +115,58 @@ If your project is correctly configured you should see the widget appearing:
 .. warning::
 
     each Orange widget should be in a dedicated file. Else orange parsing will fail.
+
+Test it with 'python script' widget
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`Orange3 <https://orangedatamining.com/>`_ package offers the 'python script' widget which are very convenient for testing.
+
+Make sure you have Orange3 installed:
+
+.. code:: bash
+    pip install Orange3
+
+Then you will be able to create a workflow like
+
+.. image:: img/my_first_widget/first_testing.png
+
+
+Now we can provide the task inputs from the two widgets 'input_data' and 'input_percentiles' and print the output data from `output_data` widget.
+Here is the source code we will used in each of the widgets:
+
+.. tab-set::
+
+    .. tab-item:: `input_data` widget
+
+        .. code-block:: python
+            
+            import numpy
+            # generate a numpy array with values between 0.0 to 1.0
+            out_object = numpy.random.random(size=10000).reshape(100, 100)
+            print("input data min is", out_data.min())
+            print("input data max is", out_data.max())
+
+    .. tab-item:: `input_percentiles` widget
+
+        .. code-block:: python
+
+            out_object = (10, 90)
+
+    .. tab-item:: `output_data` widget
+
+        .. code-block:: python
+
+            print("output data min is", in_data.min())
+            print("output data max is", in_data.max())
+
+
+when running the first two python widget we get:
+
+.. code-block:: bash
+
+    Running script:
+    output data min is 0.10002332932732391
+    output data max is 0.9068068838817003
+
+
+If you have a close result then you can move to the next section.
