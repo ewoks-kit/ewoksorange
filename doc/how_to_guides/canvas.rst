@@ -1,3 +1,5 @@
+.. _How to launch Orange canvas ?:
+
 How to launch Orange canvas ?
 =============================
 
