@@ -12,18 +12,18 @@ There are several ways of defining how your Orange Widget will handle the execut
 The choice of design depends on your use case: for example, if you deal with small processing times, the first design (the simplest one) is the best. Other designs allow more flexibility but are more complex.
 
 
-.. table:: Differences between the ewoks widget and execution
+.. table:: Differences between Ewoks widgets
    :widths: auto
 
-   ============================  =======================================  ==========================  ==============================  
-     Widget                       might freeze the gui during execution    allow parallel execution    strong connection with ewoks
-   ============================  =======================================  ==========================  ==============================
-   OWEwoksWidgetNoThread            True                                    False                       True
-   OWEwoksWidgetOneThread           False                                   False                       True
-   OWEwoksWidgetOneThreadPerRun     False                                   True                        True
-   OWEwoksWidgetWithTaskStack       False                                   True                        True
-   No direct ewoks inheritance      ???                                     ???                         False
-   ============================  =======================================  ==========================  ==============================
+   ============================  =======================================  ============================    
+     Widget                       GUI is responsive during execution      Tasks can be run in parallel
+   ============================  =======================================  ============================  
+   OWEwoksWidgetNoThread            No                                     No                       
+   OWEwoksWidgetOneThread           Yes                                    No                       
+   OWEwoksWidgetOneThreadPerRun     Yes                                    Yes                        
+   OWEwoksWidgetWithTaskStack       Yes                                    Yes                        
+   No widget                        Depends on implementation              Depends on implementation 
+   ============================  =======================================  ============================  
 
 
 .. _design qt main thread (OWEwoksWidgetNoThread):
@@ -219,5 +219,4 @@ Then you can define standard Orange `Input` and `Output`:
         self.Outputs.sum_.send(...)
 
 
-In this case there is no strong connection between ewoks and orange.
-So it will be up to you to make sure there is coherence between the orange widget and the 'ewokstaskclass'. Like making sure input and output (names) are coherent.
+In this case, the Orange widget will not derive from the Ewoks task so it will be up to you to make sure there is coherence between two (e.g making sure that input and output names are coherent).
