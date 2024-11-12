@@ -3,11 +3,9 @@
 Provide feedback on task output
 ===============================
 
-We just saw :ref:`tuto_first_widget_how_to_get_input_from_gui` we now want to display the result of the task.
+In this chapter we will:
 
-For this we can:
-
-* add a plot widget to the 'ClipDataOW' that displays the histogram of values in 'data' in the [0.0, 1.0] range
+* add a plot widget to 'ClipDataOW' that displays histogram values of 'data' in [0.0, 1.0]
 * update the plot widget when ewoks task output changes.
 
 First let's move the 'MyWidget' to the control area
@@ -110,3 +108,14 @@ Now your processing should looks like:
 
 .. hint:: You can hide some input(s) you can also hide some output(s) using the `_ewoks_outputs_to_hide_from_orange` class attribute.
 
+
+.. admonition:: Results
+    :class: dropdown
+
+    .. include:: materials/display_output.py
+        :literal:
+
+Further reading
+---------------
+
+:ref:`tuto_first_waiting_for_validation`

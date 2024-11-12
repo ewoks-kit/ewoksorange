@@ -3,9 +3,13 @@
 Add user feedback on task input(s)
 ==================================
 
-Now we want to display the input value of the two percentiles from the GUI
+In this chapter we will:
 
-For this we want to use the two user friendly sliders using `QSlider <https://doc.qt.io/qt-6/qslider.html>`_ (one for each percentiles)
+* display ewoks inputs received from a link.
+
+The input in this tutorial is `percentiles`.
+
+For this we will use two user friendly sliders using `QSlider <https://doc.qt.io/qt-6/qslider.html>`_ (one for each percentiles)
 
 The behavior will be the following:
 
@@ -94,9 +98,21 @@ Then we can link it to the ewoksorange widget
     * l14-15\: append the widget to the orange widget.
     * l17\: when ewoks receives a new signal (when we press run on the python widget for example) it will trigger this function.
     * l18-20\: we can retrieve the task inputs from 'get_task_input_value'. If the input is not defined then the condition l19 will be false. So we will only update the GUI when percentiles are defined.
-    * l19\: call parent 'handleNewSignals()' to resume casual processing. Then the task can be executed and output propagated.
+    * l21\: call parent 'handleNewSignals()' to resume casual processing. Then the task can be executed and output propagated.
 
 
 Then once you will reprocess your workflow you should have:
 
 .. image:: img/input_gui_read_only.png
+
+
+.. admonition:: Results
+    :class: dropdown
+
+    .. include:: materials/input_gui_read_only.py
+        :literal:
+
+Further reading
+---------------
+
+:ref:`tuto_first_widget_how_to_get_input_from_gui`

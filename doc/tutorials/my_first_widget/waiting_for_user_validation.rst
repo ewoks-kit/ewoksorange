@@ -1,14 +1,16 @@
+.. _tuto_first_waiting_for_validation:
+
 
 Going further: waiting for a user validation
 ============================================
 
-In this chapter we want to:
+In this chapter we will:
 
 * avoid downstream propagation until a 'ok' button is pressed
 * add a 'ok' button which trigger downstrean processing with the current result
 
 Avoid downstream propagation
-""""""""""""""""""""""""""""
+----------------------------
 
 To avoid downstream processing we can replace ewoks execution calls from `execute_ewoks_task` to `execute_ewoks_task_without_propagation`.
 
@@ -32,7 +34,7 @@ We also need to reimplement the `handleNewSignals` function that will call by de
 
 
 Add a ok button that triggers downstream processing
-"""""""""""""""""""""""""""""""""""""""""""""""""""
+---------------------------------------------------
 
 for this we will take the shortest way to do it:
 
@@ -64,3 +66,10 @@ Now your workflow should look like:
 .. image:: img/user_validation.gif
 
 .. warning:: be careful that in this use case you don;t have 'angle mort': at some point some (mandatory) input might not be defined abd this can be confusing to the user.
+
+
+.. admonition:: Results
+    :class: dropdown
+
+    .. include:: materials/waiting_for_user_validation.py
+        :literal:

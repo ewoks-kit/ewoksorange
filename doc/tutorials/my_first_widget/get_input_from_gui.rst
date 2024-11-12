@@ -1,13 +1,19 @@
 .. _tuto_first_widget_how_to_get_input_from_gui:
 
-How to get input from GUI
-=========================
+How to get input from GUI ?
+===========================
 
-We saw previously how to :ref:`tuto_first_widget_input_gui_read_only`. Now we want to go further and let the user provide input directly from the GUI.
+In this chapter we will:
 
-So first we need to update the widget to allow user editing it:
+* get an ewoks input directly from the (orange) GUI
 
-.. code-block:: text
+We saw previously how to :ref:`tuto_first_widget_input_gui_read_only`.
+
+Now we want to go further and let the user provide input directly from the GUI.
+
+First think to do is update `MyWidget` widget to allow user edition of 'percentiles':
+
+.. code-block:: diff
 
     diff --git a/src/orangecontrib/testtuto/ClipDataOW.py b/src/orangecontrib/testtuto/ClipDataOW.py
     index e52788b..821428c 100644
@@ -31,7 +37,7 @@ So first we need to update the widget to allow user editing it:
             self.layout().addRow(
 
 
-And then we can connect the QSlider `valueChanged` signal to keep the ewoks input up to date
+Then we can know when the sliders are updated from the QSlider `valueChanged <https://doc.qt.io/qt-6/qabstractslider.html#valueChanged>`_ signal. And use it to keep the ewoks task up to date as well.
 
 
 .. code-block:: python
@@ -68,12 +74,11 @@ And then we can connect the QSlider `valueChanged` signal to keep the ewoks inpu
 
 
 .. hint::
-
-    * l17-18\: connect the sliders to the `_percentileChanged` callback function
+    
+    * l17-18\: connect the sliders to the '\_percentileChanged' callback function
     * l26-27\: when one of the input value change we can update on the fly the input of the ewoks tasks. For this we can use two functions\:
-
-        * `set_dynamic_input`\: will only define the input of ewoks on the fly
-        * `set_default_input`\: will define ewoks input on the fly **and** update orange settings. So this value will be saved within the .ows file. To be used carefully, especially if some input can be heavy.
+        * 'set_dynamic_input'\: will only define the input of ewoks on the fly
+        * 'set_default_input'\: will define ewoks input on the fly **and** update orange settings. So this value will be saved within the .ows file. To be used carefully, especially if some input can be heavy.
 
 Sometime it can be 'counterintuitive' to the user to be able to provide an input from both a link and a GUI.
 In this case you can hide the input from the link by using the `_ewoks_inputs_to_hide_from_orange` class attribute. This will hide the defined inputs from the 'links' interface.
@@ -128,8 +133,20 @@ Now the python widget 'input_percentiles' can be removed as it has been replace 
 
 .. image:: img/forcing_percentiles_from_gui.png
 
-.. note:: the `setPercentiles` function will not automatically call 'valueChanged' of the QSlider. So to have `percentiles` input defined automatically you can either call `_percentileChanged` in the constructor or update the `setPercentiles` function.
+.. note:: `setPercentiles` function will not automatically call 'valueChanged' of the QSlider. So to have `percentiles` input defined automatically you can either call `_percentileChanged` in the constructor or update the `setPercentiles` function.
 
 .. hint:: to make sure the input are propagated you can add a print of the inputs in the EwoksTask (ClipDataTask)
 
 .. warning:: You have to be careful when triggering the processing. You might not want to launch the processing each time one input is updated. Especially if the processing is very time consuming. But maybe when one particular input is changed.
+
+
+.. admonition:: Results
+    :class: dropdown
+
+    .. include:: materials/input_gui_user_input.py
+        :literal:
+
+Further reading
+---------------
+
+:ref:`tuto_first_widget_output_feedback`
