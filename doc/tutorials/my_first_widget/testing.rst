@@ -3,17 +3,22 @@
 How to test this first widget ?
 ===============================
 
+In this chapter we will:
+
+* how to do simple test of a new orangecontrib widget
+
 Including the code in an orangecontrib section
 ----------------------------------------------
 
-Orange offers a mechanism to include widget to the orange canvas. For this your library must offer an 'orangecontrib' module.
-For this you can refer to the :ref:`Starting a new project from scratch` chapter.
+Orange offers a mechanism to include widget(s) to the orange canvas.
 
-If your project is correctly configured you should see the widget appearing:
+Too benefit of it your library must contain a 'orangecontrib' module. See :ref:`Starting a new project from scratch` chapter.
+
+If your project is correctly configured you should now perceive the widget we are building:
 
 .. image:: img/first_discovery.png
 
-.. note:: in this example we have an empty project with orange installed. The `RescaleDataOW` has been added in a `Test Tuto` orangecontrib.
+.. note:: in this example we have an empty project with orange installed. The `ClipDataOW` has been added in a `Test Tuto` orangecontrib.
 
 .. hint:: 
 
@@ -23,14 +28,15 @@ If your project is correctly configured you should see the widget appearing:
 
     each Orange widget should be in a dedicated file. Else orange parsing will fail.
 
-Test it with 'python script' widget
------------------------------------
+Test it with 'Orange3 python script' widget
+-------------------------------------------
 
 `Orange3 <https://orangedatamining.com/>`_ package offers the 'python script' widget which are very convenient for testing.
 
 Make sure you have Orange3 installed:
 
 .. code:: bash
+
     pip install Orange3
 
 Then you will be able to create a workflow like
@@ -77,3 +83,9 @@ when running the first two python widget we get:
 
 
 If you have a close result then you can move to the next section.
+
+
+Further reading
+---------------
+
+:ref:`tuto_first_widget_input_gui_read_only`

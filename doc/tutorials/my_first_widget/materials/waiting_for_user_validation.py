@@ -67,7 +67,7 @@ class ClipDataOW(
         data = self.get_task_output_value("data")
         if not is_missing_data(data):
             self.execute_ewoks_task_without_propagation()
-    
+
     def handleNewSignals(self):
         self.execute_ewoks_task_without_propagation()
 

@@ -16,7 +16,7 @@ If you want to simply include a new EwoksWidget to an existing orangecontrib pro
 
     src/orangecontrib/testtuto/
     ├── __init__.py
-    └── RescaleDataOW.py
+    └── ClipDataOW.py
 
 
 * Update the setup.cfg file: update 'orange3.addon' and 'orange.widgets':

@@ -3,6 +3,10 @@
 Starting my first ewoks orange widget
 =====================================
 
+In this chapter we will:
+
+* see how to do a basic connection between an ewoks task and an orangecontrib widget
+
 Setting up ewoksorange
 ----------------------
 
@@ -78,3 +82,15 @@ Widget 'skeleton' is the following:
     * l5\: the name of the widget (will be displayed in the canvas)
     * l6\: id from the orange point of view. It should be constant with time to make insure workflow compatibility.
     * l7\: tooltip of the widget
+
+
+.. admonition:: Results
+    :class: dropdown
+
+    .. include:: materials/starting.py
+        :literal:
+
+Further reading
+---------------
+
+:ref:`tuto_first_widget_testing`
