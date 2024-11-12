@@ -85,6 +85,4 @@ class MyWidget(qt.QWidget):
         self._maxPercentiles.setValue(percentiles[1])
 
     def getPercentiles(self) -> tuple:
-        return (
-            self._minPercentiles.value(), self._maxPercentiles.value()
-        )
+        return (self._minPercentiles.value(), self._maxPercentiles.value())

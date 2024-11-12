@@ -42,7 +42,7 @@ class ClipDataOW(
     want_main_area = True
     want_control_area = False
 
-    _ewoks_inputs_to_hide_from_orange = ("percentiles", )
+    _ewoks_inputs_to_hide_from_orange = ("percentiles",)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -89,8 +89,6 @@ class MyWidget(qt.QWidget):
     def setPercentiles(self, percentiles: tuple):
         self._minPercentiles.setValue(percentiles[0])
         self._maxPercentiles.setValue(percentiles[1])
-    
+
     def getPercentiles(self) -> tuple:
-        return (
-            self._minPercentiles.value(), self._maxPercentiles.value()
-        )
+        return (self._minPercentiles.value(), self._maxPercentiles.value())
