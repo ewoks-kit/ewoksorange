@@ -17,3 +17,4 @@ In this tutorial we will explain you how to create your first orange widget for 
     input_gui_read_only
     get_input_from_gui
     display_output
+    waiting_for_user_validation
