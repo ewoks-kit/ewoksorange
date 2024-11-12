@@ -15,3 +15,4 @@ In this tutorial we will explain you how to create your first orange widget for 
     starting
     testing
     input_gui_read_only
+    get_input_from_gui
