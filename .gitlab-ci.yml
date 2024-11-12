@@ -10,6 +10,7 @@ test-3.8-orange:
   extends: .test-3.8_glx
   script:
     - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
+    - python -m pip install Orange3 # https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/47
     - python -m pip install $PIP_INSTALL_OPTIONS .[test,orange]
     - !reference [.test-3.8_glx, script]
   variables:
