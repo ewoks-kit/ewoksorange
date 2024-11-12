@@ -59,7 +59,7 @@ First we will create a dedicated widget to display the inputs.
 
 .. hint::
 
-    * l10: At the moment we only want to provide feedback tot the users and not let them define this value
+    * l10\: At the moment we only want to provide feedback tot the users and not let them define this value
 
 Then we can link it to the ewoksorange widget
 
@@ -90,11 +90,11 @@ Then we can link it to the ewoksorange widget
 
 .. hint::
 
-    * l8-9: orange already defines a QDialog in each widget. Those dialog are separated in two - the control ant the main area. For this widget we only care about the main area
-    * l14-15: append the widget to the orange widget.
-    * l17: when ewoks receives a new signal (when we press run on the python widget for example) it will trigger this function.
-    * l18-20: we can retrieve the task inputs from 'get_task_input_value'. If the input is not defined then the condition l19 will be false. So we will only update the GUI when percentiles are defined.
-    * l19: call parent 'handleNewSignals()' to resume casual processing. Then the task can be executed and output propagated.
+    * l8-9\: orange already defines a QDialog in each widget. Those dialog are separated in two - the control ant the main area. For this widget we only care about the main area
+    * l14-15\: append the widget to the orange widget.
+    * l17\: when ewoks receives a new signal (when we press run on the python widget for example) it will trigger this function.
+    * l18-20\: we can retrieve the task inputs from 'get_task_input_value'. If the input is not defined then the condition l19 will be false. So we will only update the GUI when percentiles are defined.
+    * l19\: call parent 'handleNewSignals()' to resume casual processing. Then the task can be executed and output propagated.
 
 
 Then once you will reprocess your workflow you should have:
