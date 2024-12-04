@@ -254,13 +254,15 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
         )
         self.set_dynamic_input(name, value)
 
-    def get_default_input_value(self, name: str, default=None) -> Any:
+    def get_default_input_value(self, name: str, default: Any = None) -> Any:
         return self._ewoks_default_inputs.get(name, default)
 
-    def get_dynamic_input_value(self, name: str, default=None) -> Any:
+    def get_dynamic_input_value(self, name: str, default: Any = None) -> Any:
         return self.__dynamic_inputs.get(name, default)
 
-    def get_task_output_value(self, name, default=missing_data.MISSING_DATA) -> Any:
+    def get_task_output_value(
+        self, name, default: Any = missing_data.MISSING_DATA
+    ) -> Any:
         adict = self.get_task_outputs()
         try:
             value = adict[name]
@@ -271,7 +273,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
             return default
         return value
 
-    def get_task_input_value(self, name: str, default=missing_data.MISSING_DATA) -> Any:
+    def get_task_input_value(
+        self, name: str, default: Any = missing_data.MISSING_DATA
+    ) -> Any:
         adict = self.get_task_inputs()
         try:
             value = adict[name]
