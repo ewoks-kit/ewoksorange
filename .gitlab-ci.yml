@@ -4,7 +4,9 @@ include:
 
 variables:
   WARNING1: "ignore::ResourceWarning:orangecanvas.utils.localization" # https://github.com/biolab/orange-canvas-core/pull/312
-  IGNORE_WARNINGS: "-W ${WARNING1}"
+  WARNING2: "ignore::DeprecationWarning:orangecanvas.utils.localization"
+  WARNING3: "ignore::DeprecationWarning:orangecanvas.utils.localization.si"
+  IGNORE_WARNINGS: "-W ${WARNING1} -W ${WARNING2} -W ${WARNING3}"
 
 test-3.8-orange:
   extends: .test-3.8_glx
