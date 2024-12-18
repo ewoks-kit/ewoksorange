@@ -1,63 +1,77 @@
+.. _How to launch Orange canvas ?:
+
 How to launch Orange canvas ?
 =============================
 
 `Orange canvas <https://orange-canvas-core.readthedocs.io/en/latest/>`_ is a GUI allowing users to define and tune a workflow. It is used by several projects like `est <https://gitlab.esrf.fr/workflow/ewoksapps/est>`_, `ewoksfluo <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksfluo>`_ or `ewoksndreg <https://gitlab.esrf.fr/workflow/ewoksapps/ewoksndreg>`_ 
-There are several ways to launch this canvas.
+There are several ways to launch this canvas:
+
+* :ref:`launch_canvas_from_ewoks_canvas`
+* :ref:`launch_canvas_from_orange_canvas`
+* :ref:`launch_canvas_from_ewoks_execute`
+
+.. _launch_canvas_from_ewoks_canvas:
+
+1. using `ewoks-canvas` application (recommended)
+"""""""""""""""""""""""""""""""""""""""""""""""""
 
 .. tab-set::
 
-    .. tab-item:: 'ewoks-canvas'
+    .. tab-item:: using 'ewoks' CLI
 
-        .. tab-set::
+        .. code-block:: bash
 
-            .. tab-item:: 'ewoks' CLI
+            ewoks-canvas /path/to/orange_wf.ows
 
-                .. code-block:: bash
+        .. note:: launching the canvas with examples available:
 
-                    ewoks-canvas /path/to/orange_wf.ows
+            .. code-block:: bash
 
-                .. note:: launch with examples:
+                ewoks-canvas --with-examples
 
-                    .. code-block:: bash
+    .. tab-item:: using 'python3' CLI
 
-                        ewoks-canvas --with-examples
+        .. code-block:: bash
 
-            .. tab-item:: 'python3' CLI
+            python3 -m ewoksorange.canvas /path/to/orange_wf.ows
 
-                .. code-block:: bash
+.. _launch_canvas_from_orange_canvas:
 
-                    python3 -m ewoksorange.canvas /path/to/orange_wf.ows
+2. using `orange-canvas` application
+"""""""""""""""""""""""""""""""""""""""""""""""""
 
-    .. tab-item:: 'orange-canvas'
+.. tab-set::
 
-        .. tab-set::
+    .. tab-item:: using 'orange-canvas' CLI
 
-            .. tab-item:: 'orange-canvas' CLI
+        .. code-block:: bash
 
-                .. code-block:: bash
+            orange-canvas /path/to/orange_wf.ows [--config ewoksorange.canvas.config.Config]
 
-                    orange-canvas /path/to/orange_wf.ows [--config ewoksorange.canvas.config.Config]
+    .. tab-item:: using 'python3' CLI
 
-            .. tab-item:: 'python3' CLI
+        .. code-block:: bash
 
-                .. code-block:: bash
+            python3 -m orangecanvas /path/to/orange_wf.ows [--config ewoksorange.canvas.config.Config]
 
-                    python3 -m orangecanvas /path/to/orange_wf.ows [--config ewoksorange.canvas.config.Config]
 
-    .. tab-item:: 'ewoks-execute'
+.. _launch_canvas_from_ewoks_execute:
 
-        .. tab-set::
+3. using `ewoks-execute` application
+"""""""""""""""""""""""""""""""""""""""""""""""""
 
-            .. tab-item:: 'ewoks execute' CLI
+.. tab-set::
 
-                .. code-block:: bash
+    .. tab-item:: using 'ewoks' CLI
 
-                    ewoks execute /path/to/ewoks_wf.json --engine orange
-                    ewoks execute /path/to/orange_wf.ows --engine orange
+        .. code-block:: bash
 
-            .. tab-item:: 'python3' CLI
+            ewoks execute /path/to/ewoks_wf.json --engine orange
+            ewoks execute /path/to/orange_wf.ows --engine orange
 
-                .. code-block:: bash
+    .. tab-item:: using 'python3' CLI
 
-                    python3 -m ewoks execute /path/to/ewoks_wf.json --engine orange
-                    python3 -m ewoks execute /path/to/orange_wf.ows --engine orange
+        .. code-block:: bash
+
+            python3 -m ewoks execute /path/to/ewoks_wf.json --engine orange
+            python3 -m ewoks execute /path/to/orange_wf.ows --engine orange
