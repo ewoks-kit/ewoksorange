@@ -50,7 +50,8 @@ def ows_file_context(
                 )
                 yield tmp_filename
             finally:
-                os.remove(tmp_filename)
+                if os.path.exists(tmp_filename):
+                    os.remove(tmp_filename)
         else:
             # Already an .ows file
             yield ows_filename
@@ -68,7 +69,8 @@ def ows_file_context(
             )
             yield tmp_filename
         finally:
-            os.remove(tmp_filename)
+            if os.path.exists(tmp_filename):
+                os.remove(tmp_filename)
 
 
 @ewokscore.execute_graph_decorator(engine="orange")
