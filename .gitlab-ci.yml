@@ -19,7 +19,10 @@ test-3.8-orange:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 
-test-3.9-orange:
+test-3.9-orange-qt5:
+  variables:
+    - QT_API: "PyQt5"
+    - QT_BINDING: ""
   extends: .test-3.9_glx
   script:
     - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
@@ -29,7 +32,10 @@ test-3.9-orange:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 
-test-3.12-orange:
+test-3.12-orange-qt6:
+  variables:
+    - QT_API: "PyQt6"
+    - QT_BINDING: ""
   extends: .test-3.12_glx
   script:
     - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
