@@ -21,11 +21,11 @@ Install requirements
     
     You will need to install one to use `ewoksorange`. Possible bindings are `PyQt5`, `PyQt6`, `PySide` and `PySide2`. 
 
-    For example, to use `PyQt5`:
+    For example, to use `PyQt6`:
 
     .. code:: bash
 
-        pip install pyqt5
+        pip install PyQt6
 
 .. admonition:: Oasys use case
     :class: dropdown
