@@ -104,8 +104,7 @@ def process_qtapp_events() -> None:
     global _APP
     if _APP is None:
         return
-    while _APP.hasPendingEvents():
-        _APP.processEvents()
+    _APP.processEvents(QtCore.QEventLoop.AllEvents)
 
 
 class QtEvent:
@@ -143,7 +142,9 @@ def get_all_qtwidgets() -> list:
         return list()
 
     sapp = str(type(app))
-    if "PyQt5" in sapp:
+    if "PyQt6" in sapp:
+        from PyQt6.sip import ispycreated as createdByPython  # noqa
+    elif "PyQt5" in sapp or "PyQt6" in sapp:
         from PyQt5.sip import ispycreated as createdByPython  # noqa
     elif "PySide2" in sapp:
         from PySide2.shiboken2 import createdByPython  # noqa
