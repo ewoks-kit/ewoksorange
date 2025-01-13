@@ -71,6 +71,9 @@ test_sdist-3.12:
 
 build_doc:
   extends: .build_doc
+  script:
+    - python -m pip install $QT_API
+    - !reference [.build_doc, script]
 
 pages:
   extends: .pages
