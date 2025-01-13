@@ -59,12 +59,18 @@ build_sdist:
 
 test_sdist-3.8:
   extends: .test_sdist-3.8_glx
+  script:
+    - python -m pip install $QT_API
+    - !reference [.test_sdist-3.8_glx, script]
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 
 test_sdist-3.12:
   extends: .test_sdist-3.12_glx
+  script:
+    - python -m pip install $QT_API
+    - !reference [.test_sdist-3.12_glx, script]
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
