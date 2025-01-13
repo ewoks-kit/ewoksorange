@@ -2,11 +2,11 @@ import json
 from functools import partial
 from ewokscore import missing_data
 from ..gui.parameterform import ParameterForm
+from AnyQt import QtCore
 
 
 def test_parameterform(qtapp):
-    while qtapp.hasPendingEvents():
-        qtapp.processEvents()
+    qtapp.processEvents(QtCore.QEventLoop.AllEvents)
 
     nchanged = dict()
 
@@ -92,8 +92,7 @@ def test_parameterform(qtapp):
     form.set_parameter_value("choice", missing_data.MISSING_DATA)
     assert form.get_parameter_value("choice") == missing_data.MISSING_DATA
 
-    while qtapp.hasPendingEvents():
-        qtapp.processEvents()
+    qtapp.processEvents(QtCore.QEventLoop.AllEvents)
 
     # form.show()
     # qtapp.exec()

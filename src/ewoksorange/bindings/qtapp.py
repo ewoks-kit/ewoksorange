@@ -104,8 +104,7 @@ def process_qtapp_events() -> None:
     global _APP
     if _APP is None:
         return
-    while _APP.hasPendingEvents():
-        _APP.processEvents()
+    _APP.processEvents(QtCore.QEventLoop.AllEvents)
 
 
 class QtEvent:
