@@ -39,10 +39,29 @@ Make sure you have Orange3 installed:
 
     pip install Orange3
 
+Create a workflow for testing a task
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Then you will be able to create a workflow like
 
 .. image:: img/first_testing.png
 
+In this example the
+* 'rescale data' is the task you just created.
+* The three other tasks / widgets are instances of `python script <https://orangedatamining.com/widget-catalog/transform/pythonscript/>`_ from `Orange3 <https://orangedatamining.com/>`_
+
+.. hint::
+    the pythonscript widget is now part of the **transform** category but it might also be in the 'data' category according to the version you are using.
+
+.. warning::
+
+    Link should use the **Object** input / output. Other types are Orange specific object that we don't need here.
+
+    .. image:: img/python_script_linking.png
+
+
+Providing input and output
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Now we can provide the task inputs from the two widgets 'input_data' and 'input_percentiles' and print the output data from `output_data` widget.
 Here is the source code we will used in each of the widgets:
