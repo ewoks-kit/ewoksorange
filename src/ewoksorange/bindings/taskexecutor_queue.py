@@ -96,7 +96,7 @@ class _ThreadedTaskExecutor(ThreadedTaskExecutor):
         self,
         _callbacks: Iterable = tuple(),
         _log_missing_inputs: bool = False,
-        **kwargs
+        **kwargs,
     ):
         kwargs["log_missing_inputs"] = _log_missing_inputs
         super().create_task(**kwargs)

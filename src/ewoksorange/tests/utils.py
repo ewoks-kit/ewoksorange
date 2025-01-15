@@ -8,7 +8,7 @@ def execute_task(
     task_cls: Union[Type[Task], Type[OWEwoksBaseWidget]],
     inputs: Optional[Mapping] = None,
     timeout: int = 60,
-    **widget_init_params
+    **widget_init_params,
 ) -> dict:
     """Execute the task (use the orange widget or ewoks task class) and return the results"""
     if issubclass(task_cls, OWEwoksBaseWidget):

@@ -1,11 +1,13 @@
 """rm -rf doc/_generated/; sphinx-build doc build/sphinx/html -E -a
 """
 
-from ewoksorange import __version__ as release
+import importlib.metadata
+
+release = importlib.metadata.version("ewoksorange")
 
 project = "ewoksorange"
 version = ".".join(release.split(".")[:2])
-copyright = "2021-2024, ESRF"
+copyright = "2021-2025, ESRF"
 author = "ESRF"
 docstitle = f"{project} {version}"
 

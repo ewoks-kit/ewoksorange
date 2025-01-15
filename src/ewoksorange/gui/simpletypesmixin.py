@@ -19,7 +19,7 @@ class SimpleTypesWidgetMixin:
                 name,
                 value=value,
                 value_change_callback=self._default_inputs_changed,
-                **options
+                **options,
             )
 
         box = gui.widgetBox(self.controlArea, "Inputs From Previous Task")

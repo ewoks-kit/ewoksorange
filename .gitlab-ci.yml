@@ -20,28 +20,26 @@ test-3.8-orange:
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 
 test-3.9-orange-qt5:
-  variables:
-    - QT_API: "PyQt5"
-    - QT_BINDING: ""
   extends: .test-3.9_glx
   script:
     - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
     - python -m pip install $QT_API $PIP_INSTALL_OPTIONS .[test,orange]
     - !reference [.test-3.9_glx, script]
   variables:
+    QT_API: "PyQt5"
+    QT_BINDING: ""
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 
 test-3.12-orange-qt6:
-  variables:
-    - QT_API: "PyQt6"
-    - QT_BINDING: ""
   extends: .test-3.12_glx
   script:
     - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
     - python -m pip install $QT_API $PIP_INSTALL_OPTIONS .[test,orange]
     - !reference [.test-3.12_glx, script]
   variables:
+    QT_API: "PyQt6"
+    QT_BINDING: ""
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 

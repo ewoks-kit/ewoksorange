@@ -1,5 +1,87 @@
 [build-system]
-requires = [
-    "setuptools>=46.4"
-]
+requires = ["setuptools>=46.4"]
 build-backend = "setuptools.build_meta"
+[project]
+name = "ewoksorange"
+version = "1.1.0"
+authors = [{ name = "ESRF", email = "dau-pydev@esrf.fr" }]
+description = "Orange binding for Ewoks"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { file = "LICENSE.md" }
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "ewokscore >=1.0.0",
+    "orange-canvas-core",
+    "orange-widget-base",
+    "importlib-resources; python_version<'3.9'",
+]
+
+[project.urls]
+Homepage = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/"
+Documentation = "https://ewoksorange.readthedocs.io/"
+Repository = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/"
+Issues = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/issues"
+Changelog = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+full = ["PyQt6"]
+test = ["ewoksorange[full]", "pytest >=7"]
+dev = ["ewoksorange[test]", "black >=22", "flake8 >=4"]
+doc = [
+    "ewoksorange[test]",
+    "sphinx >=4.5",
+    "sphinx-autodoc-typehints >=1.16",
+    "sphinx-design",
+    "sphinx-togglebutton",
+    "pydata-sphinx-theme",
+]
+orange = ["bottleneck<1.4.1; python_version<'3.9'", "Orange3"]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ['*.ows', '*.png', '*.svg']
+
+[tool.coverage.run]
+omit = ['src/ewoksorange/tests/*']
+
+[project.scripts]
+ewoks-canvas = "ewoksorange.canvas.main:main"
+
+[project.entry-points."orange3.addon"]
+"ewoksdemo" = "orangecontrib.ewoksdemo"
+"ewoksnowidget" = "orangecontrib.ewoksnowidget"
+
+[project.entry-points."orange.widgets"]
+"Ewoks Demo" = "orangecontrib.ewoksdemo"
+"Ewoks Without Widgets" = "orangecontrib.ewoksnowidget"
+"Ewoks Test" = "orangecontrib.ewokstest"
+
+[project.entry-points."orangecanvas.examples"]
+"Ewoks Demo" = "orangecontrib.ewoksdemo.tutorials"
+"Ewoks Test" = "orangecontrib.ewokstest.tutorials"
+
+[project.entry-points."orange.widgets.tutorials"]
+"Ewoks Demo" = "orangecontrib.ewoksdemo.tutorials"
+"Ewoks Test" = "orangecontrib.ewokstest.tutorials"
+
+[project.entry-points."orange.canvas.help"]
+"html-index" = "orangecontrib.ewoksdemo:WIDGET_HELP_PATH"
+
+[project.entry-points."oasys.addon"]
+"ewoksdemo" = "orangecontrib.ewoksdemo"
+"ewoksnowidget" = "orangecontrib.ewoksnowidget"
+
+[project.entry-points."oasys.widgets"]
+"Ewoks Demo" = "orangecontrib.ewoksdemo"
+"Ewoks Without Widgets" = "orangecontrib.ewoksnowidget"
+"Ewoks Test" = "orangecontrib.ewokstest"
