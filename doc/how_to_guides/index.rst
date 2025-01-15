@@ -6,4 +6,3 @@ How-to Guides ?
 
     installation
     canvas
-    build_the_doc
