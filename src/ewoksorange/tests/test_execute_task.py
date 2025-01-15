@@ -54,7 +54,7 @@ class NoThreadTestWidget(
     PatchCalls,
     owwidgets.OWEwoksWidgetNoThread,
     **ow_build_opts,
-    ewokstaskclass=TaskForTesting
+    ewokstaskclass=TaskForTesting,
 ):
     name = "TaskForTesting"
 
@@ -63,7 +63,7 @@ class OneThreadTestWidget(
     PatchCalls,
     owwidgets.OWEwoksWidgetOneThread,
     **ow_build_opts,
-    ewokstaskclass=TaskForTesting
+    ewokstaskclass=TaskForTesting,
 ):
     name = "TaskForTesting"
 
@@ -72,7 +72,7 @@ class OneThreadPerRunTestWidget(
     PatchCalls,
     owwidgets.OWEwoksWidgetOneThreadPerRun,
     **ow_build_opts,
-    ewokstaskclass=TaskForTesting
+    ewokstaskclass=TaskForTesting,
 ):
     name = "TaskForTesting"
 
@@ -81,7 +81,7 @@ class TaskStackTestWidget(
     PatchCalls,
     owwidgets.OWEwoksWidgetWithTaskStack,
     **ow_build_opts,
-    ewokstaskclass=TaskForTesting
+    ewokstaskclass=TaskForTesting,
 ):
     name = "TaskForTesting"
 

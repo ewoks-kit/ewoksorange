@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+Drop support for Python 3.6 and 3.7
+
 ## 1.1.0
 
 New features:
