@@ -1,5 +1,4 @@
-"""Commonly used Orange3 components for implementing Orange Widgets.
-"""
+"""Commonly used Orange3 components for implementing Orange Widgets."""
 
 from ..orange_version import ORANGE_VERSION
 

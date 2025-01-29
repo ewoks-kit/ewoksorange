@@ -1,6 +1,3 @@
-"""rm -rf doc/_generated/; sphinx-build doc build/sphinx/html -E -a
-"""
-
 import importlib.metadata
 
 release = importlib.metadata.version("ewoksorange")

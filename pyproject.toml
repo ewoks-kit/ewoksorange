@@ -31,7 +31,7 @@ Changelog = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/blob/main/CHANG
 [project.optional-dependencies]
 full = ["PyQt6"]
 test = ["ewoksorange[full]", "pytest >=7"]
-dev = ["ewoksorange[test]", "black >=22", "flake8 >=4"]
+dev = ["ewoksorange[test]", "black >=25", "flake8 >=4"]
 doc = [
     "ewoksorange[test]",
     "sphinx >=4.5",
