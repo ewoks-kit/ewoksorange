@@ -1,5 +1,4 @@
-"""Copy parts of Orange.canvas.config to be used when Orange3 is not installed.
-"""
+"""Copy parts of Orange.canvas.config to be used when Orange3 is not installed."""
 
 from ..orange_version import ORANGE_VERSION
 
