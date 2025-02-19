@@ -229,18 +229,18 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
     def set_default_input(self, name: str, value: Any) -> None:
         if invalid_data.is_invalid_data(value):
-            _logger.info("ewoks widget: remove default input %r", name)
+            _logger.debug("ewoks widget: remove default input %r", name)
             self._ewoks_default_inputs.pop(name, None)
         else:
-            _logger.info("ewoks widget: set default input %r = %s", name, value)
+            _logger.debug("ewoks widget: set default input %r = %s", name, value)
             self._ewoks_default_inputs[name] = value
 
     def set_dynamic_input(self, name: str, value: Any) -> None:
         if invalid_data.is_invalid_data(value):
-            _logger.info("ewoks widget: remove dynamic input %r", name)
+            _logger.debug("ewoks widget: remove dynamic input %r", name)
             self.__dynamic_inputs.pop(name, None)
         else:
-            _logger.info(
+            _logger.debug(
                 "ewoks widget: set dynamic input %r = %s",
                 name,
                 value_from_transfer(value, varinfo=self._ewoks_varinfo),
