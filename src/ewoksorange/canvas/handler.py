@@ -176,7 +176,7 @@ class OrangeCanvasHandler:
             if not any(self.scheme.find_links(sink_node=node)):
                 widget = self.scheme.widget_for_node(node)
                 triggered = True
-                _logger.info("Trigger workflow node %r", node.title)
+                _logger.debug("Trigger workflow node %r", node.title)
                 widget.handleNewSignals()
         if not triggered:
             _logger.warning("This workflow has no widgets that can be triggered")
