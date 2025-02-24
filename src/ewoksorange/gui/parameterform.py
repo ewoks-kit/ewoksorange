@@ -293,6 +293,11 @@ class ParameterForm(QtWidgets.QWidget):
         for connect, func in connections:
             connect(func)
 
+    def addStretch(self):
+        """Append a stretchable blank row to the form"""
+        grid = self.layout()
+        grid.setRowStretch(grid.rowCount(), 1)
+
     def _get_widget(self, name: str, col: int) -> QtWidgets.QWidget:
         if name not in self._fields:
             return None

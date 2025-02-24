@@ -33,6 +33,7 @@ class OWSumList(
             deserialize=json.loads,
             value_change_callback=self._inputs_changed,
         )
+        self._parameter_form.addStretch()
         self._update_parameter_values()
 
     def _inputs_changed(self):
