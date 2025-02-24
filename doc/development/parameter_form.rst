@@ -67,6 +67,7 @@ The Orange widget will then look like this:
                 deserialize=json.loads,
                 value_change_callback=self._inputs_changed
             )
+            self._parameter_form.addStretch()
             self._update_parameter_values()
 
         def _inputs_changed(self):
@@ -133,6 +134,15 @@ We already saw the ``label`` and ``value_change_callback`` arguments.
 Since on the GUI side, a user can only input numbers or strings, this parameter will be a ``string`` (hence the ``string`` in ``value_for_type`` so that the GUI will have a textbox). 
 
 However, we can apply a transformation to the value when retrieving it from the GUI: this is the role of the function given as ``deserialize`` argument. By doing ``json.loads`` on the string representing a ``list``, we can get a list as parameter value instead not a string. The ``serialize`` is the inverse operation (when setting the value from the widget to the GUI).
+
+------
+
+.. code:: python
+
+    self._parameter_form.addStretch()
+
+This line adds a blank area that will occupy any extra vertical space in the Orange widget.
+This prevents the parameter widgets to expand vertically.
 
 ------
 
