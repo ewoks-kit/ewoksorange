@@ -6,7 +6,6 @@ from ewoksorange.bindings import ewoks_to_ows
 class Dummy(Task, input_names=["a"], output_names=["b"]):
     def run(self):
         self.outputs.b = self.inputs.a + 1
-        print(self.inputs.a, "->", self.outputs.b)
 
 
 def test_default_widgets(tmpdir, ewoks_orange_canvas):
