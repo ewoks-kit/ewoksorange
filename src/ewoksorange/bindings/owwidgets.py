@@ -114,6 +114,8 @@ def prepare_OWEwoksWidgetclass(namespace, ewokstaskclass):
 
 class _OWEwoksWidgetMetaClass(WidgetMetaClass):
     def __new__(metacls, name, bases, attrs, ewokstaskclass=None, **kw):
+        if "name" not in attrs:
+            attrs["name"] = name
         if ewokstaskclass:
             prepare_OWEwoksWidgetclass(attrs, ewokstaskclass)
         return super().__new__(metacls, name, bases, attrs, **kw)
