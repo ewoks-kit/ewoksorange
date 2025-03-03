@@ -679,7 +679,6 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     @contextmanager
     def __init_task_executor(self, task_executor, propagate: bool):
-        self.__disconnect_all_task_executors()
         task_executor.finished.connect(self._ewoks_task_finished_callback)
         self.__add_task_executor(task_executor, propagate)
         try:
