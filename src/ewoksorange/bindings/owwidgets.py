@@ -392,8 +392,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
                         invalid_data.INVALIDATION_DATA
                     )  # or channel.invalidate?
                 elif isinstance(var, Variable):
+                    # case of Output being defined by ewoksOrange binding system
                     channel.send(var.value)
                 else:
+                    # case of native orange Output
                     channel.send(var)
 
     def _output_changed(self) -> None:
