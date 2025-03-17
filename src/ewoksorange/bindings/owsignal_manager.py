@@ -48,20 +48,20 @@ class _OwWidgetSignalValues:
     def _get_value(self, signal_name: str | Signal) -> Any:
         if not isinstance(signal_name, str):
             signal_name = signal_name.name
+
         if signal_name not in self._values:
             self._values[signal_name] = _MissingSignalValue()
         return self._values[signal_name]
 
-    def _set_value(self, signal_name: str | Signal, value: Variable) -> None:
+    def _set_value(self, signal_name: str | Signal, value: Any) -> None:
         if isinstance(signal_name, Signal):
             signal_name = signal_name.name
-        if not isinstance(value, Variable):
-            raise TypeError(
-                f"Value is expected to be an instance of {Variable}. Got {type(value)}"
-            )
-        self._values[signal_name] = value
 
-    def set_value(self, signal_name: str, value: Variable) -> None:
+        var = Variable(value=value)
+        self._values[signal_name] = var
+        # var.dump()
+
+    def set_value(self, signal_name: str, value: Any) -> None:
         previous_value = self._get_value(signal_name)
         self._set_value(signal_name, value)
         if isinstance(previous_value, _MissingSignalValue):
