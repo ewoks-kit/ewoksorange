@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 from ..orange_version import ORANGE_VERSION
@@ -27,6 +29,8 @@ from .owwidgets import is_native_widget
 from .qtapp import QtEvent
 from ..bindings.owsignals import get_input_names, get_output_names
 from . import invalid_data
+from ewokscore.variable import Variable
+from orangecanvas.scheme.signalmanager import Signal
 
 
 class _MissingSignalValue:
@@ -39,21 +43,25 @@ class _OwWidgetSignalValues:
     """Store signal values and support waiting for a value"""
 
     def __init__(self):
-        self._values = dict()
+        self._values: dict[str, Variable | _MissingSignalValue] = dict()
 
-    def _get_value(self, signal_name) -> Any:
+    def _get_value(self, signal_name: str | Signal) -> Any:
         if not isinstance(signal_name, str):
             signal_name = signal_name.name
         if signal_name not in self._values:
             self._values[signal_name] = _MissingSignalValue()
         return self._values[signal_name]
 
-    def _set_value(self, signal_name, value) -> None:
-        if not isinstance(signal_name, str):
+    def _set_value(self, signal_name: str | Signal, value: Variable) -> None:
+        if isinstance(signal_name, Signal):
             signal_name = signal_name.name
+        if not isinstance(value, Variable):
+            raise TypeError(
+                f"Value is expected to be an instance of {Variable}. Got {type(value)}"
+            )
         self._values[signal_name] = value
 
-    def set_value(self, signal_name, value) -> None:
+    def set_value(self, signal_name: str, value: Variable) -> None:
         previous_value = self._get_value(signal_name)
         self._set_value(signal_name, value)
         if isinstance(previous_value, _MissingSignalValue):
@@ -65,14 +73,14 @@ class _OwWidgetSignalValues:
             return
         self.set_value(signal_name, _MissingSignalValue())
 
-    def get_value(self, signal_name, timeout=None) -> Any:
+    def get_value(self, signal_name: str, timeout=None) -> Any:
         value = self._get_value(signal_name)
         if isinstance(value, _MissingSignalValue):
             value.completed.wait(timeout=timeout)
             value = self._get_value(signal_name)
         return value
 
-    def has_value(self, signal_name) -> bool:
+    def has_value(self, signal_name: str) -> bool:
         value = self._get_value(signal_name)
         return not isinstance(value, _MissingSignalValue)
 
