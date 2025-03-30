@@ -34,7 +34,6 @@ def enable_ewokstest_category():
 
 
 def is_ewokstest_category_enabled() -> bool:
-    global widget_discovery
     try:
         widget_discovery(None)
     except NameError:
