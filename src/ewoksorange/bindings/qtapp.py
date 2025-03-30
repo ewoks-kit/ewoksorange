@@ -101,7 +101,6 @@ def get_qtapp() -> Optional[QApplication]:
 
 def process_qtapp_events() -> None:
     """Process all pending Qt events when a Qt event loop is running"""
-    global _APP
     if _APP is None:
         return
     _APP.processEvents(QtCore.QEventLoop.AllEvents)
@@ -116,7 +115,6 @@ class QtEvent:
 
     def wait(self, timeout: Optional[float] = None) -> bool:
         """Processes events associated to the calling thread while waiting"""
-        global _APP
         if timeout is not None:
             t0 = time.time()
         while not self.__flag:
