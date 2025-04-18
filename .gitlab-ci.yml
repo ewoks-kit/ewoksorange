@@ -79,7 +79,7 @@ test_sdist-3.9-win:
   extends: .test_sdist-3.9_glx-win
   script:
     - python -m pip install %QT_API%
-    - !reference [.test_sdist-3.9_glx, script]
+    - !reference [.test_sdist-3.9_glx-win, script]
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
