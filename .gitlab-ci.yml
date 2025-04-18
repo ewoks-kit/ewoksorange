@@ -19,6 +19,17 @@ test-3.8-orange:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 
+test-3.10-orange-win:
+  extends: .test-3.10_glx-win
+  script:
+    - echo PIP_INSTALL_OPTIONS %PIP_INSTALL_OPTIONS%
+    - python -m pip install Orange3 # https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/47
+    - python -m pip install %QT_API% %PIP_INSTALL_OPTIONS% .[test,orange]
+    - !reference [.test-3.10_glx-win, script]
+  variables:
+    JUPYTER_PLATFORM_DIRS: 1
+    PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+
 test-3.9-orange-qt5:
   extends: .test-3.9_glx
   script:
@@ -60,6 +71,24 @@ test_sdist-3.8:
   script:
     - python -m pip install $QT_API
     - !reference [.test_sdist-3.8_glx, script]
+  variables:
+    JUPYTER_PLATFORM_DIRS: 1
+    PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+
+test_sdist-3.9-win:
+  extends: .test_sdist-3.9_glx-win
+  script:
+    - python -m pip install %QT_API%
+    - !reference [.test_sdist-3.9_glx, script]
+  variables:
+    JUPYTER_PLATFORM_DIRS: 1
+    PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+
+test_sdist-3.11:
+  extends: .test_sdist-3.11_glx
+  script:
+    - python -m pip install $QT_API
+    - !reference [.test_sdist-3.11_glx, script]
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"

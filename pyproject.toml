@@ -30,8 +30,16 @@ Changelog = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/blob/main/CHANG
 
 [project.optional-dependencies]
 full = ["PyQt6"]
-test = ["ewoksorange[full]", "pytest >=7"]
-dev = ["ewoksorange[test]", "black >=25", "flake8 >=4"]
+test = [
+    "ewoksorange[full]",
+    "pytest >=7",
+    "pytest-timeout",
+]
+dev = [
+    "ewoksorange[test]",
+    "black >=25",
+    "flake8 >=4"
+]
 doc = [
     "ewoksorange[test]",
     "sphinx >=4.5",
@@ -85,3 +93,6 @@ ewoks-canvas = "ewoksorange.canvas.main:main"
 "Ewoks Demo" = "orangecontrib.ewoksdemo"
 "Ewoks Without Widgets" = "orangecontrib.ewoksnowidget"
 "Ewoks Test" = "orangecontrib.ewokstest"
+
+[tool.pytest.ini_options]
+timeout = 120
