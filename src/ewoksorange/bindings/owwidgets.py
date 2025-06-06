@@ -718,6 +718,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executors[id(task_executor)] = task_executor, propagate
 
     def __remove_task_executor(self, task_executor):
+        task_executor.finished.disconnect(self._ewoks_task_finished_callback)
         self.__task_executors.pop(id(task_executor), None)
 
     def __is_task_executor_propagated(self, task_executor) -> bool:
