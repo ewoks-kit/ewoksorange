@@ -42,6 +42,7 @@ def widget_to_task(widget_qualname: str) -> Tuple[OWBaseWidget, dict, Optional[T
     try:
         widget_class = import_qualname(widget_qualname)
     except ImportError:
+        logger.warning("Cannot import Orange widget %r", widget_qualname)
         widget_class = None
     if hasattr(widget_class, "ewokstaskclass"):
         # Ewoks Orange widget
@@ -88,7 +89,7 @@ def task_to_widget(
 
 
 def node_data_to_default_inputs(
-    data, widget_class: Type[OWBaseWidget], ewokstaskclass: Type[Task]
+    data, widget_class: Type[OWBaseWidget], ewokstaskclass: Optional[Type[Task]]
 ) -> List[dict]:
     if data is None:
         return list()
@@ -164,12 +165,11 @@ def ows_to_ewoks(
         node_attrs["label"] = ows_node.title
         if preserve_ows_info:
             node_attrs["ows"] = owsinfo
-        if widget_class is not None:
-            default_inputs = node_data_to_default_inputs(
-                ows_node.data, widget_class, ewokstaskclass
-            )
-            if default_inputs:
-                node_attrs["default_inputs"] = default_inputs
+        default_inputs = node_data_to_default_inputs(
+            ows_node.data, widget_class, ewokstaskclass
+        )
+        if default_inputs:
+            node_attrs["default_inputs"] = default_inputs
         widget_classes[ows_node.id] = widget_class
         nodes.append(node_attrs)
 
