@@ -2,7 +2,14 @@
 
 ## Unreleased
 
-Drop support for Python 3.6 and 3.7
+## 1.2.0
+
+Changes:
+
+- Drop support for Python 3.6 and 3.7
+- `ows_to_ewoks`: load default inputs even when the orange widget does not exist.
+- `OWEwoksWidgetOneThreadPerRun`: ensure every execution result is used and not
+  ignored because of a new execution.
 
 ## 1.1.0
 
