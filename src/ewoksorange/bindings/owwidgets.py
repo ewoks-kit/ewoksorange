@@ -477,15 +477,15 @@ class OWEwoksBaseWidget(OWWidget, metaclass=_OWEwoksWidgetMetaClass, **ow_build_
 
 
 def is_orange_widget_class(widget_class):
-    if isinstance(widget_class, type):
-        return issubclass(widget_class, OWBaseWidget)
-    return False
+    if not isinstance(widget_class, type):
+        return False
+    return issubclass(widget_class, OWBaseWidget)
 
 
 def is_ewoks_widget_class(widget_class):
-    if isinstance(widget_class, type):
-        return issubclass(widget_class, OWEwoksBaseWidget)
-    return False
+    if not isinstance(widget_class, type):
+        return False
+    return issubclass(widget_class, OWEwoksBaseWidget)
 
 
 def is_native_widget_class(widget_class):
