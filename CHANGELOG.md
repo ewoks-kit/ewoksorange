@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+New features:
+
+- Add `ewoks.engines` entry point and implement the `WorkflowEngine` interface.
+
 ## 1.2.0
 
 Changes:

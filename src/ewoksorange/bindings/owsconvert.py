@@ -2,6 +2,7 @@ import os
 import json
 import logging
 from uuid import uuid4
+from pathlib import Path
 from collections import namedtuple
 from typing import IO, Iterator, List, Optional, Tuple, Type, Union, NamedTuple
 
@@ -23,6 +24,7 @@ from ewokscore.graph import TaskGraph
 from ewokscore.inittask import task_executable_info
 from ewokscore.task import Task
 from ewokscore.node import get_node_label
+from ewokscore.graph.serialize import GraphRepresentation
 
 from ..registration import get_owwidget_descriptions
 from .taskwrapper import OWWIDGET_TASKS_GENERATOR
@@ -118,7 +120,9 @@ def ows_to_ewoks(
     source: Union[str, IO],
     preserve_ows_info: Optional[bool] = True,
     title_as_node_id: Optional[bool] = False,
-    **load_graph_options,
+    inputs: Optional[List[dict]] = None,
+    root_dir: Optional[Union[str, Path]] = None,
+    root_module: Optional[str] = None,
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
     ows = read_ows(source)
@@ -216,7 +220,7 @@ def ows_to_ewoks(
         "nodes": nodes,
     }
 
-    return load_graph(graph, **load_graph_options)
+    return load_graph(graph, inputs=inputs, root_dir=root_dir, root_module=root_module)
 
 
 def graph_is_supported(graph: TaskGraph) -> bool:
@@ -237,12 +241,21 @@ def ewoks_to_ows(
     execinfo: Optional[dict] = None,
     task_options: Optional[dict] = None,
     error_on_duplicates: bool = True,
-    **load_graph_options,
+    inputs: Optional[List[dict]] = None,
+    representation: Optional[Union[GraphRepresentation, str]] = None,
+    root_dir: Optional[Union[str, Path]] = None,
+    root_module: Optional[str] = None,
 ):
     """Save an ewoks graph as an Orange Workflow Scheme file. The ewoks node id's
     are lost because Orange uses node index numbers as id's.
     """
-    ewoksgraph = load_graph(graph, **load_graph_options)
+    ewoksgraph = load_graph(
+        graph,
+        inputs=inputs,
+        representation=representation,
+        root_dir=root_dir,
+        root_module=root_module,
+    )
     if ewoksgraph.is_cyclic:
         raise RuntimeError("Orange can only handle DAGs")
     if ewoksgraph.has_conditional_links:

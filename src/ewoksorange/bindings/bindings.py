@@ -1,10 +1,13 @@
 import os
 import sys
+from pathlib import Path
 from contextlib import contextmanager
 from typing import Any, Iterator, Optional, List, Union
 
 import ewokscore
 from ewokscore.graph import TaskGraph
+from ewokscore.graph.serialize import GraphRepresentation
+
 from . import owsconvert
 from ..canvas.main import main as launchcanvas
 
@@ -17,20 +20,21 @@ def ows_file_context(
     graph,
     inputs: Optional[List[dict]] = None,
     load_options: Optional[dict] = None,
-    outputs: Optional[List[dict]] = None,
-    merge_outputs: Optional[bool] = True,
+    varinfo: Optional[dict] = None,
+    execinfo: Optional[dict] = None,
+    task_options: Optional[dict] = None,
+    error_on_duplicates: bool = True,
     tmpdir: Optional[str] = None,
-    **execute_options,
 ) -> Iterator[str]:
     """Yields an .ows file path (temporary file when not alread an .ows file)"""
-    if outputs:
-        raise ValueError("The Orange3 binding cannot return any results")
     if load_options is None:
         load_options = dict()
-    representation = _get_representation(graph, options=load_options)
+    representation = _get_representation(
+        graph, representation=load_options.get("representation")
+    )
     if representation == "ows":
         ows_filename = graph
-        if inputs or load_options or execute_options:
+        if inputs or load_options:  # or execute_options
             # Already an .ows file but modify it before launching the GUI (default inputs, varinfo, execinfo)
             graph = owsconvert.ows_to_ewoks(ows_filename)
             basename = os.path.splitext(os.path.basename(ows_filename))[0]
@@ -45,8 +49,11 @@ def ows_file_context(
                     graph,
                     tmp_filename,
                     inputs=inputs,
+                    varinfo=varinfo,
+                    execinfo=execinfo,
+                    task_options=task_options,
+                    error_on_duplicates=error_on_duplicates,
                     **load_options,
-                    **execute_options,
                 )
                 yield tmp_filename
             finally:
@@ -65,7 +72,14 @@ def ows_file_context(
             tmp_filename = os.path.abspath("ewoks_workflow_tmp.ows")
         try:
             owsconvert.ewoks_to_ows(
-                graph, tmp_filename, inputs=inputs, **load_options, **execute_options
+                graph,
+                tmp_filename,
+                inputs=inputs,
+                varinfo=varinfo,
+                execinfo=execinfo,
+                task_options=task_options,
+                error_on_duplicates=error_on_duplicates,
+                **load_options,
             )
             yield tmp_filename
         finally:
@@ -74,8 +88,30 @@ def ows_file_context(
 
 
 @ewokscore.execute_graph_decorator(engine="orange")
-def execute_graph(graph, **kwargs) -> None:
-    with ows_file_context(graph, **kwargs) as ows_filename:
+def execute_graph(
+    graph: Any,
+    inputs: Optional[List[dict]] = None,
+    load_options: Optional[dict] = None,
+    varinfo: Optional[dict] = None,
+    execinfo: Optional[dict] = None,
+    task_options: Optional[dict] = None,
+    outputs: Optional[List[dict]] = None,
+    merge_outputs: Optional[bool] = True,
+    error_on_duplicates: bool = True,
+    tmpdir: Optional[str] = None,
+) -> None:
+    if outputs:
+        raise ValueError("The Orange3 binding cannot return any results")
+    with ows_file_context(
+        graph,
+        inputs=inputs,
+        load_options=load_options,
+        varinfo=varinfo,
+        execinfo=execinfo,
+        task_options=task_options,
+        error_on_duplicates=error_on_duplicates,
+        tmpdir=tmpdir,
+    ) as ows_filename:
         argv = [sys.argv[0], ows_filename]
         launchcanvas(argv=argv)
 
@@ -83,31 +119,44 @@ def execute_graph(graph, **kwargs) -> None:
 def load_graph(
     graph: Any,
     inputs: Optional[List[dict]] = None,
+    representation: Optional[Union[GraphRepresentation, str]] = None,
+    root_dir: Optional[Union[str, Path]] = None,
+    root_module: Optional[str] = None,
     preserve_ows_info: Optional[bool] = True,
     title_as_node_id: Optional[bool] = False,
-    **load_options,
 ) -> TaskGraph:
-    representation = _get_representation(graph, options=load_options)
+    representation = _get_representation(graph, representation=representation)
     if representation == "ows":
-        load_options.pop("representation", None)
         return owsconvert.ows_to_ewoks(
             graph,
             inputs=inputs,
+            root_dir=root_dir,
+            root_module=root_module,
             preserve_ows_info=preserve_ows_info,
             title_as_node_id=title_as_node_id,
-            **load_options,
         )
     else:
-        return ewokscore.load_graph(graph, inputs=inputs, **load_options)
+        return ewokscore.load_graph(
+            graph,
+            inputs=inputs,
+            representation=representation,
+            root_dir=root_dir,
+            root_module=root_module,
+        )
 
 
-def save_graph(graph: TaskGraph, destination, **save_options) -> Union[str, dict]:
-    representation = _get_representation(destination, options=save_options)
+def save_graph(
+    graph: TaskGraph,
+    destination,
+    representation: Optional[Union[GraphRepresentation, str]] = None,
+    **save_options,
+) -> Union[str, dict]:
+    representation = _get_representation(destination, representation=representation)
     if representation == "ows":
         owsconvert.ewoks_to_ows(graph, destination, **save_options)
         return destination
     else:
-        return graph.dump(destination, **save_options)
+        return graph.dump(destination, representation=representation, **save_options)
 
 
 def convert_graph(
@@ -125,10 +174,9 @@ def convert_graph(
     return save_graph(graph, destination, **save_options)
 
 
-def _get_representation(graph: Any, options: Optional[dict] = None):
-    representation = None
-    if options:
-        representation = options.get("representation")
+def _get_representation(
+    graph: Any, representation: Optional[Union[GraphRepresentation, str]] = None
+) -> Optional[str]:
     if (
         representation is None
         and isinstance(graph, str)

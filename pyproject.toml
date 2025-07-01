@@ -15,7 +15,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "ewokscore >=1.0.0",
+    "ewokscore >=2.0.0rc1",
     "orange-canvas-core",
     "orange-widget-base",
     "importlib-resources; python_version<'3.9'",
@@ -93,6 +93,9 @@ ewoks-canvas = "ewoksorange.canvas.main:main"
 "Ewoks Demo" = "orangecontrib.ewoksdemo"
 "Ewoks Without Widgets" = "orangecontrib.ewoksnowidget"
 "Ewoks Test" = "orangecontrib.ewokstest"
+
+[project.entry-points."ewoks.engines"]
+"orange" = "ewoksorange.engine:OrangeWorkflowEngine"
 
 [tool.pytest.ini_options]
 timeout = 120
