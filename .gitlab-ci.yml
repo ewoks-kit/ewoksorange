@@ -19,6 +19,17 @@ test-3.8-orange:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: ""
 
+test-3.8-orange-old:
+  extends: .test-3.8_glx
+  script:
+    - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
+    - python -m pip install Orange3 --prefer-binary # https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/47, https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/55
+    - python -m pip install $QT_API $PIP_INSTALL_OPTIONS .[test,orange] "orange-canvas-core<0.2a"
+    - !reference [.test-3.8_glx, script]
+  variables:
+    JUPYTER_PLATFORM_DIRS: 1
+    PYTEST_WARNINGS: ""
+
 test-3.10-orange-win:
   extends: .test-3.10_glx-win
   script:
@@ -59,7 +70,7 @@ test-3.8-oasys:
   script:
     - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
     - python -m pip install oasys1 AnyQt
-    - python -m pip install $QT_API $PIP_INSTALL_OPTIONS ewokscore importlib-resources pytest
+    - python -m pip install $QT_API $PIP_INSTALL_OPTIONS ewokscore pytest
     - python -m pip install --no-deps .
     - python -m pip list
     - python -m pytest -v .

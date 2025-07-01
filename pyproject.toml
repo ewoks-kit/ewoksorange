@@ -19,6 +19,8 @@ dependencies = [
     "orange-canvas-core",
     "orange-widget-base",
     "importlib-resources; python_version<'3.9'",
+    "importlib-metadata; python_version<'3.9'",
+    "packaging",
 ]
 
 [project.urls]
