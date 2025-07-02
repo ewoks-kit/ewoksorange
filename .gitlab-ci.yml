@@ -57,8 +57,9 @@ test-3.12-orange-qt6:
 test-3.8-oasys:
   extends: .test-3.8_glx
   script:
+    - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
     - python -m pip install oasys1 AnyQt
-    - python -m pip install $QT_API ewokscore importlib-resources pytest
+    - python -m pip install $QT_API $PIP_INSTALL_OPTIONS ewokscore importlib-resources pytest
     - python -m pip install --no-deps .
     - python -m pip list
     - python -m pytest -v .
