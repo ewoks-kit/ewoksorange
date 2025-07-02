@@ -34,9 +34,12 @@ def ows_file_context(
     )
     if representation == "ows":
         ows_filename = graph
-        if inputs or load_options:  # or execute_options
-            # Already an .ows file but modify it before launching the GUI (default inputs, varinfo, execinfo)
-            graph = owsconvert.ows_to_ewoks(ows_filename)
+        if inputs or varinfo or execinfo or task_options:
+            # Already an .ows file but we need to inject data so that
+            # `OWEwoksBaseWidget` can retrieve it in `_get_task_arguments`
+            # to instantiate an Ewoks tasks.
+            # See `OwsNodeWrapper` on how this information gets passed.
+            graph = owsconvert.ows_to_ewoks(ows_filename, **load_options)
             basename = os.path.splitext(os.path.basename(ows_filename))[0]
             if tmpdir:
                 tmp_filename = os.path.abspath(
@@ -53,7 +56,6 @@ def ows_file_context(
                     execinfo=execinfo,
                     task_options=task_options,
                     error_on_duplicates=error_on_duplicates,
-                    **load_options,
                 )
                 yield tmp_filename
             finally:
