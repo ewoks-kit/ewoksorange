@@ -1,48 +1,53 @@
-import logging
 from typing import Optional
+import importlib.metadata
+from packaging.version import Version
 
 try:
-    # pip install "orange-canvas-core>=0.2.0" "orange-widget-base>=4.23.0"
-    from orangecanvas.utils.pkgmeta import entry_points as _entry_points
-    from orangecanvas.utils.pkgmeta import Distribution as _Distribution
-    from orangecanvas.utils.pkgmeta import PackageNotFoundError as _PackageNotFoundError
+    _USE_IMPORTLIB = Version(
+        importlib.metadata.version("orange-canvas-core")
+    ) >= Version("0.2.0")
+    # orange-canvas-core>=0.2.0
+    # orange-widget-base>=4.23.0
+    # orange3>=3.37.0
+    #
+    # https://github.com/biolab/orange-canvas-core/pull/289
+    # https://github.com/biolab/orange-widget-base/pull/260
+    # https://github.com/biolab/orange3/pull/6655
+except importlib.metadata.PackageNotFoundError:
+    # Must be Oasys, raise exception otherwise
+    _ = importlib.metadata.version("oasys-canvas-core")
+    _USE_IMPORTLIB = False
 
-    def iter_entry_points(group: str):
-        try:
-            return _entry_points(group=group)
-        except Exception:
-            return _entry_points().get(group, [])
+
+if _USE_IMPORTLIB:
+    from ewokscore.entry_points import EntryPoint  # noqa F401
+    from ewokscore.entry_points import entry_points  # noqa F401
 
     def get_distribution(
         name: str, raise_error: bool = False
-    ) -> Optional[_Distribution]:
+    ) -> Optional[importlib.metadata.Distribution]:
         try:
-            return _Distribution.from_name(name)
-        except _PackageNotFoundError:
+            return importlib.metadata.Distribution.from_name(name)
+        except importlib.metadata.PackageNotFoundError:
             if raise_error:
                 raise
 
-    def get_distribution_name(distribution: _Distribution) -> str:
+    def get_distribution_name(distribution: importlib.metadata.Distribution) -> str:
         return distribution.name
 
-except ImportError:
-    # pip install "orange-canvas-core<0.2.0" "orange-widget-base<4.23.0"
-    from pkg_resources import Distribution as _Distribution
-    from pkg_resources import DistributionNotFound as _DistributionNotFound
-    from pkg_resources import iter_entry_points  # noqa F401
-    from pkg_resources import get_distribution as _get_distribution
+else:
+    import pkg_resources
+    from pkg_resources import EntryPoint  # noqa F401
+    from pkg_resources import iter_entry_points as entry_points  # noqa F401
 
     def get_distribution(
         name: str, raise_error: bool = False
-    ) -> Optional[_Distribution]:
+    ) -> Optional[pkg_resources.Distribution]:
         try:
-            return _get_distribution(name)
-        except _DistributionNotFound:
+            return pkg_resources.get_distribution(name)
+        except pkg_resources.DistributionNotFound:
             if raise_error:
                 raise
 
-    def get_distribution_name(distribution: _Distribution) -> str:
+    def get_distribution_name(distribution: pkg_resources.Distribution) -> str:
         return distribution.project_name
-
-
-logger = logging.getLogger(__name__)

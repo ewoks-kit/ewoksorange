@@ -4,7 +4,7 @@ Widget and example discovery is done from these entry-points.
 """
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from . import pkg_meta
 from .orange_version import ORANGE_VERSION
@@ -124,15 +124,17 @@ def register_owwidget(
 def get_owwidget_descriptions():
     """Do not include native orange widgets"""
     disc = _local_widget_discovery_object()
-    disc.run(_iter_entry_points(WIDGETS_ENTRY))
+    disc.run(_entry_points(WIDGETS_ENTRY))
     return disc.registry.widgets()
 
 
-def _iter_entry_points(group):
+def _entry_points(group: str) -> Tuple[pkg_meta.EntryPoint]:
     """Do not include native orange entry points"""
-    for ep in pkg_meta.iter_entry_points(group):
+    eps = list()
+    for ep in pkg_meta.entry_points(group):
         if pkg_meta.get_distribution_name(ep.dist).lower() != NATIVE_WIDGETS_PROJECT:
-            yield ep
+            eps.append(ep)
+    return tuple(eps)
 
 
 def _global_widget_discovery_objects() -> List[WidgetDiscovery]:
