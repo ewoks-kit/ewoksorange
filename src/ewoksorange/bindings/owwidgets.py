@@ -9,7 +9,7 @@ import inspect
 import logging
 import warnings
 from contextlib import contextmanager
-from typing import Any, Optional, Mapping, List, Callable
+from typing import Any, Optional, Mapping, List, Callable, Tuple
 from AnyQt import QtWidgets
 
 from ..orange_version import ORANGE_VERSION
@@ -663,7 +663,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__task_executors: dict[int, tuple[ThreadedTaskExecutor, bool]] = dict()
+        self.__task_executors: dict[int, Tuple[ThreadedTaskExecutor, bool]] = dict()
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
         self.__last_task_done = None
