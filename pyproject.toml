@@ -3,7 +3,7 @@ requires = ["setuptools>=46.4"]
 build-backend = "setuptools.build_meta"
 [project]
 name = "ewoksorange"
-version = "2.0.0rc2"
+version = "2.0.0rc3"
 authors = [{ name = "ESRF", email = "dau-pydev@esrf.fr" }]
 description = "Orange binding for Ewoks"
 readme = { file = "README.md", content-type = "text/markdown" }
@@ -98,6 +98,9 @@ ewoks-canvas = "ewoksorange.canvas.main:main"
 
 [project.entry-points."ewoks.engines"]
 "orange" = "ewoksorange.engine:OrangeWorkflowEngine"
+
+[project.entry-points."ewoks.engines.serialization.representations"]
+"orange" = "ows"
 
 [tool.pytest.ini_options]
 timeout = 120
