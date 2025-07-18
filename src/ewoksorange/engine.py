@@ -74,16 +74,8 @@ class OrangeWorkflowEngine(WorkflowEngineWithSerialization):
             graph, destination, representation=representation, **serialize_options
         )
 
-    def can_serialize_graph(
-        self,
-        graph: Any,
-        *,
-        representation: Optional[str] = None,
-    ) -> bool:
-        if representation == "ows":
-            return True
+    def get_graph_representation(self, graph: Any) -> Optional[str]:
         if isinstance(graph, str) and graph.endswith(".ows"):
-            return True
+            return "ows"
         if isinstance(graph, pathlib.Path) and graph.suffix == ".ows":
-            return True
-        return False
+            return "ows"
