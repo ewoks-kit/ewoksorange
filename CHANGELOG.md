@@ -6,7 +6,9 @@
 
 New features:
 
-- Add `ewoks.engines` entry point and implement the `WorkflowEngine` interface.
+- Implement the `WorkflowEngineWithSerialization` interface.
+- Add an entry point to the group `ewoks.engines`.
+- Add an entry point to the group `ewoks.engines.serialization.representations`.
 
 ## 1.2.0
 
