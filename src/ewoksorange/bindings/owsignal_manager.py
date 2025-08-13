@@ -14,7 +14,6 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
     notify_input_helper = None
 else:
-    from orangecanvas.scheme import signalmanager as _signalmanager
     import orangecanvas.scheme.signalmanager
 
     from orangewidget.workflow.widgetsscheme import (
