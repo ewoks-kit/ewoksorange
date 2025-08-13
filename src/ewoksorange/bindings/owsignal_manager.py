@@ -20,7 +20,8 @@ else:
     )
     from orangecanvas.scheme.node import SchemeNode
     from orangecanvas.scheme.link import SchemeLink
-    from orangecanvas.scheme.signalmanager import can_enable_dynamic
+    from orangecanvas.scheme import signalmanager as _signalmanager
+    from orangecanvas.scheme.signalmanager import can_enable_dynamic as _can_enable_dynamic
     import orangewidget.workflow.widgetsscheme as widgetsscheme_module
 
     from orangewidget.utils.signals import notify_input_helper
@@ -156,6 +157,18 @@ class SignalManagerWithOutputTracking:
     def __init__(self, *args, **kwargs):
         self._widget_states = dict()
         super().__init__(*args, **kwargs)
+        # monkey patch of 'can_enable_dynamic'
+        _signalmanager.can_enable_dynamic_patch = self.can_enable_dynamic_patch
+
+    @staticmethod
+    def can_enable_dynamic_patch(link, value):
+        # type: (SchemeLink, Any) -> bool
+        """
+        Can the a dynamic `link` (:class:`SchemeLink`) be enabled for`value`.
+        """
+        if isinstance(value, Variable):
+            value = value.value
+        return _can_enable_dynamic(link, value)
 
     def _get_widget_state(self, owwidget) -> _OwWidgetSignalState:
         state = self._widget_states.get(owwidget, None)
