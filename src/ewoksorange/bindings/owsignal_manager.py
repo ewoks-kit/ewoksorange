@@ -13,6 +13,7 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             return bool(self._input_queue)
 
     notify_input_helper = None
+    monkey_patch_can_enable_dynamic = False
 else:
     import orangecanvas.scheme.signalmanager
 
@@ -22,6 +23,8 @@ else:
     import orangewidget.workflow.widgetsscheme as widgetsscheme_module
     from orangewidget.utils.signals import notify_input_helper
 
+    monkey_patch_can_enable_dynamic = True
+
 from ewokscore.variable import value_from_transfer, Variable
 
 from .owwidgets import is_native_widget
@@ -30,20 +33,19 @@ from ..bindings.owsignals import get_input_names, get_output_names
 from . import invalid_data
 
 
-# monkey patch of 'can_enable_dynamic' See https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/58
+if monkey_patch_can_enable_dynamic:
+    # monkey patch of 'can_enable_dynamic' See https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/58
 
-_super_can_enable_dynamic = orangecanvas.scheme.signalmanager.can_enable_dynamic
+    _super_can_enable_dynamic = orangecanvas.scheme.signalmanager.can_enable_dynamic
 
-
-@staticmethod
-def can_enable_dynamic_patch(link, value):
-    # type: (SchemeLink, Any) -> bool
-    """
-    Can the a dynamic `link` (:class:`SchemeLink`) be enabled for`value`.
-    """
-    if isinstance(value, Variable):
-        value = value.value
-    return _super_can_enable_dynamic(link, value)
+    def can_enable_dynamic_patch(link, value):
+        # type: (SchemeLink, Any) -> bool
+        """
+        Can the a dynamic `link` (:class:`SchemeLink`) be enabled for`value`.
+        """
+        if isinstance(value, Variable):
+            value = value.value
+        return _super_can_enable_dynamic(link, value)
 
 
 orangecanvas.scheme.signalmanager.can_enable_dynamic = can_enable_dynamic_patch
