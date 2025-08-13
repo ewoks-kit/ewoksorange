@@ -1,11 +1,10 @@
 from typing import Any
-import logging
 
 from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas.widgetsscheme import (
-        OASYSSignalManager as _SignalManagerWithSchemeOrg
+        OASYSSignalManager as _SignalManagerWithSchemeOrg,
     )
     import oasys.canvas.widgetsscheme as widgetsscheme_module
 
@@ -15,26 +14,42 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
     notify_input_helper = None
 else:
-    from orangewidget.workflow.widgetsscheme import (
-        WidgetsSignalManager as _SignalManagerWithScheme
-    )
-    from orangecanvas.scheme.node import SchemeNode
-    from orangecanvas.scheme.link import SchemeLink
     from orangecanvas.scheme import signalmanager as _signalmanager
-    from orangecanvas.scheme.signalmanager import can_enable_dynamic as _can_enable_dynamic
-    import orangewidget.workflow.widgetsscheme as widgetsscheme_module
+    import orangecanvas.scheme.signalmanager
 
+    from orangewidget.workflow.widgetsscheme import (
+        WidgetsSignalManager as _SignalManagerWithScheme,
+    )
+    import orangewidget.workflow.widgetsscheme as widgetsscheme_module
     from orangewidget.utils.signals import notify_input_helper
 
-from ewokscore.variable import value_from_transfer
-from ewokscore.variable import Variable
+from ewokscore.variable import value_from_transfer, Variable
 
 from .owwidgets import is_native_widget
 from .qtapp import QtEvent
 from ..bindings.owsignals import get_input_names, get_output_names
 from . import invalid_data
 
-_logger = logging.getLogger(__name__)
+
+# monkey patch of 'can_enable_dynamic' See https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/58
+
+_super_can_enable_dynamic = orangecanvas.scheme.signalmanager.can_enable_dynamic
+
+
+@staticmethod
+def can_enable_dynamic_patch(link, value):
+    # type: (SchemeLink, Any) -> bool
+    """
+    Can the a dynamic `link` (:class:`SchemeLink`) be enabled for`value`.
+    """
+    if isinstance(value, Variable):
+        value = value.value
+    return _super_can_enable_dynamic(link, value)
+
+
+orangecanvas.scheme.signalmanager.can_enable_dynamic = can_enable_dynamic_patch
+
+# en monkey patch
 
 
 class _MissingSignalValue:
@@ -157,18 +172,6 @@ class SignalManagerWithOutputTracking:
     def __init__(self, *args, **kwargs):
         self._widget_states = dict()
         super().__init__(*args, **kwargs)
-        # monkey patch of 'can_enable_dynamic'
-        _signalmanager.can_enable_dynamic_patch = self.can_enable_dynamic_patch
-
-    @staticmethod
-    def can_enable_dynamic_patch(link, value):
-        # type: (SchemeLink, Any) -> bool
-        """
-        Can the a dynamic `link` (:class:`SchemeLink`) be enabled for`value`.
-        """
-        if isinstance(value, Variable):
-            value = value.value
-        return _can_enable_dynamic(link, value)
 
     def _get_widget_state(self, owwidget) -> _OwWidgetSignalState:
         state = self._widget_states.get(owwidget, None)
@@ -208,59 +211,6 @@ class SignalManagerWithOutputTracking:
 
     def widget_is_executed(self, owwidget) -> bool:
         return self._get_widget_state(owwidget).is_executed()
-
-    def process_node(self, node):
-        # type: (SchemeNode) -> None
-        """
-        Process pending input signals for `node`.
-        """
-        signals_in = self.pending_input_signals(node)
-        self.remove_pending_signals(node)
-
-        signals_in = self.compress_signals(signals_in)
-
-        _logger.debug("Processing %r, sending %i signals.",
-                  node.title, len(signals_in))
-        # Clear the link's pending flag.
-        for link in {sig.link for sig in signals_in}:
-            link.set_runtime_state(link.runtime_state() & ~SchemeLink.Pending)
-
-        def process_dynamic(signals):
-            # type: (List[Signal]) -> List[Signal]
-            """
-            Process dynamic signals; Update the link's dynamic_enabled flag if
-            the value is valid; replace values that do not type check with
-            `None`
-            """
-            res = []
-            for sig in signals:
-                # Check and update the dynamic link state
-                link = sig.link
-                if sig.link.is_dynamic():
-                    sig_value = sig.value
-                    # this is the part of the code modified from original version
-                    if isinstance(sig.value, Variable):
-                        sig_value = sig_value.value
-                    # end of modifications
-                    enabled = can_enable_dynamic(link, sig_value)
-                    link.set_dynamic_enabled(enabled)
-                    if not enabled:
-                        # Send None instead (clear the link)
-                        sig = sig._replace(value=None)
-                res.append(sig)
-            return res
-        signals_in = process_dynamic(signals_in)
-
-        self._set_runtime_state(_SignalManagerWithScheme.Processing)
-        self.processingStarted.emit()
-        self.processingStarted[_SignalManagerWithScheme].emit(node)
-        try:
-            self.send_to_node(node, signals_in)
-        finally:
-            node.set_state_flags(SchemeNode.Pending, False)
-            self.processingFinished.emit()
-            self.processingFinished[SchemeNode].emit(node)
-            self._set_runtime_state(_SignalManagerWithScheme.Waiting)
 
 
 class SignalManagerWithoutScheme(SignalManagerWithOutputTracking):
