@@ -34,7 +34,7 @@ class EwoksTask(
         self.outputs.data = SubClass(2)
 
 
-class EwoksOrangeWidget(OWEwoksWidgetNoThread):
+class EwoksOrangeWidget(OWEwoksWidgetNoThread, ewokstaskclass=EwoksTask):
     name = "ewoks widget"
 
 
