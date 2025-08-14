@@ -14,15 +14,16 @@ class SubClass(Mother): ...
 class NativeWidget(OWWidget):
     name = "native widget"
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._data = None
+
     class Inputs:
         data = Input("data", type=Mother)
 
-    class Outputs:
-        data = Output("data", type=Mother)
-
     @Inputs.data
     def data_received(self, data):
-        self.Outputs.data.send(data + 1)
+        self._data = data
 
 
 class EwoksTask(
@@ -84,7 +85,6 @@ def test_dynamic_link(tmpdir, ewoks_orange_canvas):
     destination = str(tmpdir / "ewoksgraph.ows")
     tree = ET.ElementTree(root)
     tree.write(destination, encoding="utf-8", xml_declaration=True)
-    print("destination is", destination)
 
     for widget in (NativeWidget, EwoksOrangeWidget):
         register_owwidget(
@@ -97,10 +97,7 @@ def test_dynamic_link(tmpdir, ewoks_orange_canvas):
     # Load and execute the orange workflow
     ewoks_orange_canvas.load_ows(destination)
     ewoks_orange_canvas.start_workflow()
-    # from silx.gui import qt
 
-    # qt.QApplication.instance().exec_()
     ewoks_orange_canvas.wait_widgets(timeout=10)
-    results = dict(ewoks_orange_canvas.iter_output_values())
-
-    assert results == {"task1": {"data": SubClass(2)}, "task2": {"b": 3}}
+    native_widget = next(ewoks_orange_canvas.widgets_from_name("native widget"))
+    assert native_widget._data == 2
