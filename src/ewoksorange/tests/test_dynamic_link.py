@@ -1,5 +1,7 @@
 from ..bindings.owwidgets import OWEwoksWidgetNoThread, OWWidget
-from ..bindings.owsignals import Input, Output
+from ..bindings.owsignals import Input
+from ..orange_version import ORANGE_VERSION
+
 from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
 from ewoksorange.registration import register_owwidget
@@ -11,19 +13,36 @@ class Mother(int): ...
 class SubClass(Mother): ...
 
 
-class NativeWidget(OWWidget):
-    name = "native widget"
+if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._data = None
+    class NativeWidget(OWWidget):
+        name = "native widget"
 
-    class Inputs:
-        data = Input("data", type=Mother)
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._data = None
 
-    @Inputs.data
-    def data_received(self, data):
-        self._data = data
+        class Inputs:
+            data = Input("data", type=Mother, handler="data_received")
+
+        def data_received(self, data):
+            self._data = data
+
+else:
+
+    class NativeWidget(OWWidget):
+        name = "native widget"
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._data = None
+
+        class Inputs:
+            data = Input("data", type=Mother)
+
+        @Inputs.data
+        def data_received(self, data):
+            self._data = data
 
 
 class EwoksTask(
