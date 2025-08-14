@@ -2,6 +2,7 @@ from ..bindings.owwidgets import OWEwoksWidgetNoThread, OWWidget
 from ..bindings.owsignals import Input
 from ..orange_version import ORANGE_VERSION
 
+import pytest
 import xml.etree.cElementTree as ET
 
 from ewokscore.task import Task
@@ -15,23 +16,8 @@ class Mother(int): ...
 class SubClass(Mother): ...
 
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-
-    class NativeWidget(OWWidget):
-        name = "native widget"
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self._data = None
-
-        class Inputs:
-            data = Input("data", type=Mother, handler="data_received")
-
-        def data_received(self, data):
-            self._data = data
-
-else:
-
+if ORANGE_VERSION != ORANGE_VERSION.oasys_fork:
+    # else with oasys we need to provide the 'handler' mechanism
     class NativeWidget(OWWidget):
         name = "native widget"
 
@@ -60,6 +46,9 @@ class EwoksOrangeWidget(OWEwoksWidgetNoThread, ewokstaskclass=EwoksTask):
     name = "ewoks widget"
 
 
+@pytest.mark.skipif(
+    ORANGE_VERSION == ORANGE_VERSION.oasys_fork, reason="hanging with oasys binding."
+)
 def test_dynamic_link(tmpdir, ewoks_orange_canvas):
     """Test that a dynamic link in orange will be processed as expected."""
     # Create an Orange workflows
