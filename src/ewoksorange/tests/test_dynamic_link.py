@@ -2,7 +2,7 @@ from ..bindings.owwidgets import OWEwoksWidgetNoThread, OWWidget
 from ..bindings.owsignals import Input, Output
 from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
-from ewoksorange.bindings import ewoks_to_ows
+from ewoksorange.registration import register_owwidget
 
 
 class Mother(int): ...
@@ -86,12 +86,20 @@ def test_dynamic_link(tmpdir, ewoks_orange_canvas):
     tree.write(destination, encoding="utf-8", xml_declaration=True)
     print("destination is", destination)
 
+    for widget in (NativeWidget, EwoksOrangeWidget):
+        register_owwidget(
+            widget_class=widget,
+            package_name="ewoksorange",
+            category_name="test",
+            project_name="ewoksorange",
+        )
+
     # Load and execute the orange workflow
     ewoks_orange_canvas.load_ows(destination)
     ewoks_orange_canvas.start_workflow()
-    # from silx.gui import qt
+    from silx.gui import qt
 
-    # qt.QApplication.instance().exec_()
+    qt.QApplication.instance().exec_()
     ewoks_orange_canvas.wait_widgets(timeout=10)
     results = dict(ewoks_orange_canvas.iter_output_values())
 
