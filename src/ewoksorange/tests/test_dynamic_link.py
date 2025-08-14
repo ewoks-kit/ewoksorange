@@ -97,9 +97,9 @@ def test_dynamic_link(tmpdir, ewoks_orange_canvas):
     # Load and execute the orange workflow
     ewoks_orange_canvas.load_ows(destination)
     ewoks_orange_canvas.start_workflow()
-    from silx.gui import qt
+    # from silx.gui import qt
 
-    qt.QApplication.instance().exec_()
+    # qt.QApplication.instance().exec_()
     ewoks_orange_canvas.wait_widgets(timeout=10)
     results = dict(ewoks_orange_canvas.iter_output_values())
 
