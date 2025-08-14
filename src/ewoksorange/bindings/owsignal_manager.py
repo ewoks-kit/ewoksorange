@@ -18,15 +18,36 @@ else:
         WidgetsSignalManager as _SignalManagerWithScheme,
     )
     import orangewidget.workflow.widgetsscheme as widgetsscheme_module
-
     from orangewidget.utils.signals import notify_input_helper
 
-from ewokscore.variable import value_from_transfer
+from orangecanvas.scheme import signalmanager
+
+from ewokscore.variable import value_from_transfer, Variable
 
 from .owwidgets import is_native_widget
 from .qtapp import QtEvent
 from ..bindings.owsignals import get_input_names, get_output_names
 from . import invalid_data
+
+
+# monkey patch of 'can_enable_dynamic' See https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/58
+
+_super_can_enable_dynamic = signalmanager.can_enable_dynamic
+
+
+def can_enable_dynamic_patch(link, value):
+    # type: (SchemeLink, Any) -> bool
+    """
+    Can the a dynamic `link` (:class:`SchemeLink`) be enabled for`value`.
+    """
+    if isinstance(value, Variable):
+        value = value.value
+    return _super_can_enable_dynamic(link, value)
+
+
+signalmanager.can_enable_dynamic = can_enable_dynamic_patch
+
+# en monkey patch
 
 
 class _MissingSignalValue:
