@@ -2,6 +2,8 @@ from ..bindings.owwidgets import OWEwoksWidgetNoThread, OWWidget
 from ..bindings.owsignals import Input
 from ..orange_version import ORANGE_VERSION
 
+import xml.etree.cElementTree as ET
+
 from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
 from ewoksorange.registration import register_owwidget
@@ -61,8 +63,6 @@ class EwoksOrangeWidget(OWEwoksWidgetNoThread, ewokstaskclass=EwoksTask):
 def test_dynamic_link(tmpdir, ewoks_orange_canvas):
     """Test that a dynamic link in orange will be processed as expected."""
     # Create an Orange workflows
-    import xml.etree.cElementTree as ET
-
     root = ET.Element("scheme", version="2.0", title="", description="")
     nodes = ET.SubElement(root, "nodes")
     # ewoks widget
