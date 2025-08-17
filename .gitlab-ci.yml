@@ -75,6 +75,14 @@ test-3.8-oasys:
     - python -m pip list
     - python -m pytest -v .
 
+test-3.12-noqt:
+  extends: .test-3.12
+  script:
+    - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
+    - python -m pip install $PIP_INSTALL_OPTIONS .
+    # Imports that should succeed without any Qt binding
+    - python -c "import ewoksorange.engine"
+
 build_sdist:
   extends: .build_sdist
 
