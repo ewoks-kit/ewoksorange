@@ -26,7 +26,7 @@ from ewokscore.variable import value_from_transfer, Variable
 
 from .owwidgets import is_native_widget
 from .qtapp import QtEvent
-from ..bindings.owsignals import get_input_names, get_output_names
+from .owsignals import get_input_names, get_output_names
 from . import invalid_data
 
 

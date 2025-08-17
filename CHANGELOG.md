@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The following imports were removed:
+  - `ewoksorange.QProgress`
+  - `ewoksorange.load_graph`
+  - `ewoksorange.save_graph`
+  - `ewoksorange.convert_graph`
+  - `ewoksorange.execute_graph`
+  - `ewoksorange.graph_is_supported`
+
 ## [2.0.0] - 2025-07-25
 
 ### Added

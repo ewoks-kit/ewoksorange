@@ -3,8 +3,6 @@ from AnyQt.QtCore import QObject
 
 from ewokscore.progress import BasePercentageProgress
 
-__all__ = ["QProgress"]
-
 
 class QProgress(QObject, BasePercentageProgress):
     """
