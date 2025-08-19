@@ -10,12 +10,10 @@ from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.widgets.widget import OWWidget as OWBaseWidget
-    from orangecanvas.scheme import readwrite
-    from orangecanvas.scheme import annotations
 else:
     from orangewidget.widget import OWBaseWidget
-    from orangecanvas.scheme import readwrite
-    from orangecanvas.scheme import annotations
+from orangecanvas.scheme import readwrite
+from orangecanvas.scheme import annotations
 
 from ewoksutils.import_utils import qualname
 from ewoksutils.import_utils import import_qualname
@@ -275,7 +273,10 @@ def ewoks_to_ows(
 
 
 class OwsNodeWrapper:
-    """Only part of the API used by scheme_to_ows_stream"""
+    """
+    Only part of the API used by scheme_to_ows_stream.
+    Mimics the orange 'SchemeNode' API
+    """
 
     _node_desc = namedtuple(
         "NodeDescription",
@@ -313,7 +314,9 @@ class OwsNodeWrapper:
 
 
 class OwsSchemeWrapper:
-    """Only the part of the scheme API used by scheme_to_ows_stream"""
+    """
+    Only the part of the scheme API used by scheme_to_ows_stream.
+    """
 
     _link = namedtuple(
         "Link",
@@ -348,20 +351,42 @@ class OwsSchemeWrapper:
         self._widget_classes = dict()
         for orangeid, node_attrs in enumerate(graph["nodes"]):
             task_type, task_info = task_executable_info(node_attrs["id"], node_attrs)
-            if task_type != "class":
-                raise ValueError("Orange workflows only support task type 'class'")
-            widget_class, node_attrs["project_name"] = task_to_widget(
-                task_info["task_identifier"], error_on_duplicates=error_on_duplicates
-            )
-            node_attrs["qualified_name"] = qualname(widget_class)
-            if varinfo:
-                node_attrs["varinfo"] = varinfo
-            if execinfo:
-                node_attrs["execinfo"] = execinfo
-            if task_options:
-                node_attrs["task_options"] = task_options
-            self._nodes[node_attrs["id"]] = OwsNodeWrapper(orangeid, node_attrs)
-            self._widget_classes[node_attrs["id"]] = widget_class
+            if task_type == "class":
+                # ewoksorange widget
+                widget_class, node_attrs["project_name"] = task_to_widget(
+                    task_info["task_identifier"],
+                    error_on_duplicates=error_on_duplicates,
+                )
+                node_attrs["qualified_name"] = qualname(widget_class)
+                if varinfo:
+                    node_attrs["varinfo"] = varinfo
+                if execinfo:
+                    node_attrs["execinfo"] = execinfo
+                if task_options:
+                    node_attrs["task_options"] = task_options
+                self._nodes[node_attrs["id"]] = OwsNodeWrapper(orangeid, node_attrs)
+                self._widget_classes[node_attrs["id"]] = widget_class
+            elif task_type == "generated":
+                # native widgets use-case
+                widget_metaclass = import_qualname(node_attrs["task_identifier"])
+                if issubclass(widget_metaclass, OWBaseWidget):
+                    instance = widget_metaclass()
+                    widget_class = instance.__class__
+                    node_attrs["qualified_name"] = qualname(widget_class)
+                    node_attrs["project_name"] = widget_class.category
+
+                    self._nodes[node_attrs["id"]] = OwsNodeWrapper(
+                        orangeid, node_attrs=node_attrs
+                    )
+                    self._widget_classes[node_attrs["id"]] = widget_class
+                else:
+                    raise ValueError(
+                        "'generated' task other than native orange widget are not supported"
+                    )
+            else:
+                raise ValueError(
+                    f"Orange workflows only support task of types 'class' or 'generated'. Got {task_type!r}"
+                )
 
         self.links = list()
         self.missing_links = list()
