@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2025-09-22
+
+### Fixed
+
+- Fix type mismatch when linking `EwoksOrange` widgets to native Orange widgets [!232](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/merge_requests/232)
+- Fix error when converting an Ewoks workflow containing native Orange widgets to OWS format (with `ewoks_to_ows`) [#59](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/59)
+
 ## [2.0.0] - 2025-07-25
 
 ### Added
@@ -198,7 +205,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.0.0...HEAD
+[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.0.1...HEAD
+[2.0.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.0.0...v2.0.1
 [2.0.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v1.2.0...v2.0.0
 [1.2.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v1.1.0...v1.2.0
 [1.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v1.0.0...v1.1.0
