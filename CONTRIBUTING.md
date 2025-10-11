@@ -55,7 +55,7 @@ The generated HTML pages will be available in `build/sphinx/html`. You can brows
 When rebuilding the documentation, don't forget to remove generated files to have a fresh `autodoc` documentation:
 
 ```bash
-rm -rf doc/_generated/; sphinx-build doc build/sphinx/html -E -a
+rm -rf doc/reference/_generated/; sphinx-build doc build/sphinx/html -E -a
 ```
 
 ## Releasing

@@ -7,7 +7,7 @@ For this common use case, `ewoksorange` provides a ``ParameterForm`` class. Once
 
 For example, let's take a simple Ewoks task ``SumList`` and say we want to write an Orange widget that will allow the user to specify the inputs of this task.
 
-.. code:: python 
+.. code-block:: python 
 
     from ewokscore.task import Task
 
@@ -37,7 +37,7 @@ This task takes a ``list`` as input and iterates over it to sum its elements wit
 
 The Orange widget will then look like this:
 
-.. code:: python
+.. code-block:: python
 
     import json
     from ewoksorange.bindings import OWEwoksWidgetNoThread
@@ -87,7 +87,7 @@ There is a lot to unpack so let's do this step by step:
 
 ------
 
-.. code:: python
+.. code-block:: python
     
     self._parameter_form = ParameterForm(parent=self.controlArea)
 
@@ -95,7 +95,7 @@ This line creates the ``ParameterForm`` in the ``controlArea`` of the widget. Th
 
 ------
 
-.. code:: python
+.. code-block:: python
 
     self._parameter_form.addParameter(
         "delay",
@@ -116,7 +116,7 @@ The other specified arguments are:
 
 ------
 
-.. code:: python
+.. code-block:: python
 
     self._parameter_form.addParameter(
         "list",
@@ -137,7 +137,7 @@ However, we can apply a transformation to the value when retrieving it from the 
 
 ------
 
-.. code:: python
+.. code-block:: python
 
     self._parameter_form.addStretch()
 
@@ -146,7 +146,7 @@ This prevents the parameter widgets to expand vertically.
 
 ------
 
-.. code:: python
+.. code-block:: python
 
     def _inputs_changed(self):
         new_values = self._parameter_form.get_parameter_values()
@@ -162,7 +162,7 @@ For these values to be used as inputs of the Ewoks task, we must update the defa
 
 ------
 
-.. code:: python
+.. code-block:: python
 
     def _update_parameter_values(self):
         initial_values = self.get_default_input_values()
