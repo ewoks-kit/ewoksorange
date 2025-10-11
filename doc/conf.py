@@ -16,6 +16,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "sphinx_togglebutton",
     "sphinx_design",
+    "sphinx_copybutton",
 ]
 templates_path = ["_templates"]
 source_suffix = [".rst", ".md"]
@@ -29,6 +30,9 @@ autodoc_default_flags = [
     "undoc-members",
     "show-inheritance",
 ]
+
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
