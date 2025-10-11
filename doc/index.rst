@@ -9,6 +9,20 @@ and `orange-base-widget <https://github.com/biolab/orange-widget-base>`_.
 *ewoksorange* is developed by the `Software group <http://www.esrf.eu/Instrumentation/software>`_
 of the `European Synchrotron <https://www.esrf.eu/>`_.
 
+.. admonition:: Quick Start
+
+    Install `ewoksorange`
+
+    .. code-block:: bash
+
+        pip install ewoksorange[orange]
+
+    Launch the graphical interface
+
+    .. code-block:: bash
+
+        ewoks-canvas
+
 .. toctree::
     :hidden:
 
