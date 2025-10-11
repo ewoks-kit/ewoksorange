@@ -9,7 +9,8 @@ There are several ways of defining how your Orange Widget will handle the execut
 * :ref:`design single thread and stack (OWEwoksWidgetWithTaskStack)`: execution is separate from the GUI thread. Can give information on task progress.
 * :ref:`design free implementation (No direct ewoks inheritance)`: for expert users who want to handle the execution themselves.
 
-The choice of design depends on your use case: for example, if you deal with small processing times, the first design (the simplest one) is the best. Other designs allow more flexibility but are more complex.
+The choice of design depends on your use case: for example, if you deal with small processing times,
+the first design (the simplest one) is the best. Other designs allow more flexibility but are more complex.
 
 
 .. table:: Differences between Ewoks widgets
@@ -33,7 +34,8 @@ Execute the associated Ewoks task in the Qt main thread
 
 This is the the simplest case and the most robust one.
 
-To use it, make your Orange widget inherit from :class:`OWEwoksWidgetNoThread` and specify the ewoks task to execute in `ewokstaskclass`
+To use it, make your Orange widget inherit from :class:`OWEwoksWidgetNoThread` and specify the ewoks task to
+execute in `ewokstaskclass`
 
 .. code-block:: python
 
@@ -59,12 +61,14 @@ In this case, the :class:`SumTask` is defined as
             pass
 
 
-Each input/output in ``input_names``, ``optional_input_names`` and ``output_names`` will be converted to Orange `Inputs/Outputs <https://orange3.readthedocs.io/projects/orange-development/en/latest/widget.html#input-output-signal-definitions>`_ by the :class:`OWEwoksWidgetNoThread` constructor.
-
+Each input/output in ``input_names``, ``optional_input_names`` and ``output_names`` will be converted to
+Orange `Inputs/Outputs <https://orange3.readthedocs.io/projects/orange-development/en/latest/widget.html#input-output-signal-definitions>`_
+by the :class:`OWEwoksWidgetNoThread` constructor.
 
 .. note:: 
     
-    The inputs and outputs of the Orange widget, that can be linked to other widgets, are the same as the ones of the underlying Ewoks task (in this case ``SumTask``). 
+    The inputs and outputs of the Orange widget, that can be linked to other widgets, are the same as
+    the ones of the underlying Ewoks task (in this case ``SumTask``). 
     
     See `this page for how to define additional inputs/outputs for the Orange widget <different_inputs_outputs>`_. 
 
@@ -206,7 +210,8 @@ Then you can define standard Orange `Input` and `Output`:
         class Outputs:
             sum_ = Output("sum", float)
 
-`Inputs` and `Outputs` can be retrieved and used using the same strategies described in the `additional inputs/outputs page <different_inputs_outputs>`_
+`Inputs` and `Outputs` can be retrieved and used using the same strategies described in the
+`additional inputs/outputs page <different_inputs_outputs>`_
 
 .. code-block:: python
 
@@ -219,4 +224,5 @@ Then you can define standard Orange `Input` and `Output`:
         self.Outputs.sum_.send(...)
 
 
-In this case, the Orange widget will not derive from the Ewoks task so it will be up to you to make sure there is coherence between two (e.g making sure that input and output names are coherent).
+In this case, the Orange widget will not derive from the Ewoks task so it will be up to you
+to make sure there is coherence between two (e.g making sure that input and output names are coherent).

@@ -35,7 +35,7 @@ Test it with 'Orange3 python script' widget
 
 Make sure you have Orange3 installed:
 
-.. code:: bash
+.. code-block:: bash
 
     pip install Orange3
 

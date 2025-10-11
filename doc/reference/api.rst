@@ -1,6 +1,5 @@
-ewoks orange API
-================
-
+API documentation
+=================
 
 .. autosummary::
     :toctree: _generated

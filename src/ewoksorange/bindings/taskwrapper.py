@@ -127,7 +127,7 @@ def execute_ewoks_owwidget(
 ) -> dict:
     """This is the equivalent of the execution of the associated Ewoks task
 
-    .. code::python
+    .. code-block::python
 
         task = task_cls(inputs=inputs)
         task.execute()
