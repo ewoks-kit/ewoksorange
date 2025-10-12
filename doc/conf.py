@@ -44,8 +44,12 @@ copybutton_prompt_is_regexp = True
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "pydata_sphinx_theme"
-html_static_path = ["_static"]
+html_title = docstitle
 html_logo = "_static/logo.png"
+html_static_path = ["_static"]
+html_template_path = ["_templates"]
+html_css_files = ["custom.css"]
+
 html_theme_options = {
     "icon_links": [
         {
