@@ -1,3 +1,5 @@
+.. _Ewoks widgets and execution:
+
 Ewoks widgets and execution
 ===========================
 
