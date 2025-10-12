@@ -1,3 +1,6 @@
+# -- Project information -----------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+
 import importlib.metadata
 
 release = importlib.metadata.version("ewoksorange")
@@ -7,6 +10,9 @@ version = ".".join(release.split(".")[:2])
 copyright = "2021-2025, ESRF"
 author = "ESRF"
 docstitle = f"{project} {version}"
+
+# -- General configuration ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
     "sphinx.ext.autodoc",
