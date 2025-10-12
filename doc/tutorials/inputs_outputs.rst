@@ -93,8 +93,7 @@ When linking two Orange tasks, it is possible to link any output of the source E
 input of the target Ewoks task.
 
 .. image:: img/data_mapping.png
-    :alt: A image of a link between two tasks showing one output choice on the left and multiple
-    input choices on the right.
+    :alt: A image of a link between two tasks showing one output choice on the left and multiple input choices on the right.
 
 
 To hide some of these inputs/outputs, we need to specify their name in the
