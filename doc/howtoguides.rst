@@ -4,5 +4,5 @@ How-to Guides
 .. toctree::
     :maxdepth: 1
 
-    installation
-    canvas
+    howtoguides/installation
+    howtoguides/canvas

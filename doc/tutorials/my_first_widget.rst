@@ -10,9 +10,9 @@ In this tutorial we will explain you how to create your first orange widget for 
 .. toctree::
     :maxdepth: 1
 
-    starting
-    testing
-    input_gui_read_only
-    get_input_from_gui
-    display_output
-    waiting_for_user_validation
+    my_first_widget/starting
+    my_first_widget/testing
+    my_first_widget/input_gui_read_only
+    my_first_widget/get_input_from_gui
+    my_first_widget/display_output
+    my_first_widget/waiting_for_user_validation
