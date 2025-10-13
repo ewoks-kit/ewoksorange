@@ -92,6 +92,19 @@ test_sdist-3.8:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
 
+test_sdist-3.8-oasys:
+  extends: .test_sdist-3.8_glx
+  script:
+    - echo PIP_INSTALL_OPTIONS $PIP_INSTALL_OPTIONS
+    - python -m pip install oasys1 AnyQt
+    - python -m pip install $QT_API $PIP_INSTALL_OPTIONS ewokscore pytest
+    - |
+      for filename in sdist/*.tar.gz; do
+        python -m pip install --no-deps $filename
+      done
+    - python -m pip list
+    - python -m pytest -v --pyargs ewoksorange
+
 test_sdist-3.10-win:
   extends: .test_sdist-3.10_glx-win
   script:
