@@ -17,53 +17,53 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
         parser = argparse.ArgumentParser()
 
-        parser.add_option(
+        parser.add_argument(
             "--no-discovery",
             action="store_true",
             help="Don't run widget discovery (use full cache instead)",
         )
-        parser.add_option(
+        parser.add_argument(
             "--force-discovery",
             action="store_true",
             help="Force full widget discovery (invalidate cache)",
         )
-        parser.add_option(
+        parser.add_argument(
             "--clear-widget-settings",
             action="store_true",
             help="Remove stored widget setting",
         )
-        parser.add_option(
+        parser.add_argument(
             "--no-welcome", action="store_true", help="Don't show welcome dialog."
         )
-        parser.add_option(
+        parser.add_argument(
             "--no-splash", action="store_true", help="Don't show splash screen."
         )
-        parser.add_option(
+        parser.add_argument(
             "-l",
             "--log-level",
             help="Logging level (0, 1, 2, 3, 4)",
-            type="int",
+            type=int,
             default=1,
         )
-        parser.add_option(
+        parser.add_argument(
             "--no-redirect",
             action="store_true",
             help="Do not redirect stdout/err to canvas output view.",
         )
-        parser.add_option("--style", help="QStyle to use", type="str", default="Fusion")
-        parser.add_option(
+        parser.add_argument("--style", help="QStyle to use", type=str, default="Fusion")
+        parser.add_argument(
             "--stylesheet",
             help="Application level CSS style sheet to use",
-            type="str",
+            type=str,
             default="orange.qss",
         )
-        parser.add_option(
+        parser.add_argument(
             "--qt",
             help="Additional arguments for QApplication",
-            type="str",
+            type=str,
             default=None,
         )
-        parser.add_option(
+        parser.add_argument(
             "--no-update",
             action="store_true",
             help="Stop automatic update internal libraries",
@@ -110,8 +110,9 @@ def main(argv=None):
     if "--force-discovery" not in argv:
         argv.append("--force-discovery")
 
-    if "--config" not in argv:
-        argv += ["--config", "ewoksorange.canvas.config.Config"]
+    if ORANGE_VERSION != ORANGE_VERSION.oasys_fork:
+        if "--config" not in argv:
+            argv += ["--config", "ewoksorange.canvas.config.Config"]
 
     with temporary_log_handlers(options.log_level):
         if options.with_examples:

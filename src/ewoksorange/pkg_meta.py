@@ -14,10 +14,16 @@ try:
     # https://github.com/biolab/orange-canvas-core/pull/289
     # https://github.com/biolab/orange-widget-base/pull/260
     # https://github.com/biolab/orange3/pull/6655
-except importlib.metadata.PackageNotFoundError:
-    # Must be Oasys, raise exception otherwise
-    _ = importlib.metadata.version("oasys-canvas-core")
-    _USE_IMPORTLIB = False
+except importlib.metadata.PackageNotFoundError as ex:
+    try:
+        _USE_IMPORTLIB = Version(
+            importlib.metadata.version("oasys-canvas-core")
+        ) >= Version("1.0.10")
+        # Oasys-Canvas-Core   1.0.10
+        # Oasys-Widget-Core   1.0.5
+        # OASYS1              1.2.148
+    except importlib.metadata.PackageNotFoundError:
+        raise ex
 
 
 if _USE_IMPORTLIB:
