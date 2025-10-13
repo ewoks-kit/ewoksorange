@@ -2,13 +2,15 @@ try:
     from importlib.resources import files as resource_files
 except ImportError:
     from importlib_resources import files as resource_files
+
 import pytest
-from ewoksorange.bindings import ows_to_ewoks
+from ewokscore import load_graph
+from ewokscore.tests.examples.graphs import get_graph
+from ewokscore.tests.examples.graphs import graph_names
+
 from ewoksorange.bindings import ewoks_to_ows
 from ewoksorange.bindings import graph_is_supported
-from ewokscore import load_graph
-from ewokscore.tests.examples.graphs import graph_names
-from ewokscore.tests.examples.graphs import get_graph
+from ewoksorange.bindings import ows_to_ewoks
 
 
 def test_ows_to_ewoks_sumtask_tutorial(tmpdir):

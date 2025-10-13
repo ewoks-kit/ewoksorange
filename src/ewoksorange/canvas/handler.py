@@ -1,18 +1,19 @@
+import logging
 import os
 import time
-import logging
 from typing import Dict
-from AnyQt.QtCore import Qt
+
 from AnyQt import QtWidgets
+from AnyQt.QtCore import Qt
 
 from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    from oasys.canvas import conf as orangeconfig
     from oasys.canvas.mainwindow import OASYSMainWindow as _OWCanvasMainWindow
+    from orangecanvas import config as canvasconfig
     from orangecanvas.registry import set_global_registry
     from orangecanvas.registry.qt import QtWidgetRegistry
-    from oasys.canvas import conf as orangeconfig
-    from orangecanvas import config as canvasconfig
 
     class OWCanvasMainWindow(_OWCanvasMainWindow):
         def show_scheme_properties_for(self, scheme, window_title=None):
@@ -24,25 +25,24 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         _MainWindowRegistry = None
 
 else:
+    from orangecanvas import config as canvasconfig
     from orangecanvas.registry import set_global_registry
     from orangecanvas.registry.qt import QtWidgetRegistry
-    from orangecanvas import config as canvasconfig
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
         # load MainWindow and config from Orange if installed
-        from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
         from Orange.canvas import config as orangeconfig
+        from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
     else:
         # else use the base one from orangewidget
         from orangewidget.workflow.mainwindow import OWCanvasMainWindow
         from ewoksorange.canvas import config as orangeconfig
 
-from .utils import get_orange_canvas
 from ..bindings import qtapp
 from ..bindings.bindings import ows_file_context
-from ..bindings.owwidgets import OWEwoksBaseWidget
 from ..bindings.owsignal_manager import SignalManagerWithOutputTracking
-
+from ..bindings.owwidgets import OWEwoksBaseWidget
+from .utils import get_orange_canvas
 
 _logger = logging.getLogger(__name__)
 

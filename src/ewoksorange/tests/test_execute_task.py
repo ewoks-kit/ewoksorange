@@ -1,12 +1,13 @@
-from typing import List, Dict
+from typing import Dict
+from typing import List
 
 import pytest
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
-from .utils import execute_task
-from ..bindings import owwidgets
 from ..bindings import ow_build_opts
+from ..bindings import owwidgets
+from .utils import execute_task
 
 
 class TaskForTesting(

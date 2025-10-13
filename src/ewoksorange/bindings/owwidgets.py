@@ -4,30 +4,35 @@ Orange widget base classes to execute Ewoks tasks
 
 from __future__ import annotations
 
-
 import inspect
 import logging
 import warnings
 from contextlib import contextmanager
-from typing import Any, Optional, Mapping, List, Callable, Tuple
+from typing import Any
+from typing import Callable
+from typing import List
+from typing import Mapping
+from typing import Optional
+from typing import Tuple
+
 from AnyQt import QtWidgets
 
 from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.widgets.widget import OWWidget
-    from orangewidget.widget import WidgetMetaClass
     from orangewidget.settings import Setting
+    from orangewidget.widget import WidgetMetaClass
 
     OWBaseWidget = OWWidget
     summarize = None
     PartialSummary = None
     has_progress_bar = True
 else:
-    from orangewidget.widget import OWBaseWidget
     from orangewidget.settings import Setting
-    from orangewidget.utils.signals import summarize
     from orangewidget.utils.signals import PartialSummary
+    from orangewidget.utils.signals import summarize
+    from orangewidget.widget import OWBaseWidget
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
         from Orange.widgets.widget import OWWidget
@@ -39,17 +44,17 @@ else:
         WidgetMetaClass = type(OWBaseWidget)
         has_progress_bar = False
 
+from ewokscore import missing_data
 from ewokscore.variable import Variable
 from ewokscore.variable import value_from_transfer
-from ewokscore import missing_data
+
+from . import invalid_data
+from . import owsignals
+from .events import scheme_ewoks_events
 from .progress import QProgress
 from .taskexecutor import TaskExecutor
 from .taskexecutor import ThreadedTaskExecutor
 from .taskexecutor_queue import TaskExecutorQueue
-from . import owsignals
-from .events import scheme_ewoks_events
-from . import invalid_data
-
 
 _logger = logging.getLogger(__name__)
 

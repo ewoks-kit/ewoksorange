@@ -1,24 +1,28 @@
 from numbers import Number
-from typing import List, Mapping, Optional, Tuple, Type
+from typing import List
+from typing import Mapping
+from typing import Optional
+from typing import Tuple
+from typing import Type
 
-from ewoksutils.import_utils import qualname
-from ewoksutils.import_utils import import_qualname
 from ewokscore import Task
 from ewokscore.variable import value_from_transfer
+from ewoksutils.import_utils import import_qualname
+from ewoksutils.import_utils import qualname
 
-from .qtapp import ensure_qtapp
-from .qtapp import process_qtapp_events
-from .qtapp import QtEvent
-from .owwidgets import is_ewoks_widget_class
-from .owwidgets import is_native_widget_class
-from .owwidgets import OWEwoksBaseWidget
-from .owwidgets import OWBaseWidget
-from . import owsignals
-from . import owsettings
+from ..orange_version import ORANGE_VERSION
 from . import invalid_data
+from . import owsettings
+from . import owsignals
 from .owsignal_manager import SignalManagerWithoutScheme
 from .owsignal_manager import set_input_value
-from ..orange_version import ORANGE_VERSION
+from .owwidgets import OWBaseWidget
+from .owwidgets import OWEwoksBaseWidget
+from .owwidgets import is_ewoks_widget_class
+from .owwidgets import is_native_widget_class
+from .qtapp import QtEvent
+from .qtapp import ensure_qtapp
+from .qtapp import process_qtapp_events
 
 __all__ = ["OWWIDGET_TASKS_GENERATOR"]
 

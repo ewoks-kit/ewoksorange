@@ -1,8 +1,8 @@
-from silx.gui import qt
-from ewokscore.task import Task
-from ewoksorange.bindings.owwidgets import OWEwoksWidgetOneThread
-
 import numpy
+from ewokscore.task import Task
+from silx.gui import qt
+
+from ewoksorange.bindings.owwidgets import OWEwoksWidgetOneThread
 
 
 class ClipDataTask(

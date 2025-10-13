@@ -10,6 +10,9 @@ variables:
   WARNING5: "ignore::DeprecationWarning:matplotlib._mathtext"
   IGNORE_WARNINGS: "-W ${WARNING1} -W ${WARNING2} -W ${WARNING3} -W ${WARNING4} -W ${WARNING5}"
 
+isort:
+  extends: .isort
+
 test-3.8-orange:
   extends: .test-3.8_glx
   script:

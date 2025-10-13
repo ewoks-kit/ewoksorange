@@ -1,18 +1,20 @@
-import os
 import logging
-from typing import Optional, Iterator, Tuple, Sequence
+import os
 from contextlib import contextmanager
+from typing import Iterator
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
 
 import h5py
 import silx.io
-from silx.gui import qt
 from silx.gui import icons
-from silx.gui.hdf5 import Hdf5TreeView
-from silx.gui.hdf5 import Hdf5TreeModel
-from silx.gui.hdf5 import NexusSortFilterProxyModel
-from silx.gui.hdf5 import Hdf5ContextMenuEvent
+from silx.gui import qt
 from silx.gui.data.DataViewerFrame import DataViewerFrame
-
+from silx.gui.hdf5 import Hdf5ContextMenuEvent
+from silx.gui.hdf5 import Hdf5TreeModel
+from silx.gui.hdf5 import Hdf5TreeView
+from silx.gui.hdf5 import NexusSortFilterProxyModel
 
 _logger = logging.getLogger(__name__)
 

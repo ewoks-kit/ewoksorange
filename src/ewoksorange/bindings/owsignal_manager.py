@@ -3,10 +3,10 @@ from typing import Any
 from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    import oasys.canvas.widgetsscheme as widgetsscheme_module
     from oasys.canvas.widgetsscheme import (
         OASYSSignalManager as _SignalManagerWithSchemeOrg,
     )
-    import oasys.canvas.widgetsscheme as widgetsscheme_module
 
     class _SignalManagerWithScheme(_SignalManagerWithSchemeOrg):
         def has_pending(self):
@@ -20,15 +20,15 @@ else:
     import orangewidget.workflow.widgetsscheme as widgetsscheme_module
     from orangewidget.utils.signals import notify_input_helper
 
+from ewokscore.variable import Variable
+from ewokscore.variable import value_from_transfer
 from orangecanvas.scheme import signalmanager
 
-from ewokscore.variable import value_from_transfer, Variable
-
+from ..bindings.owsignals import get_input_names
+from ..bindings.owsignals import get_output_names
+from . import invalid_data
 from .owwidgets import is_native_widget
 from .qtapp import QtEvent
-from ..bindings.owsignals import get_input_names, get_output_names
-from . import invalid_data
-
 
 # monkey patch of 'can_enable_dynamic' See https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/58
 

@@ -1,6 +1,5 @@
 from ewokscore import missing_data
 
-
 # Native Orange widgets use `None` as MISSING_DATA
 INVALIDATION_DATA = None
 

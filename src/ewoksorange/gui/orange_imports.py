@@ -10,9 +10,11 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     Output = None
 elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.widgets import gui  # noqa F401
-    from orangewidget.widget import Input, Output  # noqa F401
     from orangewidget.settings import Setting  # noqa F401
+    from orangewidget.widget import Input  # noqa F401
+    from orangewidget.widget import Output  # noqa F401
 else:
     from orangewidget import gui  # noqa F401
-    from orangewidget.widget import Input, Output  # noqa F401
     from orangewidget.settings import Setting  # noqa F401
+    from orangewidget.widget import Input  # noqa F401
+    from orangewidget.widget import Output  # noqa F401

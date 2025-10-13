@@ -1,5 +1,6 @@
-from typing import Optional
 import importlib.metadata
+from typing import Optional
+
 from packaging.version import Version
 
 try:

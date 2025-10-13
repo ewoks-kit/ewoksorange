@@ -1,5 +1,6 @@
 import pytest
 from ewoksutils.import_utils import import_qualname
+
 from ewoksorange.tests.utils import execute_task
 
 _WIDGETS = [

@@ -1,8 +1,8 @@
-from ewoksorange.gui.orange_imports import Input, Output
 from ewoksorange.bindings import OWEwoksWidgetNoThread
-from ewoksorange.tests.examples.tasks import SumTaskTest
+from ewoksorange.gui.orange_imports import Input
+from ewoksorange.gui.orange_imports import Output
 from ewoksorange.gui.simpletypesmixin import IntegerAdderMixin
-
+from ewoksorange.tests.examples.tasks import SumTaskTest
 
 __all__ = ["OWSumTaskTest"]
 

@@ -1,9 +1,12 @@
 import pathlib
-from typing import Any, Optional, Union, List
+from typing import Any
+from typing import List
+from typing import Optional
+from typing import Union
 
 from ewokscore.engine_interface import Path
-from ewokscore.engine_interface import TaskGraph
 from ewokscore.engine_interface import RawExecInfoType
+from ewokscore.engine_interface import TaskGraph
 from ewokscore.engine_interface import WorkflowEngineWithSerialization
 
 from . import bindings

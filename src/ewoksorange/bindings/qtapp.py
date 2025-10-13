@@ -1,13 +1,14 @@
 import gc
+import logging
+import signal
 import sys
 import time
-import signal
-import logging
-from typing import Optional, Iterator
 from contextlib import contextmanager
+from typing import Iterator
+from typing import Optional
+
 from AnyQt import QtCore
 from AnyQt.QtWidgets import QApplication
-
 
 _APP = None
 _OLD_HANDLERS = None

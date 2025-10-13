@@ -1,9 +1,9 @@
 from ewokscore import Task
 
+from ewoksorange.bindings import ow_build_opts
 from ewoksorange.bindings.owwidgets import (
     OWEwoksWidgetOneThreadPerRun as _OWEwoksWidgetOneThreadPerRun,
 )
-from ewoksorange.bindings import ow_build_opts
 from ewoksorange.bindings.qtapp import QtEvent
 
 

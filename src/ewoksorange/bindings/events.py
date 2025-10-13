@@ -1,4 +1,5 @@
 from contextlib import ExitStack
+
 from ewokscore import events
 from ewokscore.events.contexts import ExecInfoType
 from ewokscore.events.contexts import RawExecInfoType

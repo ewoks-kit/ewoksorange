@@ -105,3 +105,7 @@ ewoks-canvas = "ewoksorange.canvas.main:main"
 
 [tool.pytest.ini_options]
 timeout = 120
+
+[tool.isort]
+profile = "black"
+force_single_line = "True"

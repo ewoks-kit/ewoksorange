@@ -1,9 +1,9 @@
 from ewokscore.tests.examples.tasks.sumtask import SumTask
 
-from ewoksorange.gui.orange_imports import Input, Output
 from ewoksorange.bindings import OWEwoksWidgetOneThread
+from ewoksorange.gui.orange_imports import Input
+from ewoksorange.gui.orange_imports import Output
 from ewoksorange.gui.simpletypesmixin import IntegerAdderMixin
-
 
 __all__ = ["SumTask"]
 

@@ -4,22 +4,23 @@ Widget and example discovery is done from these entry-points.
 """
 
 import logging
-from typing import List, Optional, Tuple
+from typing import List
+from typing import Optional
+from typing import Tuple
 
 from . import pkg_meta
-from .orange_version import ORANGE_VERSION
 from .canvas.utils import get_orange_canvas
-
+from .orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas.conf import WIDGETS_ENTRY  # "oasys.widgets"
-    from orangewidget.canvas.discovery import WidgetDiscovery
+    from orangecanvas.registry import global_registry
     from orangecanvas.registry.base import WidgetRegistry
-    from orangecanvas.registry.description import WidgetDescription
     from orangecanvas.registry.description import InputSignal
     from orangecanvas.registry.description import OutputSignal
-    from orangecanvas.registry import global_registry
+    from orangecanvas.registry.description import WidgetDescription
     from orangecanvas.registry.utils import category_from_package_globals
+    from orangewidget.canvas.discovery import WidgetDiscovery
 
     def _get_widget_description(widget_class) -> WidgetDescription:
         widget_cls_name = widget_class.__name__
@@ -67,12 +68,12 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
     NATIVE_WIDGETS_PROJECT = "oasys1"
 else:
-    from orangewidget.workflow.discovery import WidgetDiscovery
-    from orangecanvas.registry.base import WidgetRegistry
     from orangecanvas.registry import WidgetDescription
     from orangecanvas.registry import global_registry
+    from orangecanvas.registry.base import WidgetRegistry
     from orangecanvas.registry.utils import category_from_package_globals
     from orangewidget.workflow.config import WIDGETS_ENTRY  # "orange.widgets"
+    from orangewidget.workflow.discovery import WidgetDiscovery
 
     NATIVE_WIDGETS_PROJECT = "orange3"
 

@@ -1,16 +1,19 @@
 import os
 import sys
-from pathlib import Path
 from contextlib import contextmanager
-from typing import Any, Iterator, Optional, List, Union
+from pathlib import Path
+from typing import Any
+from typing import Iterator
+from typing import List
+from typing import Optional
+from typing import Union
 
 import ewokscore
 from ewokscore.graph import TaskGraph
 from ewokscore.graph.serialize import GraphRepresentation
 
-from . import owsconvert
 from ..canvas.main import main as launchcanvas
-
+from . import owsconvert
 
 __all__ = ["execute_graph", "load_graph", "save_graph", "convert_graph"]
 

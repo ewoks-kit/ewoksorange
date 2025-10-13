@@ -1,10 +1,11 @@
 import logging
-from typing import Optional, Type
+from typing import Optional
+from typing import Type
+
 from AnyQt.QtCore import QThread
+from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
-from ewokscore import TaskWithProgress
-
 
 _logger = logging.getLogger(__name__)
 

@@ -1,9 +1,10 @@
 import pytest
-from ewokscore.tests.examples.graphs import graph_names
+from ewokscore import load_graph
 from ewokscore.tests.examples.graphs import get_graph
+from ewokscore.tests.examples.graphs import graph_names
 from ewokscore.tests.test_examples import assert_convert_graph
 from ewokscore.tests.utils.results import assert_execute_graph_tasks
-from ewokscore import load_graph
+
 from ewoksorange import convert_graph
 from ewoksorange import graph_is_supported
 
