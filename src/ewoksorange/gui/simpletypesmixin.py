@@ -1,5 +1,5 @@
-from ewoksorange.gui.parameterform import ParameterForm
 from ewoksorange.gui.orange_imports import gui
+from ewoksorange.gui.parameterform import ParameterForm
 
 
 class SimpleTypesWidgetMixin:

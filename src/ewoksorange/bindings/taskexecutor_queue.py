@@ -1,8 +1,9 @@
-from typing import Iterable
 from queue import Queue
+from typing import Iterable
 
 from AnyQt.QtCore import QObject
 from AnyQt.QtCore import pyqtSignal as Signal
+
 from ewoksorange.gui.qtsignals import block_signals
 
 from .taskexecutor import ThreadedTaskExecutor

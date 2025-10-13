@@ -1,12 +1,20 @@
-import os
 import logging
 import numbers
-from typing import Any, Callable, Dict, List, Sequence, Set, Union, Optional
+import os
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Sequence
+from typing import Set
+from typing import Union
 
 from AnyQt import QtCore
 from AnyQt import QtWidgets
-from silx.gui.dialog.DataFileDialog import DataFileDialog
 from ewokscore import missing_data
+from silx.gui.dialog.DataFileDialog import DataFileDialog
+
 from ewoksorange.gui.qtsignals import block_signals
 
 _logger = logging.getLogger(__name__)

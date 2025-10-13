@@ -1,11 +1,10 @@
 import pytest
-
-from ewoksutils.import_utils import import_qualname
-from ewokscore.task import TaskInputError
 from ewokscore.inittask import instantiate_task
+from ewokscore.task import TaskInputError
+from ewoksutils.import_utils import import_qualname
 
-from ewoksorange.tests.utils import execute_task
 from ewoksorange.bindings import OWWIDGET_TASKS_GENERATOR
+from ewoksorange.tests.utils import execute_task
 
 _WIDGETS = [
     "orangecontrib.ewokstest.sumtask.OWSumTaskTest",

@@ -1,9 +1,8 @@
-import sys
 import logging
+import sys
 from contextlib import contextmanager
 
 from ..orange_version import ORANGE_VERSION
-
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas import conf as _oasys_conf_module
@@ -72,8 +71,8 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         return parser
 
 elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from orangecanvas.main import arg_parser
     from Orange.canvas.__main__ import main as _main
+    from orangecanvas.main import arg_parser
 else:
     from orangecanvas.main import arg_parser
     from orangecanvas.main import main as _main

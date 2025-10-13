@@ -1,8 +1,7 @@
 import numpy
-
 from ewokscore.task import Task
-from ewokscore.tests.examples.tasks.sumtask import SumTask
 from ewokscore.tests.examples.tasks.sumlist import SumList
+from ewokscore.tests.examples.tasks.sumtask import SumTask
 
 
 class SumTaskTest(SumTask):

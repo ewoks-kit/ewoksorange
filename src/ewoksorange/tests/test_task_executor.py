@@ -1,12 +1,14 @@
-from AnyQt.QtCore import QObject
 import time
+
+from AnyQt.QtCore import QObject
+from ewokscore import Task
+from ewokscore.missing_data import MISSING_DATA
+from ewokscore.tests.examples.tasks.sumtask import SumTask
+
+from ewoksorange.bindings.qtapp import QtEvent
 from ewoksorange.bindings.taskexecutor import TaskExecutor
 from ewoksorange.bindings.taskexecutor import ThreadedTaskExecutor
 from ewoksorange.bindings.taskexecutor_queue import TaskExecutorQueue
-from ewoksorange.bindings.qtapp import QtEvent
-from ewokscore import Task
-from ewokscore.tests.examples.tasks.sumtask import SumTask
-from ewokscore.missing_data import MISSING_DATA
 
 
 def test_task_executor():

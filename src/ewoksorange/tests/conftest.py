@@ -1,12 +1,12 @@
+import functools
 import gc
 import logging
 import warnings
-import functools
 
 import pytest
 
-from ewoksorange.bindings.qtapp import qtapp_context
 from ewoksorange.bindings.qtapp import get_all_qtwidgets
+from ewoksorange.bindings.qtapp import qtapp_context
 from ewoksorange.canvas.handler import OrangeCanvasHandler
 from ewoksorange.orange_version import ORANGE_VERSION
 from orangecontrib.ewokstest import enable_ewokstest_category

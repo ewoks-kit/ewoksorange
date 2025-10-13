@@ -1,10 +1,10 @@
-from silx.gui import qt
-from ewokscore.task import Task
-from ewoksorange.bindings.owwidgets import OWEwoksWidgetOneThread
+import numpy
 from ewokscore.missing_data import is_missing_data
+from ewokscore.task import Task
+from silx.gui import qt
 from silx.gui.plot import Plot1D
 
-import numpy
+from ewoksorange.bindings.owwidgets import OWEwoksWidgetOneThread
 
 
 class ClipDataTask(

@@ -1,5 +1,5 @@
-from enum import Enum
 import importlib.metadata
+from enum import Enum
 
 _OrangeVersion = Enum("OrangeVersion", "latest_orange oasys_fork latest_orange_base")
 

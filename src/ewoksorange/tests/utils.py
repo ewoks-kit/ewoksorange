@@ -1,5 +1,10 @@
-from typing import Mapping, Optional, Union, Type
+from typing import Mapping
+from typing import Optional
+from typing import Type
+from typing import Union
+
 from ewokscore.task import Task
+
 from ..bindings.owwidgets import OWEwoksBaseWidget
 from ..bindings.taskwrapper import execute_ewoks_owwidget
 

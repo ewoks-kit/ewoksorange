@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+
 from AnyQt import QtWidgets
 
 

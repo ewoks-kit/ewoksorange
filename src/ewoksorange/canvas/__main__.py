@@ -26,6 +26,7 @@ but it registers the example add-on before launching.
 """
 
 import sys
+
 from .main import main
 
 if __name__ == "__main__":

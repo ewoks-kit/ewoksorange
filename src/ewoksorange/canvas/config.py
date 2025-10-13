@@ -5,16 +5,15 @@ from typing import Tuple
 from .. import pkg_meta
 from ..orange_version import ORANGE_VERSION
 
-
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.canvas.conf import oasysconf as _Config
     from oasys.canvas.conf import WIDGETS_ENTRY  # "oasys.widgets"
+    from oasys.canvas.conf import oasysconf as _Config
 elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from Orange.canvas.config import Config as _Config
     from Orange.canvas.config import WIDGETS_ENTRY  # "orange.widgets"
+    from Orange.canvas.config import Config as _Config
 else:
-    from orangewidget.workflow.config import Config as _Config
     from orangewidget.workflow.config import WIDGETS_ENTRY  # "orange.widgets"
+    from orangewidget.workflow.config import Config as _Config
 
 
 EXAMPLE_WORKFLOWS_ENTRY = WIDGETS_ENTRY + ".tutorials"

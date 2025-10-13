@@ -1,10 +1,14 @@
 from typing import Tuple
-from ewokscore import Task, TaskWithProgress
-from ewoksorange.bindings.owwidgets import OWEwoksBaseWidget
-from ewoksorange.bindings import OWEwoksWidgetNoThread, OWEwoksWidgetOneThread
-from ewoksorange import registration
-from . import widgets
 
+from ewokscore import Task
+from ewokscore import TaskWithProgress
+
+from ewoksorange import registration
+from ewoksorange.bindings import OWEwoksWidgetNoThread
+from ewoksorange.bindings import OWEwoksWidgetOneThread
+from ewoksorange.bindings.owwidgets import OWEwoksBaseWidget
+
+from . import widgets
 
 NAME = "No widgets"
 

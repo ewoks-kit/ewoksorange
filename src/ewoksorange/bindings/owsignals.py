@@ -1,5 +1,8 @@
 import inspect
-from typing import Callable, List, Optional
+from typing import Callable
+from typing import List
+from typing import Optional
+
 from ..orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
@@ -17,7 +20,8 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             return self[attr]
 
 else:
-    from orangewidget.widget import Input, Output
+    from orangewidget.widget import Input
+    from orangewidget.widget import Output
 
 
 SIGNAL_TYPES = (Input, Output)

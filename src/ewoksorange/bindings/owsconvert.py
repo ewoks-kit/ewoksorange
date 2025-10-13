@@ -1,10 +1,17 @@
-import os
 import json
 import logging
-from uuid import uuid4
-from pathlib import Path
+import os
 from collections import namedtuple
-from typing import IO, Iterator, List, Optional, Tuple, Type, Union, NamedTuple
+from pathlib import Path
+from typing import IO
+from typing import Iterator
+from typing import List
+from typing import NamedTuple
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import Union
+from uuid import uuid4
 
 from ..orange_version import ORANGE_VERSION
 
@@ -12,24 +19,24 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.widgets.widget import OWWidget as OWBaseWidget
 else:
     from orangewidget.widget import OWBaseWidget
-from orangecanvas.scheme import readwrite
-from orangecanvas.scheme import annotations
 
-from ewoksutils.import_utils import qualname
-from ewoksutils.import_utils import import_qualname
 from ewokscore import load_graph
 from ewokscore.graph import TaskGraph
-from ewokscore.inittask import task_executable_info
-from ewokscore.task import Task
-from ewokscore.node import get_node_label
 from ewokscore.graph.serialize import GraphRepresentation
+from ewokscore.inittask import task_executable_info
+from ewokscore.node import get_node_label
+from ewokscore.task import Task
+from ewoksutils.import_utils import import_qualname
+from ewoksutils.import_utils import qualname
+from orangecanvas.scheme import annotations
+from orangecanvas.scheme import readwrite
 
 from ..registration import get_owwidget_descriptions
-from .taskwrapper import OWWIDGET_TASKS_GENERATOR
+from . import invalid_data
 from .owsignals import signal_ewoks_to_orange_name
 from .owsignals import signal_orange_to_ewoks_name
 from .owwidgets import is_ewoks_widget_class
-from . import invalid_data
+from .taskwrapper import OWWIDGET_TASKS_GENERATOR
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows", "graph_is_supported"]
 
