@@ -45,12 +45,21 @@ ReadSchemeType = readwrite._scheme
 logger = logging.getLogger(__name__)
 
 
-def widget_to_task(widget_qualname: str) -> Tuple[OWBaseWidget, dict, Optional[Task]]:
+def widget_to_task(
+    widget_qualname: str, task_qualname: str
+) -> Tuple[Optional[OWBaseWidget], dict, Optional[Task]]:
     try:
         widget_class = import_qualname(widget_qualname)
     except ImportError:
+        if task_qualname:
+            try:
+                widget_class, _ = task_to_widget(task_qualname)
+            except ImportError:
+                widget_class = None
+
+    if not widget_class:
         logger.warning("Cannot import Orange widget %r", widget_qualname)
-        widget_class = None
+
     if hasattr(widget_class, "ewokstaskclass"):
         # Ewoks Orange widget
         node_attrs = {
@@ -162,7 +171,7 @@ def ows_to_ewoks(
 
     for ows_node in ows.nodes:
         widget_class, node_attrs, ewokstaskclass = widget_to_task(
-            ows_node.qualified_name
+            ows_node.qualified_name, ows_node.name
         )
         owsinfo = {
             "title": ows_node.title,
@@ -299,7 +308,7 @@ class OwsNodeWrapper:
         self.position = ows.get("position", (0.0, 0.0))
         default_name = node_attrs["qualified_name"].split(".")[-1]
         self.description = self._node_desc(
-            name=ows.get("name", default_name),
+            name=node_attrs.get("name", ows.get("name", default_name)),
             qualified_name=node_attrs["qualified_name"],
             project_name=node_attrs["project_name"],
             version=ows.get("version", ""),  # widget version
@@ -364,6 +373,8 @@ class OwsSchemeWrapper:
                     task_info["task_identifier"],
                     error_on_duplicates=error_on_duplicates,
                 )
+                node_attrs["name"] = widget_class.name
+                # Ewoks Task qualified name in case of `DefaultOwWidget`
                 node_attrs["qualified_name"] = qualname(widget_class)
                 if varinfo:
                     node_attrs["varinfo"] = varinfo
