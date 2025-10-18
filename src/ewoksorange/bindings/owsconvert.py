@@ -41,7 +41,7 @@ from .taskwrapper import OWWIDGET_TASKS_GENERATOR
 __all__ = ["ows_to_ewoks", "ewoks_to_ows", "graph_is_supported"]
 
 ReadSchemeType = readwrite._scheme
-
+_original_parse_ows_stream = readwrite.parse_ows_stream
 logger = logging.getLogger(__name__)
 
 
@@ -476,7 +476,7 @@ class OwsSchemeWrapper:
 
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:
     """Read an Orange Workflow Scheme from a file or a stream."""
-    return readwrite.parse_ows_stream(source)
+    return _original_parse_ows_stream(source)
 
 
 def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):
@@ -517,3 +517,24 @@ def _deserialize_annotation(annotation: dict) -> annotations.BaseSchemeAnnotatio
         end = tuple(end)
         return annotations.SchemeArrowAnnotation(start, end, **params)
     raise ValueError("cannot deserialize annotation params")
+
+
+def _patched_parse_ows_stream(*args, **kwargs) -> ReadSchemeType:
+    """Add missing widgets to the `ewoksnowidget` Orange3 add-on when
+    parsing `.ows` streams.
+    """
+    scheme = _original_parse_ows_stream(*args, **kwargs)
+    for node in scheme.nodes:
+        if (
+            node.qualified_name.startswith("orangecontrib.ewoksnowidget.widgets.")
+            and node.name
+        ):
+            try:
+                _ = task_to_widget(node.name)
+            except ImportError:
+                logger.error("Ewoks task cannot be imported: %r", node.name)
+    return scheme
+
+
+def patch_parse_ows_stream():
+    readwrite.parse_ows_stream = _patched_parse_ows_stream
