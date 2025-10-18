@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `orangecontrib.ewoksnowidget.global_cleanup_ewoksnowidget` removes all dynamically generated widget
+  declarations from the `orangecontrib.ewoksnowidget` Orange add-on. Used by pytest fixture `qtapp`.
+
 ## [2.0.1] - 2025-09-22
 
 ### Fixed
