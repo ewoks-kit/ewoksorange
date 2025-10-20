@@ -124,9 +124,9 @@ def register_owwidget(
 
 def get_owwidget_descriptions():
     """Do not include native orange widgets"""
-    disc = _local_widget_discovery_object()
-    disc.run(_entry_points(WIDGETS_ENTRY))
-    return disc.registry.widgets()
+    discovery = _temporary_widget_discovery_object()
+    discovery.run(_entry_points(WIDGETS_ENTRY))
+    return discovery.registry.widgets()
 
 
 def _entry_points(group: str) -> Tuple[pkg_meta.EntryPoint]:
@@ -142,7 +142,7 @@ def _global_widget_discovery_objects() -> List[WidgetDiscovery]:
     return [WidgetDiscovery(reg) for reg in _global_registry_objects()]
 
 
-def _local_widget_discovery_object() -> WidgetDiscovery:
+def _temporary_widget_discovery_object() -> WidgetDiscovery:
     return WidgetDiscovery(WidgetRegistry())
 
 

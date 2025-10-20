@@ -9,7 +9,7 @@ class Dummy(Task, input_names=["a"], output_names=["b"]):
         self.outputs.b = self.inputs.a + 1
 
 
-def test_default_widgets(tmpdir, ewoks_orange_canvas):
+def test_default_widgets(tmp_path, ewoks_orange_canvas):
     nodes = [
         {
             "id": "task1",
@@ -34,7 +34,7 @@ def test_default_widgets(tmpdir, ewoks_orange_canvas):
 
     # Create an Orange workflows
     graph = {"graph": {"id": "test_graph"}, "nodes": nodes, "links": links}
-    destination = str(tmpdir / "ewoksgraph.ows")
+    destination = str(tmp_path / "ewoksgraph.ows")
     ewoks_to_ows(graph, destination)
 
     # Load and execute the orange workflow

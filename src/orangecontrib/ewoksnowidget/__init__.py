@@ -5,9 +5,9 @@ from ewokscore import TaskWithProgress
 from ewoksutils.import_utils import qualname
 
 from ewoksorange import registration
-from ewoksorange.bindings import OWEwoksWidgetNoThread
-from ewoksorange.bindings import OWEwoksWidgetOneThread
 from ewoksorange.bindings.owwidgets import OWEwoksBaseWidget
+from ewoksorange.bindings.owwidgets import OWEwoksWidgetNoThread
+from ewoksorange.bindings.owwidgets import OWEwoksWidgetOneThread
 
 from . import widgets
 
@@ -77,3 +77,15 @@ def default_owwidget_class(task_class: Task) -> Tuple[OWEwoksBaseWidget, str]:
 def widget_discovery(discovery):
     for widget_class in _DEFAULT_WIDGET_CLASSES.values():
         register_owwidget(widget_class, discovery_object=discovery)
+
+
+def global_cleanup_ewoksnowidget():
+    """Remove all widget declarations."""
+    # Note: the discovery object owns a widget registry which keeps references
+    # to all discovered widget classes. The widgets from `ewoksnowidget` are
+    # never registered with a global widget registry (so not visible in the
+    # widget panel in the canvas) so there is no need to remove the widgets
+    # from the registry used during discovery.
+    for widget_class in _DEFAULT_WIDGET_CLASSES.values():
+        delattr(widgets, widget_class.__name__)
+    _DEFAULT_WIDGET_CLASSES.clear()

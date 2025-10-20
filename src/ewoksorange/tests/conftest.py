@@ -9,6 +9,7 @@ from ewoksorange.bindings.qtapp import get_all_qtwidgets
 from ewoksorange.bindings.qtapp import qtapp_context
 from ewoksorange.canvas.handler import OrangeCanvasHandler
 from ewoksorange.orange_version import ORANGE_VERSION
+from orangecontrib.ewoksnowidget import global_cleanup_ewoksnowidget
 from orangecontrib.ewokstest import enable_ewokstest_category
 
 logger = logging.getLogger(__name__)
@@ -68,6 +69,7 @@ def qtapp():
         assert app is not None
         yield app
     collect_garbage(app)
+    global_cleanup_ewoksnowidget()
     global_cleanup_orange()
     global_cleanup_pytest()
     collect_garbage(app)
