@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2025-10-23
+
 ### Added
 
 - `orangecontrib.ewoksnowidget.global_cleanup_ewoksnowidget` removes all dynamically generated widget
@@ -193,11 +195,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- OWEwoksBaseWidget: get default inputs with or without missing values.
+- `OWEwoksBaseWidget`: get default inputs with or without missing values.
 
 ### Fixed
 
-- ParameterForm: fix serialization for sequences.
+- `ParameterForm`: fix serialization for sequences.
 
 ## [0.1.1] - 2023-01-26
 
@@ -210,15 +212,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Bases classes for Orange Widgets natively compliant with ewoks.
-  - OWEwoksWidgetNoThread: will execute ewoks task directly.
-  - OWEwoksWidgetOneThread: will execute ewoks task on a thread. Refuse job is the thread is already running.
-  - OWEwoksWidgetOneThreadPerRun: create one new thread per ewoks task to be execute.
-  - OWEwoksWidgetWithTaskStack: has one thread to execute ewoks tasks. Work as a FIFO stack.
+  - `OWEwoksWidgetNoThread`: will execute ewoks task directly.
+  - `OWEwoksWidgetOneThread`: will execute ewoks task on a thread. Refuse job is the thread is already running.
+  - `OWEwoksWidgetOneThreadPerRun`: create one new thread per ewoks task to be execute.
+  - `OWEwoksWidgetWithTaskStack`: has one thread to execute ewoks tasks. Work as a FIFO stack.
 - Convert Orange workflows to Ewoks and vice versa.
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.0.1...HEAD
+[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.1.0...HEAD
+[2.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.0.1...v2.1.0
 [2.0.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.0.0...v2.0.1
 [2.0.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v1.2.0...v2.0.0
 [1.2.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v1.1.0...v1.2.0
