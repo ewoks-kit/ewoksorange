@@ -13,6 +13,7 @@ from .canvas.utils import get_orange_canvas
 from .orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    # from orangecanvas.registry import WidgetDiscovery  # use orangewidget to be sure
     from oasys.canvas.conf import WIDGETS_ENTRY  # "oasys.widgets"
     from orangecanvas.registry import global_registry
     from orangecanvas.registry.base import WidgetRegistry
@@ -68,6 +69,7 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
     NATIVE_WIDGETS_PROJECT = "oasys1"
 else:
+    # from orangecanvas.registry import WidgetDiscovery  # use orangewidget to be sure
     from orangecanvas.registry import WidgetDescription
     from orangecanvas.registry import global_registry
     from orangecanvas.registry.base import WidgetRegistry

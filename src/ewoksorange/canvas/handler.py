@@ -30,13 +30,14 @@ else:
     from orangecanvas.registry.qt import QtWidgetRegistry
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-        # load MainWindow and config from Orange if installed
         from Orange.canvas import config as orangeconfig
         from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
     else:
-        # else use the base one from orangewidget
-        from orangewidget.workflow.mainwindow import OWCanvasMainWindow
-        from ewoksorange.canvas import config as orangeconfig
+        # from orangewidget.workflow.mainwindow import OWCanvasMainWindow  # ewoks-canvas CLI does not use this
+        from orangecanvas.application.canvasmain import (
+            CanvasMainWindow as OWCanvasMainWindow,
+        )
+        from . import config as orangeconfig
 
 from ..bindings import qtapp
 from ..bindings.bindings import ows_file_context

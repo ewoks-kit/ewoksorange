@@ -7,7 +7,10 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
 else:
-    from orangewidget.workflow.mainwindow import OWCanvasMainWindow
+    # from orangewidget.workflow.mainwindow import OWCanvasMainWindow # ewoks-canvas CLI does not use this
+    from orangecanvas.application.canvasmain import (
+        CanvasMainWindow as OWCanvasMainWindow,
+    )
 
 from ..bindings.qtapp import get_qtapp
 

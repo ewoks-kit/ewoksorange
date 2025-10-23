@@ -12,12 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `orangecontrib.ewoksnowidget.global_cleanup_ewoksnowidget` removes all dynamically generated widget
   declarations from the `orangecontrib.ewoksnowidget` Orange add-on. Used by pytest fixture `qtapp`.
 
+### Fixed
+
+- Widget classes from Ewoks tasks without Orange widget are now generated dynamically when
+  opening or executing `.ows` files.
+
 ## [2.0.1] - 2025-09-22
 
 ### Fixed
 
-- Fix type mismatch when linking `EwoksOrange` widgets to native Orange widgets [!232](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/merge_requests/232)
-- Fix error when converting an Ewoks workflow containing native Orange widgets to OWS format (with `ewoks_to_ows`) [#59](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/59)
+- Fix type mismatch when linking `EwoksOrange` widgets to native Orange widgets
+  [!232](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/merge_requests/232)
+- Fix error when converting an Ewoks workflow containing native Orange widgets to OWS format
+  (with `ewoks_to_ows`) [#59](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/59)
 
 ## [2.0.0] - 2025-07-25
 
@@ -58,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `OWEwoksWidgetOneThread`, `OWEwoksWidgetOneThreadPerRun`, `OWEwoksWidgetWithTaskStack`: new method `cancel_running_task` to cancel the current task.
+- `OWEwoksWidgetOneThread`, `OWEwoksWidgetOneThreadPerRun`, `OWEwoksWidgetWithTaskStack`:
+  new method `cancel_running_task` to cancel the current task.
 - Usage with Python 3.6 and 3.7 is deprecated. These versions will not be supported by the next major release.
 
 ## [0.7.2] - 2024-06-23
