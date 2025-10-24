@@ -751,6 +751,9 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def get_task_outputs(self):
         return self.__last_output_variables
 
+    def get_task_executors(self) -> dict[int, tuple[ThreadedTaskExecutor, bool]]:
+        return self.__task_executors
+
 
 class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     """
