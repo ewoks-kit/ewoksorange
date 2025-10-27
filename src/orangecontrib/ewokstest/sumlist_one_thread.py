@@ -1,4 +1,4 @@
-from ewoksorange.bindings import OWEwoksWidgetOneThread
+from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
 from ewoksorange.tests.examples.tasks import SumList
 from ewoksorange.tests.examples.widgets import WidgetMixin
 

@@ -1,5 +1,6 @@
-from ewoksorange.tests.utils import execute_task
 from orangecontrib.ewoksdemo.sumtask import OWSumTask
+
+from .utils import execute_task
 
 
 def test_sumtask_task():

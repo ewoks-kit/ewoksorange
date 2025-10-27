@@ -5,8 +5,8 @@ from typing import Union
 
 from ewokscore.task import Task
 
-from ..bindings.owwidgets import OWEwoksBaseWidget
 from ..bindings.taskwrapper import execute_ewoks_owwidget
+from ..gui.owwidgets.base import OWEwoksBaseWidget
 
 
 def execute_task(

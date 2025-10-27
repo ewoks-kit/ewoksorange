@@ -8,7 +8,7 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas import conf as _oasys_conf_module
     from oasys.canvas.__main__ import main as _main
 
-    from ewoksorange.canvas.config import Config as _Config
+    from ..canvas.config import Config as _Config
 
     _oasys_conf_module.oasysconf = _Config
 

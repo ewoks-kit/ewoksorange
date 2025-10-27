@@ -1,10 +1,10 @@
 from ewokscore import Task
 
-from ewoksorange.bindings import ow_build_opts
-from ewoksorange.bindings.owwidgets import (
+from ..bindings.qtapp import QtEvent
+from ..gui.owwidgets.meta import ow_build_opts
+from ..gui.owwidgets.threaded import (
     OWEwoksWidgetOneThreadPerRun as _OWEwoksWidgetOneThreadPerRun,
 )
-from ewoksorange.bindings.qtapp import QtEvent
 
 
 class MyObject:

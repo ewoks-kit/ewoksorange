@@ -1,4 +1,4 @@
-from ewoksorange.bindings import OWEwoksWidgetWithTaskStack
+from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetWithTaskStack
 from ewoksorange.tests.examples.tasks import SumList3
 from ewoksorange.tests.examples.widgets import WidgetMixin
 

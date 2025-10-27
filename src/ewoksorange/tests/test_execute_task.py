@@ -5,8 +5,11 @@ import pytest
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
-from ..bindings import ow_build_opts
-from ..bindings import owwidgets
+from ..gui.owwidgets.meta import ow_build_opts
+from ..gui.owwidgets.nothread import OWEwoksWidgetNoThread
+from ..gui.owwidgets.threaded import OWEwoksWidgetOneThread
+from ..gui.owwidgets.threaded import OWEwoksWidgetOneThreadPerRun
+from ..gui.owwidgets.threaded import OWEwoksWidgetWithTaskStack
 from .utils import execute_task
 
 
@@ -53,7 +56,7 @@ class PatchCalls:
 
 class NoThreadTestWidget(
     PatchCalls,
-    owwidgets.OWEwoksWidgetNoThread,
+    OWEwoksWidgetNoThread,
     **ow_build_opts,
     ewokstaskclass=TaskForTesting,
 ):
@@ -62,7 +65,7 @@ class NoThreadTestWidget(
 
 class OneThreadTestWidget(
     PatchCalls,
-    owwidgets.OWEwoksWidgetOneThread,
+    OWEwoksWidgetOneThread,
     **ow_build_opts,
     ewokstaskclass=TaskForTesting,
 ):
@@ -71,7 +74,7 @@ class OneThreadTestWidget(
 
 class OneThreadPerRunTestWidget(
     PatchCalls,
-    owwidgets.OWEwoksWidgetOneThreadPerRun,
+    OWEwoksWidgetOneThreadPerRun,
     **ow_build_opts,
     ewokstaskclass=TaskForTesting,
 ):
@@ -80,7 +83,7 @@ class OneThreadPerRunTestWidget(
 
 class TaskStackTestWidget(
     PatchCalls,
-    owwidgets.OWEwoksWidgetWithTaskStack,
+    OWEwoksWidgetWithTaskStack,
     **ow_build_opts,
     ewokstaskclass=TaskForTesting,
 ):

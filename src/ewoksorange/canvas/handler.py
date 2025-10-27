@@ -42,7 +42,7 @@ else:
 from ..bindings import qtapp
 from ..bindings.bindings import ows_file_context
 from ..bindings.owsignal_manager import SignalManagerWithOutputTracking
-from ..bindings.owwidgets import OWEwoksBaseWidget
+from ..gui.owwidgets.base import OWEwoksBaseWidget
 from .utils import get_orange_canvas
 
 _logger = logging.getLogger(__name__)

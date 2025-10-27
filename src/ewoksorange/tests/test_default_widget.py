@@ -1,7 +1,7 @@
 from ewokscore import Task
 from ewoksutils.import_utils import qualname
 
-from ewoksorange.bindings import ewoks_to_ows
+from ..bindings import ewoks_to_ows
 
 
 class Dummy(Task, input_names=["a"], output_names=["b"]):

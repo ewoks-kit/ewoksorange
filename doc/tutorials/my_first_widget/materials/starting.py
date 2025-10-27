@@ -1,7 +1,7 @@
 import numpy
 from ewokscore.task import Task
 
-from ewoksorange.bindings.owwidgets import OWEwoksWidgetOneThread
+from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
 
 
 class ClipDataTask(
