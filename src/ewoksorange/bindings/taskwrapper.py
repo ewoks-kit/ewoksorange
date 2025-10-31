@@ -10,16 +10,16 @@ from ewokscore.variable import value_from_transfer
 from ewoksutils.import_utils import import_qualname
 from ewoksutils.import_utils import qualname
 
+from ..gui.owwidgets.base import OWBaseWidget
+from ..gui.owwidgets.base import OWEwoksBaseWidget
+from ..gui.owwidgets.types import is_ewoks_widget_class
+from ..gui.owwidgets.types import is_native_widget_class
 from ..orange_version import ORANGE_VERSION
 from . import invalid_data
 from . import owsettings
 from . import owsignals
 from .owsignal_manager import SignalManagerWithoutScheme
 from .owsignal_manager import set_input_value
-from .owwidgets import OWBaseWidget
-from .owwidgets import OWEwoksBaseWidget
-from .owwidgets import is_ewoks_widget_class
-from .owwidgets import is_native_widget_class
 from .qtapp import QtEvent
 from .qtapp import ensure_qtapp
 from .qtapp import process_qtapp_events

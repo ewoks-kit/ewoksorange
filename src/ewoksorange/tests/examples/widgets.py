@@ -1,6 +1,6 @@
 from ewokscore import missing_data
 
-from ewoksorange.gui.simpletypesmixin import SimpleTypesWidgetMixin
+from ...gui.widgets.simple_types_mixin import SimpleTypesWidgetMixin
 
 
 def serialize_list(value) -> str:

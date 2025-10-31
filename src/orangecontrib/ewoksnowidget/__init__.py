@@ -5,9 +5,9 @@ from ewokscore import TaskWithProgress
 from ewoksutils.import_utils import qualname
 
 from ewoksorange import registration
-from ewoksorange.bindings.owwidgets import OWEwoksBaseWidget
-from ewoksorange.bindings.owwidgets import OWEwoksWidgetNoThread
-from ewoksorange.bindings.owwidgets import OWEwoksWidgetOneThread
+from ewoksorange.gui.owwidgets.base import OWEwoksBaseWidget
+from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
+from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
 
 from . import widgets
 

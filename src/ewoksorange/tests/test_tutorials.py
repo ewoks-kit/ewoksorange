@@ -1,8 +1,8 @@
 import pytest
 from ewokscore import execute_graph
 
-from ewoksorange.bindings import ows_to_ewoks
-from ewoksorange.orange_version import ORANGE_VERSION
+from ..bindings import ows_to_ewoks
+from ..orange_version import ORANGE_VERSION
 
 try:
     from importlib.resources import files as resource_files

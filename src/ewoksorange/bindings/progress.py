@@ -1,22 +1,13 @@
-from AnyQt.QtCore import QObject
-from AnyQt.QtCore import pyqtSignal as Signal
-from ewokscore.progress import BasePercentageProgress
+import warnings
+
+from ..gui.qt_utils.progress import QProgress  # noqa F401
 
 __all__ = ["QProgress"]
 
 
-class QProgress(QObject, BasePercentageProgress):
-    """
-    Progress associated to a QObject.
-    This is connected to the Orange :class:'ProgressBar' from classes:
-    * :class:`OWEwoksWidgetOneThread`
-    * :class:`OWEwoksWidgetWithTaskStack`
-    """
-
-    sigProgressChanged = Signal(int)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def _update(self):
-        self.sigProgressChanged.emit(self._progress)
+warnings.warn(
+    f"The '{__name__}' module is deprecated and will be removed in a future release. "
+    "Please migrate to the new 'ewoksorange.gui.owwidgets.*' modules.",
+    DeprecationWarning,
+    stacklevel=2,
+)

@@ -40,7 +40,7 @@ The Orange widget will then look like this:
 .. code-block:: python
 
     import json
-    from ewoksorange.bindings import OWEwoksWidgetNoThread
+    from ewoksorange.ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
     from ewoksorange.gui.parameterform import ParameterForm
     from ewokscore.tests.examples.tasks.sumlist import SumList
 

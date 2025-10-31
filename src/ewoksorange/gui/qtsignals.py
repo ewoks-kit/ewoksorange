@@ -1,12 +1,10 @@
-from contextlib import contextmanager
+import warnings
 
-from AnyQt import QtWidgets
+from .qt_utils.qt_signals import block_signals  # noqa F401
 
-
-@contextmanager
-def block_signals(w: QtWidgets.QWidget):
-    old = w.blockSignals(True)
-    try:
-        yield
-    finally:
-        w.blockSignals(old)
+warnings.warn(
+    f"The '{__name__}' module is deprecated and will be removed in a future release. "
+    "Please migrate to the new 'ewoksorange.gui.widgets.qt_signals' module.",
+    DeprecationWarning,
+    stacklevel=2,
+)

@@ -1,20 +1,14 @@
-"""Commonly used Orange3 components for implementing Orange Widgets."""
+import warnings
 
-from ..orange_version import ORANGE_VERSION
+from ..gui.owwidgets.orange_imports import Input  # noqa F401
+from ..gui.owwidgets.orange_imports import Output  # noqa F401
+from ..gui.owwidgets.orange_imports import Setting  # noqa F401
+from ..gui.widgets.orange_imports import gui  # noqa F401
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.widgets import gui  # noqa F401
-    from orangewidget.settings import Setting  # noqa F401
-
-    Input = None
-    Output = None
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from Orange.widgets import gui  # noqa F401
-    from orangewidget.settings import Setting  # noqa F401
-    from orangewidget.widget import Input  # noqa F401
-    from orangewidget.widget import Output  # noqa F401
-else:
-    from orangewidget import gui  # noqa F401
-    from orangewidget.settings import Setting  # noqa F401
-    from orangewidget.widget import Input  # noqa F401
-    from orangewidget.widget import Output  # noqa F401
+warnings.warn(
+    f"The '{__name__}' module is deprecated and will be removed in a future release. "
+    "Please migrate to the new 'ewoksorange.gui.owwidgets.orange_imports' or "
+    " 'ewoksorange.gui.widgets.orange_imports' module.",
+    DeprecationWarning,
+    stacklevel=2,
+)

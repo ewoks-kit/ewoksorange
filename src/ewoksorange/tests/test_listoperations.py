@@ -1,7 +1,7 @@
 import pytest
 from ewoksutils.import_utils import import_qualname
 
-from ewoksorange.tests.utils import execute_task
+from .utils import execute_task
 
 _WIDGETS = [
     "orangecontrib.ewokstest.sumlist_one_thread.SumListOneThread",

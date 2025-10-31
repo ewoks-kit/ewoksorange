@@ -26,8 +26,8 @@ from orangecanvas.scheme import signalmanager
 
 from ..bindings.owsignals import get_input_names
 from ..bindings.owsignals import get_output_names
+from ..gui.owwidgets.types import is_native_widget
 from . import invalid_data
-from .owwidgets import is_native_widget
 from .qtapp import QtEvent
 
 # monkey patch of 'can_enable_dynamic' See https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/58

@@ -31,11 +31,11 @@ from ewoksutils.import_utils import qualname
 from orangecanvas.scheme import annotations
 from orangecanvas.scheme import readwrite
 
+from ..gui.owwidgets.types import is_ewoks_widget_class
 from ..registration import get_owwidget_descriptions
 from . import invalid_data
 from .owsignals import signal_ewoks_to_orange_name
 from .owsignals import signal_orange_to_ewoks_name
-from .owwidgets import is_ewoks_widget_class
 from .taskwrapper import OWWIDGET_TASKS_GENERATOR
 
 __all__ = ["ows_to_ewoks", "ewoks_to_ows", "graph_is_supported"]

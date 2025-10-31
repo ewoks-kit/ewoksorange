@@ -1,4 +1,4 @@
-from ewoksorange.bindings import OWEwoksWidgetNoThread
+from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ewoksorange.tests.examples.tasks import PrintSum
 from ewoksorange.tests.examples.widgets import WidgetMixin
 

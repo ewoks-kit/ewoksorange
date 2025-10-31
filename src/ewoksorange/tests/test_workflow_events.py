@@ -4,7 +4,7 @@ from ewokscore.tests.test_workflow_events import fetch_events
 from ewokscore.tests.test_workflow_events import run_failed_workfow
 from ewokscore.tests.test_workflow_events import run_succesfull_workfow
 
-from ewoksorange.bindings import ewoks_to_ows
+from ..bindings import ewoks_to_ows
 
 
 def execute_graph(

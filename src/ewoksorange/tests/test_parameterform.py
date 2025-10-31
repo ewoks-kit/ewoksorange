@@ -4,7 +4,7 @@ from functools import partial
 from AnyQt import QtCore
 from ewokscore import missing_data
 
-from ..gui.parameterform import ParameterForm
+from ..gui.widgets.parameter_form import ParameterForm
 
 
 def test_parameterform(qtapp):

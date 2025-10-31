@@ -41,7 +41,7 @@ execute in `ewokstaskclass`
 
 .. code-block:: python
 
-    from ewoksorange.bindings import OWEwoksWidgetNoThread
+    from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
     from ewokscore.tests.examples.tasks.sumtask import SumTask
 
     class OWSumTask(
@@ -132,7 +132,7 @@ For this, make your Orange widget inherit from the :class:`OWEwoksWidgetOneThrea
 
 .. code-block:: python
 
-    from ewoksorange.bindings import OWEwoksWidgetOneThreadPerRun
+    from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThreadPerRun
     from ewoksorange.tests.examples.tasks import SumList2
 
     class SumListSeveralThread(
@@ -162,7 +162,7 @@ To access it you can create a widget inheriting from :class:`OWEwoksWidgetWithTa
 
 .. code-block:: python
 
-    from ewoksorange.bindings import OWEwoksWidgetWithTaskStack
+    from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetWithTaskStack
     from ewoksorange.tests.examples.tasks import SumList3
 
     class SumListWithTaskStack(
