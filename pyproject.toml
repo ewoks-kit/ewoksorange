@@ -50,6 +50,7 @@ doc = [
     "sphinx-togglebutton",
     "pydata-sphinx-theme",
     "sphinx-copybutton",
+    "sphinxcontrib-mermaid",
 ]
 orange = ["bottleneck<1.4.1; python_version<'3.9'", "Orange3"]
 
