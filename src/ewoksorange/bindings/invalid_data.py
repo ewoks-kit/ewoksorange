@@ -1,23 +1,13 @@
-from ewokscore import missing_data
+import warnings
 
-# Native Orange widgets use `None` as MISSING_DATA
-INVALIDATION_DATA = None
+from ewoksorange.gui.utils.invalid_data import INVALIDATION_DATA  # noqa: F401
+from ewoksorange.gui.utils.invalid_data import as_invalidation  # noqa: F401
+from ewoksorange.gui.utils.invalid_data import as_missing  # noqa: F401
+from ewoksorange.gui.utils.invalid_data import is_invalid_data  # noqa: F401
 
-
-def is_invalid_data(value):
-    """Invalid means either missing data or invalidation value"""
-    return value is INVALIDATION_DATA or missing_data.is_missing_data(value)
-
-
-def as_missing(value):
-    """Convert INVALIDATION_DATA to MISSING_DATA"""
-    if is_invalid_data(value):
-        return missing_data.MISSING_DATA
-    return value
-
-
-def as_invalidation(value):
-    """Convert MISSING_DATA to INVALIDATION_DATA"""
-    if is_invalid_data(value):
-        return INVALIDATION_DATA
-    return value
+warnings.warn(
+    f"The '{__name__}' module is deprecated and will be removed in a future release. "
+    "Please migrate to the new 'ewoksorange.gui.invalid_data' module.",
+    DeprecationWarning,
+    stacklevel=2,
+)

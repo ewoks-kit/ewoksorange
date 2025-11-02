@@ -66,7 +66,7 @@ where = ["src"]
 omit = ['src/ewoksorange/tests/*']
 
 [project.scripts]
-ewoks-canvas = "ewoksorange.canvas.main:main"
+ewoks-canvas = "ewoksorange.gui.canvas.main:main"
 
 [project.entry-points."orange3.addon"]
 "ewoksdemo" = "orangecontrib.ewoksdemo"

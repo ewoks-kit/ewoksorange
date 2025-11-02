@@ -3,8 +3,8 @@ from types import MethodType
 
 from packaging.version import Version
 
-from .orange_version import ORANGE_VERSION
-from .pkg_meta import get_distribution
+from ..orange_version import ORANGE_VERSION
+from ..pkg_meta import get_distribution
 
 
 def oasys_patch():

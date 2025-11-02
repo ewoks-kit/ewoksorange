@@ -1,7 +1,7 @@
 from ewokscore.tests.examples.tasks.sumtask import SumTask
 
-from ewoksorange.gui.owwidgets.orange_imports import Input
-from ewoksorange.gui.owwidgets.orange_imports import Output
+from ewoksorange.gui.orange_utils.orange_imports import Input
+from ewoksorange.gui.orange_utils.orange_imports import Output
 from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
 from ewoksorange.gui.widgets.simple_types_mixin import IntegerAdderMixin
 

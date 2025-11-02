@@ -1,6 +1,6 @@
+from ewoksorange.gui.orange_utils.orange_imports import Input
+from ewoksorange.gui.orange_utils.orange_imports import Output
 from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
-from ewoksorange.gui.owwidgets.orange_imports import Input
-from ewoksorange.gui.owwidgets.orange_imports import Output
 from ewoksorange.gui.widgets.simple_types_mixin import IntegerAdderMixin
 from ewoksorange.tests.examples.tasks import SumTaskTest
 

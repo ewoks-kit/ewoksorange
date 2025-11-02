@@ -1,26 +1,10 @@
-from typing import Optional
+import warnings
 
-from ..orange_version import ORANGE_VERSION
+from ..gui.canvas.utils import get_orange_canvas  # noqa F401
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.canvas.mainwindow import OASYSMainWindow as OWCanvasMainWindow
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
-else:
-    # from orangewidget.workflow.mainwindow import OWCanvasMainWindow # ewoks-canvas CLI does not use this
-    from orangecanvas.application.canvasmain import (
-        CanvasMainWindow as OWCanvasMainWindow,
-    )
-
-from ..bindings.qtapp import get_qtapp
-
-
-def get_orange_canvas() -> Optional[OWCanvasMainWindow]:
-    """Get the QApplication in the current process (if any)."""
-    app = get_qtapp()
-    if app is None:
-        return None
-    for widget in app.topLevelWidgets():
-        if isinstance(widget, OWCanvasMainWindow):
-            return widget
-    return None
+warnings.warn(
+    f"The '{__name__}' module is deprecated and will be removed in a future release. "
+    "Please migrate to the new 'ewoksorange.gui.canvas.utils' module.",
+    DeprecationWarning,
+    stacklevel=2,
+)

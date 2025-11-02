@@ -1,4 +1,4 @@
-from .orange_imports import gui
+from ..orange_utils.orange_imports import gui
 from .parameter_form import ParameterForm
 
 

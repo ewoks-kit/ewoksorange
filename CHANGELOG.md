@@ -9,19 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- Module `ewoksorange.bindings.owwidgets`.
-- Module `ewoksorange.bindings.progress`.
-- Module `ewoksorange.bindings.taskexecutor_queue`.
-- Module `ewoksorange.bindings.taskexecutor`.
-- Module `ewoksorange.gui.data_viewer`.
-- Module `ewoksorange.gui.orange_imports`.
-- Module `ewoksorange.gui.parameterform`.
-- Module `ewoksorange.gui.qtsignals`.
-- Module `ewoksorange.gui.simpletypesmixin`.
+- Module `ewoksorange.canvas`.
+- Module `ewoksorange.registration`.
+- All `ewoksorange.bindings.*` modules.
+- All `ewoksorange.canvas.*` modules.
 
 ## Removed
 
 - Module `ewoksorange.oasys_patch`.
+
+## Fixed
+
+- `ewoksorange.engine.OrangeWorkflowEngine` can be instantiated without importing Qt.
 
 ## [2.1.0] - 2025-10-23
 

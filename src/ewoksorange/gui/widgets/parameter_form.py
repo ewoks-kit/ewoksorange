@@ -15,7 +15,7 @@ from AnyQt import QtWidgets
 from ewokscore import missing_data
 from silx.gui.dialog.DataFileDialog import DataFileDialog
 
-from ..qt_utils.qt_signals import block_signals
+from ..qt_utils.signals import block_signals
 
 _logger = logging.getLogger(__name__)
 

@@ -80,6 +80,23 @@ test-3.8-oasys:
     - python -m pip list
     - python -m pytest -v .
 
+test-3.12-noqt:
+  extends: .test-3.12
+  script:
+    - pip install .
+    # Test that engine works without Qt
+    - python -c "from ewoksorange.engine import OrangeWorkflowEngine; OrangeWorkflowEngine()"
+    # Test that modules requiring Qt fail without Qt
+    - |
+      for mod in ewoksorange.bindings ewoksorange.gui; do
+        if python -c "import $mod"; then
+          echo "ERROR: $mod imported without Qt!"
+          exit 1
+        else
+          echo "Expected failure: $mod requires Qt"
+        fi
+      done
+
 build_sdist:
   extends: .build_sdist
 

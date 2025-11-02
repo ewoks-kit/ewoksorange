@@ -8,9 +8,9 @@ from ewokscore import load_graph
 from ewokscore.tests.examples.graphs import get_graph
 from ewokscore.tests.examples.graphs import graph_names
 
-from ..bindings import ewoks_to_ows
-from ..bindings import graph_is_supported
-from ..bindings import ows_to_ewoks
+from ..gui.workflows.owscheme import ewoks_to_ows
+from ..gui.workflows.owscheme import graph_is_supported
+from ..gui.workflows.owscheme import ows_to_ewoks
 
 
 def test_ows_to_ewoks_sumtask_tutorial(tmpdir):

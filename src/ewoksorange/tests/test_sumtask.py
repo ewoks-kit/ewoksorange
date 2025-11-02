@@ -3,7 +3,7 @@ from ewokscore.inittask import instantiate_task
 from ewokscore.task import TaskInputError
 from ewoksutils.import_utils import import_qualname
 
-from ..bindings import OWWIDGET_TASKS_GENERATOR
+from ..gui.workflows.task_wrappers import OWWIDGET_TASKS_GENERATOR
 from .utils import execute_task
 
 _WIDGETS = [

@@ -32,9 +32,9 @@ else:
 
     OWWidget = OWBaseWidget
 
-from ...bindings import invalid_data
-from ...bindings import owsignals
-from ...bindings.events import scheme_ewoks_events
+from ..orange_utils import signals as owsignals
+from ..utils import invalid_data
+from ..utils.events import scheme_ewoks_events
 from .meta import OWEwoksWidgetMetaClass
 from .meta import ow_build_opts
 

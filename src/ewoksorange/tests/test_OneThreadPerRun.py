@@ -1,10 +1,10 @@
 from ewokscore import Task
 
-from ..bindings.qtapp import QtEvent
 from ..gui.owwidgets.meta import ow_build_opts
 from ..gui.owwidgets.threaded import (
     OWEwoksWidgetOneThreadPerRun as _OWEwoksWidgetOneThreadPerRun,
 )
+from ..gui.qt_utils.app import QtEvent
 
 
 class MyObject:
@@ -59,10 +59,9 @@ def test_OWEwoksWidgetOneThreadPerRun(qtapp):
         # Start calculation
         widget.handleNewSignals()
 
-    [obj.finished.wait(timeout=3) for obj in objects]
+    for obj in objects:
+        obj.finished.wait(timeout=3)
 
-    assert [obj.value for obj in objects] == [
-        0,
-        1,
-        2,
-    ]
+    values = [obj.value for obj in objects]
+    expected = [0, 1, 2]
+    assert values == expected

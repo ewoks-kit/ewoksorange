@@ -8,9 +8,9 @@ import pytest
 from orangecontrib.ewoksnowidget import global_cleanup_ewoksnowidget
 from orangecontrib.ewokstest import enable_ewokstest_category
 
-from ..bindings.qtapp import get_all_qtwidgets
-from ..bindings.qtapp import qtapp_context
-from ..canvas.handler import OrangeCanvasHandler
+from ..gui.canvas.handler import OrangeCanvasHandler
+from ..gui.qt_utils.app import get_all_qtwidgets
+from ..gui.qt_utils.app import qtapp_context
 from ..orange_version import ORANGE_VERSION
 
 logger = logging.getLogger(__name__)

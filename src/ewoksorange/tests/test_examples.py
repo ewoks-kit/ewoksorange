@@ -5,8 +5,8 @@ from ewokscore.tests.examples.graphs import graph_names
 from ewokscore.tests.test_examples import assert_convert_graph
 from ewokscore.tests.utils.results import assert_execute_graph_tasks
 
-from .. import convert_graph
-from .. import graph_is_supported
+from ..bindings import convert_graph
+from ..gui.workflows.owscheme import graph_is_supported
 
 
 @pytest.mark.parametrize("graph_name", graph_names())
