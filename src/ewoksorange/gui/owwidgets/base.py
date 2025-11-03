@@ -56,8 +56,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
     by a `Variable` to handle things like Ewoks tasks output caching.
 
     Subclasses must implement:
-      - methods: get_task_outputs, _execute_ewoks_task
-      - properties: task_succeeded, task_done, task_exception
+
+    - methods: get_task_outputs, _execute_ewoks_task
+    - properties: task_succeeded, task_done, task_exception
     """
 
     def __init__(self, *args, **kwargs):

@@ -12,7 +12,7 @@ You can easily bootstrap such a project using the
 
 A minimal working example is available 
 `here <https://gitlab.esrf.fr/workflow/ewoksapps/ewoks-orange-example-addon>`_ and
-is described below.
+is used as an example in the following sections.
 
 Python Distribution Layout
 --------------------------
@@ -24,7 +24,7 @@ An Orange add-on project for Ewoks typically contains **two Python packages**:
 - **Namespace package** – Provides Orange *Qt* widgets
   (under ``orangecontrib``, usually with the same subpackage name).
 
-When using a `src-layout <https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/>`_, 
+When using an `src-layout <https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/>`_, 
 the project structure typically looks like this:
 
 .. code-block:: bash
@@ -78,7 +78,7 @@ The add-on metadata displayed in the Orange Canvas GUI is defined in:
 
     # src/orangecontrib/ewoks_orange_example_addon/__init__.py
 
-    NAME = "Ewoks Orange Demo"
+    NAME = "Ewoks Orange Example"
     DESCRIPTION = "An Ewoks project"
 
 The ``NAME`` value determines how the add-on appears in the Orange widget panel.
@@ -140,9 +140,12 @@ Example:
         def run(self):
             self.outputs.result = self.inputs.number + 1
 
-For more information please see [Task implementation](https://ewokscore.readthedocs.io/en/v2.0.0/definitions.html#task-implementation) and [Define Task class inputs](https://ewoks.readthedocs.io/en/stable/howtoguides/task_inputs.html#define-task-class-inputs).
+For more information please see `Task implementation <https://ewokscore.readthedocs.io/en/v2.0.0/definitions.html#task-implementation>`_
+and `Define Task class inputs <https://ewoks.readthedocs.io/en/stable/howtoguides/task_inputs.html#define-task-class-inputs>`_.
 
-..note:: Please consider using [Input models](https://ewoks.readthedocs.io/en/stable/howtoguides/task_inputs.html#input-model) and Output models for your tasks. It will allow creating 'typed' Orange Inputs and Outputs as well.
+.. note:: Please consider using `Input models <https://ewoks.readthedocs.io/en/stable/howtoguides/task_inputs.html#input-model>`_
+    and `Output models` for your tasks. It will allow creating 'typed' Orange Inputs and Outputs as well.
+
 Creating an Ewoks-Orange Widget
 -------------------------------
 
@@ -152,9 +155,9 @@ It typically includes:
 - Widgets for user-defined Ewoks task inputs
 - Widgets for displaying results
 
-A typical widget could implements the following interactions:
+A typical widget could implement the following interactions:
 
-- **Load File → Initialize Display:**  
+- **Load Workflow File → Initialize Display:**  
   Populate widgets with saved Ewoks inputs.
 - **User Input → Store:**  
   Store user-defined inputs at runtime.
@@ -170,7 +173,9 @@ To create a widget, subclass one of the Ewoks-Orange base widget classes, such a
 
 Use the ``ewokstaskclass`` argument to link the widget to its Ewoks task, and define the ``name`` 
 attribute for the widget panel display.
-.. warning:: if the ``name`` is not defined Orange will not be able to process the widget.
+
+.. warning:: If the ``name`` is not defined, Orange will not be able to process the widget.
+
 Example:
 
 .. code-block:: python
@@ -178,8 +183,6 @@ Example:
     from AnyQt import QtWidgets
     from ewoksorange.bindings import OWEwoksWidgetOneThread
     from ewoks_orange_example_addon.tasks.exampletask import ExampleTask
-
-    __all__ = ["OWExampleTask"]
 
     class OWExampleTask(OWEwoksWidgetOneThread, ewokstaskclass=ExampleTask):
         """Orange widget that delegates computation to an Ewoks task.
@@ -192,7 +195,7 @@ Example:
         The class implements Qt widgets for displaying task inputs and outputs.
         """
 
-        name = "Demo"
+        name = "Example Ewoks Task Widget"
         description = "Add +1 to a number"
 
         def __init__(self) -> None:
@@ -257,17 +260,81 @@ Example:
     
     - **Execute:** runs only the current node (``execute_ewoks_task_without_propagation``)
     - **Trigger:** runs the current node and all downstream nodes (``execute_ewoks_task``)
-An ewoksorange widget input can be defined by:
 
-* ``default value``
-* ``dynamic value``
 
-If a dynamic value exists then it will be picked else it will fall-back on the default value.
+Accessing and Modifying Widget Input Values
+-------------------------------------------
 
-To match those cases developers can use the following API (at the widget side !):
+Each Ewoks-Orange widget provides instance methods to manage **input values**,
+grouped into three categories depending on their origin and usage.
 
-* ``set_default_input`` / ``get_default_input``
-* ``set_dynamic_input`` / ``get_dynamic_input``
+Default Input Values
+~~~~~~~~~~~~~~~~~~~~
+
+Default inputs are user-defined values that are **saved in the workflow file**.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Method
+     - Description
+   * - ``set_default_input(name, value)``
+     - Set a single default input value.
+   * - ``update_default_inputs(**inputs)``
+     - Update one or more default input values at once.
+   * - ``get_default_input_value(name, default=None)``
+     - Retrieve a single default input value.
+   * - ``get_default_input_values()``
+     - Return all inputs that have default values.
+
+Dynamic Input Values
+~~~~~~~~~~~~~~~~~~~~
+
+Dynamic inputs are values received from **upstream workflow nodes** during execution.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Method
+     - Description
+   * - ``set_dynamic_input(name, value)``
+     - Set a single dynamic input value.
+   * - ``update_dynamic_inputs(**inputs)``
+     - Update one or more dynamic input values at once.
+   * - ``get_dynamic_input_value(name, default=None)``
+     - Retrieve a single dynamic input value.
+   * - ``get_dynamic_input_values()``
+     - Return all inputs that have dynamic values.
+
+Task Input Values
+~~~~~~~~~~~~~~~~~
+
+Task inputs are the values used when executing the **underlying Ewoks task**.  
+They are resolved according to the following precedence:
+
+1. Dynamic input (if present)
+2. Default input (if defined)
+3. Explicit fallback argument (if provided)
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Method
+     - Description
+   * - ``get_task_input_value(name, default=None)``
+     - Retrieve a single task input value, preferring dynamic values if present.
+   * - ``get_task_input_values()``
+     - Return all task input values (dynamic when present, default otherwise).
+
+Notes
+~~~~~
+
+- Use *default inputs* for values configured by the user and stored in the workflow file.  
+- Use *dynamic inputs* for runtime values propagated from upstream tasks.  
+- *Task input* getters automatically combine both, and are typically used when instantiating an Ewoks ``Task``.
 
 Ewoks-Orange Execution Call Stack
 ---------------------------------
