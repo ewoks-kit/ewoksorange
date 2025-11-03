@@ -169,13 +169,34 @@ def _validate_signals(namespace: dict, direction: str, names: List[str]) -> None
 
     signal_dict = get_signals(signal_container)
 
+    ewoks_task = namespace.get("ewokstaskclass", None)
+
+    input_model = getattr(ewoks_task, "_INPUT_MODEL", None)
+    output_model = getattr(ewoks_task, "_OUTPUT_MODEL", None)
+
+    def get_signal_value_data_type(ewoksname, model, default_data_type=object):
+        if model is None:
+            return default_data_type
+
+        field_info = model.model_fields.get(ewoksname, None)
+        if field_info is not None:
+            return field_info.annotation
+        else:
+            return default_data_type
+
     for ewoksname in names:
         signal = signal_dict.get(ewoksname, None)
         if signal is None:
             if is_inputs:
-                signal = Input(name=ewoksname, type=object)
+                data_type = get_signal_value_data_type(
+                    ewoksname=ewoksname, model=input_model
+                )
+                signal = Input(name=ewoksname, type=data_type)
             else:
-                signal = Output(name=ewoksname, type=object)
+                data_type = get_signal_value_data_type(
+                    ewoksname=ewoksname, model=output_model
+                )
+                signal = Output(name=ewoksname, type=data_type)
             setattr(signal_container, ewoksname, signal)
         signal.ewoksname = ewoksname
         if is_inputs and not signal.handler:  # str
