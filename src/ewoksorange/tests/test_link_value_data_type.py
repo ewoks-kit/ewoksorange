@@ -1,3 +1,4 @@
+import pytest
 from ewokscore.model import BaseInputModel
 from ewokscore.model import BaseOutputModel
 from ewokscore.task import Task
@@ -8,6 +9,8 @@ from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ewoksorange.gui.owwidgets.registration import _temporary_widget_discovery_object
 from ewoksorange.gui.owwidgets.registration import register_owwidget
 from ewoksorange.gui.workflows.owscheme import ewoks_to_ows
+
+from ..orange_version import ORANGE_VERSION
 
 
 class InputModelA(BaseInputModel):
@@ -46,6 +49,9 @@ class EwoksOrangeTaskB(OWEwoksWidgetNoThread, ewokstaskclass=TaskB):
     name = "ewoks widget B"
 
 
+@pytest.mark.skipif(
+    ORANGE_VERSION == ORANGE_VERSION.oasys_fork, reason="hanging with oasys binding."
+)
 def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     """Test that Orange link are correctly taking into account the ewoks input / output models."""
     # Create an Orange workflows
