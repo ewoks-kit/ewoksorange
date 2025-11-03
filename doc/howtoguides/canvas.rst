@@ -33,7 +33,7 @@ There are several ways to launch this canvas:
 
         .. code-block:: bash
 
-            python3 -m ewoksorange.canvas /path/to/orange_wf.ows
+            python3 -m ewoksorange.gui.canvas /path/to/orange_wf.ows
 
 .. _launch_canvas_from_orange_canvas:
 
@@ -46,13 +46,13 @@ There are several ways to launch this canvas:
 
         .. code-block:: bash
 
-            orange-canvas /path/to/orange_wf.ows [--config ewoksorange.canvas.config.Config]
+            orange-canvas /path/to/orange_wf.ows [--config ewoksorange.gui.canvas.config.Config]
 
     .. tab-item:: using 'python3' CLI
 
         .. code-block:: bash
 
-            python3 -m orangecanvas /path/to/orange_wf.ows [--config ewoksorange.canvas.config.Config]
+            python3 -m orangecanvas /path/to/orange_wf.ows [--config ewoksorange.gui.canvas.config.Config]
 
 
 .. _launch_canvas_from_ewoks_execute:

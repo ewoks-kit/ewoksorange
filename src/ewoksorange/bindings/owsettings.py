@@ -1,16 +1,12 @@
-import inspect
+import warnings
 
-from ..orange_version import ORANGE_VERSION
+from ewoksorange.gui.orange_utils.settings import Setting  # noqa: F401
+from ewoksorange.gui.orange_utils.settings import get_settings  # noqa: F401
+from ewoksorange.gui.orange_utils.settings import is_setting  # noqa: F401
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from orangewidget.settings import Setting
-else:
-    from orangewidget.settings import Setting
-
-
-def is_setting(obj):
-    return isinstance(obj, Setting)
-
-
-def get_settings(widget_class):
-    return dict(inspect.getmembers(widget_class, is_setting))
+warnings.warn(
+    f"The '{__name__}' module is deprecated and will be removed in a future release. "
+    "Please migrate to the new 'ewoksorange.gui.orange_utils.owsettings' module.",
+    DeprecationWarning,
+    stacklevel=2,
+)

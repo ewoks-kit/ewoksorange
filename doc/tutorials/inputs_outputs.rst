@@ -20,7 +20,7 @@ For this, we can define additional inputs directly in the Orange widget using th
 
     from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
     from ewokscore.tests.examples.tasks.sumtask import SumTask
-    from ewoksorange.gui.owwidgets.orange_imports import Input
+    from ewoksorange.gui.orange_utils.orange_imports import Input
 
 
     class OrangeInputExample(
@@ -56,7 +56,7 @@ Similarly, additional custom outputs can created this way using the
 
     from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
     from ewokscore.tests.examples.tasks.sumtask import SumTask
-    from ewoksorange.gui.owwidgets.orange_imports import Input
+    from ewoksorange.gui.orange_utils.orange_imports import Output
 
 
     class OrangeOutputExample(

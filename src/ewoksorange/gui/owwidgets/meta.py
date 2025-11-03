@@ -20,7 +20,7 @@ else:
 
         WidgetMetaClass = type(OWBaseWidget)
 
-from ...bindings import owsignals
+from ..orange_utils import signals as owsignals
 
 
 class OWEwoksWidgetMetaClass(WidgetMetaClass):

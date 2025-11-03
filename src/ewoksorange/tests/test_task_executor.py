@@ -5,10 +5,10 @@ from ewokscore import Task
 from ewokscore.missing_data import MISSING_DATA
 from ewokscore.tests.examples.tasks.sumtask import SumTask
 
-from ..bindings.qtapp import QtEvent
 from ..gui.concurrency.base import TaskExecutor
 from ..gui.concurrency.queued import TaskExecutorQueue
 from ..gui.concurrency.threaded import ThreadedTaskExecutor
+from ..gui.qt_utils.app import QtEvent
 
 
 def test_task_executor():

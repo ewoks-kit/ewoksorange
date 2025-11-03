@@ -1,7 +1,7 @@
 import pytest
 from ewokscore import execute_graph
 
-from ..bindings import ows_to_ewoks
+from ..gui.workflows.owscheme import ows_to_ewoks
 from ..orange_version import ORANGE_VERSION
 
 try:

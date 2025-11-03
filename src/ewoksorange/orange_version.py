@@ -22,9 +22,3 @@ else:
     raise importlib.metadata.PackageNotFoundError(
         "No compatible Orange distributions found."
     )
-
-# Fix test_cancel_current_task_in_task_executor_queue failures:
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    import oasys.widgets  # noqa F401
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    import Orange  # noqa F401
