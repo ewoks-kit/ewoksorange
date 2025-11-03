@@ -318,7 +318,8 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         :param default: Fallback if not present.
         :return: The dynamic value or provided fallback.
         """
-        return self.__dynamic_inputs.get(name, default)
+        value = self.__dynamic_inputs.get(name, default)
+        return self._extract_value(value)
 
     def set_dynamic_input(self, name: str, value: Any) -> None:
         """
