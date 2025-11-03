@@ -4,10 +4,9 @@ from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
 from orangecanvas.utils import qualified_name
 
-from ewoksorange.bindings import ewoks_to_ows
-from ewoksorange.gui.orange_utils.orange_imports import Input
 from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ewoksorange.gui.owwidgets.registration import _temporary_widget_discovery_object
+from ewoksorange.gui.workflows.owscheme import ewoks_to_ows
 from ewoksorange.registration import register_owwidget
 
 
