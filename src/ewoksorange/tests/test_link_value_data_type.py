@@ -6,8 +6,8 @@ from orangecanvas.utils import qualified_name
 
 from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ewoksorange.gui.owwidgets.registration import _temporary_widget_discovery_object
+from ewoksorange.gui.owwidgets.registration import register_owwidget
 from ewoksorange.gui.workflows.owscheme import ewoks_to_ows
-from ewoksorange.registration import register_owwidget
 
 
 class InputModelA(BaseInputModel):
