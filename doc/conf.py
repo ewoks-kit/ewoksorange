@@ -23,6 +23,7 @@ extensions = [
     "sphinx_togglebutton",
     "sphinx_design",
     "sphinx_copybutton",
+    "sphinxcontrib.mermaid",
 ]
 templates_path = ["_templates"]
 source_suffix = [".rst", ".md"]
