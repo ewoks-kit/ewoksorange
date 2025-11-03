@@ -140,6 +140,9 @@ Example:
         def run(self):
             self.outputs.result = self.inputs.number + 1
 
+For more information please see [Task implementation](https://ewokscore.readthedocs.io/en/v2.0.0/definitions.html#task-implementation) and [Define Task class inputs](https://ewoks.readthedocs.io/en/stable/howtoguides/task_inputs.html#define-task-class-inputs).
+
+..note:: Please consider using [Input models](https://ewoks.readthedocs.io/en/stable/howtoguides/task_inputs.html#input-model) and Output models for your tasks. It will allow creating 'typed' Orange Inputs and Outputs as well.
 Creating an Ewoks-Orange Widget
 -------------------------------
 
@@ -149,7 +152,7 @@ It typically includes:
 - Widgets for user-defined Ewoks task inputs
 - Widgets for displaying results
 
-A typical widget implements the following interactions:
+A typical widget could implements the following interactions:
 
 - **Load File → Initialize Display:**  
   Populate widgets with saved Ewoks inputs.
@@ -163,9 +166,11 @@ A typical widget implements the following interactions:
 To create a widget, subclass one of the Ewoks-Orange base widget classes, such as
 ``OWEwoksWidgetOneThread`` — which executes the task in a separate thread to keep the GUI responsive.
 
+.. hint:: see :ref:`ewoks widgets and execution` for more details about existing widgets.
+
 Use the ``ewokstaskclass`` argument to link the widget to its Ewoks task, and define the ``name`` 
 attribute for the widget panel display.
-
+.. warning:: if the ``name`` is not defined Orange will not be able to process the widget.
 Example:
 
 .. code-block:: python
@@ -252,6 +257,17 @@ Example:
     
     - **Execute:** runs only the current node (``execute_ewoks_task_without_propagation``)
     - **Trigger:** runs the current node and all downstream nodes (``execute_ewoks_task``)
+An ewoksorange widget input can be defined by:
+
+* ``default value``
+* ``dynamic value``
+
+If a dynamic value exists then it will be picked else it will fall-back on the default value.
+
+To match those cases developers can use the following API (at the widget side !):
+
+* ``set_default_input`` / ``get_default_input``
+* ``set_dynamic_input`` / ``get_dynamic_input``
 
 Ewoks-Orange Execution Call Stack
 ---------------------------------
