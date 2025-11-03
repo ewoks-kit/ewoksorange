@@ -1,13 +1,15 @@
-from ..bindings.owwidgets import OWEwoksWidgetNoThread
-
-from ewokscore.model import BaseInputModel, BaseOutputModel
+from ewokscore.model import BaseInputModel
+from ewokscore.model import BaseOutputModel
 from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
-from ewoksorange.registration import register_owwidget
+from orangecanvas.utils import qualified_name
+
 from ewoksorange.bindings import ewoks_to_ows
 from ewoksorange.gui.orange_utils.orange_imports import Input
 from ewoksorange.gui.owwidgets.registration import _temporary_widget_discovery_object
-from orangecanvas.utils import qualified_name
+from ewoksorange.registration import register_owwidget
+
+from ..bindings.owwidgets import OWEwoksWidgetNoThread
 
 
 class InputModelA(BaseInputModel):
