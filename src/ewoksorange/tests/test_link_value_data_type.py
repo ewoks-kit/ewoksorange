@@ -105,7 +105,6 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     assert len(descWidgetA.outputs) == 1
     assert descWidgetA.outputs[0].type == (qualified_name(float),)
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
-    assert len(descWidgetB.inputs) == 1 and descWidgetB.inputs[0].type == (
-        qualified_name(float),
-    )
+    assert len(descWidgetB.inputs) == 1
+    assert descWidgetB.inputs[0].type == (qualified_name(float),)
     assert len(descWidgetB.outputs) == 0
