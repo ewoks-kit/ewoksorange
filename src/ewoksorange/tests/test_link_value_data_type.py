@@ -1,10 +1,10 @@
+from enum import Enum
 from typing import List
 from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Union
 
-from enum import Enum
 import numpy
 from ewokscore.model import BaseInputModel
 from ewokscore.model import BaseOutputModel
