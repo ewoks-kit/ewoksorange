@@ -16,6 +16,10 @@ from ewoksorange.gui.owwidgets.registration import _temporary_widget_discovery_o
 from ewoksorange.gui.owwidgets.registration import register_owwidget
 
 
+class Data:
+    pass
+
+
 class InputModelA(BaseInputModel):
     a: int
     b: Tuple[int]
@@ -25,6 +29,7 @@ class InputModelA(BaseInputModel):
 
 class OutputModelA(BaseOutputModel):
     a: float
+    b: Data
 
 
 class InputModelB(BaseInputModel):
@@ -94,8 +99,9 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     assert get_input_data_type(descWidgetA, "c") == (qualified_name(list),)
     assert get_input_data_type(descWidgetA, "d") == (qualified_name(str),)
 
-    assert len(descWidgetA.outputs) == 1
+    assert len(descWidgetA.outputs) == 2
     assert get_output_data_type(descWidgetA, "a") == (qualified_name(float),)
+    assert get_output_data_type(descWidgetA, "b") == (qualified_name(Data),)
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
     assert len(descWidgetB.inputs) == 3
