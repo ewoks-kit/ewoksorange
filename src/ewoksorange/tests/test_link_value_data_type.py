@@ -15,6 +15,8 @@ from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ewoksorange.gui.owwidgets.registration import _temporary_widget_discovery_object
 from ewoksorange.gui.owwidgets.registration import register_owwidget
 
+from ..orange_version import ORANGE_VERSION
+
 
 class Data:
     pass
@@ -87,6 +89,12 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
         assert len(outputs) == 1
         return outputs[0].type
 
+    def expected_output_type(dtype):
+        if ORANGE_VERSION != ORANGE_VERSION.oasys_fork:
+            return (dtype,)
+        else:
+            return dtype
+
     assert len(widget_registry.registry.widgets()) == 2
 
     # check that orange links are correctly typed.
@@ -94,18 +102,36 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
 
     assert len(descWidgetA.inputs) == 4
 
-    assert get_input_data_type(descWidgetA, "a") == (qualified_name(int),)
-    assert get_input_data_type(descWidgetA, "b") == (qualified_name(tuple),)
-    assert get_input_data_type(descWidgetA, "c") == (qualified_name(list),)
-    assert get_input_data_type(descWidgetA, "d") == (qualified_name(str),)
+    assert get_input_data_type(descWidgetA, "a") == expected_output_type(
+        qualified_name(int)
+    )
+    assert get_input_data_type(descWidgetA, "b") == expected_output_type(
+        qualified_name(tuple)
+    )
+    assert get_input_data_type(descWidgetA, "c") == expected_output_type(
+        qualified_name(list)
+    )
+    assert get_input_data_type(descWidgetA, "d") == expected_output_type(
+        qualified_name(str)
+    )
 
     assert len(descWidgetA.outputs) == 2
-    assert get_output_data_type(descWidgetA, "a") == (qualified_name(float),)
-    assert get_output_data_type(descWidgetA, "b") == (qualified_name(Data),)
+    assert get_output_data_type(descWidgetA, "a") == expected_output_type(
+        qualified_name(float)
+    )
+    assert get_output_data_type(descWidgetA, "b") == expected_output_type(
+        qualified_name(Data)
+    )
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
     assert len(descWidgetB.inputs) == 3
-    assert get_input_data_type(descWidgetB, "a") == (qualified_name(object),)
-    assert get_input_data_type(descWidgetB, "b") == (qualified_name(object),)
-    assert get_input_data_type(descWidgetB, "c") == (qualified_name(numpy.int32),)
+    assert get_input_data_type(descWidgetB, "a") == expected_output_type(
+        qualified_name(object)
+    )
+    assert get_input_data_type(descWidgetB, "b") == expected_output_type(
+        qualified_name(object)
+    )
+    assert get_input_data_type(descWidgetB, "c") == expected_output_type(
+        qualified_name(numpy.int32)
+    )
     assert len(descWidgetB.outputs) == 0
