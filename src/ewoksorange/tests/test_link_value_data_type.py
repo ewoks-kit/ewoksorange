@@ -4,6 +4,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from enum import Enum
 import numpy
 from ewokscore.model import BaseInputModel
 from ewokscore.model import BaseOutputModel
@@ -22,6 +23,10 @@ class Data:
     pass
 
 
+class MyEnum(Enum):
+    VALUE = "value"
+
+
 class InputModelA(BaseInputModel):
     a: int
     b: Tuple[int]
@@ -38,6 +43,8 @@ class InputModelB(BaseInputModel):
     a: Union[float, int]
     b: Optional[numpy.float32]
     c: numpy.int32
+    d: Literal["value", "other value"]
+    e: MyEnum
 
 
 class TaskA(
@@ -124,7 +131,7 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     )
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
-    assert len(descWidgetB.inputs) == 3
+    assert len(descWidgetB.inputs) == 5
     assert get_input_data_type(descWidgetB, "a") == expected_output_type(
         qualified_name(object)
     )
@@ -134,4 +141,11 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     assert get_input_data_type(descWidgetB, "c") == expected_output_type(
         qualified_name(numpy.int32)
     )
+    assert get_input_data_type(descWidgetB, "d") == expected_output_type(
+        qualified_name(str)
+    )
+    assert get_input_data_type(descWidgetB, "e") == expected_output_type(
+        qualified_name(MyEnum)
+    )
+
     assert len(descWidgetB.outputs) == 0
