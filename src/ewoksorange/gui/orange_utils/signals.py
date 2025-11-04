@@ -1,8 +1,11 @@
 import inspect
 from typing import Callable
 from typing import List
+from typing import Literal
 from typing import Optional
+from typing import Type
 from typing import get_origin
+
 from pydantic import BaseModel
 
 from ...orange_version import ORANGE_VERSION
@@ -147,7 +150,7 @@ def _validate_signals_oasys(namespace: dict, direction: str, names: List[str]) -
                 orangename, stype, handler = ewoksname, object, None
             else:
                 stype = _pydantic_model_field_type(
-                    ewoksname=ewoksname, model=input_model
+                    field_name=ewoksname, model=input_model
                 )
                 orangename, _, handler = signal
 
@@ -167,7 +170,7 @@ def _validate_signals_oasys(namespace: dict, direction: str, names: List[str]) -
                 )
             else:
                 stype = _pydantic_model_field_type(
-                    ewoksname=ewoksname, model=output_model
+                    field_name=ewoksname, model=output_model
                 )
                 signal = Output(signal)
         signal_container.append(signal)
@@ -193,12 +196,12 @@ def _validate_signals(namespace: dict, direction: str, names: List[str]) -> None
         if signal is None:
             if is_inputs:
                 data_type = _pydantic_model_field_type(
-                    ewoksname=ewoksname, model=input_model
+                    field_name=ewoksname, model=input_model
                 )
                 signal = Input(name=ewoksname, type=data_type)
             else:
                 data_type = _pydantic_model_field_type(
-                    ewoksname=ewoksname, model=output_model
+                    field_name=ewoksname, model=output_model
                 )
                 signal = Output(name=ewoksname, type=data_type)
             setattr(signal_container, ewoksname, signal)
@@ -295,11 +298,21 @@ def get_output_names(widget_class) -> List[str]:
 
 
 def _pydantic_model_field_type(
-    model: Optional[BaseModel], field_name: str, default_data_type=object
+    model: Optional[Type[BaseModel]], field_name: str, default_data_type=object
 ) -> type:
     if model is None:
         return default_data_type
     field_info = model.model_fields.get(field_name, None)
     if field_info is None:
         return default_data_type
-    return get_origin(field_info.annotation)
+    origin = get_origin(field_info.annotation)
+    if origin is None:
+        # if unsupported ()
+        return field_info.annotation
+    elif origin in (list, tuple):
+        return origin
+    elif origin is Literal:
+        return str
+    else:
+        # Union, Optional use cases
+        return object
