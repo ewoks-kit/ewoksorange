@@ -134,13 +134,22 @@ def _validate_signals_oasys(namespace: dict, direction: str, names: List[str]) -
     signal_dict = get_signals(signal_container, orange_to_ewoks)
 
     signal_container = namespace[direction] = list()
+
+    ewoks_task = namespace.get("ewokstaskclass", None)
+
+    input_model = getattr(ewoks_task, "_INPUT_MODEL", None)
+    output_model = getattr(ewoks_task, "_OUTPUT_MODEL", None)
+
     for ewoksname in names:
         signal = signal_dict.get(ewoksname, None)
         if is_inputs:
             if signal is None:
                 orangename, stype, handler = ewoksname, object, None
             else:
-                orangename, stype, handler = signal
+                stype = _pydantic_model_field_type(
+                    ewoksname=ewoksname, model=input_model
+                )
+                orangename, _, handler = signal
 
             if not handler:
                 setter = _receive_dynamic_input(ewoksname)
@@ -157,6 +166,9 @@ def _validate_signals_oasys(namespace: dict, direction: str, names: List[str]) -
                     [("name", ewoksname), ("type", object), ("id", ewoksname)]
                 )
             else:
+                stype = _pydantic_model_field_type(
+                    ewoksname=ewoksname, model=output_model
+                )
                 signal = Output(signal)
         signal_container.append(signal)
 

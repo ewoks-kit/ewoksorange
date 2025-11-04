@@ -49,10 +49,7 @@ class EwoksOrangeTaskB(OWEwoksWidgetNoThread, ewokstaskclass=TaskB):
     name = "ewoks widget B"
 
 
-@pytest.mark.skipif(
-    ORANGE_VERSION == ORANGE_VERSION.oasys_fork, reason="hanging with oasys binding."
-)
-def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
+def test_link_value_data_type(ewoks_orange_canvas):
     """Test that Orange link are correctly taking into account the ewoks input / output models."""
     widget_registry = _temporary_widget_discovery_object()
 
