@@ -100,12 +100,10 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     # check that orange links are correctly typed.
     descWidgetA = widget_registry.registry.widget(qualname(EwoksOrangeTaskA))
 
-    assert len(descWidgetA.inputs) == 1 and descWidgetA.inputs[0].type == (
-        qualified_name(int),
-    )
-    assert len(descWidgetA.outputs) == 1 and descWidgetA.outputs[0].type == (
-        qualified_name(float),
-    )
+    assert len(descWidgetA.inputs) == 1
+    assert descWidgetA.inputs[0].type == (qualified_name(int),)
+    assert len(descWidgetA.outputs) == 1
+    assert descWidgetA.outputs[0].type == (qualified_name(float),)
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
     assert len(descWidgetB.inputs) == 1 and descWidgetB.inputs[0].type == (
         qualified_name(float),
