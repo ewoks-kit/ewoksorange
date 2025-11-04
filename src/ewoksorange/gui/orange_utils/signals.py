@@ -137,8 +137,8 @@ def _validate_signals_oasys(namespace: dict, direction: str, names: List[str]) -
 
     ewoks_task = namespace.get("ewokstaskclass", None)
 
-    input_model = getattr(ewoks_task, "_INPUT_MODEL", None)
-    output_model = getattr(ewoks_task, "_OUTPUT_MODEL", None)
+    input_model = ewoks_task.input_model()
+    output_model = ewoks_task.output_model()
 
     for ewoksname in names:
         signal = signal_dict.get(ewoksname, None)
@@ -185,8 +185,8 @@ def _validate_signals(namespace: dict, direction: str, names: List[str]) -> None
 
     ewoks_task = namespace.get("ewokstaskclass", None)
 
-    input_model = getattr(ewoks_task, "_INPUT_MODEL", None)
-    output_model = getattr(ewoks_task, "_OUTPUT_MODEL", None)
+    input_model = ewoks_task.input_model()
+    output_model = ewoks_task.output_model()
 
     for ewoksname in names:
         signal = signal_dict.get(ewoksname, None)
