@@ -54,36 +54,6 @@ class EwoksOrangeTaskB(OWEwoksWidgetNoThread, ewokstaskclass=TaskB):
 )
 def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     """Test that Orange link are correctly taking into account the ewoks input / output models."""
-    # Create an Orange workflows
-    workflow = {
-        "graph": {
-            "id": "ewoksgraph",
-            "label": "Ewoks workflow 'ewoksgraph'",
-            "schema_version": "1.1",
-        },
-        "links": [
-            {
-                "data_mapping": [{"source_output": "b", "target_input": "c"}],
-                "source": "0",
-                "target": "1",
-            }
-        ],
-        "nodes": [
-            {
-                "id": "0",
-                "task_identifier": qualname(TaskA),
-                "task_type": "class",
-            },
-            {
-                "id": "1",
-                "task_identifier": qualname(TaskB),
-                "task_type": "class",
-            },
-        ],
-    }
-    destination = str(tmpdir / "ewoksgraph.ows")
-    ewoks_to_ows(workflow, destination)
-
     widget_registry = _temporary_widget_discovery_object()
 
     for widget in (EwoksOrangeTaskA, EwoksOrangeTaskB):
