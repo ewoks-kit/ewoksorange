@@ -2,6 +2,8 @@ import inspect
 from typing import Callable
 from typing import List
 from typing import Optional
+from typing import get_origin
+from pydantic import BaseModel
 
 from ...orange_version import ORANGE_VERSION
 
@@ -174,26 +176,16 @@ def _validate_signals(namespace: dict, direction: str, names: List[str]) -> None
     input_model = getattr(ewoks_task, "_INPUT_MODEL", None)
     output_model = getattr(ewoks_task, "_OUTPUT_MODEL", None)
 
-    def get_signal_value_data_type(ewoksname, model, default_data_type=object):
-        if model is None:
-            return default_data_type
-
-        field_info = model.model_fields.get(ewoksname, None)
-        if field_info is not None:
-            return field_info.annotation
-        else:
-            return default_data_type
-
     for ewoksname in names:
         signal = signal_dict.get(ewoksname, None)
         if signal is None:
             if is_inputs:
-                data_type = get_signal_value_data_type(
+                data_type = _pydantic_model_field_type(
                     ewoksname=ewoksname, model=input_model
                 )
                 signal = Input(name=ewoksname, type=data_type)
             else:
-                data_type = get_signal_value_data_type(
+                data_type = _pydantic_model_field_type(
                     ewoksname=ewoksname, model=output_model
                 )
                 signal = Output(name=ewoksname, type=data_type)
@@ -288,3 +280,14 @@ def get_output_names(widget_class) -> List[str]:
         signal.name
         for signal in get_signals(signal_container, orange_to_ewoks).values()
     ]
+
+
+def _pydantic_model_field_type(
+    model: Optional[BaseModel], field_name: str, default_data_type=object
+) -> type:
+    if model is None:
+        return default_data_type
+    field_info = model.model_fields.get(field_name, None)
+    if field_info is None:
+        return default_data_type
+    return get_origin(field_info.annotation)
