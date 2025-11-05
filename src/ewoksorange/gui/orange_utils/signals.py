@@ -311,8 +311,6 @@ def _pydantic_model_field_type(
         return field_info.annotation
     elif origin in (list, tuple):
         return origin
-    elif origin is Literal:
-        return str
     else:
-        # Union, Optional use cases
+        # Union, Optional, Literal use cases
         return object

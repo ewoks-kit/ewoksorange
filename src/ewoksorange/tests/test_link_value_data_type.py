@@ -31,7 +31,7 @@ class InputModelA(BaseInputModel):
     a: int
     b: Tuple[int]
     c: List[float]
-    d: Literal[42]
+    d: Literal[42, "any"]
 
 
 class OutputModelA(BaseOutputModel):
@@ -43,7 +43,7 @@ class InputModelB(BaseInputModel):
     a: Union[float, int]
     b: Optional[numpy.float32]
     c: numpy.int32
-    d: Literal["value", "other value"]
+    d: str
     e: MyEnum
 
 
@@ -119,7 +119,7 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
         qualified_name(list)
     )
     assert get_input_data_type(descWidgetA, "d") == expected_output_type(
-        qualified_name(str)
+        qualified_name(object)
     )
 
     assert len(descWidgetA.outputs) == 2
