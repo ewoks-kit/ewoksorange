@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - `OWEwoksBaseWidget.get_dynamic_input_value`: return the actual value, not the wrapper `Variable`.
+- `OWEwoksBaseWidget.get_dynamic_input`: return the actual value, not the wrapper `Variable`.
+- `signals`: Enhance creation of Orange Input and Output from deducing signal value data type from the Ewoks Task's models.
 
 ## [2.1.0] - 2025-10-23
 

@@ -2,6 +2,10 @@ import inspect
 from typing import Callable
 from typing import List
 from typing import Optional
+from typing import Type
+from typing import get_origin
+
+from pydantic import BaseModel
 
 from ...orange_version import ORANGE_VERSION
 
@@ -132,11 +136,20 @@ def _validate_signals_oasys(namespace: dict, direction: str, names: List[str]) -
     signal_dict = get_signals(signal_container, orange_to_ewoks)
 
     signal_container = namespace[direction] = list()
+
+    ewoks_task = namespace.get("ewokstaskclass", None)
+
+    input_model = ewoks_task.input_model()
+    output_model = ewoks_task.output_model()
+
     for ewoksname in names:
         signal = signal_dict.get(ewoksname, None)
         if is_inputs:
             if signal is None:
-                orangename, stype, handler = ewoksname, object, None
+                stype = _pydantic_model_field_type(
+                    field_name=ewoksname, model=input_model
+                )
+                orangename, handler = ewoksname, None
             else:
                 orangename, stype, handler = signal
 
@@ -151,8 +164,11 @@ def _validate_signals_oasys(namespace: dict, direction: str, names: List[str]) -
             )
         else:
             if signal is None:
+                stype = _pydantic_model_field_type(
+                    field_name=ewoksname, model=output_model
+                )
                 signal = Output(
-                    [("name", ewoksname), ("type", object), ("id", ewoksname)]
+                    [("name", ewoksname), ("type", stype), ("id", ewoksname)]
                 )
             else:
                 signal = Output(signal)
@@ -169,13 +185,24 @@ def _validate_signals(namespace: dict, direction: str, names: List[str]) -> None
 
     signal_dict = get_signals(signal_container)
 
+    ewoks_task = namespace.get("ewokstaskclass", None)
+
+    input_model = ewoks_task.input_model()
+    output_model = ewoks_task.output_model()
+
     for ewoksname in names:
         signal = signal_dict.get(ewoksname, None)
         if signal is None:
             if is_inputs:
-                signal = Input(name=ewoksname, type=object)
+                data_type = _pydantic_model_field_type(
+                    field_name=ewoksname, model=input_model
+                )
+                signal = Input(name=ewoksname, type=data_type)
             else:
-                signal = Output(name=ewoksname, type=object)
+                data_type = _pydantic_model_field_type(
+                    field_name=ewoksname, model=output_model
+                )
+                signal = Output(name=ewoksname, type=data_type)
             setattr(signal_container, ewoksname, signal)
         signal.ewoksname = ewoksname
         if is_inputs and not signal.handler:  # str
@@ -267,3 +294,22 @@ def get_output_names(widget_class) -> List[str]:
         signal.name
         for signal in get_signals(signal_container, orange_to_ewoks).values()
     ]
+
+
+def _pydantic_model_field_type(
+    model: Optional[Type[BaseModel]], field_name: str, default_data_type=object
+) -> type:
+    if model is None:
+        return default_data_type
+    field_info = model.model_fields.get(field_name, None)
+    if field_info is None:
+        return default_data_type
+    origin = get_origin(field_info.annotation)
+    if origin is None:
+        # if unsupported ()
+        return field_info.annotation
+    elif origin in (list, tuple):
+        return origin
+    else:
+        # Union, Optional, Literal use cases
+        return object
