@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scheme version="2.0" title="Mixed Ewoks/Native example" description="simple mixed graph" working_directory="./" workspace_units="1">
+	<nodes>
+		<node id="0" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" version="" title="Before" position="(165.0, 238.0)" />
+		<node id="1" name="Python Script" qualified_name="oasys.widgets.tools.ow_python_script.OWPythonScript" project_name="OASYS1" version="" title="Python Script" position="(352.0, 239.0)" />
+		<node id="2" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" version="" title="After" position="(505.0, 237.0)" />
+	</nodes>
+	<links>
+		<link id="0" source_node_id="0" sink_node_id="1" source_channel="A + B" sink_channel="in_object_1" enabled="true" />
+		<link id="1" source_node_id="1" sink_node_id="2" source_channel="out_object" sink_channel="A" enabled="true" />
+	</links>
+	<annotations />
+	<thumbnail />
+	<node_properties>
+		<properties node_id="0" format="pickle">gASVDgEAAAAAAAB9lCiMFV9ld29rc19kZWZhdWx0X2lucHV0c5R9lIwBYZRLAXOMD19ld29rc19l
+eGVjaW5mb5R9lIwTX2V3b2tzX3Rhc2tfb3B0aW9uc5R9lIwOX2V3b2tzX3ZhcmluZm+UfZSMDmRl
+ZmF1bHRfaW5wdXRzlH2UjBNzYXZlZFdpZGdldEdlb21ldHJ5lIwDc2lwlIwOX3VucGlja2xlX3R5
+cGWUk5SMDFB5UXQ1LlF0Q29yZZSMClFCeXRlQXJyYXmUQ0IB2dDLAAMAAAAABEgAAAIMAAAF7AAA
+A10AAARIAAACDAAABewAAANdAAAAAAAAAAAKAAAABEgAAAIMAAAF7AAAA12UhZSHlFKUdS4=
+</properties>
+		<properties node_id="1" format="pickle">gASVxgEAAAAAAAB9lCiMDGF1dG9fZXhlY3V0ZZSIjBJjdXJyZW50U2NyaXB0SW5kZXiUSwCMCWZv
+bnRfc2l6ZZRLBIwRbGlicmFyeUxpc3RTb3VyY2WUXZSMJG9hc3lzLndpZGdldHMudG9vbHMub3df
+cHl0aG9uX3NjcmlwdJSMBlNjcmlwdJSTlCmBlH2UKIwEbmFtZZSMBHRlc3SUjAZzY3JpcHSUjGRw
+cmludCgiU2NyaXB0IGlucHV0OiIsIGluX29iamVjdF8xKQpvdXRfb2JqZWN0ID0gaW5fb2JqZWN0
+XzEgKyAxCnByaW50KCJTY3JpcHQgb3V0cHV0OiIsIG91dF9vYmplY3QplIwFZmxhZ3OUSwCMCGZp
+bGVuYW1llE51YmGME3NhdmVkV2lkZ2V0R2VvbWV0cnmUjANzaXCUjA5fdW5waWNrbGVfdHlwZZST
+lIwMUHlRdDUuUXRDb3JllIwKUUJ5dGVBcnJheZRDQgHZ0MsAAwAAAAADDAAAAQ8AAAh1AAADxQAA
+AwwAAAE0AAAIdQAAA8UAAAAAAAAAAAoAAAADDAAAATQAAAh1AAADxZSFlIeUUpSMDXNwbGl0dGVy
+U3RhdGWUTnUu
+</properties>
+		<properties node_id="2" format="pickle">gASVDgEAAAAAAAB9lCiMFV9ld29rc19kZWZhdWx0X2lucHV0c5R9lIwBYpRLAXOMD19ld29rc19l
+eGVjaW5mb5R9lIwTX2V3b2tzX3Rhc2tfb3B0aW9uc5R9lIwOX2V3b2tzX3ZhcmluZm+UfZSMDmRl
+ZmF1bHRfaW5wdXRzlH2UjBNzYXZlZFdpZGdldEdlb21ldHJ5lIwDc2lwlIwOX3VucGlja2xlX3R5
+cGWUk5SMDFB5UXQ1LlF0Q29yZZSMClFCeXRlQXJyYXmUQ0IB2dDLAAMAAAAABEgAAAIMAAAF7AAA
+A10AAARIAAACDAAABewAAANdAAAAAAAAAAAKAAAABEgAAAIMAAAF7AAAA12UhZSHlFKUdS4=
+</properties>
+	</node_properties>
+</scheme>

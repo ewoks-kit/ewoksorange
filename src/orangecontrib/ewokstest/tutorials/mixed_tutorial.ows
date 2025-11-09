@@ -1,20 +1,20 @@
 <?xml version='1.0' encoding='utf-8'?>
 <scheme version="2.0" title="Mixed Ewoks/Native example" description="simple mixed graph">
 	<nodes>
-		<node id="0" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" version="" title="SumTaskTest" position="(190.0, 271.0)" />
-		<node id="1" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" version="" title="SumTaskTest" position="(577.0, 267.0)" />
-		<node id="2" name="Python Script" qualified_name="Orange.widgets.data.owpythonscript.OWPythonScript" project_name="Orange3" version="" title="Python Script" position="(390.0, 268.0)" />
+		<node id="0" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" version="" title="Before" position="(190.0, 271.0)" />
+		<node id="1" name="Python Script" qualified_name="Orange.widgets.data.owpythonscript.OWPythonScript" project_name="Orange3" version="" title="Python Script" position="(390.0, 268.0)" />
+		<node id="2" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" version="" title="After" position="(571.0, 265.0)" />
 	</nodes>
 	<links>
-		<link id="0" source_node_id="0" sink_node_id="2" source_channel="A + B" sink_channel="Object" enabled="true" />
-		<link id="1" source_node_id="2" sink_node_id="1" source_channel="Object" sink_channel="A" enabled="true" />
+		<link id="0" source_node_id="0" sink_node_id="1" source_channel="A + B" sink_channel="Object" enabled="true" source_channel_id="result" sink_channel_id="object" />
+		<link id="1" source_node_id="1" sink_node_id="2" source_channel="Object" sink_channel="A" enabled="true" source_channel_id="object" sink_channel_id="a" />
 	</links>
 	<annotations />
 	<thumbnail />
 	<node_properties>
-		<properties node_id="0" format="literal">{'_ewoks_default_inputs': {'b': 0, 'a': 1}}</properties>
-		<properties node_id="1" format="literal">{'_ewoks_default_inputs': {'b': 1, 'a': 0}}</properties>
-		<properties node_id="2" format="literal">{'currentScriptIndex': 0, 'scriptLibrary': [], 'scriptText': 'print("Script input:",in_object)\nout_object = in_object + 1\nprint("Script output:", out_object)\n', '__version__': 2}</properties>
+		<properties node_id="0" format="literal">{'_ewoks_default_inputs': {'b': 0, 'a': 1}, '_ewoks_execinfo': {}, '_ewoks_task_options': {}, '_ewoks_varinfo': {}, 'controlAreaVisible': True, 'default_inputs': {}, 'savedWidgetGeometry': b'\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x03\x9c\x00\x00\x01\xd2\x00\x00\x06\x1b\x00\x00\x03\xb1\x00\x00\x03\x9c\x00\x00\x01\xd2\x00\x00\x06\x1b\x00\x00\x03\xb1\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x03\x9c\x00\x00\x01\xd2\x00\x00\x06\x1b\x00\x00\x03\xb1', '__version__': 1}</properties>
+		<properties node_id="1" format="literal">{'controlAreaVisible': True, 'currentScriptIndex': 0, 'savedWidgetGeometry': b'\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x02\xa3\x00\x00\x02\x8d\x00\x00\x05\xe9\x00\x00\x04\x91\x00\x00\x02\xa3\x00\x00\x02\xb2\x00\x00\x05\xe9\x00\x00\x04\x91\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x02\xa3\x00\x00\x02\xb2\x00\x00\x05\xe9\x00\x00\x04\x91', 'scriptLibrary': [], 'scriptText': 'print("Script input:", in_object)\nout_object = in_object + 1\nprint("Script output:", out_object)\n', 'splitterState': b'\x00\x00\x00\xff\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\xac\x00\x00\x00h\x01\xff\xff\xff\xff\x01\x00\x00\x00\x02\x00', 'vimModeEnabled': False, '__version__': 2}</properties>
+		<properties node_id="2" format="literal">{'_ewoks_default_inputs': {'b': 1}, '_ewoks_execinfo': {}, '_ewoks_task_options': {}, '_ewoks_varinfo': {}, 'controlAreaVisible': True, 'default_inputs': {}, 'savedWidgetGeometry': b'\x01\xd9\xd0\xcb\x00\x03\x00\x00\x00\x00\x03\x9c\x00\x00\x01\xd2\x00\x00\x06\x1b\x00\x00\x03\xb1\x00\x00\x03\x9c\x00\x00\x01\xd2\x00\x00\x06\x1b\x00\x00\x03\xb1\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x03\x9c\x00\x00\x01\xd2\x00\x00\x06\x1b\x00\x00\x03\xb1', '__version__': 1}</properties>
 	</node_properties>
 	<session_state>
 		<window_groups />

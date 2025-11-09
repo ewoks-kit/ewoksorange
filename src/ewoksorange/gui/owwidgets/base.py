@@ -32,7 +32,10 @@ else:
 
     OWWidget = OWBaseWidget
 
-from ..orange_utils import signals as owsignals
+from ..orange_utils._signals import get_signal
+from ..orange_utils.orange_imports import OWBaseWidget
+from ..orange_utils.orange_imports import OWWidget
+from ..orange_utils.signals import Output
 from ..utils import invalid_data
 from ..utils.events import scheme_ewoks_events
 from .meta import OWEwoksWidgetMetaClass
@@ -451,23 +454,20 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         _logger.debug("%s: trigger downstream", self)
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for ewoksname, var in self.get_task_outputs().items():
-                ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
-                    type(self), "outputs"
-                )
-                orangename = ewoks_to_orange.get(ewoksname, ewoksname)
+                output = self._get_output_signal(ewoksname)
                 if invalid_data.is_invalid_data(var.value):
-                    self.send(orangename, invalid_data.INVALIDATION_DATA)
-                    # Note: perhaps `self.invalidate` is equivalent
+                    self.send(output.name, invalid_data.INVALIDATION_DATA)
+                    # Note: perhaps `self.invalidate(output.name)` is equivalent
                 else:
-                    self.send(orangename, var)
+                    self.send(output.name, var)
         else:
             for ewoksname, var in self.get_task_outputs().items():
-                channel = self._get_output_signal(ewoksname)
+                output = self._get_output_signal(ewoksname)
                 if invalid_data.is_invalid_data(var.value):
-                    channel.send(invalid_data.INVALIDATION_DATA)
-                    # Note: channel `self.invalidate` is equivalent
+                    output.send(invalid_data.INVALIDATION_DATA)
+                    # Note: perhaps `output.invalidate()` is equivalent
                 else:
-                    channel.send(var)
+                    output.send(var)
 
     def clear_downstream(self) -> None:
         """
@@ -478,38 +478,24 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         _logger.debug("%s: clear downstream", self)
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             for ewoksname in self.get_task_outputs():
-                ewoks_to_orange = owsignals.get_ewoks_to_orange_mapping(
-                    type(self), "outputs"
-                )
-                orangename = ewoks_to_orange.get(ewoksname, ewoksname)
-                self.send(orangename, invalid_data.INVALIDATION_DATA)
-                # Note: perhaps `self.invalidate` is equivalent
+                output = self._get_output_signal(ewoksname)
+                self.send(output.name, invalid_data.INVALIDATION_DATA)
+                # Note: perhaps `self.invalidate(output.name)` is equivalent
         else:
-            for name in self.get_task_outputs():
-                channel = self._get_output_signal(name)
-                channel.send(invalid_data.INVALIDATION_DATA)
-                # Note: channel `self.invalidate` is equivalent
+            for ewoksname in self.get_task_outputs():
+                output = self._get_output_signal(ewoksname)
+                output.send(invalid_data.INVALIDATION_DATA)
+                # Note: perhaps `output.invalidate` is equivalent
 
-    def _get_output_signal(self, ewoksname: str):
+    def _get_output_signal(self, ewoksname: str) -> Output:
         """
-        Resolve and return the Orange output signal/channel for a given Ewoks output name.
+        Resolve and return the Orange output signal for a given Ewoks output name.
 
         :param ewoksname: Ewoks output name.
         :raises RuntimeError: If the corresponding Orange output signal does not exist.
-        :return: The Orange signal/channel object.
+        :return: The Orange signal object.
         """
-        # This method intentionally uses dynamic resolution depending on Orange version.
-        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for signal in self.outputs:
-                if signal.name == ewoksname:
-                    break
-            else:
-                signal = None
-        else:
-            signal = getattr(self.Outputs, ewoksname, None)
-        if signal is None:
-            raise RuntimeError(f"Output signal '{ewoksname}' does not exist")
-        return signal
+        return get_signal(self, "outputs", ewoksname)
 
     # --- Ewoks task execution --------------------------------------------------------------
 

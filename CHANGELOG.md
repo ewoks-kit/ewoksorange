@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Removed
 
 - Module `ewoksorange.oasys_patch`.
+- Module `ewoksorange.bindings.owsignals`.
 
 ## Fixed
 
@@ -28,7 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `OWEwoksBaseWidget.get_dynamic_input_value`: return the actual value, not the wrapper `Variable`.
 - `OWEwoksBaseWidget.get_dynamic_input`: return the actual value, not the wrapper `Variable`.
-- `signals`: Enhance creation of Orange Input and Output from deducing signal value data type from the Ewoks Task's models.
+- `signals`: Enhance creation of Orange Input and Output from deducing signal value data type
+  from the Ewoks Task's models.
+
+## Added
+
+- `ewoksorange.gui.orange_utils.signals.Input` and `ewoksorange.gui.orange_utils.signals.Output`
+  should be used to modify the Orange name of the signal. They accept an `ewoksname` argument
+  which defaults to the attribute name in the `Inputs` and `Outputs` container classes.
 
 ## [2.1.0] - 2025-10-23
 

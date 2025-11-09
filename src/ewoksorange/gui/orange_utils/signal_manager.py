@@ -28,8 +28,7 @@ from orangecanvas.scheme import signalmanager
 from ..owwidgets.types import is_native_widget
 from ..qt_utils.app import QtEvent
 from ..utils import invalid_data
-from .signals import get_input_names
-from .signals import get_output_names
+from ._signals import get_signal_orange_names
 
 # monkey patch of 'can_enable_dynamic' See https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/58
 
@@ -106,10 +105,10 @@ class _OwWidgetSignalState:
     """Store input and output signal values for one widget and support waiting for a value"""
 
     def __init__(self, owwidget, *args, **kwargs):
-        output_variable_names = get_output_names(owwidget)
+        output_variable_names = get_signal_orange_names(owwidget, "outputs")
         widget_has_outputs = bool(output_variable_names)
         if not output_variable_names:
-            output_variable_names = get_input_names(owwidget)
+            output_variable_names = get_signal_orange_names(owwidget, "inputs")
 
         self._variable_names = output_variable_names
         self._widget_has_outputs = widget_has_outputs
