@@ -1,7 +1,7 @@
 import json
 
 from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
-from ewoksorange.gui.parameterform import ParameterForm
+from ewoksorange.gui.widgets.parameter_form import ParameterForm
 from ewoksorange.tests.examples.tasks import SumList4
 
 

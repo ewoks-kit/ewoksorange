@@ -181,7 +181,7 @@ Example:
 .. code-block:: python
 
     from AnyQt import QtWidgets
-    from ewoksorange.bindings import OWEwoksWidgetOneThread
+    from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
     from ewoks_orange_example_addon.tasks.exampletask import ExampleTask
 
     class OWExampleTask(OWEwoksWidgetOneThread, ewokstaskclass=ExampleTask):

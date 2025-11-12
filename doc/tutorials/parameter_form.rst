@@ -41,7 +41,7 @@ The Orange widget will then look like this:
 
     import json
     from ewoksorange.ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
-    from ewoksorange.gui.parameterform import ParameterForm
+    from ewoksorange.gui.widgets.parameter_form import ParameterForm
     from ewokscore.tests.examples.tasks.sumlist import SumList
 
     class OWSumList(
