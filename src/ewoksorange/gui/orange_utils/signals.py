@@ -57,7 +57,9 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
 else:
     from orangewidget.widget import Input as _Input
+    from orangewidget.widget import InputSignal as _InputSignal
     from orangewidget.widget import Output as _Output
+    from orangewidget.widget import OutputSignal as _OutputSignal
 
     class Input(_Input):
         def __init__(self, name, type, *args, ewoksname: str = "", **kwargs) -> None:

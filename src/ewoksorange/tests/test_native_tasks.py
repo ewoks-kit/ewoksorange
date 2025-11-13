@@ -6,7 +6,7 @@ from .utils import execute_task
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
-    class NativeWidget(OWWidget):
+    class NativeOldStyleWidget(OWWidget):
         name = "native"
         inputs = [("A", object, "set_a"), ("B", object, "set_b")]
         outputs = [{"name": "A + B", "id": "A + B", "type": object}]
@@ -24,11 +24,12 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             self._b = value
             self.send("A + B", self._a + self._b)
 
+    NativeNewStyleWidget = NotImplemented
 else:
     from orangewidget.widget import Input
     from orangewidget.widget import Output
 
-    class NativeWidget(OWWidget):
+    class NativeNewStyleWidget(OWWidget):
         name = "native"
 
         class Inputs:
@@ -53,14 +54,36 @@ else:
             self._b = value
             self.Outputs.result.send(self._a + self._b)
 
+    class NativeOldStyleWidget(OWWidget):
+        name = "native"
+        inputs = [("A", object, "set_a"), ("B", object, "set_b")]
+        outputs = [("A + B", object)]  # dict does not work
 
-def test_execute_native_widget(qtapp):
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        result = execute_task(NativeWidget, inputs={"A": 5, "B": 6})
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._a = 0
+            self._b = 0
+
+        def set_a(self, value):
+            self._a = value
+            self.send("A + B", self._a + self._b)
+
+        def set_b(self, value):
+            self._b = value
+            self.send("A + B", self._a + self._b)
+
+
+@pytest.mark.parametrize("widget_class", [NativeOldStyleWidget, NativeNewStyleWidget])
+def test_execute_native_widget(qtapp, widget_class):
+    if widget_class is NotImplemented:
+        pytest.skip(f"Not supported by {ORANGE_VERSION}")
+    if widget_class is NativeOldStyleWidget:
+        inputs = {"A": 5, "B": 6}
         expected = {"A + B": 11}
     else:
-        result = execute_task(NativeWidget, inputs={"a": 5, "b": 6})
+        inputs = {"a": 5, "b": 6}
         expected = {"result": 11}
+    result = execute_task(widget_class, inputs=inputs)
     assert result == expected, result
 
 

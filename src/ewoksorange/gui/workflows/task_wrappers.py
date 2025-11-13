@@ -278,7 +278,8 @@ def _parse_input_values(
         settings_dict[ewoksname] = value
 
     # Values corresponding to inputs
-    for signal in _signals.get_signal_list(widget_class, "inputs"):
+    input_signals = _signals.get_signal_list(widget_class, "inputs")
+    for signal in input_signals:
         if signal.ewoksname not in inputs:
             continue
         used_values.add(signal.ewoksname)

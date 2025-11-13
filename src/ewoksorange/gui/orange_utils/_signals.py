@@ -4,6 +4,7 @@ Orange behavior:
 - The widget instance attributes `Inputs` and `Outputs` are instances of the widget class attributes `Inputs` and `Outputs`.
 - The `Input` and `Output` attributes of the `Inputs` and `Outputs` instances hold a reference to the widget.
 - `Input` and `Output` attributes have two names: orange name and Inputs/Outputs container attribute name.
+- Old-style `inputs` and `outputs` are deprecated but can still exist.
 
 Ewoks-Orange behavior:
 
@@ -47,6 +48,8 @@ from ...orange_version import ORANGE_VERSION
 from .orange_imports import OWBaseWidget
 from .signals import Input
 from .signals import Output
+from .signals import _InputSignal
+from .signals import _OutputSignal
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
@@ -128,16 +131,23 @@ def _get_signal_container(
     """Returns attribute which is a class with Input or Output signal instances as attributes."""
     attr_name = direction.title()
 
-    if not hasattr(orange_widget, attr_name):
-        if hasattr(orange_widget, direction):
+    signal_container_class = None
+
+    if hasattr(orange_widget, direction):
+        if not hasattr(orange_widget, attr_name) or not _get_signals(
+            getattr(orange_widget, attr_name)
+        ):
             # Most likely a native Orange/Oasys widget.
             # Old-style inputs/outputs as a list of tuples or dicts
             # instead of the new-style Inputs/Outputs classes.
+            # Old-style is deprecated in Orange.
             signals = getattr(orange_widget, direction)
             signal_container_class = _oldstyle_signal_container(signals, direction)
-        else:
+    else:
+        if not hasattr(orange_widget, attr_name):
             signal_container_class = type(attr_name, (), {})
 
+    if signal_container_class is not None:
         if isinstance(orange_widget, type):
             setattr(orange_widget, attr_name, signal_container_class)
         else:
@@ -236,7 +246,7 @@ def validate_signals(
 
     # Do not allow old-style (list instead of signal class) signal definition in Ewoks-Orange widgets.
     signal_container_name = direction.title()
-    if namespace.get(direction):
+    if direction in namespace:
         raise ValueError(
             f"Use an {signal_container_name!r} class instead of an {direction!r} list"
         )
@@ -384,6 +394,18 @@ def _oldstyle_instantiate_signal(
         signal = signal_class(*data, ewoksname=data[0])
     elif isinstance(data, dict):
         signal = signal_class(**data, ewoksname=data["name"])
+    elif isinstance(data, _InputSignal):
+        names = "name", "type", "id", "doc", "replaces"
+        data_dict = {name: getattr(data, name) for name in names if hasattr(data, name)}
+        signal = signal_class(**data_dict)
+        if hasattr(data, "handler"):
+            signal.handler = getattr(data, "handler")
+        signal.ewoksname = signal.name
+    elif isinstance(data, _OutputSignal):
+        names = "name", "type", "id", "doc", "replaces"
+        data_dict = {name: getattr(data, name) for name in names if hasattr(data, name)}
+        signal = signal_class(**data_dict)
+        signal.ewoksname = signal.name
     else:
         raise TypeError(type(data))
     return signal
