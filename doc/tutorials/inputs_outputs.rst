@@ -70,8 +70,8 @@ Similarly, additional custom outputs can created this way using the
         class Outputs:
             filename = Output("filename", str, ewoksname="filename")
 
-The first two required arguments are the Orange name and type of the inputs. The `ewoksname` is optional
-and defaults to the attribute name in the `Inputs` class.
+The first two required arguments are the Orange name and type of the output. The `ewoksname` is optional
+and defaults to the attribute name in the `Output` class.
 
 The output will then be available as a possible choice when connecting this widget to another widget's inputs.
 

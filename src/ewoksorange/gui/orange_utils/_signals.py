@@ -3,11 +3,11 @@ Orange behavior:
 
 - The widget instance attributes `Inputs` and `Outputs` are instances of the widget class attributes `Inputs` and `Outputs`.
 - The `Input` and `Output` attributes of the `Inputs` and `Outputs` instances hold a reference to the widget.
-- An `Input` and `Output` attribute has two names: orange name and Inputs/Outputs container attribute name.
+- `Input` and `Output` attributes have two names: orange name and Inputs/Outputs container attribute name.
 
 Ewoks-Orange behavior:
 
-- An `Input` and `Output` attribute has three names: orange name, ewoks name and Inputs/Outputs container attribute name.
+- `Input` and `Output` attributes have three names: orange name, ewoks name and Inputs/Outputs container attribute name.
 
 Oasys behavior:
 
