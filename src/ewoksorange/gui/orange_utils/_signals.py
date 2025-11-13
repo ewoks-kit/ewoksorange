@@ -17,6 +17,17 @@ Oasys behavior:
 Nomenclature:
 
 - Instances of `Input` and `Output` are referred to as "signals".
+
+Implementation:
+
+- When Orange instantiates a widget, it calls `OWBaseWidget._bind_signals` to sets the `Inputs` and `Outputs` attributes
+  of the widget instance to be `Inputs` and `Outputs` instances. Thats why in this module we have methods that accept
+  widget or signal container classes and instances:
+
+  .. code--block:: python
+
+    signal_container: Union[str, object]
+    orange_widget: Union[OWBaseWidget, Type[OWBaseWidget]]
 """
 
 import inspect
