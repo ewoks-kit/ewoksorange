@@ -1,9 +1,6 @@
-import sys
-
 import pytest
 
 from ..gui.owwidgets.base import OWWidget
-from ..gui.utils.invalid_data import is_invalid_data
 from ..orange_version import ORANGE_VERSION
 from .utils import execute_task
 
@@ -70,22 +67,30 @@ def test_execute_native_widget(qtapp):
 def test_execute_python_script(qtapp):
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         from oasys.widgets.tools.ow_python_script import OWPythonScript
+        from oasys.widgets.tools.ow_python_script import Script
 
-        all_outputs = {"out_object"}
-        outputs_with_values = all_outputs
+        settings = {
+            "auto_execute": True,
+            "currentScriptIndex": 0,
+            "libraryListSource": [Script("test_script", "out_object = [1, 2, 3]")],
+        }
+        expected = {"out_object": [1, 2, 3]}
     elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
         from Orange.widgets.data.owpythonscript import OWPythonScript
 
-        all_outputs = {"data", "learner", "classifier", "object"}
-        if sys.platform == "win32":
-            # TODO: not sure whether it is a bug in orange or in ewoksorange
-            outputs_with_values = {}
-        else:
-            outputs_with_values = {"data"}
+        settings = {
+            "scriptText": "out_object = [1, 2, 3]",
+            "scriptLibrary": [],
+            "__version__": 2,
+        }
+        expected = {
+            "data": None,
+            "learner": None,
+            "classifier": None,
+            "object": [1, 2, 3],
+        }
     else:
         pytest.skip("Requires the Orange3 or Oasys1 python script widget")
 
-    result = execute_task(OWPythonScript)
-    assert set(result) == all_outputs, result
-    for name in outputs_with_values:
-        assert not is_invalid_data(result[name]), f"Value of {name!r} not set"
+    result = execute_task(OWPythonScript, settings=settings)
+    assert result == expected, result

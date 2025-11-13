@@ -198,6 +198,7 @@ def execute_native_owwidget(
     widget_class: Type[OWBaseWidget],
     inputs: Optional[Mapping] = None,
     timeout: Optional[Number] = None,
+    settings: Optional[Mapping] = None,
     **widget_init_params,
 ):
     """This is the equivalent of `execute_ewoks_owwidget` but then for native Orange widget
@@ -216,6 +217,8 @@ def execute_native_owwidget(
     input_list, stored_settings = _parse_input_values(widget_class, inputs)
 
     # Create widget with the proper settings
+    if settings:
+        stored_settings.update(settings)
     widget = instantiate_owwidget(
         widget_class,
         signal_manager=SignalManagerWithoutScheme(),
