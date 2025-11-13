@@ -233,13 +233,13 @@ def execute_native_owwidget(
             try:
                 set_input_value(widget, signal, value, index)
             except Exception as ex:
-                exception = ex
+                exception = exception or ex
 
         # Start calculation
         try:
             widget.handleNewSignals()
         except Exception as ex:
-            exception = ex
+            exception = exception or ex
 
         # Wait for the result
         process_qtapp_events()
