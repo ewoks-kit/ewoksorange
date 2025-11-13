@@ -52,7 +52,9 @@ def default_owwidget_class(task_class: Task) -> Tuple[OWEwoksBaseWidget, str]:
         basecls = OWEwoksWidgetNoThread
 
     class DefaultOwWidget(basecls, ewokstaskclass=task_class):
-        name = qualname(task_class)
+        name = qualname(
+            task_class
+        )  # Allows recreating `DefaultOwWidget` when loading .ows file
         description = f"Orange widget is missing for Ewoks task {task_class.__name__}"
         icon = "icons/nowidget.svg"
         want_main_area = False

@@ -13,13 +13,6 @@ from typing import Type
 from typing import Union
 from uuid import uuid4
 
-from ...orange_version import ORANGE_VERSION
-
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.widgets.widget import OWWidget as OWBaseWidget
-else:
-    from orangewidget.widget import OWBaseWidget
-
 from ewokscore import load_graph
 from ewokscore.graph import TaskGraph
 from ewokscore.graph.serialize import GraphRepresentation
@@ -31,8 +24,10 @@ from ewoksutils.import_utils import qualname
 from orangecanvas.scheme import annotations
 from orangecanvas.scheme import readwrite
 
-from ..orange_utils.signals import signal_ewoks_to_orange_name
-from ..orange_utils.signals import signal_orange_to_ewoks_name
+from ...orange_version import ORANGE_VERSION
+from ..orange_utils._signals import signal_ewoks_to_orange_name
+from ..orange_utils._signals import signal_orange_to_ewoks_name
+from ..orange_utils.orange_imports import OWBaseWidget
 from ..owwidgets.registration import get_owwidget_descriptions
 from ..owwidgets.types import is_ewoks_widget_class
 from ..utils import invalid_data

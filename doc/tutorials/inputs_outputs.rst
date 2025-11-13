@@ -20,7 +20,7 @@ For this, we can define additional inputs directly in the Orange widget using th
 
     from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
     from ewokscore.tests.examples.tasks.sumtask import SumTask
-    from ewoksorange.gui.orange_utils.orange_imports import Input
+    from ewoksorange.gui.orange_utils.signals import Input
 
 
     class OrangeInputExample(
@@ -29,7 +29,10 @@ For this, we can define additional inputs directly in the Orange widget using th
     ): 
 
         class Inputs:
-            root_directory = Input("root_directory", str) # Note that the input type must be specified
+            root_directory = Input("root_directory", str, ewoksname="root_directory")
+
+The first two required arguments are the Orange name and type of the inputs. The `ewoksname` is optional
+and defaults to the attribute name in the `Inputs` class.
 
 The input will then be available as a possible choice when connecting another widget to this widget's inputs,
 in addition of the Ewoks task (`SumTask` here) inputs.
@@ -56,7 +59,7 @@ Similarly, additional custom outputs can created this way using the
 
     from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
     from ewokscore.tests.examples.tasks.sumtask import SumTask
-    from ewoksorange.gui.orange_utils.orange_imports import Output
+    from ewoksorange.gui.orange_utils.signals import Output
 
 
     class OrangeOutputExample(
@@ -65,7 +68,10 @@ Similarly, additional custom outputs can created this way using the
     ): 
 
         class Outputs:
-            filename = Output("filename", str) # Note that the output type must be specified
+            filename = Output("filename", str, ewoksname="filename")
+
+The first two required arguments are the Orange name and type of the output. The `ewoksname` is optional
+and defaults to the attribute name in the `Output` class.
 
 The output will then be available as a possible choice when connecting this widget to another widget's inputs.
 

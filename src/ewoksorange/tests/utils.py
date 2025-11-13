@@ -5,8 +5,11 @@ from typing import Union
 
 from ewokscore.task import Task
 
-from ..gui.owwidgets.base import OWEwoksBaseWidget
+from ..gui.owwidgets.types import OWEwoksBaseWidget
+from ..gui.owwidgets.types import is_ewoks_widget_class
+from ..gui.owwidgets.types import is_native_widget_class
 from ..gui.workflows.task_wrappers import execute_ewoks_owwidget
+from ..gui.workflows.task_wrappers import execute_native_owwidget
 
 
 def execute_task(
@@ -16,8 +19,12 @@ def execute_task(
     **widget_init_params,
 ) -> dict:
     """Execute the task (use the orange widget or ewoks task class) and return the results"""
-    if issubclass(task_cls, OWEwoksBaseWidget):
+    if is_ewoks_widget_class(task_cls):
         return execute_ewoks_owwidget(
+            task_cls, inputs=inputs, timeout=timeout, **widget_init_params
+        )
+    if is_native_widget_class(task_cls):
+        return execute_native_owwidget(
             task_cls, inputs=inputs, timeout=timeout, **widget_init_params
         )
     if issubclass(task_cls, Task):

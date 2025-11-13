@@ -38,23 +38,31 @@ def test_list_operations_without_qt(qtapp):
     assert_sumlist_tutorial_without_qt(filename)
 
 
-@pytest.mark.skipif(
-    ORANGE_VERSION != ORANGE_VERSION.latest_orange, reason="Requires Orange3 widgets"
-)
 def test_mixed_tutorial_with_qt(ewoks_orange_canvas):
     from orangecontrib.ewokstest import tutorials
 
-    filename = resource_files(tutorials).joinpath("mixed_tutorial.ows")
+    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+        workflow = "mixed_tutorial.ows"
+    elif ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+        workflow = "mixed_tutorial_oasys.ows"
+    else:
+        pytest.skip("Requires the Orange3 or Oasys1 python script widget")
+
+    filename = resource_files(tutorials).joinpath(workflow)
     assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename)
 
 
-@pytest.mark.skipif(
-    ORANGE_VERSION != ORANGE_VERSION.latest_orange, reason="Requires Orange3 widgets"
-)
 def test_mixed_tutorial_without_qt(qtapp):
     from orangecontrib.ewokstest import tutorials
 
-    filename = resource_files(tutorials).joinpath("mixed_tutorial.ows")
+    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+        workflow = "mixed_tutorial.ows"
+    elif ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+        workflow = "mixed_tutorial_oasys.ows"
+    else:
+        pytest.skip("Requires the Orange3 or Oasys1 python script widget")
+
+    filename = resource_files(tutorials).joinpath(workflow)
     assert_mixed_tutorial_without_qt(filename)
 
 
@@ -129,7 +137,7 @@ def assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename):
     ewoks_orange_canvas.load_ows(str(filename))
     ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)
-    widget = ewoks_orange_canvas.widget_from_id("1")
+    widget = ewoks_orange_canvas.widget_from_id("2")
     results = widget.get_task_output_values()
     assert results == {"result": 3}
 
@@ -138,5 +146,5 @@ def assert_mixed_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
     graph = ows_to_ewoks(filename)
     tasks = execute_graph(graph, output_tasks=True)
-    results = tasks["1"].get_output_values()
+    results = tasks["2"].get_output_values()
     assert results == {"result": 3}
