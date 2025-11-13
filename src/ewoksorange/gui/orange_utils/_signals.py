@@ -31,7 +31,6 @@ Implementation:
 """
 
 import inspect
-from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -50,93 +49,6 @@ from .signals import Input
 from .signals import Output
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-
-    def _oasys_inputs_container(inputs: List[Tuple[str]]) -> type:
-        """Convert
-
-        .. code-block:: python
-
-            inputs = [("A", object, ""), ("B", object, "")]  # list of tuples or dicts
-
-        to
-
-        .. code-block:: python
-
-            class Inputs:
-                a = Input("A", object)
-                b = Input("B", object)
-        """
-        names = [f"input{i}" for i in range(len(inputs))]
-        values = [_oasys_instantiate_signal(Input, input) for input in inputs]
-        attrs = dict(zip(names, values))
-        return type("Inputs", (), attrs)
-
-    def _oasys_outputs_container(outputs: List[Dict[str, Any]]) -> type:
-        """Convert
-
-        .. code-block:: python
-
-            outputs = [{"name": "A + B", "id": "A + B", "type": object}]  # list of tuples or dicts
-
-        to
-
-        .. code-block:: python
-
-            class Outputs:
-                result = Output("A + B", object)
-        """
-        names = [f"output{i}" for i in range(len(outputs))]
-        values = [_oasys_instantiate_signal(Output, output) for output in outputs]
-        attrs = dict(zip(names, values))
-        return type("Outputs", (), attrs)
-
-    def _oasys_inputs_list(input_container_class) -> List[str]:
-        """Convert
-
-        .. code-block:: python
-
-            class Inputs:
-                a = Input("A", object)
-                b = Input("B", object)
-
-        to
-
-        .. code-block:: python
-
-            inputs = [("A", object, "")]
-        """
-        signals = _get_signal_list_from_container(input_container_class)
-        return [input.as_tuple() for input in signals]
-
-    def _oasys_outputs_list(
-        output_container_class: type,
-    ) -> List[Dict[str, Any]]:
-        """Convert
-
-        .. code-block:: python
-
-            class Outputs:
-                result = Output("A + B", object)
-
-        to
-
-        .. code-block:: python
-
-            outputs = [("A + B", object)]
-        """
-        signals = _get_signal_list_from_container(output_container_class)
-        return [output.as_tuple() for output in signals]
-
-    def _oasys_instantiate_signal(
-        signal_class: Union[Type[Input], Type[Output]], data: Union[tuple, dict]
-    ) -> Union[Input, Output]:
-        if isinstance(data, tuple):
-            signal = signal_class(*data, ewoksname=data[0])
-        elif isinstance(data, dict):
-            signal = signal_class(**data, ewoksname=data["name"])
-        else:
-            raise TypeError(type(data))
-        return signal
 
     def _native_getsignals(
         signal_container_class: type,
@@ -181,13 +93,13 @@ def _get_signal_list_from_container(
     counter = 0
     for attrname, signal in _get_signals(signal_container):
         if not getattr(signal, "ewoksname", ""):
-            # Native Orange/Oasys widget
+            # Most likely a native Orange/Oasys widget
             signal.ewoksname = attrname
 
         if getattr(signal, "_seq_id"):
             signal_list.append((signal._seq_id, signal))
         else:
-            # Native Oasys widget
+            # Most likely a native Oasys widget
             counter += 1
             signal_list.append((counter, signal))
 
@@ -203,7 +115,7 @@ def _get_signal_ewoks_dict(
     signal_dict = {}
     for attrname, signal in _get_signals(signal_container):
         if not getattr(signal, "ewoksname", ""):
-            # Native Orange widget
+            # Most likely a native Orange widget
             signal.ewoksname = attrname
         signal_dict[signal.ewoksname] = signal
     return signal_dict
@@ -217,19 +129,12 @@ def _get_signal_container(
     attr_name = direction.title()
 
     if not hasattr(orange_widget, attr_name):
-        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            if hasattr(orange_widget, direction):
-                # Native Oasys widget: old-style inputs/outputs as a list of tuples or dicts
-                # instead of the new-style Inputs/Outputs classes.
-                signals = getattr(orange_widget, direction)
-                if direction == "inputs":
-                    signal_container_class = _oasys_inputs_container(signals)
-                elif direction == "outputs":
-                    signal_container_class = _oasys_outputs_container(signals)
-                else:
-                    raise ValueError(f"{direction=}")
-            else:
-                signal_container_class = type(attr_name, (), {})
+        if hasattr(orange_widget, direction):
+            # Most likely a native Orange/Oasys widget.
+            # Old-style inputs/outputs as a list of tuples or dicts
+            # instead of the new-style Inputs/Outputs classes.
+            signals = getattr(orange_widget, direction)
+            signal_container_class = _oldstyle_signal_container(signals, direction)
         else:
             signal_container_class = type(attr_name, (), {})
 
@@ -288,7 +193,7 @@ def get_signal(
     signal_dict = _get_signal_ewoks_dict(signal_container)
     if ewoksname not in signal_dict:
         raise ValueError(
-            f"{orange_widget.__name__} does not have {ewoksname!r} in the {direction.Title()!r}"
+            f"{orange_widget.__name__} does not have {ewoksname!r} in the {direction.title()!r}"
         )
     return signal_dict[ewoksname]
 
@@ -305,142 +210,88 @@ def _receive_dynamic_input(name: str) -> Callable:
     return setter
 
 
-def validate_inputs(namespace: dict, name_to_ignore=tuple()) -> None:
+def validate_signals(
+    namespace: dict, direction: Literal["inputs", "outputs"], name_to_ignore=tuple()
+) -> None:
     """Namespace of an Ewoks-Orange widget class (i.e. not a native Orange widget):
 
-    - Ensure that for each Ewoks Task input there is an Orange widget `Input` instance.
-    - Ensure that `Inputs` namespace key exist.
-    - Oasys: ensure that `inputs` namespace key exist.
+    - Ensure that for each Ewoks Task input and output there is an Orange widget signal.
+    - Ensure that the `Inputs`/`Outputs` namespace key exist.
+    - Oasys: ensure that the `inputs`/`outputs` namespace key exist.
     """
+    ewoks_task = namespace["ewokstaskclass"]
+    if direction == "inputs":
+        signal_class = Input
+        ewoks_names = ewoks_task.input_names()
+        ewoks_model = ewoks_task.input_model()
+        is_input = True
+    elif direction == "outputs":
+        signal_class = Output
+        ewoks_names = ewoks_task.output_names()
+        ewoks_model = ewoks_task.output_model()
+        is_input = False
+    else:
+        raise ValueError(f"{direction=}")
+    ewoks_names = tuple(name for name in ewoks_names if name not in name_to_ignore)
 
-    ewoks_input_names = tuple(
-        name
-        for name in namespace["ewokstaskclass"].input_names()
-        if name not in name_to_ignore
-    )
+    # Do not allow old-style (list instead of signal class) signal definition in Ewoks-Orange widgets.
+    signal_container_name = direction.title()
+    if namespace.get(direction):
+        raise ValueError(
+            f"Use an {signal_container_name!r} class instead of an {direction!r} list"
+        )
 
-    # Oasys: convert list of tuples to `Inputs` attribute
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        if namespace.get("inputs"):
-            raise ValueError("Use an `Inputs` class instead of an `inputs` list")
+    # Ensure signal container attribute exists
+    if signal_container_name not in namespace:
+        namespace[signal_container_name] = type(signal_container_name, (), {})
 
-    # Ensure `Inputs` attribute exists
-    if "Inputs" not in namespace:
-        namespace["Inputs"] = type("Inputs", (), {})
+    # Orange signals
+    signal_container_class = namespace[signal_container_name]
+    signals_dict = _get_signal_ewoks_dict(signal_container_class)
 
-    # Orange inputs
-    input_container_class = namespace["Inputs"]
-    inputs_dict = _get_signal_ewoks_dict(input_container_class)
-
-    # Ewoks inputs
-    ewoks_task = namespace.get("ewokstaskclass", None)
-    input_model = ewoks_task.input_model()
-
-    # Validate `Inputs`
-    inputs_attrs = list()
-    new_inputs_class = False
-    for ewoksname in ewoks_input_names:
-        # `Input` for the ewoks input
-        input = inputs_dict.get(ewoksname, None)
-        if input is None:
-            data_type = _pydantic_model_field_type(input_model, ewoksname)
+    # Validate signal container
+    signals_attrs = list()
+    new_signals_class = False
+    for ewoksname in ewoks_names:
+        # Orange signal for the Ewoks variable.
+        signal = signals_dict.get(ewoksname, None)
+        if signal is None:
+            data_type = _pydantic_model_field_type(ewoks_model, ewoksname)
             doc = _pydantic_model_field_doc(
-                input_model,
+                ewoks_model,
                 ewoksname,
             )
             orangename = ewoksname
-            input = Input(name=orangename, type=data_type, doc=doc)
-            new_inputs_class = True
+            signal = signal_class(name=orangename, type=data_type, doc=doc)
+            new_signals_class = True
 
-        # Create a handler for the input value provided
-        # by upstream nodes at runtime, unless already provided.
-        handler: str = input.handler
-        if not handler or handler not in namespace:
-            setter = _receive_dynamic_input(ewoksname)
-            handler = setter.__name__
-            namespace[handler] = input(setter)  # does input.handler = handler
+        if is_input:
+            # Create a handler for the input value provided
+            # by upstream nodes at runtime, unless already provided.
+            handler: str = signal.handler
+            if not handler or handler not in namespace:
+                setter = _receive_dynamic_input(ewoksname)
+                handler = setter.__name__
+                namespace[handler] = signal(setter)  # does input.handler = handler
 
-        # Ensure the `Input` knows about the Ewoks parameter name as well
-        input.ewoksname = ewoksname
+        # Ensure the signal knows about the Ewoks parameter name as well
+        signal.ewoksname = ewoksname
 
-        inputs_attrs.append((ewoksname, input))
-
-    # Ensure Ewoks order
-    for i, (_, input) in enumerate(inputs_attrs, 1):
-        input._seq_id = i
-
-    # Replace `Inputs` when needed
-    if new_inputs_class:
-        input_container_class = type("Inputs", (), dict(inputs_attrs))
-        namespace["Inputs"] = input_container_class
-
-    # Oasys: ensure list of tuples
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        if len(namespace.get("inputs", [])) != len(ewoks_input_names):
-            namespace["inputs"] = _oasys_inputs_list(input_container_class)
-
-
-def validate_outputs(namespace: dict, name_to_ignore=tuple()) -> None:
-    """Namespace of an Ewoks-Orange widget class (i.e. not a native Orange widget):
-
-    - Ensure that for each Ewoks Task output there is an Orange widget `Output` instance.
-    - Ensure that `Outputs` namespace key exist.
-    - Oasys: ensure that `outputs` namespace key exist.
-    """
-    ewoks_output_names = tuple(
-        name
-        for name in namespace["ewokstaskclass"].output_names()
-        if name not in name_to_ignore
-    )
-
-    # Oasys: convert list of tuples to `Outputs` attribute
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        if namespace.get("outputs"):
-            raise ValueError("Use an `Outputs` class instead of an `outputs` list")
-
-    # Ensure `Outputs` attribute exists
-    if "Outputs" not in namespace:
-        namespace["Outputs"] = type("Outputs", (), {})
-
-    # Orange outputs
-    output_container_class = namespace["Outputs"]
-    output_dict = _get_signal_ewoks_dict(output_container_class)
-
-    # Ewoks inputs
-    ewoks_task = namespace.get("ewokstaskclass", None)
-    output_model = ewoks_task.output_model()
-
-    # Validate `Outputs`
-    outputs_attrs = list()
-    new_outputs_class = False
-    for ewoksname in ewoks_output_names:
-        # `Output` for the ewoks output
-        output = output_dict.get(ewoksname, None)
-        if output is None:
-            data_type = _pydantic_model_field_type(output_model, ewoksname)
-            doc = _pydantic_model_field_doc(output_model, ewoksname)
-            orangename = ewoksname
-            output = Output(name=orangename, type=data_type, doc=doc)
-            new_outputs_class = True
-
-        # Ensure the `Output` knows about the Ewoks parameter name as well
-        output.ewoksname = ewoksname
-
-        outputs_attrs.append((ewoksname, output))
+        signals_attrs.append((ewoksname, signal))
 
     # Ensure Ewoks order
-    for i, (_, output) in enumerate(outputs_attrs, 1):
-        output._seq_id = i
+    for i, (_, signal) in enumerate(signals_attrs, 1):
+        signal._seq_id = i
 
-    # Replace `Outputs` when needed
-    if new_outputs_class:
-        output_container_class = type("Outputs", (), dict(outputs_attrs))
-        namespace["Outputs"] = output_container_class
+    # Replace signal class when needed
+    if new_signals_class:
+        signal_container_class = type(signal_container_name, (), dict(signals_attrs))
+        namespace[signal_container_name] = signal_container_class
 
-    # Oasys: ensure list of dicts
+    # Oasys needs old-style signal definitions
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        if len(namespace.get("outputs", [])) != len(ewoks_output_names):
-            namespace["outputs"] = _oasys_outputs_list(output_container_class)
+        if len(namespace.get(direction, [])) != len(ewoks_names):
+            namespace[direction] = _oldstyle_signal_list(signal_container_class)
 
 
 def _pydantic_model_field_type(
@@ -474,3 +325,65 @@ def _pydantic_model_field_doc(
         return field_info.description
     except AttributeError:
         return default_doc
+
+
+def _oldstyle_signal_container(
+    signals: List[Tuple[str]], direction: Literal["inputs", "outputs"]
+) -> type:
+    """Convert
+
+    .. code-block:: python
+
+        inputs = [("A", object, ""), ("B", object, "")]  # list of tuples or dicts
+
+    to
+
+    .. code-block:: python
+
+        class Inputs:
+            a = Input("A", object)
+            b = Input("B", object)
+    """
+    if direction == "inputs":
+        prefix = "input"
+        signal_class = Input
+    elif direction == "outputs":
+        prefix = "output"
+        signal_class = Output
+    else:
+        raise ValueError(f"{direction=}")
+    names = [f"{prefix}{i}" for i in range(len(signals))]
+    values = [_oldstyle_instantiate_signal(signal_class, signal) for signal in signals]
+    attrs = dict(zip(names, values))
+    return type(direction.title(), (), attrs)
+
+
+def _oldstyle_signal_list(input_container_class) -> List[str]:
+    """Convert
+
+    .. code-block:: python
+
+        class Inputs:
+            a = Input("A", object)
+            b = Input("B", object)
+
+    to
+
+    .. code-block:: python
+
+        inputs = [("A", object, "")]
+    """
+    signals = _get_signal_list_from_container(input_container_class)
+    return [signal.as_tuple() for signal in signals]
+
+
+def _oldstyle_instantiate_signal(
+    signal_class: Union[Type[Input], Type[Output]], data: Union[tuple, dict]
+) -> Union[Input, Output]:
+    if isinstance(data, tuple):
+        signal = signal_class(*data, ewoksname=data[0])
+    elif isinstance(data, dict):
+        signal = signal_class(**data, ewoksname=data["name"])
+    else:
+        raise TypeError(type(data))
+    return signal
