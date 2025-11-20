@@ -23,6 +23,7 @@ test-3.8-orange:
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: ""
+    PYTEST_COV: "true"
 
 test-3.8-orange-old:
   extends: .test-3.8_glx
@@ -34,6 +35,7 @@ test-3.8-orange-old:
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: ""
+    PYTEST_COV: ""
 
 test-3.10-orange-win:
   extends: .test-3.10_glx-win
@@ -45,6 +47,7 @@ test-3.10-orange-win:
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+    PYTEST_COV: ""
 
 test-3.9-orange-qt5:
   extends: .test-3.9_glx
@@ -57,6 +60,7 @@ test-3.9-orange-qt5:
     QT_BINDING: ""
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+    PYTEST_COV: ""
 
 test-3.12-orange-qt6:
   extends: .test-3.12_glx
@@ -69,6 +73,16 @@ test-3.12-orange-qt6:
     QT_BINDING: ""
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+    PYTEST_COV: ""
+
+test-3.11:
+  extends: .test-3.11_glx
+  variables:
+    QT_API: "PyQt6"
+    QT_BINDING: ""
+    JUPYTER_PLATFORM_DIRS: 1
+    PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+    PYTEST_COV: ""
 
 test-3.8-oasys:
   extends: .test-3.8_glx
@@ -108,6 +122,7 @@ test_sdist-3.8:
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+    PYTEST_COV: "true"
 
 test_sdist-3.8-oasys:
   extends: .test_sdist-3.8_glx
@@ -130,6 +145,7 @@ test_sdist-3.10-win:
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+    PYTEST_COV: ""
 
 test_sdist-3.11:
   extends: .test_sdist-3.11_glx
@@ -139,6 +155,7 @@ test_sdist-3.11:
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+    PYTEST_COV: ""
 
 test_sdist-3.12:
   extends: .test_sdist-3.12_glx
@@ -148,6 +165,7 @@ test_sdist-3.12:
   variables:
     JUPYTER_PLATFORM_DIRS: 1
     PYTEST_WARNINGS: "-W error ${IGNORE_WARNINGS}"
+    PYTEST_COV: ""
 
 build_doc:
   extends: .build_doc
