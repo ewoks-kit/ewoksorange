@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.2] - 2025-11-21
+
+- Add the deprecated `ewoksorange.bindings.owwidgets.invalid_data`.
+- Add the deprecated `ewoksorange.bindings.qtapp.QtEvent`.
+
 ## [3.0.1] - 2025-11-21
 
 ## Fixed
@@ -257,7 +262,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.1...HEAD
+[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.2...HEAD
+[3.0.2]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.1...v3.0.2
 [3.0.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.0...v3.0.1
 [3.0.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.1.0...v3.0.0
 [2.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.0.1...v2.1.0

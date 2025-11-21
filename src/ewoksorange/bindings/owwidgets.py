@@ -15,6 +15,7 @@ from ..gui.owwidgets.types import is_native_widget  # noqa: F401
 from ..gui.owwidgets.types import is_native_widget_class  # noqa: F401
 from ..gui.owwidgets.types import is_orange_widget  # noqa: F401
 from ..gui.owwidgets.types import is_orange_widget_class  # noqa: F401
+from ..gui.utils import invalid_data  # noqa: F401
 
 __all__ = [
     "OWEwoksWidgetNoThread",

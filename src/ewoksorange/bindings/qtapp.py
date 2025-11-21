@@ -1,5 +1,6 @@
 import warnings
 
+from ..gui.qt_utils.app import QtEvent  # noqa F401
 from ..gui.qt_utils.app import close_qtapp  # noqa F401
 from ..gui.qt_utils.app import ensure_qtapp  # noqa F401
 from ..gui.qt_utils.app import get_all_qtwidgets  # noqa F401
