@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2025-11-24
+
 ## Added
 
 - `block_signals`: accept multiple widgets.
@@ -266,7 +268,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.2...HEAD
+[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.0...HEAD
+[3.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.2...v3.1.0
 [3.0.2]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.1...v3.0.2
 [3.0.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.0...v3.0.1
 [3.0.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.1.0...v3.0.0
