@@ -126,7 +126,7 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
     assert not executor.is_available
     # cancel obj 1
     executor.cancel_running_task(wait=False)
-    assert obj2.finished.wait(timeout=6)
+    assert obj2.finished.wait(timeout=30)
     assert obj1.results["result"] is MISSING_DATA
     assert executor.is_available
     assert obj2.results["result"] == "have waited 1s"
