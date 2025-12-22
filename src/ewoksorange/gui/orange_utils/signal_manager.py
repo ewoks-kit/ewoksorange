@@ -1,3 +1,4 @@
+import weakref
 from typing import Any
 
 from ...orange_version import ORANGE_VERSION
@@ -168,7 +169,7 @@ class SignalManagerWithOutputTracking:
     """
 
     def __init__(self, *args, **kwargs):
-        self._widget_states = dict()
+        self._widget_states = weakref.WeakKeyDictionary()
         super().__init__(*args, **kwargs)
 
     def _get_widget_state(self, owwidget) -> _OwWidgetSignalState:
