@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2025-12-30
+
+### Fixed
+
+- `SignalManagerWithOutputTracking`: keep only weak reference to widgets.
+- Adapt to `ewokscore>=4` test utility API change.
+
 ## [3.1.0] - 2025-11-24
 
 ## Added
@@ -268,7 +275,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.0...HEAD
+[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.1...HEAD
+[3.1.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.0...v3.1.1
 [3.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.2...v3.1.0
 [3.0.2]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.1...v3.0.2
 [3.0.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.0...v3.0.1
