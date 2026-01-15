@@ -38,6 +38,7 @@ from ..orange_utils.orange_imports import OWWidget
 from ..orange_utils.signals import Output
 from ..utils import invalid_data
 from ..utils.events import scheme_ewoks_events
+from ..utils.model import _get_model_default_values
 from .meta import OWEwoksWidgetMetaClass
 from .meta import ow_build_opts
 
@@ -219,9 +220,15 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             }
         else:
             values = dict()
+
+        input_model = self.ewokstaskclass.input_model()
+        if input_model is not None:
+            values.update(_get_model_default_values(input_model))
+
         if defaults:
             values.update(defaults)
         values.update(self._ewoks_default_inputs)
+
         return {name: invalid_data.as_missing(value) for name, value in values.items()}
 
     def get_default_input_value(self, name: str, default: Any = None) -> Any:
