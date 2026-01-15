@@ -1,9 +1,7 @@
 from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Union
 
-import numpy
 from ewokscore.model import BaseInputModel
 from ewokscore.task import Task
 from pydantic import Field
@@ -11,8 +9,6 @@ from pydantic import Field
 from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ewoksorange.gui.owwidgets.registration import _temporary_widget_discovery_object
 from ewoksorange.gui.owwidgets.registration import register_owwidget
-
-from ..orange_version import ORANGE_VERSION
 
 
 class InputModel(BaseInputModel):
