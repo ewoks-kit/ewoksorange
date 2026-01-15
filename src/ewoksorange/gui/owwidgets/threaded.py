@@ -10,7 +10,6 @@ from typing import Dict
 from typing import Optional
 from typing import Tuple
 
-from ...orange_version import ORANGE_VERSION
 from ..concurrency.queued import TaskExecutorQueue
 from ..concurrency.threaded import ThreadedTaskExecutor
 from ..qt_utils.progress import QProgress
@@ -18,13 +17,6 @@ from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
 
 _logger = logging.getLogger(__name__)
-
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    has_progress_bar = True
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    has_progress_bar = True
-else:
-    has_progress_bar = False
 
 
 class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
@@ -40,18 +32,14 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
         Initialize threaded base internals, including optional progress object.
         """
         super().__init__(*args, **kwargs)
-        if has_progress_bar:
-            self.__taskProgress = QProgress()
-            self.__taskProgress.sigProgressChanged.connect(self.__onProgressChanged)
-        else:
-            self.__taskProgress = None
+        self.__taskProgress = QProgress()
+        self.__taskProgress.sigProgressChanged.connect(self.__onProgressChanged)
 
     def onDeleteWidget(self):
         """
         Clean up progress connections and task executors on widget deletion.
         """
-        if has_progress_bar:
-            self.__taskProgress.sigProgressChanged.disconnect(self.__onProgressChanged)
+        self.__taskProgress.sigProgressChanged.disconnect(self.__onProgressChanged)
         self._cleanup_task_executor()
         super().onDeleteWidget()
 
@@ -89,13 +77,11 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
 
     def __ewoks_task_init(self):
         """Internal: initialize progress UI if available."""
-        if has_progress_bar:
-            self.progressBarInit()
+        self.progressBarInit()
 
     def __ewoks_task_finished(self):
         """Internal: finalize progress UI and notify output change."""
-        if has_progress_bar:
-            self.progressBarFinished()
+        self.progressBarFinished()
         self._output_changed()
 
     def _get_task_arguments(self):
