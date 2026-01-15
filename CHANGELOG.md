@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2025-12-30
+
+## Changed
+
+- Progress bar : Adapt the code to make it available without `Orange3` or `OASYS` dependency. Only `orange-widget-base` is necessary.
+
+### Fixed
+
+- Progress bar : Exception raised at the initialization of a task with a progress bar.
+
 ## [3.1.1] - 2025-12-30
 
 ### Fixed
@@ -276,6 +286,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add-on setup tools.
 
 [unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.1...HEAD
+[3.2.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.1...v3.2.0
 [3.1.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.0...v3.1.1
 [3.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.2...v3.1.0
 [3.0.2]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.1...v3.0.2
