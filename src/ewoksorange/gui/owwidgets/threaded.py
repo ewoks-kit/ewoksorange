@@ -42,7 +42,7 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
         super().__init__(*args, **kwargs)
         if has_progress_bar:
             self.__taskProgress = QProgress()
-            self.__taskProgress.sigProgressChanged.connect(self.progressBarSet)
+            self.__taskProgress.sigProgressChanged.connect(self.__onProgressChanged)
         else:
             self.__taskProgress = None
 
@@ -51,7 +51,7 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
         Clean up progress connections and task executors on widget deletion.
         """
         if has_progress_bar:
-            self.__taskProgress.sigProgressChanged.disconnect(self.progressBarSet)
+            self.__taskProgress.sigProgressChanged.disconnect(self.__onProgressChanged)
         self._cleanup_task_executor()
         super().onDeleteWidget()
 
@@ -105,6 +105,9 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
         adict = super()._get_task_arguments()
         adict["progress"] = self.__taskProgress
         return adict
+
+    def __onProgressChanged(self, progress: int):
+        self.progressBarSet(float(progress))
 
 
 class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
