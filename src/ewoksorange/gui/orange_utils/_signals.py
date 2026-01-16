@@ -259,6 +259,9 @@ def validate_signals(
     signal_container_class = namespace[signal_container_name]
     signals_dict = _get_signal_ewoks_dict(signal_container_class)
 
+    # Concatenate Ewoks task-only IO and Orange signals to get the complete list
+    ewoks_names = tuple(list(ewoks_names) + list(signals_dict.keys()))
+
     # Validate signal container
     signals_attrs = list()
     new_signals_class = False

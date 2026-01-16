@@ -17,6 +17,7 @@ class OWSumTask(IntegerAdderMixin, OWEwoksWidgetOneThread, ewokstaskclass=SumTas
     class Inputs:
         a = Input("A", object)
         b = Input("B", object)
+        c = Input("C", int)
 
     class Outputs:
         result = Output("A + B", object)
