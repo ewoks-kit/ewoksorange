@@ -33,7 +33,11 @@ class EwoksOrangeTaskA(OWEwoksWidgetNoThread, ewokstaskclass=TaskA):
 
 
 def test_default_values(ewoks_orange_canvas):
-    """Test that task with an ewoks InputModel are taking into account field default values and default factory."""
+    """
+    Test that task with an ewoks InputModel are taking into account field default values and default factory.
+
+    Warning: Orange consider "None" as the value to 'invalidate' link. As a consequence those are filtered if defined as a default value.
+    """
     widget_registry = _temporary_widget_discovery_object()
 
     for widget in (EwoksOrangeTaskA,):
@@ -49,5 +53,4 @@ def test_default_values(ewoks_orange_canvas):
     assert widget_a.get_default_input_values() == {
         "a": 12,
         "b": ("b",),
-        "d": None,
     }

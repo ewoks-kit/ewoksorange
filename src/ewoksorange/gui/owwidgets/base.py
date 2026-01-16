@@ -223,23 +223,23 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
         input_model = self.ewokstaskclass.input_model()
 
-        class ValidNoneValue: ...
-
         if input_model is not None:
-            default_values = _get_model_default_values(input_model)
-            default_values = {
-                k: ValidNoneValue if v is None else v for k, v in default_values.items()
-            }
-            values.update(default_values)
+            # remove Values set to None. This defines "invalid downstream" in Orange.
+            explicit_values = dict(
+                filter(
+                    lambda pair: pair[1] is not None,
+                    _get_model_default_values(input_model).items(),
+                )
+            )
+        else:
+            explicit_values = {}
+        values.update(explicit_values)
 
         if defaults:
             values.update(defaults)
         values.update(self._ewoks_default_inputs)
 
-        values = {
-            name: invalid_data.as_missing(value) for name, value in values.items()
-        }
-        return {k: None if v is ValidNoneValue else v for k, v in values.items()}
+        return {name: invalid_data.as_missing(value) for name, value in values.items()}
 
     def get_default_input_value(self, name: str, default: Any = None) -> Any:
         """
