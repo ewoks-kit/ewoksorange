@@ -125,7 +125,7 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
         qualified_name(object)
     )
     assert get_input_data_type(descWidgetA, "e") == expected_output_type(
-        qualified_name(str)
+        qualified_name(str if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
     )
 
     assert len(descWidgetA.outputs) == 4
@@ -136,24 +136,30 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
         qualified_name(Data)
     )
     assert get_output_data_type(descWidgetA, "c") == expected_output_type(
-        qualified_name(str)
+        qualified_name(str if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
     )
     assert get_output_data_type(descWidgetA, "d") == expected_output_type(
-        qualified_name(int)
+        qualified_name(int if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
     )
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
     assert len(descWidgetB.inputs) == 5
-    assert get_input_data_type(descWidgetB, "a") == tuple(
-        [
-            qualified_name(float),
-        ]
-        + [
-            qualified_name(int),
-        ]
+    assert get_input_data_type(descWidgetB, "a") == (
+        tuple(
+            [
+                qualified_name(float),
+            ]
+            + [
+                qualified_name(int),
+            ]
+        )
+        if ORANGE_VERSION != ORANGE_VERSION.oasys_fork
+        else expected_output_type(qualified_name(object))
     )
     assert get_input_data_type(descWidgetB, "b") == expected_output_type(
-        qualified_name(numpy.float32)
+        qualified_name(
+            numpy.float32 if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object
+        )
     )
     assert get_input_data_type(descWidgetB, "c") == expected_output_type(
         qualified_name(numpy.int32)
