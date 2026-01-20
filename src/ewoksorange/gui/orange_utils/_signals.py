@@ -32,6 +32,7 @@ Implementation:
 """
 
 import inspect
+from types import UnionType
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -40,6 +41,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import Union
+from typing import get_args
 from typing import get_origin
 
 from pydantic import BaseModel
@@ -321,8 +323,16 @@ def _pydantic_model_field_type(
         return field_info.annotation
     elif origin in (list, tuple):
         return origin
+    elif origin in (Union, UnionType):
+        # Handle Union types (including Optional)
+        args = get_args(field_info.annotation)
+        non_none_args = [arg for arg in args if arg is not type(None)]
+        if len(non_none_args) == 1:
+            return non_none_args[0]
+        else:
+            return object
     else:
-        # Union, Optional, Literal use cases
+        # other cases
         return object
 
 

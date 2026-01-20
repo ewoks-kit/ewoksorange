@@ -32,11 +32,16 @@ class InputModelA(BaseInputModel):
     b: Tuple[int]
     c: List[float]
     d: Literal[42, "any"]
+    e: float | None
+    f: Optional[str]
 
 
 class OutputModelA(BaseOutputModel):
     a: float
     b: Data
+    c: Union[str, None]
+    d: Optional[int]
+    e: int | str
 
 
 class InputModelB(BaseInputModel):
@@ -107,7 +112,7 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     # check that orange links are correctly typed.
     descWidgetA = widget_registry.registry.widget(qualname(EwoksOrangeTaskA))
 
-    assert len(descWidgetA.inputs) == 4
+    assert len(descWidgetA.inputs) == 6
 
     assert get_input_data_type(descWidgetA, "a") == expected_output_type(
         qualified_name(int)
@@ -121,13 +126,28 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     assert get_input_data_type(descWidgetA, "d") == expected_output_type(
         qualified_name(object)
     )
+    assert get_input_data_type(descWidgetA, "e") == expected_output_type(
+        qualified_name(float)
+    )
+    assert get_input_data_type(descWidgetA, "f") == expected_output_type(
+        qualified_name(str)
+    )
 
-    assert len(descWidgetA.outputs) == 2
+    assert len(descWidgetA.outputs) == 5
     assert get_output_data_type(descWidgetA, "a") == expected_output_type(
         qualified_name(float)
     )
     assert get_output_data_type(descWidgetA, "b") == expected_output_type(
         qualified_name(Data)
+    )
+    assert get_output_data_type(descWidgetA, "c") == expected_output_type(
+        qualified_name(str)
+    )
+    assert get_output_data_type(descWidgetA, "d") == expected_output_type(
+        qualified_name(int)
+    )
+    assert get_output_data_type(descWidgetA, "e") == expected_output_type(
+        qualified_name(object)
     )
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
@@ -136,7 +156,7 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
         qualified_name(object)
     )
     assert get_input_data_type(descWidgetB, "b") == expected_output_type(
-        qualified_name(object)
+        qualified_name(numpy.float32)
     )
     assert get_input_data_type(descWidgetB, "c") == expected_output_type(
         qualified_name(numpy.int32)
