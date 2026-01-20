@@ -32,6 +32,7 @@ Implementation:
 """
 
 import inspect
+import sys
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -40,8 +41,15 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import Union
+from typing import get_args
 from typing import get_origin
 
+if sys.version_info >= (3, 10):
+    from types import UnionType
+
+    has_UnionType = True
+else:
+    has_UnionType = False
 from pydantic import BaseModel
 
 from ...orange_version import ORANGE_VERSION
@@ -316,13 +324,24 @@ def _pydantic_model_field_type(
     if field_info is None:
         return default_data_type
     origin = get_origin(field_info.annotation)
+    valid_union_types = [
+        Union,
+    ]
+    if has_UnionType:
+        valid_union_types.append(UnionType)
     if origin is None:
         # if unsupported ()
         return field_info.annotation
     elif origin in (list, tuple):
         return origin
+    elif ORANGE_VERSION != ORANGE_VERSION.oasys_fork and origin in valid_union_types:
+        # Handle Union types (including Optional)
+        # This feature is only accessible for "recent" orange version and not for OASYS where type must be a scalar
+        args = get_args(field_info.annotation)
+        non_none_args = [arg for arg in args if arg is not type(None)]
+        return tuple(non_none_args)
     else:
-        # Union, Optional, Literal use cases
+        # other cases
         return object
 
 
