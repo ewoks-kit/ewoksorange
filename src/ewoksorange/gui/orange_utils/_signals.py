@@ -336,7 +336,7 @@ def _pydantic_model_field_type(
         return origin
     elif ORANGE_VERSION != ORANGE_VERSION.oasys_fork and origin in valid_union_types:
         # Handle Union types (including Optional)
-        # This future is only accessible for "recent" orange version and not for OASYS where type must be a scalar
+        # This feature is only accessible for "recent" orange version and not for OASYS where type must be a scalar
         args = get_args(field_info.annotation)
         non_none_args = [arg for arg in args if arg is not type(None)]
         return tuple(non_none_args)
