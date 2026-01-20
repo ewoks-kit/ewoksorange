@@ -338,10 +338,7 @@ def _pydantic_model_field_type(
         # Handle Union types (including Optional)
         args = get_args(field_info.annotation)
         non_none_args = [arg for arg in args if arg is not type(None)]
-        if len(non_none_args) == 1:
-            return non_none_args[0]
-        else:
-            return object
+        return tuple(non_none_args)
     else:
         # other cases
         return object
