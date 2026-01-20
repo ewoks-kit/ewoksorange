@@ -144,8 +144,13 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
     assert len(descWidgetB.inputs) == 5
-    assert get_input_data_type(descWidgetB, "a") == expected_output_type(
-        qualified_name(object)
+    assert get_input_data_type(descWidgetB, "a") == tuple(
+        [
+            qualified_name(float),
+        ]
+        + [
+            qualified_name(int),
+        ]
     )
     assert get_input_data_type(descWidgetB, "b") == expected_output_type(
         qualified_name(numpy.float32)
