@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-01-22
+
+### Changed
+
+- Improve pydantic model handling.
+  - Default values defined in a task `InputModel` are now taken into account [PR 264](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/merge_requests/264).
+  - Link between Orange `Input` and ewoks task Pydantic models now fully handle `Union` and `Optional` types [PR 268](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/merge_requests/268)
+
+
 ## [3.2.1] - 2026-01-16
 
 ### Fixed
