@@ -351,7 +351,7 @@ def _from_annotation_to_builtin_type(value):
     """Convert annotation to builtin types. Those will be orange Input/Output final type."""
     if get_origin(value) is Sequence:
         # handle Sequence[int] for example
-        return list
+        return object
     if get_origin(value) is not None:
         # handle case like typing.Dict[str, int] for example.
         return get_origin(value)

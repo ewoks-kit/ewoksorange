@@ -132,7 +132,7 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
         qualified_name(str if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
     )
     assert get_input_data_type(descWidgetA, "f") == expected_output_type(
-        qualified_name(list if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
+        qualified_name(object)
     )
 
     assert len(descWidgetA.outputs) == 5
