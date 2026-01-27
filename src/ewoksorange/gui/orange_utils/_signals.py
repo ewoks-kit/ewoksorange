@@ -33,6 +33,7 @@ Implementation:
 
 import inspect
 import sys
+from collections.abc import Sequence
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -337,12 +338,25 @@ def _pydantic_model_field_type(
     elif ORANGE_VERSION != ORANGE_VERSION.oasys_fork and origin in valid_union_types:
         # Handle Union types (including Optional)
         # This feature is only accessible for "recent" orange version and not for OASYS where type must be a scalar
+
         args = get_args(field_info.annotation)
         non_none_args = [arg for arg in args if arg is not type(None)]
-        return tuple(non_none_args)
+        return tuple([_from_annotation_to_builtin_type(arg) for arg in non_none_args])
     else:
         # other cases
         return object
+
+
+def _from_annotation_to_builtin_type(value):
+    """Convert annotation to builtin types. Those will be orange Input/Output final type."""
+    if get_origin(value) is Sequence:
+        # handle Sequence[int] for example
+        return object
+    if get_origin(value) is not None:
+        # handle case like typing.Dict[str, int] for example.
+        return get_origin(value)
+    else:
+        return value
 
 
 def _pydantic_model_field_doc(

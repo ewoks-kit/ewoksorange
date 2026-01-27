@@ -1,7 +1,9 @@
 from enum import Enum
+from typing import Dict
 from typing import List
 from typing import Literal
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -33,6 +35,7 @@ class InputModelA(BaseInputModel):
     c: List[float]
     d: Literal[42, "any"]
     e: Optional[str]
+    f: Optional[Sequence[int]]
 
 
 class OutputModelA(BaseOutputModel):
@@ -40,6 +43,7 @@ class OutputModelA(BaseOutputModel):
     b: Data
     c: Union[str, None]
     d: Optional[int]
+    e: Optional[Dict[str, int]]
 
 
 class InputModelB(BaseInputModel):
@@ -110,7 +114,7 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     # check that orange links are correctly typed.
     descWidgetA = widget_registry.registry.widget(qualname(EwoksOrangeTaskA))
 
-    assert len(descWidgetA.inputs) == 5
+    assert len(descWidgetA.inputs) == 6
 
     assert get_input_data_type(descWidgetA, "a") == expected_output_type(
         qualified_name(int)
@@ -127,8 +131,11 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     assert get_input_data_type(descWidgetA, "e") == expected_output_type(
         qualified_name(str if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
     )
+    assert get_input_data_type(descWidgetA, "f") == expected_output_type(
+        qualified_name(object)
+    )
 
-    assert len(descWidgetA.outputs) == 4
+    assert len(descWidgetA.outputs) == 5
     assert get_output_data_type(descWidgetA, "a") == expected_output_type(
         qualified_name(float)
     )
@@ -140,6 +147,9 @@ def test_link_value_data_type(tmpdir, ewoks_orange_canvas):
     )
     assert get_output_data_type(descWidgetA, "d") == expected_output_type(
         qualified_name(int if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
+    )
+    assert get_output_data_type(descWidgetA, "e") == expected_output_type(
+        qualified_name(dict if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
     )
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
