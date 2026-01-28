@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.3.1] - 2026-01-27
+## [3.3.1] - 2026-01-28
 
 ### Fixed
 
-- Improve handling of InputModel annotation.
+- Handle ewoksndreg pydantic mode use case (`Sequence`, `Dict`)
 
 ## [3.3.0] - 2026-01-22
 
