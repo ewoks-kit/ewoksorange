@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1] - 2026-01-28
+
+### Fixed
+
+- Handle ewoksndreg pydantic mode use case (`Sequence`, `Dict`)
+
 ## [3.3.0] - 2026-01-22
 
 ### Changed
@@ -300,7 +306,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.2.1...HEAD
+[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.3.1...HEAD
+[3.3.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.3.0...v3.3.1
+[3.3.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.2.1...v3.3.0
 [3.2.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.2.0...v3.2.1
 [3.2.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.1...v3.2.0
 [3.1.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.0...v3.1.1
