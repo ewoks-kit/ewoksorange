@@ -18,6 +18,7 @@ from ewokscore import missing_data
 from ewokscore.variable import value_from_transfer
 
 from ...orange_version import ORANGE_VERSION
+from ..utils.invalid_data import is_invalid_data
 
 # OWBaseWidget: lowest level Orange widget base class
 # OWWidget: highest level Orangewidget base class.
@@ -212,10 +213,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         input_model = self.ewokstaskclass.input_model()
 
         if input_model is not None:
-            # remove Values set to None. This defines "invalid downstream" in Orange.
+            # remove Values set to None or MISSING_DATA. This defines "invalid downstream" in Orange.
             return dict(
                 filter(
-                    lambda pair: pair[1] is not None,
+                    lambda pair: not is_invalid_data(pair[1]),
                     _get_model_default_values(input_model).items(),
                 )
             )
