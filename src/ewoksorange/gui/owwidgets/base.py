@@ -4,6 +4,7 @@ Abstract base class for Ewoks-Orange widgets.
 
 from __future__ import annotations
 
+import functools
 import logging
 import warnings
 from typing import Any
@@ -203,6 +204,23 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         else:
             return set(self._ewoks_default_inputs)
 
+    @functools.lru_cache(maxsize=1)
+    def _get_pydantic_model_default_values(self) -> dict:
+        """
+        Return default values defined in the task pydantic input model.
+        """
+        input_model = self.ewokstaskclass.input_model()
+
+        if input_model is not None:
+            # remove Values set to None. This defines "invalid downstream" in Orange.
+            return dict(
+                filter(
+                    lambda pair: pair[1] is not None,
+                    _get_model_default_values(input_model).items(),
+                )
+            )
+        return {}
+
     def get_default_input_values(
         self, include_missing: bool = False, defaults: Optional[Mapping] = None
     ) -> dict:
@@ -221,18 +239,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         else:
             values = dict()
 
-        input_model = self.ewokstaskclass.input_model()
-
-        if input_model is not None:
-            # remove Values set to None. This defines "invalid downstream" in Orange.
-            explicit_values = dict(
-                filter(
-                    lambda pair: pair[1] is not None,
-                    _get_model_default_values(input_model).items(),
-                )
-            )
-        else:
-            explicit_values = {}
+        explicit_values = self._get_pydantic_model_default_values()
         values.update(explicit_values)
 
         if defaults:
@@ -243,13 +250,15 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
     def get_default_input_value(self, name: str, default: Any = None) -> Any:
         """
-        Get a default input value saved in the widget settings.
+        Get a default input value saved in the pydantic models then updated by the widget settings.
 
         :param name: Input name.
         :param default: Fallback if the value is not present.
         :return: The default value or provided fallback.
         """
-        return self._ewoks_default_inputs.get(name, default)
+        values = self._get_pydantic_model_default_values()
+        values.update(self._ewoks_default_inputs)
+        return values.get(name, default)
 
     def set_default_input(self, name: str, value: Any) -> None:
         """
