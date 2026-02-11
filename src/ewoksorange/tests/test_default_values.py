@@ -50,7 +50,11 @@ def test_default_values(ewoks_orange_canvas):
         )
 
     widget_a = EwoksOrangeTaskA()
+
+    assert widget_a.get_default_input_value("a") == 12
+    assert widget_a.get_default_input_value("b") == ("b",)
     assert widget_a.get_default_input_values() == {
         "a": 12,
         "b": ("b",),
     }
+    assert widget_a.get_default_input_value("c", "unset") == "unset"
