@@ -200,7 +200,9 @@ def signal_orange_to_ewoks_name(
     for ewoks_or_attr_name, signal in signal_dict.items():
         if signal.name == orangename:
             return ewoks_or_attr_name
-    raise RuntimeError(f"{orangename} is not a signal of {signal_container}")
+    raise RuntimeError(
+        f"{orange_widget.__name__} does not have a signal {orangename!r} in {signal_container.__name__!r}"
+    )
 
 
 def get_signal(
