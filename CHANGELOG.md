@@ -7,18 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [4.0.0] - 2026-02-09
+### Changed
+
+- 
+
+## [4.0.0rc1] - 2026-02-11
+
+### Fixed
+
+- `OWEwoksBaseWidget.get_default_input_value`: also take into account values defined in the Pydantic model.
+- `OWEwoksBaseWidget._get_pydantic_model_default_values`: ignore values marked as `invalid_data`.
+
+## [4.0.0rc0] - 2026-02-09
+
+### Changed
+
+- Prepare the `4.0.0` prerelease line (`rc0`).
+- No additional functional changes compared to `3.3.1`.
+
+## [3.3.1] - 2026-01-28
 
 ### Fixed
 
 - Handle ewoksndreg pydantic mode use case (`Sequence`, `Dict`)
 
+## [3.3.0] - 2026-01-22
+
 ### Changed
 
 - Improve pydantic model handling.
-  - Default values defined in a task `InputModel` are now taken into account [PR 264](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/merge_requests/264).
-  - Link between Orange `Input` and ewoks task Pydantic models now fully handle `Union` and `Optional` types [PR 268](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/merge_requests/268)
-
+  - Default values defined in a task `InputModel` are now taken into account [PR 264](https://github.com/ewoks-kit/ewoksorange/pull/264).
+  - Link between Orange `Input` and ewoks task Pydantic models now fully handle `Union` and `Optional` types [PR 268](https://github.com/ewoks-kit/ewoksorange/pull/268)
 
 ## [3.2.1] - 2026-01-16
 
@@ -108,9 +127,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix type mismatch when linking `EwoksOrange` widgets to native Orange widgets
-  [!232](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/merge_requests/232)
+  [!319](https://github.com/ewoks-kit/ewoksorange/pull/319)
 - Fix error when converting an Ewoks workflow containing native Orange widgets to OWS format
-  (with `ewoks_to_ows`) [#59](https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/59)
+  (with `ewoks_to_ows`) [#59](https://github.com/ewoks-kit/ewoksorange/issues/59)
 
 ## [2.0.0] - 2025-07-25
 
@@ -304,39 +323,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.4.0...HEAD
-[3.4.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.2.1...v3.4.0
-[3.2.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.2.0...v3.2.1
-[3.2.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.1...v3.2.0
-[3.1.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.1.0...v3.1.1
-[3.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.2...v3.1.0
-[3.0.2]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.1...v3.0.2
-[3.0.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v3.0.0...v3.0.1
-[3.0.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.1.0...v3.0.0
-[2.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.0.1...v2.1.0
-[2.0.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v2.0.0...v2.0.1
-[2.0.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v1.2.0...v2.0.0
-[1.2.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v1.1.0...v1.2.0
-[1.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v1.0.0...v1.1.0
-[1.0.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.9.0...v1.0.0
-[0.9.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.8.0...v0.9.0
-[0.8.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.7.2...v0.8.0
-[0.7.2]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.7.1...v0.7.2
-[0.7.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.7.0...v0.7.1
-[0.7.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.6.0...v0.7.0
-[0.6.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.5.0...v0.6.0
-[0.5.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.4.0...v0.5.0
-[0.4.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.3.1...v0.4.0
-[0.3.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.3.0...v0.3.1
-[0.3.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.2.1...v0.3.0
-[0.2.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.2.0...v0.2.1
-[0.2.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.1.8...v0.2.0
-[0.1.8]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.1.7...v0.1.8
-[0.1.7]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.1.6...v0.1.7
-[0.1.6]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.1.5...v0.1.6
-[0.1.5]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.1.4...v0.1.5
-[0.1.4]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.1.3...v0.1.4
-[0.1.3]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.1.2...v0.1.3
-[0.1.2]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.1.1...v0.1.2
-[0.1.1]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/compare/v0.1.0...v0.1.1
-[0.1.0]: https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/tags/v0.1.0
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0rc1...HEAD
+[4.0.0rc1]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0rc0...v4.0.0rc1
+[4.0.0rc0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.1...v4.0.0rc0
+[3.3.1]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.0...v3.3.1
+[3.3.0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.2.1...v3.3.0
+[3.2.1]: https://github.com/ewoks-kit/ewoksorange/compare/v3.2.0...v3.2.1
+[3.2.0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.1.1...v3.2.0
+[3.1.1]: https://github.com/ewoks-kit/ewoksorange/compare/v3.1.0...v3.1.1
+[3.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.0.2...v3.1.0
+[3.0.2]: https://github.com/ewoks-kit/ewoksorange/compare/v3.0.1...v3.0.2
+[3.0.1]: https://github.com/ewoks-kit/ewoksorange/compare/v3.0.0...v3.0.1
+[3.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v2.1.0...v3.0.0
+[2.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v2.0.1...v2.1.0
+[2.0.1]: https://github.com/ewoks-kit/ewoksorange/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v1.2.0...v2.0.0
+[1.2.0]: https://github.com/ewoks-kit/ewoksorange/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v0.9.0...v1.0.0
+[0.9.0]: https://github.com/ewoks-kit/ewoksorange/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/ewoks-kit/ewoksorange/compare/v0.7.2...v0.8.0
+[0.7.2]: https://github.com/ewoks-kit/ewoksorange/compare/v0.7.1...v0.7.2
+[0.7.1]: https://github.com/ewoks-kit/ewoksorange/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/ewoks-kit/ewoksorange/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/ewoks-kit/ewoksorange/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/ewoks-kit/ewoksorange/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/ewoks-kit/ewoksorange/compare/v0.3.1...v0.4.0
+[0.3.1]: https://github.com/ewoks-kit/ewoksorange/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/ewoks-kit/ewoksorange/compare/v0.2.1...v0.3.0
+[0.2.1]: https://github.com/ewoks-kit/ewoksorange/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/ewoks-kit/ewoksorange/compare/v0.1.8...v0.2.0
+[0.1.8]: https://github.com/ewoks-kit/ewoksorange/compare/v0.1.7...v0.1.8
+[0.1.7]: https://github.com/ewoks-kit/ewoksorange/compare/v0.1.6...v0.1.7
+[0.1.6]: https://github.com/ewoks-kit/ewoksorange/compare/v0.1.5...v0.1.6
+[0.1.5]: https://github.com/ewoks-kit/ewoksorange/compare/v0.1.4...v0.1.5
+[0.1.4]: https://github.com/ewoks-kit/ewoksorange/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/ewoks-kit/ewoksorange/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/ewoks-kit/ewoksorange/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/ewoks-kit/ewoksorange/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/ewoks-kit/ewoksorange/releases/tag/v0.1.0
