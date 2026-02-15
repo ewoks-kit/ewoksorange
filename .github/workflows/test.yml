@@ -1,0 +1,28 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  # Build Python package
+  build:
+    uses: ewoks-kit/.github/.github/workflows/python-build.yml@main
+
+  # Run tests
+  tests:
+    needs: build
+    uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
+
+  # Run linter / checks
+  checks:
+    uses: ewoks-kit/.github/.github/workflows/python-check.yml@main
+
+  # Build documentation
+  docs:
+    needs: build
+    uses: ewoks-kit/.github/.github/workflows/python-docs.yml@main
