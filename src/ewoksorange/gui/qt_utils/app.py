@@ -1,6 +1,5 @@
 import gc
 import logging
-import os
 import signal
 import sys
 import time
@@ -31,15 +30,6 @@ def ensure_qtapp() -> Optional[QApplication]:
 
     # Install signal, exception and Qt message handlers
     _install_handlers()
-
-    # In headless sessions without DISPLAY/Wayland, enforce a platform plugin
-    # that does not require an X server.
-    if (
-        not os.environ.get("QT_QPA_PLATFORM")
-        and not os.environ.get("DISPLAY")
-        and not os.environ.get("WAYLAND_DISPLAY")
-    ):
-        os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
     # Application without event loop (_APP.exec() is not called)
     _APP = QApplication([])
