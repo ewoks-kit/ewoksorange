@@ -25,13 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prepare the `4.0.0` prerelease line (`rc0`).
 - No additional functional changes compared to `3.3.1`.
 
-## [3.3.1] - 2026-01-28
+## [3.3.1] - 2026-01-28 [YANKED]
 
 ### Fixed
 
 - Handle ewoksndreg pydantic mode use case (`Sequence`, `Dict`)
 
-## [3.3.0] - 2026-01-22
+## [3.3.0] - 2026-01-22 [YANKED]
 
 ### Changed
 
