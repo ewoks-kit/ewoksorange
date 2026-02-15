@@ -31,7 +31,7 @@ from ..qt_utils.app import QtEvent
 from ..utils import invalid_data
 from ._signals import get_signal_orange_names
 
-# monkey patch of 'can_enable_dynamic' See https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/issues/58
+# monkey patch of 'can_enable_dynamic' See https://github.com/ewoks-kit/ewoksorange/issues/58
 
 _super_can_enable_dynamic = signalmanager.can_enable_dynamic
 

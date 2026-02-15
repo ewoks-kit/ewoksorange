@@ -25,11 +25,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/"
+Homepage = "https://github.com/ewoks-kit/ewoksorange/"
 Documentation = "https://ewoksorange.readthedocs.io/"
-Repository = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/"
-Issues = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/issues"
-Changelog = "https://gitlab.esrf.fr/workflow/ewoks/ewoksorange/-/blob/main/CHANGELOG.md"
+Repository = "https://github.com/ewoks-kit/ewoksorange/"
+Issues = "https://github.com/ewoks-kit/ewoksorange/issues"
+Changelog = "https://github.com/ewoks-kit/ewoksorange/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 full = ["PyQt6"]

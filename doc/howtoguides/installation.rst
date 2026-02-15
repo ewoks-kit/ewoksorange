@@ -13,9 +13,9 @@ Installation
 
         .. code-block:: bash
             
-            git clone https://gitlab.esrf.fr/workflow/ewoks/ewoksorange.git
+            git clone https://github.com/ewoks-kit/ewoksorange.git
             # or cloning with ssh
-            # git clone git@gitlab.esrf.fr:workflow/ewoks/ewoksorange.git
+            # git clone git@github.com:ewoks-kit/ewoksorange.git
             cd ewoksorange
             pip install .[full]
 
