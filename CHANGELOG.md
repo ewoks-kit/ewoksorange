@@ -9,13 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- 
-
 ## [4.0.0rc2] - 2026-02-16
 
 ### Fixed
 
 - Project migrated to https://github.com/ewoks-kit/ewoksorange.
+- CI: stabilize headless Qt test runs by setting `QT_QPA_PLATFORM=offscreen`.
 
 ## [4.0.0rc1] - 2026-02-11
 

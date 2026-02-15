@@ -16,7 +16,7 @@ jobs:
   # Run tests
   tests:
     needs: build
-    uses: ewoks-kit/.github/.github/workflows/python-tests.yml@add_qt_system_lib
+    uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
     with:
       pytest-args: >-
         -v -ra -W error
