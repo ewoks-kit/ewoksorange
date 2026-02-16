@@ -33,6 +33,15 @@ jobs:
     uses: ewoks-kit/.github/.github/workflows/python-coverage.yml@add-coverage
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
+    with:
+      qt-api: PyQt6
+      pytest-args: >-
+        -v -ra -W error
+        -W ignore::ResourceWarning:orangecanvas.utils.localization
+        -W ignore::DeprecationWarning:orangecanvas.utils.localization
+        -W ignore::DeprecationWarning:orangecanvas.utils.localization.si
+        -W ignore::DeprecationWarning:matplotlib._fontconfig_pattern
+        -W ignore::DeprecationWarning:matplotlib._mathtext
 
   # Run linter / checks
   checks:
