@@ -27,6 +27,11 @@ jobs:
         -W ignore::DeprecationWarning:matplotlib._fontconfig_pattern
         -W ignore::DeprecationWarning:matplotlib._mathtext
 
+  coverage:
+    needs: build
+    uses: ewoks-kit/.github/.github/workflows/python-coverage.yml@add-coverage
+    secrets: inherit
+
   # Run linter / checks
   checks:
     uses: ewoks-kit/.github/.github/workflows/python-check.yml@main
