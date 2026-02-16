@@ -1,0 +1,37 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  # Build Python package
+  build:
+    uses: ewoks-kit/.github/.github/workflows/python-build.yml@main
+
+  # Run tests
+  tests:
+    needs: build
+    uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
+    with:
+      qt-api: PyQt6
+      pytest-args: >-
+        -v -ra -W error
+        -W ignore::ResourceWarning:orangecanvas.utils.localization
+        -W ignore::DeprecationWarning:orangecanvas.utils.localization
+        -W ignore::DeprecationWarning:orangecanvas.utils.localization.si
+        -W ignore::DeprecationWarning:matplotlib._fontconfig_pattern
+        -W ignore::DeprecationWarning:matplotlib._mathtext
+
+  # Run linter / checks
+  checks:
+    uses: ewoks-kit/.github/.github/workflows/python-check.yml@main
+
+  # Build documentation
+  docs:
+    needs: build
+    uses: ewoks-kit/.github/.github/workflows/python-docs.yml@main
