@@ -14,7 +14,6 @@ jobs:
     uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
     with:
       qt-api: PyQt6
-      qt-binding: ""
       pytest-args: >-
         -v -ra -W error
         -W ignore::ResourceWarning:orangecanvas.utils.localization
