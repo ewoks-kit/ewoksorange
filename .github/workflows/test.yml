@@ -18,7 +18,8 @@ jobs:
     needs: build
     uses: ewoks-kit/.github/.github/workflows/python-tests.yml@add_qt_system_lib
     with:
-      jupyter-platform-dirs: "1"
+      qt-api: PyQt6
+      qt-binding: ""
       pytest-args: >-
         -v -ra -W error
         -W ignore::ResourceWarning:orangecanvas.utils.localization
