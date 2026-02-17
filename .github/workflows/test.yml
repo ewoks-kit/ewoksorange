@@ -19,19 +19,53 @@ jobs:
     strategy:
       matrix:
         include:
-          - python-version: "3.12"
+          - name: "py3.12-linux-qt6-coverage"
+            os: ubuntu-latest
+            python-version: "3.12"
+            qt-api: "PyQt6"
+            qt-binding: ""
             enable-coverage: "true"
-          - python-version: "3.13"
+            extra-pytest-args: ""
+          - name: "py3.13-linux-qt6"
+            os: ubuntu-latest
+            python-version: "3.13"
+            qt-api: "PyQt6"
+            qt-binding: ""
             enable-coverage: "false"
+            extra-pytest-args: ""
+          - name: "py3.11-linux-qt6"
+            os: ubuntu-latest
+            python-version: "3.11"
+            qt-api: "PyQt6"
+            qt-binding: ""
+            enable-coverage: "false"
+            extra-pytest-args: ""
+          - name: "py3.10-windows-qt6"
+            os: windows-latest
+            python-version: "3.10"
+            qt-api: "PyQt6"
+            qt-binding: ""
+            enable-coverage: "false"
+            extra-pytest-args: ""
+          - name: "py3.9-linux-qt5"
+            os: ubuntu-latest
+            python-version: "3.9"
+            qt-api: "PyQt5"
+            qt-binding: ""
+            enable-coverage: "false"
+            extra-pytest-args: "-W ignore::RuntimeWarning:networkx.utils.backends"
     uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
     with:
+      os: ${{ matrix.os }}
       python-version: ${{ matrix.python-version }}
-      qt-api: PyQt6
+      qt-api: ${{ matrix.qt-api }}
+      qt-binding: ${{ matrix.qt-binding }}
       enable-coverage: ${{ matrix.enable-coverage }}
       pytest-args: >-
         -v -ra -W error
+        ${{ matrix.extra-pytest-args }}
         -W ignore::ResourceWarning:orangecanvas.utils.localization
         -W ignore::DeprecationWarning:orangecanvas.utils.localization
         -W ignore::DeprecationWarning:orangecanvas.utils.localization.si
