@@ -65,7 +65,16 @@ where = ["src"]
 "*" = ['*.ows', '*.png', '*.svg']
 
 [tool.coverage.run]
-omit = ['src/ewoksorange/tests/*']
+omit = [
+    "src/ewoksorange/tests/*",
+    "*/ewoksorange/tests/*",
+]
+
+[tool.coverage.report]
+omit = [
+    "src/ewoksorange/tests/*",
+    "*/ewoksorange/tests/*",
+]
 
 [project.scripts]
 ewoks-canvas = "ewoksorange.gui.canvas.main:main"
