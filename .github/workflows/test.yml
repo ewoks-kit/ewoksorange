@@ -21,6 +21,7 @@ jobs:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
     with:
       qt-api: PyQt6
+      enable-coverage: 'true'
       pytest-args: >-
         -v -ra -W error
         -W ignore::ResourceWarning:orangecanvas.utils.localization
