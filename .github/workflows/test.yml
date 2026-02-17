@@ -16,12 +16,20 @@ jobs:
   # Run tests
   tests:
     needs: build
+    strategy:
+      matrix:
+        include:
+          - python-version: "3.12"
+            enable-coverage: "true"
+          - python-version: "3.13"
+            enable-coverage: "false"
     uses: ewoks-kit/.github/.github/workflows/python-tests.yml@add-coverage
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
     with:
+      python-version: ${{ matrix.python-version }}
       qt-api: PyQt6
-      enable-coverage: 'true'
+      enable-coverage: ${{ matrix.enable-coverage }}
       pytest-args: >-
         -v -ra -W error
         -W ignore::ResourceWarning:orangecanvas.utils.localization
