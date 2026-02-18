@@ -54,8 +54,7 @@ jobs:
             qt-binding: ""
             enable-coverage: "false"
             extra-pytest-args: "-W ignore::RuntimeWarning:networkx.utils.backends"
-    uses: ewoks-kit/.github/.github/workflows/python-tests.yml@install-required-qt-version-from-qt-api
-    secrets:
+    uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
     with:
       os: ${{ matrix.os }}
