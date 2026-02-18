@@ -55,6 +55,7 @@ jobs:
             enable-coverage: "false"
             extra-pytest-args: "-W ignore::RuntimeWarning:networkx.utils.backends"
     uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
+    secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
     with:
       os: ${{ matrix.os }}
