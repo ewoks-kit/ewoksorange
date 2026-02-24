@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+### Fixed
+
+- `write_ows`: support string literals with pickle fallback.
 
 ## [4.0.0rc2] - 2026-02-16
 
