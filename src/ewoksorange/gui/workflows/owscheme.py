@@ -478,7 +478,9 @@ def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):
     """
     if not isinstance(scheme, OwsSchemeWrapper):
         raise TypeError(scheme, type(scheme))
-    tree = readwrite.scheme_to_etree(scheme, data_format="literal")
+    tree = readwrite.scheme_to_etree(
+        scheme, data_format="literal", pickle_fallback=True
+    )
     for node in tree.getroot().find("nodes"):
         del node.attrib["scheme_node_type"]
     readwrite.indent(tree.getroot(), 0)
