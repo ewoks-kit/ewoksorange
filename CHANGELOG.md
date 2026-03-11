@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-03-11
+
 ### Fixed
 
 - `write_ows`: support string literals with pickle fallback.
@@ -331,7 +333,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0rc2...HEAD
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0rc2...v4.0.0
 [4.0.0rc2]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0rc1...v4.0.0rc2
 [4.0.0rc1]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0rc0...v4.0.0rc1
 [4.0.0rc0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.1...v4.0.0rc0
