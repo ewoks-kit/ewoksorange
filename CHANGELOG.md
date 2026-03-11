@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `write_ows`: support string literals with pickle fallback.
+- Pin `chardet<7` since it breaks `Orange3<=3.40.0`.
 
 ## [4.0.0rc2] - 2026-02-16
 
