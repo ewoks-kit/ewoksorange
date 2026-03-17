@@ -23,12 +23,11 @@ if summarize is not None:
         :param var: The Variable to summarize.
         :return: PartialSummary describing the variable.
         """
-        if var.is_missing():
-            dtype = var.value
-        else:
-            dtype = type(var.value).__name__
-        desc = f"ewoks variable ({dtype})"
-        return PartialSummary(desc, desc)
+        if not var.is_missing():
+            return summarize(var.value)
+
+        summary = details = str(var.value)
+        return PartialSummary(summary, details)
 
     @summarize.register(object)
     def summarize_object(value: object):
@@ -38,4 +37,5 @@ if summarize is not None:
         :param value: The object to summarize.
         :return: PartialSummary describing the object's type.
         """
-        return PartialSummary(str(type(value)), str(type(value)))
+        summary = details = str(type(value))
+        return PartialSummary(summary, details)
