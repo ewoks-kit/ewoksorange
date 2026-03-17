@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+
+- Fix error reporting bug in `get_signal` and `signal_orange_to_ewoks_name`.
+
 ## [4.0.0] - 2026-03-11
 
 ### Fixed
