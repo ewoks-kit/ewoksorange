@@ -27,7 +27,7 @@ Implementation:
 
   .. code--block:: python
 
-    signal_container: Union[str, object]
+    signal_container: Union[object, type]
     orange_widget: Union[OWBaseWidget, Type[OWBaseWidget]]
 """
 
@@ -78,7 +78,7 @@ else:
 
 
 def _get_signals(
-    signal_container: Union[type, object],
+    signal_container: Union[object, type],
 ) -> Union[List[Tuple[str, Input]], List[Tuple[str, Output]]]:
     if isinstance(signal_container, type):
         lst = _native_getsignals(signal_container)
@@ -98,7 +98,7 @@ def get_signal_list(
 
 
 def _get_signal_list_from_container(
-    signal_container: Union[type, object],
+    signal_container: Union[object, type],
 ) -> Union[List[Input], List[Output]]:
     """Returns list of Input or Output signal instances."""
     signal_list = []
@@ -119,7 +119,7 @@ def _get_signal_list_from_container(
 
 
 def _get_signal_ewoks_dict(
-    signal_container: Union[str, object],
+    signal_container: Union[object, type],
 ) -> Dict[str, Union[List[Input], List[Output]]]:
     """Returns dict of Input or Output signal instances.
     The keys are the ewoks names or attribute names when missing.
@@ -136,7 +136,7 @@ def _get_signal_ewoks_dict(
 def _get_signal_container(
     orange_widget: Union[OWBaseWidget, Type[OWBaseWidget]],
     direction: Literal["inputs", "outputs"],
-) -> Union[type, object]:
+) -> Union[object, type]:
     """Returns attribute which is a class with Input or Output signal instances as attributes."""
     attr_name = direction.title()
 
@@ -201,7 +201,7 @@ def signal_orange_to_ewoks_name(
         if signal.name == orangename:
             return ewoks_or_attr_name
     raise RuntimeError(
-        f"{orange_widget.__name__} does not have a signal {orangename!r} in {signal_container.__name__!r}"
+        f"{_get_name(orange_widget)} does not have a signal {orangename!r} in {_get_name(signal_container)!r}"
     )
 
 
@@ -214,7 +214,7 @@ def get_signal(
     signal_dict = _get_signal_ewoks_dict(signal_container)
     if ewoksname not in signal_dict:
         raise ValueError(
-            f"{orange_widget.__name__} does not have {ewoksname!r} in the {direction.title()!r}"
+            f"{_get_name(orange_widget)} does not have {ewoksname!r} in the {direction.title()!r}"
         )
     return signal_dict[ewoksname]
 
@@ -447,3 +447,9 @@ def _oldstyle_instantiate_signal(
     else:
         raise TypeError(type(data))
     return signal
+
+
+def _get_name(obj: Union[object, type]):
+    if isinstance(obj, type):
+        return obj.__name__
+    return type(obj).__name__
