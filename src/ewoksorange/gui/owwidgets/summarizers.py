@@ -37,9 +37,9 @@ if summarize is not None:
         :param value: The object to summarize.
         :return: PartialSummary describing the object's type.
         """
-        value = type(object)
-        summary = value.__name__
-        details = f"{value.__module__}.{value.__name__}: \n{value!r}"
+        value_type = type(value)
+        summary = value_type.__name__
+        details = f"{value_type.__module__}.{value_type.__name__}: \n{value!r}"
         return PartialSummary(summary, details)
 
     @summarize.register(type)
