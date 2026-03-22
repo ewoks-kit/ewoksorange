@@ -150,7 +150,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_exception(self) -> Optional[Exception]:
         return self.__task_executor.exception
 
-    def get_task_outputs(self) -> dict:
+    def _get_task_outputs(self) -> dict:
         """Return outputs from the running/last thread task executor."""
         return self.__task_executor.output_variables
 
@@ -287,7 +287,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_exception(self) -> Optional[Exception]:
         return self.__last_task_exception
 
-    def get_task_outputs(self) -> dict:
+    def _get_task_outputs(self) -> dict:
         """Return the last finished task's outputs."""
         return self.__last_output_variables
 
@@ -347,7 +347,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def task_exception(self) -> Optional[Exception]:
         return self.__last_task_exception
 
-    def get_task_outputs(self) -> dict:
+    def _get_task_outputs(self) -> dict:
         """Return outputs from the last completed queued task."""
         return self.__last_output_variables
 

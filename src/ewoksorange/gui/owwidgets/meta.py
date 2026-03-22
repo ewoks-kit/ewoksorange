@@ -77,17 +77,13 @@ def _prepare_OWEwoksWidgetclass(namespace: dict, ewokstaskclass: Any) -> None:
     namespace["_ewoks_execinfo"] = Setting(dict(), schema_only=schema_only)
     namespace["_ewoks_task_options"] = Setting(dict(), schema_only=schema_only)
 
+    # Hide Ewoks task variables from Orange: do not create Orange signals
+    hidden_inputs = namespace.setdefault("_ewoks_inputs_to_hide_from_orange", tuple())
+    hidden_outputs = namespace.setdefault("_ewoks_outputs_to_hide_from_orange", tuple())
+
     # Deprecated:
     namespace["default_inputs"] = Setting(dict(), schema_only=schema_only)
 
     # Add missing inputs and outputs as widget class attributes
-    _signals.validate_signals(
-        namespace,
-        "inputs",
-        name_to_ignore=namespace.get("_ewoks_inputs_to_hide_from_orange", tuple()),
-    )
-    _signals.validate_signals(
-        namespace,
-        "outputs",
-        name_to_ignore=namespace.get("_ewoks_outputs_to_hide_from_orange", tuple()),
-    )
+    _signals.validate_signals(namespace, "inputs", name_to_ignore=hidden_inputs)
+    _signals.validate_signals(namespace, "outputs", name_to_ignore=hidden_outputs)

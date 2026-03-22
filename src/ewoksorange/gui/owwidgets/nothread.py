@@ -62,6 +62,6 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         """Return the exception raised during last task execution, if any."""
         return self.__task_executor.exception
 
-    def get_task_outputs(self) -> dict:
+    def _get_task_outputs(self) -> dict:
         """Return output variables produced by the last executed task."""
         return self.__task_executor.output_variables
