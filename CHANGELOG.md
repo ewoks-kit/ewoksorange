@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- Ewoks-Orange widgets can now be defined without an explicit `name` class attribute.
+  When missing this attribute is set to the Ewoks task class name.
+
 ## Fixed
 
 - Fix error reporting bug in `get_signal` and `signal_orange_to_ewoks_name`.
