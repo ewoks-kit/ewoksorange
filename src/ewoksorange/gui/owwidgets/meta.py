@@ -62,6 +62,7 @@ def _prepare_OWEwoksWidgetclass(namespace: dict, ewokstaskclass: Any) -> None:
 
     # Add the Ewoks class as an attribute to the Orange widget class
     namespace["ewokstaskclass"] = ewokstaskclass
+    _ = namespace.setdefault("name", ewokstaskclass.__name__)
 
     # Make sure the values above are always the default setting values:
     # https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial-settings.html
