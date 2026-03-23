@@ -12,6 +12,7 @@ from typing import Callable
 from typing import List
 from typing import Mapping
 from typing import Optional
+from typing import Set
 
 from AnyQt import QtWidgets
 from ewokscore import missing_data
@@ -144,15 +145,18 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
     # --- Ewoks task inputs --------------------------------------------------------------
 
     @classmethod
-    def get_input_names(cls):
+    def get_input_names(cls, exclude_hidden: bool = False) -> Set[str]:
         """
         Return Ewoks task input names for the bound task class.
 
         :return: Iterable of input name strings.
         """
-        return cls.ewokstaskclass.input_names()
+        names = set(cls.ewokstaskclass.input_names())
+        if exclude_hidden:
+            names -= set(cls._ewoks_inputs_to_hide_from_orange)
+        return names
 
-    def get_task_inputs(self) -> dict:
+    def get_task_inputs(self, exclude_hidden: bool = False) -> dict:
         """
         Merge default and dynamic inputs producing the inputs mapping used by tasks.
 
@@ -160,15 +164,24 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         inputs = self.get_default_input_values()
         inputs.update(self.__dynamic_inputs)
+        if exclude_hidden:
+            inputs = {
+                k: v
+                for k, v in inputs.items()
+                if k not in self._ewoks_inputs_to_hide_from_orange
+            }
         return inputs
 
-    def get_task_input_values(self) -> dict:
+    def get_task_input_values(self, exclude_hidden: bool = False) -> dict:
         """
         Return all task input values (dynamic or default when missing).
 
         :return: Dict of input name -> plain value.
         """
-        return {k: self._extract_value(v) for k, v in self.get_task_inputs().items()}
+        return {
+            k: self._extract_value(v)
+            for k, v in self.get_task_inputs(exclude_hidden=exclude_hidden).items()
+        }
 
     def get_task_input_value(
         self, name: str, default: Any = missing_data.MISSING_DATA
@@ -192,7 +205,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
     # --- Ewoks task default inputs (SAVED IN FILE) --------------------------------------------------------------
 
-    def get_default_input_names(self, include_missing: bool = False) -> set:
+    def get_default_input_names(
+        self, include_missing: bool = False, exclude_hidden: bool = False
+    ) -> Set[str]:
         """
         Return input names that have default values (or all input names).
 
@@ -201,9 +216,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         self._deprecated_default_inputs()
         if include_missing:
-            return set(self.get_input_names())
+            names = set(self.get_input_names())
         else:
-            return set(self._ewoks_default_inputs)
+            names = set(self._ewoks_default_inputs)
+        if exclude_hidden:
+            names -= set(self._ewoks_inputs_to_hide_from_orange)
+        return names
 
     @functools.lru_cache(maxsize=1)
     def _get_pydantic_model_default_values(self) -> dict:
@@ -212,18 +230,22 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         input_model = self.ewokstaskclass.input_model()
 
-        if input_model is not None:
-            # remove Values set to None or MISSING_DATA. This defines "invalid downstream" in Orange.
-            return dict(
-                filter(
-                    lambda pair: not is_invalid_data(pair[1]),
-                    _get_model_default_values(input_model).items(),
-                )
+        if input_model is None:
+            return {}
+
+        # remove Values set to None or MISSING_DATA. This defines "invalid downstream" in Orange.
+        return dict(
+            filter(
+                lambda pair: not is_invalid_data(pair[1]),
+                _get_model_default_values(input_model).items(),
             )
-        return {}
+        )
 
     def get_default_input_values(
-        self, include_missing: bool = False, defaults: Optional[Mapping] = None
+        self,
+        include_missing: bool = False,
+        defaults: Optional[Mapping] = None,
+        exclude_hidden: bool = False,
     ) -> dict:
         """
         Return default input values or a mapping including missing markers.
@@ -246,6 +268,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         if defaults:
             values.update(defaults)
         values.update(self._ewoks_default_inputs)
+
+        if exclude_hidden:
+            values = {
+                k: v
+                for k, v in values.items()
+                if k not in self._ewoks_inputs_to_hide_from_orange
+            }
 
         return {name: invalid_data.as_missing(value) for name, value in values.items()}
 
@@ -306,7 +335,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
     # --- Ewoks task dynamic inputs (NOT SAVED IN FILE) --------------------------------------------------------------
 
-    def get_dynamic_input_names(self, include_missing: bool = False) -> set:
+    def get_dynamic_input_names(
+        self, include_missing: bool = False, exclude_hidden: bool = False
+    ) -> set:
         """
         Return input names that have dynamic variables (or all input names).
 
@@ -314,12 +345,18 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         :return: Set of input names.
         """
         if include_missing:
-            return set(self.get_input_names())
+            names = set(self.get_input_names())
         else:
-            return set(self.__dynamic_inputs)
+            names = set(self.__dynamic_inputs)
+        if exclude_hidden:
+            names -= set(self._ewoks_inputs_to_hide_from_orange)
+        return names
 
     def get_dynamic_input_values(
-        self, include_missing: bool = False, defaults: Optional[Mapping] = None
+        self,
+        include_missing: bool = False,
+        defaults: Optional[Mapping] = None,
+        exclude_hidden: bool = False,
     ) -> dict:
         """
         Return dynamic input values or a mapping including missing markers.
@@ -334,11 +371,21 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             }
         else:
             values = dict()
+
         if defaults:
             values.update(defaults)
+
         values.update(
             {k: self._extract_value(v) for k, v in self.__dynamic_inputs.items()}
         )
+
+        if exclude_hidden:
+            values = {
+                k: v
+                for k, v in values.items()
+                if k not in self._ewoks_inputs_to_hide_from_orange
+            }
+
         return {name: invalid_data.as_missing(value) for name, value in values.items()}
 
     def get_dynamic_input_value(self, name: str, default: Any = None) -> Any:
@@ -404,30 +451,46 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
     # --- Ewoks task outputs --------------------------------------------------------------
 
     @classmethod
-    def get_output_names(cls):
+    def get_output_names(cls, exclude_hidden: bool = False) -> Set[str]:
         """
         Return Ewoks task output names for the bound task class.
 
         :return: Iterable of output name strings.
         """
-        return cls.ewokstaskclass.output_names()
+        names = set(cls.ewokstaskclass.output_names())
+        if exclude_hidden:
+            names -= set(cls._ewoks_outputs_to_hide_from_orange)
+        return names
 
-    def get_task_outputs(self) -> dict:
+    def get_task_outputs(self, exclude_hidden: bool = False) -> dict:
         """
         Return task output variables.
 
         Subclasses must implement this to return a dict-like mapping of output name
         to Variable.
         """
+        outputs = self._get_task_outputs()
+        if exclude_hidden:
+            outputs = {
+                k: v
+                for k, v in outputs.items()
+                if k not in self._ewoks_outputs_to_hide_from_orange
+            }
+        return outputs
+
+    def _get_task_outputs(self) -> dict:
         raise NotImplementedError("Base class")
 
-    def get_task_output_values(self) -> dict:
+    def get_task_output_values(self, exclude_hidden: bool = False) -> dict:
         """
         Return all task output values extracted from Variables.
 
         :return: Dict of output name -> plain value (missing replaced).
         """
-        return {k: self._extract_value(v) for k, v in self.get_task_outputs().items()}
+        return {
+            k: self._extract_value(v)
+            for k, v in self.get_task_outputs(exclude_hidden=exclude_hidden).items()
+        }
 
     def get_task_output_value(
         self, name, default: Any = missing_data.MISSING_DATA
@@ -480,7 +543,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         _logger.debug("%s: trigger downstream", self)
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for ewoksname, var in self.get_task_outputs().items():
+            for ewoksname, var in self.get_task_outputs(exclude_hidden=True).items():
                 output = self._get_output_signal(ewoksname)
                 if invalid_data.is_invalid_data(var.value):
                     self.send(output.name, invalid_data.INVALIDATION_DATA)
@@ -488,7 +551,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
                 else:
                     self.send(output.name, var)
         else:
-            for ewoksname, var in self.get_task_outputs().items():
+            for ewoksname, var in self.get_task_outputs(exclude_hidden=True).items():
                 output = self._get_output_signal(ewoksname)
                 if invalid_data.is_invalid_data(var.value):
                     output.send(invalid_data.INVALIDATION_DATA)
@@ -504,12 +567,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         _logger.debug("%s: clear downstream", self)
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for ewoksname in self.get_task_outputs():
+            for ewoksname in self.get_task_outputs(exclude_hidden=True):
                 output = self._get_output_signal(ewoksname)
                 self.send(output.name, invalid_data.INVALIDATION_DATA)
                 # Note: perhaps `self.invalidate(output.name)` is equivalent
         else:
-            for ewoksname in self.get_task_outputs():
+            for ewoksname in self.get_task_outputs(exclude_hidden=True):
                 output = self._get_output_signal(ewoksname)
                 output.send(invalid_data.INVALIDATION_DATA)
                 # Note: perhaps `output.invalidate` is equivalent
@@ -613,6 +676,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             execinfo = scheme_ewoks_events(scheme, self._ewoks_execinfo)
 
         if self._ewoks_task_options:
+            print(
+                "self._ewoks_task_options = ",
+                self._ewoks_task_options,
+                type(self._ewoks_task_options),
+            )
             task_arguments = dict(self._ewoks_task_options)
         else:
             task_arguments = dict()
