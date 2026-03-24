@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0rc1] - 2026-03-11
+
 ## Added
 
 - Ewoks-Orange widgets can now be defined without an explicit `name` class attribute.
@@ -25,27 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `write_ows`: support string literals with pickle fallback.
 - Pin `chardet<7` since it breaks `Orange3<=3.40.0`.
-
-## [4.0.0rc2] - 2026-02-16
-
-### Fixed
-
 - Project migrated to https://github.com/ewoks-kit/ewoksorange.
 - CI: stabilize headless Qt test runs by setting `QT_QPA_PLATFORM=offscreen`.
-
-## [4.0.0rc1] - 2026-02-11
-
-### Fixed
-
 - `OWEwoksBaseWidget.get_default_input_value`: also take into account values defined in the Pydantic model.
 - `OWEwoksBaseWidget._get_pydantic_model_default_values`: ignore values marked as `invalid_data`.
-
-## [4.0.0rc0] - 2026-02-09
-
-### Changed
-
-- Prepare the `4.0.0` prerelease line (`rc0`).
-- No additional functional changes compared to `3.3.1`.
 
 ## [3.3.1] - 2026-01-28 [YANKED]
 
@@ -345,11 +330,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...HEAD
-[4.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0rc2...v4.0.0
-[4.0.0rc2]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0rc1...v4.0.0rc2
-[4.0.0rc1]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0rc0...v4.0.0rc1
-[4.0.0rc0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.1...v4.0.0rc0
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0rc1...HEAD
+[4.1.0rc1]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0rc1
+[4.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.1...v4.0.0
 [3.3.1]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.0...v3.3.1
 [3.3.0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.2.1...v3.3.0
 [3.2.1]: https://github.com/ewoks-kit/ewoksorange/compare/v3.2.0...v3.2.1
