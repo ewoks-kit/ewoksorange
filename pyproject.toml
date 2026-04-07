@@ -22,6 +22,7 @@ dependencies = [
     "importlib-resources; python_version<'3.9'",
     "importlib-metadata; python_version<'3.9'",
     "packaging",
+    "silx[full_no_qt]",
 ]
 
 [project.urls]
