@@ -7,11 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## Fixed
-
-- Added `silx[full_no_qt]` to support `silx>=3.0`.
-
-## [4.1.0rc1] - 2026-03-11
+## [4.1.0] - 2026-04-08
 
 ## Added
 
@@ -24,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hide Ewoks task inputs/outputs from Orange propagation when hidden from Orange.
 - Ewoks `Variable` summary: fall back to the Orange UI summary of the underlying value.
 - Improve Orange UI for `object` and `type`.
+- Added `silx[full_no_qt]` to support `silx>=3.0`.
 
 ## [4.0.0] - 2026-03-11
 
@@ -334,8 +331,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0rc1...HEAD
-[4.1.0rc1]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0rc1
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...HEAD
+[4.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.1...v4.0.0
 [3.3.1]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.0...v3.3.1
 [3.3.0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.2.1...v3.3.0
