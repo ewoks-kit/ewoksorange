@@ -1,7 +1,7 @@
 import logging
 import sys
 from contextlib import contextmanager
-
+import os
 from ...orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
@@ -78,6 +78,38 @@ else:
     from orangecanvas.main import main as _main
 
 
+def _apply_registry_filter():
+    """
+    Patches the WidgetRegistry to hide categories based on an environment variable.
+    """
+    filter_env = os.environ.get("EWOKS_WIDGET_FILTER")
+    if not filter_env:
+        return
+
+    try:
+        from orangecanvas.registry import WidgetRegistry
+    except ImportError:
+        try:
+            from Orange.canvas.registry import WidgetRegistry
+        except ImportError:
+            return
+
+    original_categories_method = WidgetRegistry.categories
+
+    def patched_categories(self):
+        # Call the real method to get all discovered categories
+        all_cats = original_categories_method(self)
+
+        # Define what we want to keep
+        keep = {cat.strip() for cat in filter_env.split(",")}
+
+        # Return a filtered list to the UI
+        return [c for c in all_cats if c.name in keep]
+
+    # Apply the patch to the class method
+    WidgetRegistry.categories = patched_categories
+
+
 @contextmanager
 def _temporary_log_handlers(log_level):
     logger = logging.getLogger("ewoksorange")
@@ -119,5 +151,5 @@ def main(argv=None):
             from orangecontrib.ewokstest import enable_ewokstest_category
 
             enable_ewokstest_category()
-
+    _apply_registry_filter()
     _main(argv)
