@@ -111,6 +111,7 @@ def main(argv=None):
 
     if "--with-examples" in argv:
         argv.pop(argv.index("--with-examples"))
+
     if "--with-demo" in argv:
         argv.pop(argv.index("--with-demo"))
 
