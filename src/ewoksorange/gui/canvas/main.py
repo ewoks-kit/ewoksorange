@@ -102,7 +102,7 @@ def main(argv=None):
     parser.add_argument(
         "--with-demo",
         action="store_true",
-        help="Register demo widgets from ewoksorange.",
+        help="Register demo add-on's from ewoksorange.",
     )
 
     if argv is None:
