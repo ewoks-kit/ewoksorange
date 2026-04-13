@@ -30,6 +30,12 @@ Launch the Orange canvas with the examples add-on
 ewoks-canvas --with-examples
 ```
 
+Launch the Orange canvas with the demo add-on
+
+```bash
+ewoks-canvas --with-demo
+```
+
 Open an existing workflow in the Orange canvas
 
 ```bash

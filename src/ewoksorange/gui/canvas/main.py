@@ -99,6 +99,11 @@ def main(argv=None):
         action="store_true",
         help="Register example add-on's from ewoksorange.",
     )
+    parser.add_argument(
+        "--with-demo",
+        action="store_true",
+        help="Register demo add-on's from ewoksorange.",
+    )
 
     if argv is None:
         argv = sys.argv
@@ -106,6 +111,9 @@ def main(argv=None):
 
     if "--with-examples" in argv:
         argv.pop(argv.index("--with-examples"))
+
+    if "--with-demo" in argv:
+        argv.pop(argv.index("--with-demo"))
 
     if "--force-discovery" not in argv:
         argv.append("--force-discovery")
@@ -119,5 +127,9 @@ def main(argv=None):
             from orangecontrib.ewokstest import enable_ewokstest_category
 
             enable_ewokstest_category()
+        if options.with_demo:
+            from orangecontrib.ewoksdemo import enable_ewoksdemo_category
+
+            enable_ewoksdemo_category()
 
     _main(argv)
