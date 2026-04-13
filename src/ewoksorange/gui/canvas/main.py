@@ -80,7 +80,7 @@ else:
 
 def _apply_registry_filter():
     """
-    Patches the WidgetRegistry to hide categories based on an environment variable.
+    Patches the WidgetRegistry to show categories based on an environment variable.
     """
     filter_env = os.environ.get("EWOKS_WIDGET_FILTER")
     if not filter_env:
@@ -95,18 +95,11 @@ def _apply_registry_filter():
             return
 
     original_categories_method = WidgetRegistry.categories
-
     def patched_categories(self):
-        # Call the real method to get all discovered categories
         all_cats = original_categories_method(self)
-
-        # Define what we want to keep
         keep = {cat.strip() for cat in filter_env.split(",")}
-
-        # Return a filtered list to the UI
         return [c for c in all_cats if c.name in keep]
 
-    # Apply the patch to the class method
     WidgetRegistry.categories = patched_categories
 
 
