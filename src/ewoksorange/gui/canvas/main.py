@@ -97,12 +97,12 @@ def main(argv=None):
     parser.add_argument(
         "--with-examples",
         action="store_true",
-        help="Register example add-on's from ewoksorange.",
+        help="Register Orange add-on for 'ewoksorange' example Ewoks tasks.",
     )
     parser.add_argument(
         "--with-demo",
         action="store_true",
-        help="Register demo add-on's from ewoksorange.",
+        help="Register Orange add-on for 'ewokscore' demo Ewoks tasks.",
     )
 
     if argv is None:
