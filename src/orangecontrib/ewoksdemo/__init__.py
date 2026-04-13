@@ -23,6 +23,7 @@ def is_ewoksdemo_category_enabled() -> bool:
         return True
     return False
 
+
 DESCRIPTION = "Ewoks Demo"
 
 LONG_DESCRIPTION = "Ewoks Demo"
