@@ -95,6 +95,7 @@ def _apply_registry_filter():
             return
 
     original_categories_method = WidgetRegistry.categories
+
     def patched_categories(self):
         all_cats = original_categories_method(self)
         keep = {cat.strip() for cat in filter_env.split(",")}
