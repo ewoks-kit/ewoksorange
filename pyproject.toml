@@ -58,7 +58,6 @@ orange = [
     "Orange3",
     "chardet<7",  # for Orange3<=3.40.0
 ]
-demo = ["ewoksorange-demo"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -85,22 +84,31 @@ omit = [
 ewoks-canvas = "ewoksorange.gui.canvas.main:main"
 
 [project.entry-points."orange3.addon"]
+"ewoksdemo" = "orangecontrib.ewoksdemo"
 "ewoksnowidget" = "orangecontrib.ewoksnowidget"
 
 [project.entry-points."orange.widgets"]
+"Ewoks Demo" = "orangecontrib.ewoksdemo"
 "Ewoks Without Widgets" = "orangecontrib.ewoksnowidget"
 "Ewoks Test" = "orangecontrib.ewokstest"
 
 [project.entry-points."orangecanvas.examples"]
+"Ewoks Demo" = "orangecontrib.ewoksdemo.tutorials"
 "Ewoks Test" = "orangecontrib.ewokstest.tutorials"
 
 [project.entry-points."orange.widgets.tutorials"]
+"Ewoks Demo" = "orangecontrib.ewoksdemo.tutorials"
 "Ewoks Test" = "orangecontrib.ewokstest.tutorials"
 
+[project.entry-points."orange.canvas.help"]
+"html-index" = "orangecontrib.ewoksdemo:WIDGET_HELP_PATH"
+
 [project.entry-points."oasys.addon"]
+"ewoksdemo" = "orangecontrib.ewoksdemo"
 "ewoksnowidget" = "orangecontrib.ewoksnowidget"
 
 [project.entry-points."oasys.widgets"]
+"Ewoks Demo" = "orangecontrib.ewoksdemo"
 "Ewoks Without Widgets" = "orangecontrib.ewoksnowidget"
 "Ewoks Test" = "orangecontrib.ewokstest"
 
