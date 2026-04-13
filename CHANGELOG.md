@@ -7,14 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-04-13
+
+### Changed
+
+- `ewoksorange` no longer provides widgets for the `ewokscore` demo tasks by default.
+  Requires `ewoks-canvas --with-demo`.
+
 ## [4.1.0] - 2026-04-08
 
-## Added
+### Added
 
 - Ewoks-Orange widgets can now be defined without an explicit `name` class attribute.
   When missing this attribute is set to the Ewoks task class name.
 
-## Fixed
+### Fixed
 
 - Fix error reporting bug in `get_signal` and `signal_orange_to_ewoks_name`.
 - Hide Ewoks task inputs/outputs from Orange propagation when hidden from Orange.
@@ -331,7 +338,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...HEAD
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.0...HEAD
+[5.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.1...v4.0.0
 [3.3.1]: https://github.com/ewoks-kit/ewoksorange/compare/v3.3.0...v3.3.1
