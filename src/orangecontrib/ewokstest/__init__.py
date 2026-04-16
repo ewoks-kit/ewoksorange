@@ -2,9 +2,9 @@ import sysconfig
 
 NAME = "Ewoks Test"
 
-DESCRIPTION = "Short Test"
+DESCRIPTION = "Short Test Description"
 
-LONG_DESCRIPTION = "Long Test"
+LONG_DESCRIPTION = "Long Test Description"
 
 ICON = "icons/category.svg"
 
@@ -21,7 +21,7 @@ WIDGET_HELP_PATH = (
 
 
 def widget_discovery(discovery):
-    """Do not show any widgets"""
+    """Do not show any widgets by default."""
     pass
 
 
