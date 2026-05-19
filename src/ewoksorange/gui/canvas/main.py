@@ -2,6 +2,8 @@ import logging
 import sys
 from contextlib import contextmanager
 
+from packaging.pylock import _logger
+
 from ...orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
@@ -74,8 +76,23 @@ elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.canvas.__main__ import main as _main
     from orangecanvas.main import arg_parser
 else:
+    import orangecanvas.main
     from orangecanvas.main import arg_parser
-    from orangecanvas.main import main as _main
+    from .mainwindow import CanvasMainWindow
+
+    if not hasattr(CanvasMainWindow, "EDITOR_WIDGET_CONSTRUCTOR"):
+        _logger.info(
+            "Canvas main window does not have an editor widget constructor, skipping adding the 'trigger' action to links"
+        )
+
+    class Main(orangecanvas.main.Main):
+
+        def create_main_window(self) -> CanvasMainWindow:
+            """Create the (initial) main window."""
+            return CanvasMainWindow()
+
+    def _main(argv=None):
+        return Main().run(argv)
 
 
 @contextmanager
