@@ -78,6 +78,7 @@ elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
 else:
     import orangecanvas.main
     from orangecanvas.main import arg_parser
+
     from .mainwindow import CanvasMainWindow
 
     if not hasattr(CanvasMainWindow, "EDITOR_WIDGET_CONSTRUCTOR"):
