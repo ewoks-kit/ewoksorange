@@ -1,9 +1,6 @@
-import logging
 from AnyQt.QtWidgets import QAction, QMenu
 from orangecanvas.document.schemeedit import SchemeEditWidget as _SchemeEditWidget
 from orangecanvas.scheme import SchemeLink
-
-_logger = logging.getLogger(__name__)
 
 
 class SchemeEditWidget(_SchemeEditWidget):
