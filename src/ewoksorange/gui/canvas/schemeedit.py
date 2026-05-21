@@ -1,7 +1,11 @@
+import logging
+
 from AnyQt.QtWidgets import QAction
 from AnyQt.QtWidgets import QMenu
 from orangecanvas.document.schemeedit import SchemeEditWidget as _SchemeEditWidget
 from orangecanvas.scheme import SchemeLink
+
+_logger = logging.getLogger(__file__)
 
 
 class SchemeEditWidget(_SchemeEditWidget):
@@ -29,8 +33,16 @@ class SchemeEditWidget(_SchemeEditWidget):
         if not link:
             return
 
-        self.removeLink(link)
-        self.addLink(link)
+        runtime_state = link.runtime_state()
+        if not link.is_enabled():
+            _logger.debug("Won't trigger link %s because it is not active", link)
+        elif runtime_state != SchemeLink.State.Active:
+            _logger.debug(
+                "Won't trigger link %s because runtime state is", runtime_state
+            )
+        else:
+            self.removeLink(link)
+            self.addLink(link)
 
     def contextMenuForLink(self, link: SchemeLink) -> QMenu:
         """
