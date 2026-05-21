@@ -2,9 +2,9 @@ import logging
 import sys
 from contextlib import contextmanager
 
-from packaging.pylock import _logger
-
 from ...orange_version import ORANGE_VERSION
+
+_logger = logging.getLogger(__file__)
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas import conf as _oasys_conf_module
