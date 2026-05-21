@@ -1,4 +1,5 @@
 from orangecanvas.application.canvasmain import CanvasMainWindow as _CanvasMainWindow
+
 from .schemeedit import SchemeEditWidget
 
 

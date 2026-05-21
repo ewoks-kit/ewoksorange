@@ -1,4 +1,5 @@
-from AnyQt.QtWidgets import QAction, QMenu
+from AnyQt.QtWidgets import QAction
+from AnyQt.QtWidgets import QMenu
 from orangecanvas.document.schemeedit import SchemeEditWidget as _SchemeEditWidget
 from orangecanvas.scheme import SchemeLink
 
