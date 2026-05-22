@@ -76,11 +76,11 @@ elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.canvas.__main__ import main as _main
     from orangecanvas.main import arg_parser
 else:
-    import orangecanvas.main
     from orangecanvas.application.canvasmain import (
         CanvasMainWindow as _CanvasMainWindow,
     )
     from orangecanvas.main import arg_parser
+    from orangecanvas.main import main as _main
 
     from .schemeedit import SchemeEditWidget as _SchemeEditWidget
 
@@ -88,17 +88,8 @@ else:
         _logger.info(
             "Canvas main window does not have an editor widget constructor, skipping adding the 'trigger' action to links"
         )
-
-    class Main(orangecanvas.main.Main):
-
-        def create_main_window(self) -> _CanvasMainWindow:
-            """Create the (initial) main window."""
-            _CanvasMainWindow.EDITOR_WIDGET_CONSTRUCTOR = _SchemeEditWidget
-            # Redefining the 'EDITOR_WIDGET_CONSTRUCTOR' allow use to add features to the default 'SchemeEditWidget' like adding actions to the link.
-            return _CanvasMainWindow()
-
-    def _main(argv=None):
-        return Main().run(argv)
+    _CanvasMainWindow.EDITOR_WIDGET_CONSTRUCTOR = _SchemeEditWidget
+    # Redefining the 'EDITOR_WIDGET_CONSTRUCTOR' allow use to add features to the default 'SchemeEditWidget' like adding actions to the link.
 
 
 @contextmanager
