@@ -606,21 +606,26 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         pass
 
-    def execute_ewoks_task(self, log_missing_inputs: bool = True) -> None:
+    def execute_ewoks_task(self, log_missing_inputs: bool = True) -> None | str:
         """
         Execute the Ewoks task and propagate downstream on completion.
 
         :param log_missing_inputs: Whether missing inputs should be logged.
+        :return: Task identifier if execution was queued, None otherwise.
         """
         _logger.debug("%s: execute ewoks task (with propagation)", self)
-        self._execute_ewoks_task(propagate=True, log_missing_inputs=log_missing_inputs)
+        return self._execute_ewoks_task(
+            propagate=True, log_missing_inputs=log_missing_inputs
+        )
 
-    def execute_ewoks_task_without_propagation(self) -> None:
+    def execute_ewoks_task_without_propagation(self) -> None | str:
         """
         Execute the Ewoks task without propagating outputs downstream.
+
+        :return: Task identifier if execution was queued, None otherwise.
         """
         _logger.debug("%s: execute ewoks task (without propagation)", self)
-        self._execute_ewoks_task(propagate=False, log_missing_inputs=False)
+        return self._execute_ewoks_task(propagate=False, log_missing_inputs=False)
 
     @property
     def task_succeeded(self) -> Optional[bool]:
