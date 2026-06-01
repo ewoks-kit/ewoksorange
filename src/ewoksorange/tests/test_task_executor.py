@@ -142,3 +142,29 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
     assert obj3.results["result"] == "have waited 0.2s"
 
     assert executor.is_available
+
+    # test cancelling any task in the queue (even if not running)
+    obj4 = MyObject()
+    obj5 = MyObject()
+
+    obj4_id = executor.add(
+        inputs={
+            "duration": 2,
+        },
+        _callbacks=(obj4.finished_callback,),
+    )
+    obj5_id = executor.add(
+        inputs={
+            "duration": 2,
+        },
+        _callbacks=(obj5.finished_callback,),
+    )
+    assert executor.cancel_task(task_id=obj5_id)
+
+    assert len(executor) == 1
+    remaining_task_ids = list(executor._task_ids.keys()) + [
+        executor._current_task_id,
+    ]
+    assert obj4_id in remaining_task_ids
+    executor.cancel_all_tasks(wait=True)
+    assert len(executor) == 0
