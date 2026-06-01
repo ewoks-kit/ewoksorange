@@ -317,7 +317,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         """Access the underlying TaskExecutorQueue."""
         return self.__task_executor_queue
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> str:
         """
         Queue the task for later execution in FIFO order.
 
@@ -329,11 +329,12 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             self._ewoks_task_finished_callback(propagate)
 
         with self._ewoks_task_start_context():
-            self.__task_executor_queue.add(
+            task_id = self.__task_executor_queue.add(
                 _callbacks=(callback,),
                 _log_missing_inputs=log_missing_inputs,
                 **self._get_task_arguments(),
             )
+        return task_id
 
     @property
     def task_succeeded(self) -> Optional[bool]:
@@ -375,3 +376,15 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def cancel_running_task(self):
         """Cancel the currently running task in the queue, if any."""
         self.__task_executor_queue.cancel_running_task()
+
+    def cancel_task(self, task_id: str):
+        """Cancel a specific task in the queue by its ID."""
+        self.__task_executor_queue.cancel_task(task_id)
+
+    def cancel_all_tasks(self):
+        """Cancel all pending and running tasks in the queue."""
+        # first clear the queue of pending tasks
+        while not self.__task_executor_queue.empty():
+            self.__task_executor_queue.get()
+        # then cancel the currently running task, if any
+        self.__task_executor_queue.cancel_all_tasks()
