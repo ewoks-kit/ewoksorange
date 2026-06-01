@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- canvas: Add a 'Trigger' action on link in order to trigger a specific link.
+
 ## [5.0.1] - 2026-04-17
 
 ### Fixed

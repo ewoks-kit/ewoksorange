@@ -4,6 +4,8 @@ from contextlib import contextmanager
 
 from ...orange_version import ORANGE_VERSION
 
+_logger = logging.getLogger(__file__)
+
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.canvas import conf as _oasys_conf_module
     from oasys.canvas.__main__ import main as _main
@@ -74,8 +76,20 @@ elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.canvas.__main__ import main as _main
     from orangecanvas.main import arg_parser
 else:
+    from orangecanvas.application.canvasmain import (
+        CanvasMainWindow as _CanvasMainWindow,
+    )
     from orangecanvas.main import arg_parser
     from orangecanvas.main import main as _main
+
+    from .schemeedit import SchemeEditWidget as _SchemeEditWidget
+
+    if not hasattr(_CanvasMainWindow, "EDITOR_WIDGET_CONSTRUCTOR"):
+        _logger.info(
+            "Canvas main window does not have an editor widget constructor, skipping adding the 'trigger' action to links"
+        )
+    _CanvasMainWindow.EDITOR_WIDGET_CONSTRUCTOR = _SchemeEditWidget
+    # Redefining the 'EDITOR_WIDGET_CONSTRUCTOR' allow use to add features to the default 'SchemeEditWidget' like adding actions to the link.
 
 
 @contextmanager
