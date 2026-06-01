@@ -1,4 +1,10 @@
-from queue import Queue
+from __future__ import annotations
+
+import uuid
+from collections import deque
+from typing import Any
+from typing import Deque
+from typing import Dict
 from typing import Iterable
 
 from AnyQt.QtCore import QObject
@@ -8,8 +14,13 @@ from ..qt_utils.signals import block_signals
 from .threaded import ThreadedTaskExecutor
 
 
-class TaskExecutorQueue(QObject, Queue):
-    """Processing Queue with a First In, First Out behavior"""
+class TaskExecutorQueue(QObject):
+    """
+    Processing Queue with a First In, First Out behavior.
+
+    When a task is added, it is put in a queue and executed when the current task is finished.
+    `add()` method returns a task identifier that can be used to cancel the task before it starts.
+    """
 
     sigComputationStarted = Signal()
     """Signal emitted when a computation is started"""
@@ -18,28 +29,44 @@ class TaskExecutorQueue(QObject, Queue):
 
     def __init__(self, ewokstaskclass):
         super().__init__()
-        self._task_executor = _ThreadedTaskExecutor(ewokstaskclass=ewokstaskclass)
+        self._task_queue: Deque[str] = deque()
+        """Queue storing task IDs in FIFO order"""
+        self._task_ids: Dict[str, Dict[str, Any]] = {}
+        """Dictionary mapping task IDs to their keyword arguments"""
+        self._current_task_id: str | None = None
+        self._task_executor: ThreadedTaskExecutor = _ThreadedTaskExecutor(
+            ewokstaskclass=ewokstaskclass
+        )
         self._task_executor.finished.connect(self._process_ended)
-        self._available = True
-        """Simple thread to know if we can do some processing
-        and avoid to mix thinks with QSignals and different threads
-        """
+        self._available: bool = True
 
     @property
     def is_available(self) -> bool:
         return self._available
 
-    def add(self, **kwargs):
-        """Add a task `ewokstaskclass` execution request"""
-        super().put(kwargs)
+    def add(self, **kwargs) -> str:
+        """Add a task `ewokstaskclass` execution request
+
+        :return: Task identifier (UUID) that can be used to cancel the task
+        """
+        task_id = str(uuid.uuid4())
+        self._task_ids[task_id] = kwargs
+        self._task_queue.append(task_id)
+
         if self.is_available:
             self._process_next()
 
+        return task_id
+
     def _process_next(self):
-        if Queue.empty(self):
+        if not self._task_queue:
             return
+
         self._available = False
-        self._task_executor.create_task(**Queue.get(self))
+        self._current_task_id = self._task_queue.popleft()
+        task_kwargs = self._task_ids.pop(self._current_task_id)
+
+        self._task_executor.create_task(**task_kwargs)
         if self._task_executor.has_task:
             self.sigComputationStarted.emit()
             self._task_executor.start()
@@ -54,6 +81,7 @@ class TaskExecutorQueue(QObject, Queue):
             callback()
         self.sigComputationEnded.emit()
         self._available = True
+        self._current_task_id = None
         if self.is_available:
             self._process_next()
 
@@ -62,27 +90,59 @@ class TaskExecutorQueue(QObject, Queue):
         will cancel current task.
         task_executor signal 'finished' will be blocked but callbacks will be executed to ensure a safe processing
         """
-        if not self.is_available:
-            with block_signals(self._task_executor):
-                self._task_executor.cancel_running_task()
-                # stop and remove the current task from the stack
-                self._task_executor.stop(wait=wait)
-                # signal that processing is done
-                self._process_ended_direct(task_executor=self._task_executor)
+        with block_signals(self._task_executor):
+            self._task_executor.cancel_running_task()
+            # stop and remove the current task from the stack
+            self._task_executor.stop(wait=wait)
+            self._current_task_id = None
+            # signal that processing is done
+            self._process_ended_direct(task_executor=self._task_executor)
+
+    def cancel_task(self, task_id: str) -> bool:
+        """Cancel a task by its identifier
+
+        :param task_id: The identifier returned by add()
+        :return: True if the task was successfully cancelled, False otherwise
+        """
+        # If task is currently running, use existing cancel method
+        if self._current_task_id == task_id:
+            self.cancel_running_task()
+            return True
+        # If task is not currently running, remove from queue
+        elif task_id in self._task_ids:
+            # Remove from queue
+            if task_id in self._task_queue:
+                self._task_queue.remove(task_id)
+                del self._task_ids[task_id]
+                return True
+
+        return False
+
+    def cancel_all_tasks(self, wait=True):
+        """Cancel all pending and running tasks in the queue."""
+        # first clear the queue of pending tasks
+        self._task_queue.clear()
+        self._task_ids.clear()
+        # then cancel the currently running task, if any
+        self.cancel_running_task(wait=wait)
 
     def stop(self):
         """
         stop the queue. Wait for the last processing to be finished and reset current_task
         """
         self._task_executor.finished.disconnect(self._process_ended)
-        while not self.empty():
-            self.get()
+        self._task_queue.clear()
+        self._task_ids.clear()
+        self._current_task_id = None
         self._task_executor.stop(wait=True)
         self._task_executor = None
 
     @property
     def current_task(self):
         return self._task_executor.current_task
+
+    def __len__(self):
+        return len(self._task_queue) + (1 if self._current_task_id else 0)
 
 
 class _ThreadedTaskExecutor(ThreadedTaskExecutor):

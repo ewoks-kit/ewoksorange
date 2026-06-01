@@ -375,3 +375,11 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def cancel_running_task(self):
         """Cancel the currently running task in the queue, if any."""
         self.__task_executor_queue.cancel_running_task()
+
+    def cancel_all_tasks(self):
+        """Cancel all pending and running tasks in the queue."""
+        # first clear the queue of pending tasks
+        while not self.__task_executor_queue.empty():
+            self.__task_executor_queue.get()
+        # then cancel the currently running task, if any
+        self.__task_executor_queue.cancel_all_tasks()
