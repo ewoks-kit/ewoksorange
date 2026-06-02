@@ -98,6 +98,7 @@ And we can also remove update of the QSlider when receiving a 'percentiles' inpu
 And only initialize it in the constructor.
 
 .. code-block:: python
+    :linenos:
 
     class OWClipData(
         OWEwoksWidgetOneThread,
@@ -128,6 +129,10 @@ And only initialize it in the constructor.
             self.set_dynamic_input("percentiles", self._myWidget.getPercentiles())
             self.execute_ewoks_task()
 
+.. hint::
+
+    * l20\: We define percentiles values directly from the GUI. This could be done by reading pydantic models default value. See :ref:`tuto_retrieve_pydantic_model_fields_default_values` for more details.
+
 
 Now the python widget 'input_percentiles' can be removed as it has been replace by the GUI.
 
@@ -143,8 +148,15 @@ Now the python widget 'input_percentiles' can be removed as it has been replace 
 .. admonition:: Results
     :class: dropdown
 
-    .. include:: materials/input_gui_user_input.py
+    .. include:: materials/input_gui_user_input/clipdata.py
         :literal:
+
+    .. include:: materials/input_gui_user_input/MyWidget.py
+        :literal:
+
+    .. include:: materials/input_gui_user_input/OWClipData.py
+        :literal:
+
 
 Further reading
 ---------------
