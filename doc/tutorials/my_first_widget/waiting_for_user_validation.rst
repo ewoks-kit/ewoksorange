@@ -39,7 +39,7 @@ Add a ok button that triggers downstream processing
 for this we will take the shortest way to do it:
 
 * append a QPushButton to the control widget `MyWidget`
-* connect the `released` signal to the ewoks orange function `trigger_downstream`
+* connect the `clicked` signal to the ewoks orange function `trigger_downstream`
 
 .. code-block:: python
 
@@ -59,7 +59,7 @@ for this we will take the shortest way to do it:
             ...
             # connect signal / slot
             ...
-            self._myWidget._okButton.released.connect(self.trigger_downstream)
+            self._myWidget._okButton.clicked.connect(self.trigger_downstream)
 
 Now your workflow should look like:
 
@@ -77,5 +77,11 @@ Now your workflow should look like:
 .. admonition:: Results
     :class: dropdown
 
-    .. include:: materials/waiting_for_user_validation.py
+    .. include:: materials/waiting_for_user_validation/clipdata.py
+        :literal:
+
+    .. include:: materials/waiting_for_user_validation/MyWidget.py
+        :literal:
+
+    .. include:: materials/waiting_for_user_validation/OWClipData.py
         :literal:
