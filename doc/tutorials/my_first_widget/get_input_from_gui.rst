@@ -135,7 +135,7 @@ Now the python widget 'input_percentiles' can be removed as it has been replace 
 
 .. note:: `setPercentiles` function will not automatically call 'valueChanged' of the QSlider. So to have `percentiles` input defined automatically you can either call `_percentileChanged` in the constructor or update the `setPercentiles` function.
 
-.. hint:: to make sure the input are propagated you can add a print of the inputs in the EwoksTask (ClipDataTask)
+.. hint:: to make sure the inputs are propagated you can add a print of the inputs in the EwoksTask (ClipDataTask)
 
 .. warning:: You have to be careful when triggering the processing. You might not want to launch the processing each time one input is updated. Especially if the processing is very time consuming. But maybe when one particular input is changed.
 
