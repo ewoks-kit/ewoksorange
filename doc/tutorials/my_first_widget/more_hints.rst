@@ -11,6 +11,8 @@ Widget icons
 More usage of the pydantic models
 ---------------------------------
 
+.. _tuto_retrieve_pydantic_model_fields_default_values:
+
 Retrieving pydantic model fields default values
 '''''''''''''''''''''''''''''''''''''''''''''''
 
