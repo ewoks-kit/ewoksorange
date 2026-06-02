@@ -13,32 +13,12 @@ Now we want to go further and let the user provide input directly from the GUI.
 
 First think to do is update `MyWidget` widget to allow user edition of 'percentiles':
 
-.. code-block:: diff
 
-    diff --git a/src/orangecontrib/testtuto/OWClipData.py b/src/orangecontrib/testtuto/OWClipData.py
-    index e52788b..821428c 100644
-    --- a/src/orangecontrib/testtuto/OWClipData.py
-    +++ b/src/orangecontrib/testtuto/OWClipData.py
-    @@ -61,7 +61,6 @@ class MyWidget(qt.QWidget):
-    
-            self._minPercentiles = qt.QSlider(qt.Qt.Orientation.Horizontal)
-            self._minPercentiles.setTickPosition(qt.QSlider.TickPosition.TicksBelow)
-    -        self._minPercentiles.setEnabled(False)
-            self._minPercentiles.setRange(0, 100)
-            self._minPercentiles.setTickInterval(10)
-            self.layout().addRow(
-    @@ -72,7 +71,6 @@ class MyWidget(qt.QWidget):
-            # max percentiles
-            self._maxPercentiles = qt.QSlider(qt.Qt.Orientation.Horizontal)
-            self._maxPercentiles.setTickPosition(qt.QSlider.TickPosition.TicksBelow)
-    -        self._maxPercentiles.setEnabled(False)
-            self._maxPercentiles.setRange(0, 100)
-            self._maxPercentiles.setTickInterval(10)
-            self.layout().addRow(
+.. literalinclude:: materials/input_gui_user_input/MyWidget.py
+   :diff: materials/input_gui_read_only/MyWidget.py
 
 
 Then we can know when the sliders are updated from the QSlider `valueChanged <https://doc.qt.io/qt-6/qabstractslider.html#valueChanged>`_ signal. And use it to keep the ewoks task up to date as well.
-
 
 .. code-block:: python
     :linenos:
