@@ -91,7 +91,7 @@ Widget 'skeleton' is the following:
     from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
     from [my_project].tasks.clipdata import ClipDataTask
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):

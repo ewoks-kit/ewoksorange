@@ -18,7 +18,7 @@ We also need to reimplement the `handleNewSignals` function that will call by de
 
 .. code-block:: python
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -51,7 +51,7 @@ for this we will take the shortest way to do it:
             self._okButton = qt.QPushButton("ok", self)
             self.layout().addRow(self._okButton)
     
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
