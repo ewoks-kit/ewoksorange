@@ -1,3 +1,8 @@
+try:
+    from enum import StrEnum
+except ImportError:
+    from backports.strenum import StrEnum
+
 import logging
 import numbers
 import os
@@ -21,6 +26,19 @@ _logger = logging.getLogger(__name__)
 
 ParameterValueType = Any
 WidgetValueType = Union[str, numbers.Number, bool, missing_data.MissingData]
+
+
+class SelectMode(StrEnum):
+    FILE = "file"
+    NEW_FILE = "newfile"
+    FILES = "files"
+    NEW_FILES = "newfiles"
+    DIRECTORY = "directory"
+    DIRECTORIES = "directories"
+    H5_DATASET = "h5dataset"
+    H5_DATASETS = "h5datasets"
+    H5_GROUP = "h5group"
+    H5_GROUPS = "h5groups"
 
 
 def _default_serialize(value: ParameterValueType) -> WidgetValueType:
@@ -63,7 +81,7 @@ class ParameterForm(QtWidgets.QWidget):
         label: Optional[str] = None,
         readonly: Optional[bool] = None,
         enabled: Optional[bool] = None,
-        select: Optional[str] = None,
+        select: Union[SelectMode, str, None] = None,
         select_label: str = "...",
         checked: Optional[bool] = None,
         checkbox_label: str = "checked",
@@ -73,23 +91,63 @@ class ParameterForm(QtWidgets.QWidget):
         ] = _default_deserialize,
         bool_label: str = "",
     ):
-        """Each row has the following widgets:
+        """Add one row to the form.
 
-        - label widget: name of the parameter by default
-        - value widget: MISSING_DATA by default
-        - select button (optional): select file/directory/HDF5 url
-        - check box (optional): checked by default
+        Each row contains:
+        - a label widget (left column)
+        - a value widget (centre column): type determined by *value_for_type*
+        - an optional select button (right column): opened when *select* is set
+        - an optional checkbox (far-right column): present when *checked* is set
 
-        Parameters have folowing properties:
-
-        - readonly: the means you can edit the value
-                    Default: False when value_change_callback is provided, True otherwise
-        - enabled: when False all widgets are disabled (grey color)
-                   Default: True
-        - checked: can mean whatever the user wants
+        Parameters
+        ----------
+        name:
+            Identifier of the row
+        value:
+            Initial value displayed in the widget. Defaults to MISSING_DATA.
+        value_for_type:
+            Determines the widget type:
+            - ``str`` → QLineEdit
+            - ``bool`` → QCheckBox
+            - ``numbers.Integral`` → QSpinBox
+            - ``numbers.Real`` → QDoubleSpinBox
+            - ``Sequence`` → QComboBox (items are the choices)
+        value_change_callback:
+            Called with no arguments whenever the user edits the value.
+            When provided, *readonly* defaults to False; otherwise True.
+        label:
+            Text shown in the label widget. Defaults to *name*.
+        readonly:
+            When True the value widget is not editable.
+            Default: True when no *value_change_callback*, False otherwise.
+        enabled:
+            When False all widgets in the row are greyed out. Default: True.
+        select:
+            Adds a ``"..."`` button that opens a dialog. See :class:`SelectMode`.
+            Only valid when *value_for_type* is a ``str``.
+        select_label:
+            Text shown on the select button. Default: ``"..."``.
+        checked:
+            When set, adds a checkbox in the far-right column initialised to
+            this value. Its meaning is application-defined.
+        checkbox_label:
+            Text shown next to the optional checkbox. Default: ``"checked"``.
+        serialize:
+            Converts the parameter value to a value the widget can display
+            (str, number, or bool). Identity by default.
+        deserialize:
+            Converts the widget's internal value back to a parameter value.
+            Identity by default. Should raise on invalid input so the form
+            can fall back to MISSING_DATA.
+        bool_label:
+            Text shown inside the QCheckBox when *value_for_type* is a bool.
+            Default: ``""``.
         """
         if not label:
             label = name
+
+        if select is not None:
+            select = SelectMode(select)
 
         has_callback = bool(value_change_callback)
         if readonly is None:
@@ -118,7 +176,7 @@ class ParameterForm(QtWidgets.QWidget):
                 connections.append(
                     (value_widget.editingFinished.connect, value_change_callback)
                 )
-            if select == "file":
+            if select == SelectMode.FILE:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
@@ -130,7 +188,7 @@ class ParameterForm(QtWidgets.QWidget):
                         ),
                     )
                 )
-            elif select == "newfile":
+            elif select == SelectMode.NEW_FILE:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
@@ -142,7 +200,7 @@ class ParameterForm(QtWidgets.QWidget):
                         ),
                     )
                 )
-            elif select == "directory":
+            elif select == SelectMode.DIRECTORY:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
@@ -152,7 +210,7 @@ class ParameterForm(QtWidgets.QWidget):
                         ),
                     )
                 )
-            elif select == "h5dataset":
+            elif select == SelectMode.H5_DATASET:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
@@ -162,7 +220,7 @@ class ParameterForm(QtWidgets.QWidget):
                         ),
                     )
                 )
-            elif select == "h5group":
+            elif select == SelectMode.H5_GROUP:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
@@ -172,7 +230,7 @@ class ParameterForm(QtWidgets.QWidget):
                         ),
                     )
                 )
-            elif select == "files":
+            elif select == SelectMode.FILES:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
@@ -185,7 +243,7 @@ class ParameterForm(QtWidgets.QWidget):
                         ),
                     )
                 )
-            elif select == "newfiles":
+            elif select == SelectMode.NEW_FILES:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
@@ -198,7 +256,7 @@ class ParameterForm(QtWidgets.QWidget):
                         ),
                     )
                 )
-            elif select == "directories":
+            elif select == SelectMode.DIRECTORIES:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
@@ -210,7 +268,7 @@ class ParameterForm(QtWidgets.QWidget):
                         ),
                     )
                 )
-            elif select == "h5datasets":
+            elif select == SelectMode.H5_DATASETS:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (
@@ -222,7 +280,7 @@ class ParameterForm(QtWidgets.QWidget):
                         ),
                     )
                 )
-            elif select == "h5groups":
+            elif select == SelectMode.H5_GROUPS:
                 select_widget = QtWidgets.QPushButton(select_label)
                 connections.append(
                     (

@@ -21,6 +21,7 @@ dependencies = [
     "orange-widget-base>=4.13.0",
     "importlib-resources; python_version<'3.9'",
     "importlib-metadata; python_version<'3.9'",
+    "backports.strenum;python_version < '3.11'",
     "packaging",
     "silx[full_no_qt]",
 ]
