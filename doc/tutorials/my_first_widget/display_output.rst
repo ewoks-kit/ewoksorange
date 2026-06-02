@@ -13,6 +13,10 @@ First let's move the 'MyWidget' to the control area
 From orange main area to control area
 """""""""""""""""""""""""""""""""""""
 
+.. comment::
+
+    for the following code-block this is not the full diff. But only a subset. This is why we are force to have it in "raw".
+
 .. code-block:: diff
 
     diff --git a/src/orangecontrib/testtuto/OWClipData.py b/src/orangecontrib/testtuto/OWClipData.py
