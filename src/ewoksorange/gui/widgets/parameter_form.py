@@ -28,7 +28,7 @@ ParameterValueType = Any
 WidgetValueType = Union[str, numbers.Number, bool, missing_data.MissingData]
 
 
-class SelectMode(enum.Enum):
+class SelectMode(StrEnum):
     FILE = "file"
     NEW_FILE = "newfile"
     FILES = "files"
@@ -81,7 +81,7 @@ class ParameterForm(QtWidgets.QWidget):
         label: Optional[str] = None,
         readonly: Optional[bool] = None,
         enabled: Optional[bool] = None,
-        select: Optional[SelectMode | str] = None,
+        select: Union[SelectMode, str, None] = None,
         select_label: str = "...",
         checked: Optional[bool] = None,
         checkbox_label: str = "checked",
