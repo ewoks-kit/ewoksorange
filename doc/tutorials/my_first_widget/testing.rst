@@ -18,7 +18,7 @@ If your project is correctly configured you should now perceive the widget we ar
 
 .. image:: img/first_discovery.png
 
-.. note:: in this example we have an empty project with orange installed. The `ClipDataOW` has been added in a `Test Tuto` orangecontrib.
+.. note:: in this example we have an empty project with orange installed. The ``OWClipData`` has been added in a `Test Tuto` orangecontrib.
 
 .. hint:: 
 
@@ -26,7 +26,8 @@ If your project is correctly configured you should now perceive the widget we ar
 
 .. warning::
 
-    each Orange widget should be in a dedicated file. Else orange parsing will fail.
+    each Orange widget should be in a dedicated file. Else widget discovery done by orange will fail.
+
 
 Test it with 'Orange3 python script' widget
 -------------------------------------------
@@ -39,6 +40,7 @@ Make sure you have Orange3 installed:
 
     pip install Orange3
 
+
 Create a workflow for testing a task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -46,12 +48,13 @@ Then you will be able to create a workflow like
 
 .. image:: img/first_testing.png
 
-In this example the
-* 'rescale data' is the task you just created.
+In this example:
+
+* ``rescale data`` is the task you just created.
 * The three other tasks / widgets are instances of `python script <https://orangedatamining.com/widget-catalog/transform/pythonscript/>`_ from `Orange3 <https://orangedatamining.com/>`_
 
 .. hint::
-    the pythonscript widget is now part of the **transform** category but it might also be in the 'data' category according to the version you are using.
+    the ``pythonscript`` widget is now part of the **transform** category but it might also be in the 'data' category according to the version you are using.
 
 .. warning::
 
