@@ -4,10 +4,10 @@ Includes the ewoks task and the pydantic models.
 """
 
 import numpy
-from pydantic import Field
 from ewokscore.model import BaseInputModel
 from ewokscore.model import BaseOutputModel
 from ewokscore.task import Task
+from pydantic import Field
 
 
 class InputModel(BaseInputModel):
@@ -19,8 +19,7 @@ class InputModel(BaseInputModel):
 
 
 class OutputModel(BaseOutputModel):
-    data: numpy.ndarray
-    """rescaled data"""
+    data: numpy.ndarray = Field(..., description="rescaled data")
 
 
 class ClipDataTask(
