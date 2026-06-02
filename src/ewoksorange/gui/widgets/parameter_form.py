@@ -596,7 +596,7 @@ class ParameterForm(QtWidgets.QWidget):
         if filename:
             dialog.setDirectory(os.path.dirname(filename))
 
-        if not dialog.exec_():
+        if not dialog.exec():
             dialog.close()
             return
 
@@ -679,7 +679,7 @@ class ParameterForm(QtWidgets.QWidget):
         if directory:
             dialog.setDirectory(directory)
 
-        if not dialog.exec_():
+        if not dialog.exec():
             dialog.close()
             return
 
