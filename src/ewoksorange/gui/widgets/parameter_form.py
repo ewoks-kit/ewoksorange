@@ -1,4 +1,8 @@
-import enum
+try:
+    from enum import StrEnum
+except ImportError:
+    from backports.strenum import StrEnum
+
 import logging
 import numbers
 import os
@@ -77,7 +81,7 @@ class ParameterForm(QtWidgets.QWidget):
         label: Optional[str] = None,
         readonly: Optional[bool] = None,
         enabled: Optional[bool] = None,
-        select: Optional[SelectMode] = None,
+        select: Optional[SelectMode | str] = None,
         select_label: str = "...",
         checked: Optional[bool] = None,
         checkbox_label: str = "checked",
@@ -141,6 +145,9 @@ class ParameterForm(QtWidgets.QWidget):
         """
         if not label:
             label = name
+
+        if select is not None:
+            select = SelectMode(select)
 
         has_callback = bool(value_change_callback)
         if readonly is None:
