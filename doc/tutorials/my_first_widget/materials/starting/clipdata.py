@@ -1,13 +1,29 @@
+"""
+clipdata.py: Core code for the ClipDataTask, which is a task to rescale 'data' (numpy array) to the given percentiles.
+Includes the ewoks task and the pydantic models.
+"""
+
 import numpy
+from ewokscore.model import BaseInputModel, BaseOutputModel
 from ewokscore.task import Task
 
-from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
+
+class InputModel(BaseInputModel):
+    data: numpy.ndarray
+    """data to rescale"""
+    percentiles: tuple[float, float]
+    """percentiles to use for rescaling, must be a tuple of two values (p_min, p_max) with p_min <= p_max"""
+
+
+class OutputModel(BaseOutputModel):
+    data: numpy.ndarray
+    """rescaled data"""
 
 
 class ClipDataTask(
     Task,
-    input_names=["data", "percentiles"],
-    output_names=["data"],
+    input_model=InputModel,
+    output_model=OutputModel,
 ):
     """
     Task to rescale 'data' (numpy array) to the given percentiles.
@@ -27,13 +43,3 @@ class ClipDataTask(
             a_min=numpy.percentile(data, percentiles[0]),
             a_max=numpy.percentile(data, percentiles[1]),
         )
-
-
-class ClipDataOW(
-    OWEwoksWidgetOneThread,
-    ewokstaskclass=ClipDataTask,
-):
-    name = "rescale data"
-    id = "orange.widgets.my_project.ClipDataTask"
-    description = "widget to clip data (numpy array) within a percentile range."
-    pass
