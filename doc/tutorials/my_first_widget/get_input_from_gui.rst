@@ -15,10 +15,10 @@ First think to do is update `MyWidget` widget to allow user edition of 'percenti
 
 .. code-block:: diff
 
-    diff --git a/src/orangecontrib/testtuto/ClipDataOW.py b/src/orangecontrib/testtuto/ClipDataOW.py
+    diff --git a/src/orangecontrib/testtuto/OWClipData.py b/src/orangecontrib/testtuto/OWClipData.py
     index e52788b..821428c 100644
-    --- a/src/orangecontrib/testtuto/ClipDataOW.py
-    +++ b/src/orangecontrib/testtuto/ClipDataOW.py
+    --- a/src/orangecontrib/testtuto/OWClipData.py
+    +++ b/src/orangecontrib/testtuto/OWClipData.py
     @@ -61,7 +61,6 @@ class MyWidget(qt.QWidget):
     
             self._minPercentiles = qt.QSlider(qt.Qt.Orientation.Horizontal)
@@ -44,7 +44,7 @@ Then we can know when the sliders are updated from the QSlider `valueChanged <ht
     :linenos:
 
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -85,7 +85,7 @@ In this case you can hide the input from the link by using the `_ewoks_inputs_to
 
 .. code-block:: python
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -99,7 +99,7 @@ And only initialize it in the constructor.
 
 .. code-block:: python
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -135,7 +135,7 @@ Now the python widget 'input_percentiles' can be removed as it has been replace 
 
 .. note:: `setPercentiles` function will not automatically call 'valueChanged' of the QSlider. So to have `percentiles` input defined automatically you can either call `_percentileChanged` in the constructor or update the `setPercentiles` function.
 
-.. hint:: to make sure the input are propagated you can add a print of the inputs in the EwoksTask (ClipDataTask)
+.. hint:: to make sure the inputs are propagated you can add a print of the inputs in the EwoksTask (ClipDataTask)
 
 .. warning:: You have to be careful when triggering the processing. You might not want to launch the processing each time one input is updated. Especially if the processing is very time consuming. But maybe when one particular input is changed.
 

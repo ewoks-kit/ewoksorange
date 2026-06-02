@@ -72,7 +72,7 @@ Then we can link it to the ewoksorange widget
 
     from ewokscore.missing_data import is_missing_data
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):

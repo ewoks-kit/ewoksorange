@@ -33,7 +33,7 @@ class ClipDataTask(
         )
 
 
-class ClipDataOW(
+class OWClipData(
     OWEwoksWidgetOneThread,
     ewokstaskclass=ClipDataTask,
 ):
