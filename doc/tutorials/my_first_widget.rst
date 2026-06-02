@@ -16,3 +16,4 @@ In this tutorial we will explain you how to create your first orange widget for 
     my_first_widget/get_input_from_gui
     my_first_widget/display_output
     my_first_widget/waiting_for_user_validation
+    my_first_widget/more_hints
