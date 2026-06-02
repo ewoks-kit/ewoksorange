@@ -26,7 +26,7 @@ If your project is correctly configured you should now perceive the widget we ar
 
 .. warning::
 
-    each Orange widget should be in a dedicated file. Else widget discovery done by orange will fail.
+    each Orange widget should be in a dedicated file. Else an error will be printed when running the canvas and the widget will not be available in Orange.
 
 
 Test it with 'Orange3 python script' widget
