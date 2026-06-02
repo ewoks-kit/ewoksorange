@@ -2,8 +2,9 @@
 OWClipData.py: Code for the orange add-on binding.
 """
 
-from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
 from ewokstesttuto.tasks.clipdata import ClipDataTask
+
+from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
 
 
 class OWClipData(
