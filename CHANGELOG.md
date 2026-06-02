@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix `ParameterForm` file system selection in QT6 (Replace `QDialog.exec_` with `QDialog.exec`).
+
+### Added
+
+- In `ParameterForm`, add a `QCompleter` for file system `LineEdit`.
+
+
 ## [5.0.1] - 2026-04-17
 
 ### Fixed
