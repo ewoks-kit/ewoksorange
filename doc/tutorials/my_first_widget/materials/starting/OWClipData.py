@@ -10,11 +10,8 @@ class OWClipData(
     OWEwoksWidgetOneThread,
     ewokstaskclass=ClipDataTask,
 ):
-
     name = "rescale data"
-
     id = "orange.widgets.my_project.ClipDataTask"
-
     description = "widget to clip data (numpy array) within a percentile range."
 
     pass
