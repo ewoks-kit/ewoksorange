@@ -36,7 +36,6 @@ class OWClipData(
         self._percentileChanged()
 
         # connect signal / slot
-
         self._myWidget._minPercentiles.valueChanged.connect(self._percentileChanged)
         self._myWidget._maxPercentiles.valueChanged.connect(self._percentileChanged)
 
