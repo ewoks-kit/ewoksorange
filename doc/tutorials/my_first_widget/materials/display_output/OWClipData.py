@@ -3,12 +3,12 @@ OWClipData.py: Code for the orange add-on binding.
 """
 
 import numpy
-from silx.gui.plot import Plot1D
 from ewokscore.missing_data import is_missing_data
-from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
-
 from ewokstesttuto.gui.MyWidget import MyWidget
 from ewokstesttuto.tasks.clipdata import ClipDataTask
+from silx.gui.plot import Plot1D
+
+from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
 
 
 class OWClipData(
