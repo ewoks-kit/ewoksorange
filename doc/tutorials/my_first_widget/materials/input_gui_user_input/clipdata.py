@@ -4,7 +4,8 @@ Includes the ewoks task and the pydantic models.
 """
 
 import numpy
-from ewokscore.model import BaseInputModel, BaseOutputModel
+from ewokscore.model import BaseInputModel
+from ewokscore.model import BaseOutputModel
 from ewokscore.task import Task
 
 
