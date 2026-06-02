@@ -8,6 +8,8 @@ Widget icons
 
 `qtawesome <https://pypi.org/project/QtAwesome/>`_ is a great library to get access to a large collection of icons. Silx already depends on it. Consider using if you want to have a nice icon for your widget without creating your own.
 
+See `qtawesome usage examples <https://qtawesome.readthedocs.io/en/latest/usage.html#examples`_.
+
 More usage of the pydantic models
 ---------------------------------
 
