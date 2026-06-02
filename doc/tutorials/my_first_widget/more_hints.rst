@@ -19,12 +19,6 @@ Remember that your pydantic models can contain default values.
 .. code-block:: python
 
     class InputModel(BaseInputModel):
-        percentiles: tuple[float, float] = (0, 100)
-        """percentiles to use for rescaling, must be a tuple of two values (p_min, p_max) with p_min <= p_max"""
-
-    # or 
-
-    class InputModel(BaseInputModel):
         percentiles: tuple[float, float] = description(default=(0, 100), description="percentiles to use for rescaling, must be a tuple of two values (p_min, p_max) with p_min <= p_max")
         
 

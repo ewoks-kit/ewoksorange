@@ -4,16 +4,18 @@ Includes the ewoks task and the pydantic models.
 """
 
 import numpy
+from pydantic import Field
 from ewokscore.model import BaseInputModel
 from ewokscore.model import BaseOutputModel
 from ewokscore.task import Task
 
 
 class InputModel(BaseInputModel):
-    data: numpy.ndarray
-    """data to rescale"""
-    percentiles: tuple[float, float]
-    """percentiles to use for rescaling, must be a tuple of two values (p_min, p_max) with p_min <= p_max"""
+    data: numpy.ndarray = Field(..., description="data to rescale")
+    percentiles: tuple[float, float] = Field(
+        ...,
+        description="""percentiles to use for rescaling, must be a tuple of two values (p_min, p_max) with p_min <= p_max""",
+    )
 
 
 class OutputModel(BaseOutputModel):
