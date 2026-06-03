@@ -101,7 +101,7 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
         """Subclasses should implement cancellation logic for their specific executors."""
         raise NotImplementedError("Base class")
 
-    def cancel_task(self, task_id):
+    def cancel_task(self, task_id: TaskExecutionID):
         """Subclasses should implement cancellation logic for their specific executors."""
         raise NotImplementedError("Base class")
 
@@ -196,7 +196,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         # OWEwoksWidgetOneThread only supports one task at a time, so canceling all tasks is the same as canceling the running task.
         self.cancel_running_task()
 
-    def cancel_task(self, task_id):
+    def cancel_task(self, task_id: TaskExecutionID):
         if task_id == self._current_task_exec_id:
             self.cancel_running_task()
 
@@ -340,7 +340,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def cancel_all_tasks(self):
         raise NotImplementedError
 
-    def cancel_task(self, task_id):
+    def cancel_task(self, task_id: TaskExecutionID):
         self._cancel_running_task(task_id)
 
     def _cancel_running_task(self, task_id):
