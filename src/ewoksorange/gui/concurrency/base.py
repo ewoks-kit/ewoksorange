@@ -1,12 +1,15 @@
 import logging
 from typing import Optional
 from typing import Type
+from typing import TypeAlias
 
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
 _logger = logging.getLogger(__name__)
+
+TaskExecutionID: TypeAlias = str
 
 
 class TaskExecutor:
@@ -31,13 +34,18 @@ class TaskExecutor:
             else:
                 _logger.info(f"task initialization failed: {e}")
 
-    def execute_task(self) -> None:
+    def execute_task(self) -> tuple[bool, TaskExecutionID]:
+        """
+        Execute the task and return a tuple indicating success of the submission and the execution ID.
+        """
         if not self.has_task:
-            return
+            return False, ""
         try:
             self.__task.execute()
         except Exception as e:
             _logger.error(f"task failed: {e}", exc_info=True)
+            return True, ""
+        return True, ""
 
     @property
     def has_task(self) -> bool:
@@ -75,3 +83,9 @@ class TaskExecutor:
     @property
     def current_task(self) -> Optional[Task]:
         return self.__task
+
+    def cancel_task(self, task_id) -> None:
+        raise NotImplementedError("Task cancellation is not implemented yet")
+
+    def cancel_all_tasks(self) -> None:
+        raise NotImplementedError("Task cancellation is not implemented yet")
