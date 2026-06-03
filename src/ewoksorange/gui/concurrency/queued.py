@@ -91,6 +91,9 @@ class TaskExecutorQueue(QObject):
         will abort current task.
         task_executor signal 'finished' will be blocked but callbacks will be executed to ensure a safe processing
         """
+        if self.is_available:
+            return
+
         with block_signals(self._task_executor):
             self._task_executor.cancel_running_task()
             # stop and remove the current task from the stack
