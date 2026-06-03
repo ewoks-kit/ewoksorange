@@ -95,7 +95,6 @@ class TaskExecutorQueue(QObject):
             self._task_executor.cancel_running_task()
             # stop and remove the current task from the stack
             self._task_executor.stop(wait=wait)
-            self._current_task_id = None
             # signal that processing is done
             self._process_ended_direct(task_executor=self._task_executor)
 
@@ -108,7 +107,6 @@ class TaskExecutorQueue(QObject):
         # If task is currently running, use existing cancel method
         if self._current_task_id == task_id:
             self.cancel_running_task()
-            return True
         else:
             self._cancel_pending_task(task_id)
 
