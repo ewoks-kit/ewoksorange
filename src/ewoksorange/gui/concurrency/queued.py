@@ -12,6 +12,7 @@ from AnyQt.QtCore import pyqtSignal as Signal
 
 from ..qt_utils.signals import block_signals
 from .threaded import ThreadedTaskExecutor
+from .base import TaskExecutionID
 
 
 class TaskExecutorQueue(QObject):
@@ -87,7 +88,7 @@ class TaskExecutorQueue(QObject):
 
     def cancel_running_task(self, wait=True):
         """
-        will cancel current task.
+        will abort current task.
         task_executor signal 'finished' will be blocked but callbacks will be executed to ensure a safe processing
         """
         with block_signals(self._task_executor):
@@ -98,7 +99,7 @@ class TaskExecutorQueue(QObject):
             # signal that processing is done
             self._process_ended_direct(task_executor=self._task_executor)
 
-    def cancel_task(self, task_id: str) -> bool:
+    def cancel_task(self, task_id: str):
         """Cancel a task by its identifier
 
         :param task_id: The identifier returned by add()
@@ -108,15 +109,16 @@ class TaskExecutorQueue(QObject):
         if self._current_task_id == task_id:
             self.cancel_running_task()
             return True
+        else:
+            self._cancel_pending_task(task_id)
+
+    def _cancel_pending_task(self, task_id: TaskExecutionID):
         # If task is not currently running, remove from queue
-        elif task_id in self._task_ids:
+        if task_id in self._task_ids:
             # Remove from queue
             if task_id in self._task_queue:
                 self._task_queue.remove(task_id)
                 del self._task_ids[task_id]
-                return True
-
-        return False
 
     def cancel_all_tasks(self, wait=True):
         """Cancel all pending and running tasks in the queue."""
