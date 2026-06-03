@@ -30,11 +30,11 @@ class TaskExecutorQueue(QObject):
 
     def __init__(self, ewokstaskclass):
         super().__init__()
-        self._task_queue: Deque[str] = deque()
+        self._task_queue: Deque[TaskExecutionID] = deque()
         """Queue storing task IDs in FIFO order"""
-        self._task_ids: Dict[str, Dict[str, Any]] = {}
+        self._task_ids: Dict[TaskExecutionID, Dict[str, Any]] = {}
         """Dictionary mapping task IDs to their keyword arguments"""
-        self._current_task_id: str | None = None
+        self._current_task_id: TaskExecutionID | None = None
         self._task_executor: ThreadedTaskExecutor = _ThreadedTaskExecutor(
             ewokstaskclass=ewokstaskclass
         )
@@ -45,7 +45,7 @@ class TaskExecutorQueue(QObject):
     def is_available(self) -> bool:
         return self._available
 
-    def add(self, **kwargs) -> str:
+    def add(self, **kwargs) -> TaskExecutionID:
         """Add a task `ewokstaskclass` execution request
 
         :return: Task identifier (UUID) that can be used to cancel the task
@@ -99,7 +99,7 @@ class TaskExecutorQueue(QObject):
             # signal that processing is done
             self._process_ended_direct(task_executor=self._task_executor)
 
-    def cancel_task(self, task_id: str):
+    def cancel_task(self, task_id: TaskExecutionID):
         """Cancel a task by its identifier
 
         :param task_id: The identifier returned by add()
