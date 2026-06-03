@@ -71,7 +71,7 @@ Widget 'skeleton' is the following:
     * `l5`\: inheritance with the ewoks orange widget.
     * `l6`\: definition of the ewoks task to bind. This is usually given with the full module path. For example if `RescaleDataTask` is saved in `my_project.tasks.rescale` the value would be `my_project.tasks.rescale.RescaleDataTask`.
     * `l8`\: the name of the widget (will be displayed in the canvas).
-    * `l9`\: id from the orange point of view. It should be constant with time to make insure workflow compatibility.
+    * `l9`\: id from the orange point of view. It should be constant with time to ensure workflow compatibility.
     * `l10`\: tooltip of the widget.
 
 
