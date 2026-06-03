@@ -95,6 +95,14 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
     def __onProgressChanged(self, progress: int):
         self.progressBarSet(float(progress))
 
+    def cancel_all_tasks(self):
+        """Subclasses should implement cancellation logic for their specific executors."""
+        raise NotImplementedError("Base class")
+
+    def cancel_task(self, task_id):
+        """Subclasses should implement cancellation logic for their specific executors."""
+        raise NotImplementedError("Base class")
+
 
 class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     """
