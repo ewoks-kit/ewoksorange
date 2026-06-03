@@ -35,10 +35,6 @@ class ClipDataTask(
         data = self.inputs.data
         # compute data min and max
         percentiles = self.inputs.percentiles
-        assert (
-            isinstance(percentiles, tuple) and len(percentiles) == 2
-        ), "incoherent input"
-        assert percentiles[0] <= percentiles[1], "incoherent percentiles value"
 
         self.outputs.data = numpy.clip(
             data,
