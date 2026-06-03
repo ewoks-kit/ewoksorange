@@ -235,8 +235,9 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         )
         with self.__init_task_executor(task_executor, propagate):
             if task_executor.has_task:
+                task_id = str(uuid.uuid4())
                 with self._ewoks_task_start_context():
-                    task_id = task_executor.start()
+                    task_executor.start()
             else:
                 task_executor.finished.emit()
         return task_id
