@@ -1,3 +1,4 @@
+import uuid
 import logging
 from typing import Optional
 from typing import Type
@@ -39,13 +40,19 @@ class TaskExecutor:
         Execute the task and return a tuple indicating success of the submission and the execution ID.
         """
         if not self.has_task:
-            return ""
+            return str(
+                uuid.uuid4()
+            )  # Return a dummy TaskExecutionID since we couldn't create the task
         try:
             self.__task.execute()
         except Exception as e:
             _logger.error(f"task failed: {e}", exc_info=True)
-            return ""
-        return ""
+            return str(
+                uuid.uuid4()
+            )  # Return a dummy TaskExecutionID since we couldn't create the task
+        return str(
+            uuid.uuid4()
+        )  # Return a dummy TaskExecutionID since we couldn't create the task
 
     @property
     def has_task(self) -> bool:
