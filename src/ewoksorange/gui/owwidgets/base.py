@@ -19,8 +19,8 @@ from ewokscore import missing_data
 from ewokscore.variable import value_from_transfer
 
 from ...orange_version import ORANGE_VERSION
-from ..utils.invalid_data import is_invalid_data
 from ..concurrency.base import TaskExecutionID
+from ..utils.invalid_data import is_invalid_data
 
 # OWBaseWidget: lowest level Orange widget base class
 # OWWidget: highest level Orangewidget base class.

@@ -11,8 +11,8 @@ from AnyQt.QtCore import QObject
 from AnyQt.QtCore import pyqtSignal as Signal
 
 from ..qt_utils.signals import block_signals
-from .threaded import ThreadedTaskExecutor
 from .base import TaskExecutionID
+from .threaded import ThreadedTaskExecutor
 
 
 class TaskExecutorQueue(QObject):

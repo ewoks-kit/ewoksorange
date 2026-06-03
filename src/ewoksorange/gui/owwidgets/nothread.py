@@ -2,11 +2,12 @@
 Synchronous (no-thread) Ewoks widget implementation.
 """
 
-import uuid
 import logging
+import uuid
 from typing import Optional
 
-from ..concurrency.base import TaskExecutor, TaskExecutionID
+from ..concurrency.base import TaskExecutionID
+from ..concurrency.base import TaskExecutor
 from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
 

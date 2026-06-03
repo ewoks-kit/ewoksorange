@@ -4,8 +4,8 @@ Threaded Ewoks widget implementations.
 
 from __future__ import annotations
 
-import uuid
 import logging
+import uuid
 from contextlib import contextmanager
 from typing import Dict
 from typing import Optional
