@@ -312,6 +312,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self, task_id: TaskExecutionID
     ) -> ThreadedTaskExecutor | None:
         """Return outputs from the last finished task executor."""
+        # FIXME: This lookup is inefficient; consider maintaining a separate dict mapping task_id to executor for O(1) access if needed.
         task_id_to_executor = {
             task_id: executor for executor, _, task_id in self.__task_executors.values()
         }
