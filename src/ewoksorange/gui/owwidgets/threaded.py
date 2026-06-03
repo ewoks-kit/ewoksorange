@@ -367,12 +367,15 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         """Access the underlying TaskExecutorQueue."""
         return self.__task_executor_queue
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> str:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> tuple[bool, TaskExecutionID]:
         """
         Queue the task for later execution in FIFO order.
 
         :param propagate: Whether to propagate outputs after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
+        :return: Tuple indicating if the task was successfully queued and its execution ID.
         """
 
         def callback():
@@ -434,3 +437,12 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             self.__task_executor_queue.get()
         # then cancel the currently running task, if any
         self.__task_executor_queue.cancel_all_tasks()
+
+    def cancel_task(self, task_id):
+        """
+        Cancel a specific task by ID, whether it's currently running or still in the queue.
+
+        :param task_id: The ID of the task to cancel.
+        :return: True if the task was found and cancellation was initiated, False otherwise.
+        """
+        return self.__task_executor_queue.cancel_task(task_id)
