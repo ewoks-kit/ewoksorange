@@ -211,18 +211,23 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         Initialize per-run executor storage.
         """
         super().__init__(*args, **kwargs)
-        self.__task_executors: Dict[int, Tuple[ThreadedTaskExecutor, bool]] = dict()
+        self.__task_executors: Dict[
+            int, Tuple[ThreadedTaskExecutor, bool, TaskExecutionID]
+        ] = dict()
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
         self.__last_task_done = None
         self.__last_task_exception = None
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> tuple[bool, TaskExecutionID]:
         """
         Create a fresh ThreadedTaskExecutor, register it, and start it if it has work.
 
         :param propagate: Whether to propagate outputs after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
+        :return: Tuple indicating if the task was successfully queued and its execution ID.
         """
         task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
         task_executor.create_task(
@@ -231,9 +236,10 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         with self.__init_task_executor(task_executor, propagate):
             if task_executor.has_task:
                 with self._ewoks_task_start_context():
-                    task_executor.start()
+                    task_id = task_executor.start()
             else:
                 task_executor.finished.emit()
+        return True, task_id
 
     @contextmanager
     def __init_task_executor(self, task_executor, propagate: bool):
@@ -284,9 +290,11 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             task_executor.quit()
         self.__task_executors.clear()
 
-    def __add_task_executor(self, task_executor, propagate: bool):
+    def __add_task_executor(self, task_executor, propagate: bool) -> TaskExecutionID:
         """Internal: register a new task executor with its propagate flag."""
-        self.__task_executors[id(task_executor)] = task_executor, propagate
+        task_id = id(task_executor)
+        self.__task_executors[id(task_executor)] = task_executor, propagate, task_id
+        return task_id
 
     def __remove_task_executor(self, task_executor: ThreadedTaskExecutor):
         """Internal: unregister a task executor and disconnect its signals."""
@@ -298,7 +306,16 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def __is_task_executor_propagated(self, task_executor) -> bool:
         """Return whether the given executor was registered to propagate."""
-        return self.__task_executors.get(id(task_executor), (None, False))[1]
+        return self.__task_executors.get(id(task_executor), (None, False, ""))[1]
+
+    def _get_task_executor(
+        self, task_id: TaskExecutionID
+    ) -> ThreadedTaskExecutor | None:
+        """Return outputs from the last finished task executor."""
+        task_id_to_executor = {
+            task_id: executor for executor, _, task_id in self.__task_executors.values()
+        }
+        return task_id_to_executor.get(task_id, None)
 
     @property
     def task_succeeded(self) -> Optional[bool]:
@@ -315,6 +332,14 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def _get_task_outputs(self) -> dict:
         """Return the last finished task's outputs."""
         return self.__last_output_variables
+
+    def cancel_all_tasks(self):
+        raise NotImplementedError
+
+    def cancel_task(self, task_id):
+        executor = self._get_task_executor(task_id)
+        if executor is not None:
+            executor.cancel_running_task()
 
 
 class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
