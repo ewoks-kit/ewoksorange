@@ -34,18 +34,18 @@ class TaskExecutor:
             else:
                 _logger.info(f"task initialization failed: {e}")
 
-    def execute_task(self) -> tuple[bool, TaskExecutionID]:
+    def execute_task(self) -> TaskExecutionID:
         """
         Execute the task and return a tuple indicating success of the submission and the execution ID.
         """
         if not self.has_task:
-            return False, ""
+            return ""
         try:
             self.__task.execute()
         except Exception as e:
             _logger.error(f"task failed: {e}", exc_info=True)
-            return True, ""
-        return True, ""
+            return ""
+        return ""
 
     @property
     def has_task(self) -> bool:
@@ -84,7 +84,7 @@ class TaskExecutor:
     def current_task(self) -> Optional[Task]:
         return self.__task
 
-    def cancel_task(self, task_id) -> None:
+    def cancel_task(self, task_id: TaskExecutionID) -> None:
         raise NotImplementedError("Task cancellation is not implemented yet")
 
     def cancel_all_tasks(self) -> None:
