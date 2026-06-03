@@ -4,12 +4,14 @@ Threaded Ewoks widget implementations.
 
 from __future__ import annotations
 
+import uuid
 import logging
 from contextlib import contextmanager
 from typing import Dict
 from typing import Optional
 from typing import Tuple
 
+from ..concurrency.base import TaskExecutionID
 from ..concurrency.queued import TaskExecutorQueue
 from ..concurrency.threaded import ThreadedTaskExecutor
 from ..qt_utils.progress import QProgress
@@ -119,17 +121,21 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
         self.__task_executor.finished.connect(self._ewoks_task_finished_callback)
         self.__propagate = None
+        self._current_task_exec_id = ""
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> tuple[bool, TaskExecutionID]:
         """
         Prepare and start the background thread if idle.
 
         :param propagate: Whether to propagate outputs after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
+        :return: Tuple indicating if the task was successfully queued and its execution ID.
         """
         if self.__task_executor.isRunning():
             _logger.error("A processing is already ongoing")
-            return
+            return False, ""
         self.__task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )
@@ -137,9 +143,13 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             with self._ewoks_task_start_context():
                 self.__propagate = propagate
                 self.__task_executor.start()
+                self._current_task_exec_id = str(uuid.uuid4())
+                return True, self._current_task_exec_id
         else:
             self.__propagate = propagate
             self.__task_executor.finished.emit()
+            self._current_task_exec_id = ""
+            return False, self._current_task_exec_id
 
     @property
     def task_executor(self):
@@ -180,8 +190,15 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executor = None
 
     def cancel_running_task(self):
-        """Request cancellation of a running task."""
         self.__task_executor.cancel_running_task()
+
+    def cancel_all_tasks(self):
+        # OWEwoksWidgetOneThread only supports one task at a time, so canceling all tasks is the same as canceling the running task.
+        self.cancel_running_task()
+
+    def cancel_task(self, task_id):
+        if task_id == self._current_task_exec_id:
+            self.cancel_running_task()
 
 
 class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
