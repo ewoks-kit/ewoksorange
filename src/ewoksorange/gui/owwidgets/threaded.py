@@ -233,9 +233,9 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )
-        with self.__init_task_executor(task_executor, propagate):
+        task_id = str(uuid.uuid4())
+        with self.__init_task_executor(task_executor, propagate, task_id):
             if task_executor.has_task:
-                task_id = str(uuid.uuid4())
                 with self._ewoks_task_start_context():
                     task_executor.start()
             else:
@@ -243,7 +243,9 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         return task_id
 
     @contextmanager
-    def __init_task_executor(self, task_executor, propagate: bool):
+    def __init_task_executor(
+        self, task_executor, propagate: bool, task_id: TaskExecutionID
+    ):
         """
         Register a task executor and connect its finished callback for safe cleanup.
 
@@ -251,7 +253,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         :param propagate: Propagate flag to store with the executor.
         """
         task_executor.finished.connect(self._ewoks_task_finished_callback)
-        self.__add_task_executor(task_executor, propagate)
+        self.__add_task_executor(task_executor, propagate, task_id)
         try:
             yield
         except Exception:
@@ -291,11 +293,11 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             task_executor.quit()
         self.__task_executors.clear()
 
-    def __add_task_executor(self, task_executor, propagate: bool) -> TaskExecutionID:
+    def __add_task_executor(
+        self, task_executor, propagate: bool, task_id
+    ) -> TaskExecutionID:
         """Internal: register a new task executor with its propagate flag."""
-        task_id = id(task_executor)
         self.__task_executors[id(task_executor)] = task_executor, propagate, task_id
-        return task_id
 
     def __remove_task_executor(self, task_executor: ThreadedTaskExecutor):
         """Internal: unregister a task executor and disconnect its signals."""
