@@ -21,7 +21,7 @@ Remember that your pydantic models can contain default values.
 .. code-block:: python
 
     class InputModel(BaseInputModel):
-        percentiles: tuple[float, float] = description(default=(0, 100), description="percentiles to use for rescaling, must be a tuple of two values (p_min, p_max) with p_min <= p_max")
+        percentiles: tuple[float, float] = Field(default=(0, 100), description="percentiles to use for rescaling, must be a tuple of two values (p_min, p_max) with p_min <= p_max")
         
 
 To avoid duplicating this information on the "gui" module you can retrieve those values like:
