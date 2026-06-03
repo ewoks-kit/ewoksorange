@@ -2,10 +2,11 @@
 Synchronous (no-thread) Ewoks widget implementation.
 """
 
+import uuid
 import logging
 from typing import Optional
 
-from ..concurrency.base import TaskExecutor
+from ..concurrency.base import TaskExecutor, TaskExecutionID
 from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
 
@@ -26,7 +27,9 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         super().__init__(*args, **kwargs)
         self.__task_executor = TaskExecutor(self.ewokstaskclass)
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> TaskExecutionID:
         """
         Create and execute the Task synchronously.
 
@@ -46,6 +49,9 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
                 self.propagate_downstream()
         finally:
             self._output_changed()
+        return str(
+            uuid.uuid4()
+        )  # Return a dummy TaskExecutionID since we're synchronous
 
     @property
     def task_succeeded(self) -> Optional[bool]:

@@ -20,6 +20,7 @@ from ewokscore.variable import value_from_transfer
 
 from ...orange_version import ORANGE_VERSION
 from ..utils.invalid_data import is_invalid_data
+from ..concurrency.base import TaskExecutionID
 
 # OWBaseWidget: lowest level Orange widget base class
 # OWWidget: highest level Orangewidget base class.
@@ -606,7 +607,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         pass
 
-    def execute_ewoks_task(self, log_missing_inputs: bool = True) -> None | str:
+    def execute_ewoks_task(self, log_missing_inputs: bool = True) -> TaskExecutionID:
         """
         Execute the Ewoks task and propagate downstream on completion.
 
@@ -618,7 +619,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             propagate=True, log_missing_inputs=log_missing_inputs
         )
 
-    def execute_ewoks_task_without_propagation(self) -> None | str:
+    def execute_ewoks_task_without_propagation(self) -> TaskExecutionID:
         """
         Execute the Ewoks task without propagating outputs downstream.
 
@@ -728,11 +729,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             if ncallbacks > 1:
                 self.__post_task_execute(callbacks[1:])
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> TaskExecutionID:
         """
         Subclasses must implement how the task is created and executed.
 
         :param propagate: Whether to propagate outputs downstream after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
+        :return: Task execution identifier. Can be used to cancel / abort a task.
         """
         raise NotImplementedError("Base class")
