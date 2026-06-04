@@ -98,7 +98,7 @@ class TaskExecutorQueue(QObject):
             # signal that processing is done
             self._process_ended_direct(task_executor=self._task_executor)
 
-    def cancel_task(self, task_exec_id: TaskExecutionID):
+    def cancel_task(self, task_exec_id: TaskExecutionID) -> None:
         """Cancel a task by its identifier
 
         :param task_exec_id: The identifier returned by add()

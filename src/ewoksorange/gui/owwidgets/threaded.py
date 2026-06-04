@@ -97,11 +97,11 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
     def __onProgressChanged(self, progress: int):
         self.progressBarSet(float(progress))
 
-    def cancel_all_tasks(self):
+    def cancel_all_tasks(self) -> None:
         """Subclasses should implement cancellation logic for their specific executors."""
         raise NotImplementedError("Base class")
 
-    def cancel_task(self, task_exec_id: TaskExecutionID):
+    def cancel_task(self, task_exec_id: TaskExecutionID) -> None:
         """Subclasses should implement cancellation logic for their specific executors."""
         raise NotImplementedError("Base class")
 
@@ -192,11 +192,11 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def cancel_running_task(self):
         self.__task_executor.cancel_running_task()
 
-    def cancel_all_tasks(self):
+    def cancel_all_tasks(self) -> None:
         # OWEwoksWidgetOneThread only supports one task at a time, so canceling all tasks is the same as canceling the running task.
         self.cancel_running_task()
 
-    def cancel_task(self, task_exec_id: TaskExecutionID):
+    def cancel_task(self, task_exec_id: TaskExecutionID) -> None:
         if task_exec_id == self._current_task_exec_id:
             self.cancel_running_task()
 
@@ -342,17 +342,17 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         """Return the last finished task's outputs."""
         return self.__last_output_variables
 
-    def cancel_all_tasks(self):
+    def cancel_all_tasks(self) -> None:
         task_exec_ids = [
             task_exec_id for _, _, task_exec_id in self.__task_executors.values()
         ]
         for task_exec_id in task_exec_ids:
             self.cancel_task(task_exec_id=task_exec_id)
 
-    def cancel_task(self, task_exec_id: TaskExecutionID):
+    def cancel_task(self, task_exec_id: TaskExecutionID) -> None:
         self._cancel_running_task(task_exec_id)
 
-    def _cancel_running_task(self, task_exec_id):
+    def _cancel_running_task(self, task_exec_id) -> None:
         executor = self._get_task_executor(task_exec_id)
         if executor is not None:
             executor.cancel_running_task()
@@ -446,7 +446,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         """Cancel the currently running task in the queue, if any."""
         self.__task_executor_queue.cancel_running_task()
 
-    def cancel_all_tasks(self):
+    def cancel_all_tasks(self) -> None:
         """Cancel (or abort) all pending and running tasks in the queue."""
         self.__task_executor_queue.cancel_all_tasks()
 
