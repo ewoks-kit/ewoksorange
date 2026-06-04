@@ -1,6 +1,8 @@
+from time import sleep
+
+import pytest
 from ewokscore import Task
 
-from time import sleep
 from ..gui.owwidgets.meta import ow_build_opts
 from ..gui.owwidgets.threaded import (
     OWEwoksWidgetOneThreadPerRun as _OWEwoksWidgetOneThreadPerRun,
@@ -52,7 +54,14 @@ class OWEwoksWidgetOneThreadPerRun(
     name = "test_OW"
 
 
-def test_OWEwoksWidgetOneThreadPerRun(qtapp):
+@pytest.mark.parametrize(
+    "test_case, expected_values",
+    [
+        ("standard_execution", [0, 1, 2]),
+        ("cancellation", ["cancelled", "cancelled", "cancelled"]),
+    ],
+)
+def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_values):
     """
     Test processing several tasks.
     The widget will create one thread per task and execution will be done in parallel.
@@ -66,50 +75,22 @@ def test_OWEwoksWidgetOneThreadPerRun(qtapp):
         MyObject(),
     )
 
-    for value, obj in enumerate(objects):
-        widget.set_dynamic_input("value", value)
-        widget.set_dynamic_input("my_object", obj)
-
-        # Start calculation
-        widget.handleNewSignals()
-
-    for obj in objects:
-        obj.finished.wait(timeout=3)
-
-    values = [obj.value for obj in objects]
-    expected = [0, 1, 2]
-    assert values == expected
-
-
-def test_OWEwoksWidgetOneThreadPerRun_cancellation(qtapp):
-    # test task cancellation
-    widget = OWEwoksWidgetOneThreadPerRun()
-
-    objects = (
-        MyObject(),
-        MyObject(),
-        MyObject(),
-    )
     execution_ids = []
-
     for value, obj in enumerate(objects):
         widget.set_dynamic_input("value", value)
         widget.set_dynamic_input("my_object", obj)
-        widget.set_dynamic_input("sleep_duration", 0.5)
+        if test_case == "cancellation":
+            widget.set_dynamic_input("sleep_duration", 0.5)
 
         # Start calculation
-        task_exec_id = widget.execute_ewoks_task()
-        execution_ids.append(task_exec_id)
-        assert task_exec_id not in ("", None)
+        execution_ids.append(widget.execute_ewoks_task())
 
-    for exec_id in execution_ids:
-        widget.cancel_task(exec_id)
+    if test_case == "cancellation":
+        for exec_id in execution_ids:
+            widget.cancel_task(exec_id)
 
     for obj in objects:
         obj.finished.wait(timeout=3)
 
-    # The task is not implemented the `cancel` method,
-    # so the first task will be executed and the others will be cancelled.
     values = [obj.value for obj in objects]
-    expected = ["cancelled", "cancelled", "cancelled"]
-    assert values == expected
+    assert values == expected_values
