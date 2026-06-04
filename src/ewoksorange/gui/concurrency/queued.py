@@ -39,11 +39,10 @@ class TaskExecutorQueue(QObject):
             ewokstaskclass=ewokstaskclass
         )
         self._task_executor.finished.connect(self._process_ended)
-        self._available: bool = True
 
     @property
     def is_available(self) -> bool:
-        return self._available
+        return self._current_task_exec_id is None
 
     def add(self, **kwargs) -> TaskExecutionID:
         """Add a task `ewokstaskclass` execution request
@@ -63,7 +62,6 @@ class TaskExecutorQueue(QObject):
         if not self._task_queue:
             return
 
-        self._available = False
         self._current_task_exec_id = self._task_queue.popleft()
         task_kwargs = self._task_exec_ids.pop(self._current_task_exec_id)
 
@@ -81,7 +79,6 @@ class TaskExecutorQueue(QObject):
         for callback in task_executor.callbacks:
             callback()
         self.sigComputationEnded.emit()
-        self._available = True
         self._current_task_exec_id = None
         if self.is_available:
             self._process_next()
