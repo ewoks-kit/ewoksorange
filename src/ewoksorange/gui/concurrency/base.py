@@ -1,5 +1,5 @@
-import uuid
 import logging
+import uuid
 from typing import Optional
 from typing import Type
 from typing import TypeAlias
