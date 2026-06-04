@@ -5,7 +5,7 @@ from ewokscore import Task
 from ewokscore.missing_data import MISSING_DATA
 from ewokscore.tests.examples.tasks.sumtask import SumTask
 
-from ..gui.concurrency.base import TaskExecutor
+from ..gui.concurrency.base import TaskExecutor, TaskExecutionID
 from ..gui.concurrency.queued import TaskExecutorQueue
 from ..gui.concurrency.threaded import ThreadedTaskExecutor
 from ..gui.qt_utils.app import QtEvent
@@ -20,10 +20,15 @@ def test_task_executor():
     assert executor.has_task
     assert not executor.succeeded
 
-    executor.execute_task()
+    task_exec_id = executor.execute_task()
+    assert task_exec_id not in ("", None) and isinstance(task_exec_id, TaskExecutionID)
     assert executor.succeeded
     results = {k: v.value for k, v in executor.output_variables.items()}
     assert results == {"result": 3}
+
+    # dummy test of the API
+    executor.cancel_task(task_id=task_exec_id)
+    executor.cancel_all_tasks()
 
 
 def test_threaded_task_executor(qtapp):
