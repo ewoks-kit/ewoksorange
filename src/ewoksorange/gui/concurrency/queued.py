@@ -32,9 +32,9 @@ class TaskExecutorQueue(QObject):
         super().__init__()
         self._task_queue: Deque[TaskExecutionID] = deque()
         """Queue storing task IDs in FIFO order"""
-        self._task_ids: Dict[TaskExecutionID, Dict[str, Any]] = {}
+        self._task_exec_ids: Dict[TaskExecutionID, Dict[str, Any]] = {}
         """Dictionary mapping task IDs to their keyword arguments"""
-        self._current_task_id: TaskExecutionID | None = None
+        self._current_task_exec_id: TaskExecutionID | None = None
         self._task_executor: ThreadedTaskExecutor = _ThreadedTaskExecutor(
             ewokstaskclass=ewokstaskclass
         )
@@ -50,22 +50,22 @@ class TaskExecutorQueue(QObject):
 
         :return: Task identifier (UUID) that can be used to cancel the task
         """
-        task_id = str(uuid.uuid4())
-        self._task_ids[task_id] = kwargs
-        self._task_queue.append(task_id)
+        task_exec_id = str(uuid.uuid4())
+        self._task_exec_ids[task_exec_id] = kwargs
+        self._task_queue.append(task_exec_id)
 
         if self.is_available:
             self._process_next()
 
-        return task_id
+        return task_exec_id
 
     def _process_next(self):
         if not self._task_queue:
             return
 
         self._available = False
-        self._current_task_id = self._task_queue.popleft()
-        task_kwargs = self._task_ids.pop(self._current_task_id)
+        self._current_task_exec_id = self._task_queue.popleft()
+        task_kwargs = self._task_exec_ids.pop(self._current_task_exec_id)
 
         self._task_executor.create_task(**task_kwargs)
         if self._task_executor.has_task:
@@ -82,7 +82,7 @@ class TaskExecutorQueue(QObject):
             callback()
         self.sigComputationEnded.emit()
         self._available = True
-        self._current_task_id = None
+        self._current_task_exec_id = None
         if self.is_available:
             self._process_next()
 
@@ -101,31 +101,31 @@ class TaskExecutorQueue(QObject):
             # signal that processing is done
             self._process_ended_direct(task_executor=self._task_executor)
 
-    def cancel_task(self, task_id: TaskExecutionID):
+    def cancel_task(self, task_exec_id: TaskExecutionID):
         """Cancel a task by its identifier
 
-        :param task_id: The identifier returned by add()
+        :param task_exec_id: The identifier returned by add()
         :return: True if the task was successfully cancelled, False otherwise
         """
         # If task is currently running, use existing cancel method
-        if self._current_task_id == task_id:
+        if self._current_task_exec_id == task_exec_id:
             self.cancel_running_task()
         else:
-            self._cancel_pending_task(task_id)
+            self._cancel_pending_task(task_exec_id)
 
-    def _cancel_pending_task(self, task_id: TaskExecutionID):
+    def _cancel_pending_task(self, task_exec_id: TaskExecutionID):
         # If task is not currently running, remove from queue
-        if task_id in self._task_ids:
+        if task_exec_id in self._task_exec_ids:
             # Remove from queue
-            if task_id in self._task_queue:
-                self._task_queue.remove(task_id)
-                del self._task_ids[task_id]
+            if task_exec_id in self._task_queue:
+                self._task_queue.remove(task_exec_id)
+                del self._task_exec_ids[task_exec_id]
 
     def cancel_all_tasks(self, wait=True):
         """Cancel all pending and running tasks in the queue."""
         # first clear the queue of pending tasks
         self._task_queue.clear()
-        self._task_ids.clear()
+        self._task_exec_ids.clear()
         # then cancel the currently running task, if any
         self.cancel_running_task(wait=wait)
 
@@ -135,8 +135,8 @@ class TaskExecutorQueue(QObject):
         """
         self._task_executor.finished.disconnect(self._process_ended)
         self._task_queue.clear()
-        self._task_ids.clear()
-        self._current_task_id = None
+        self._task_exec_ids.clear()
+        self._current_task_exec_id = None
         self._task_executor.stop(wait=True)
         self._task_executor = None
 
@@ -145,7 +145,7 @@ class TaskExecutorQueue(QObject):
         return self._task_executor.current_task
 
     def __len__(self):
-        return len(self._task_queue) + (1 if self._current_task_id else 0)
+        return len(self._task_queue) + (1 if self._current_task_exec_id else 0)
 
 
 class _ThreadedTaskExecutor(ThreadedTaskExecutor):

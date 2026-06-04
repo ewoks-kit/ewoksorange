@@ -101,7 +101,7 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
         """Subclasses should implement cancellation logic for their specific executors."""
         raise NotImplementedError("Base class")
 
-    def cancel_task(self, task_id: TaskExecutionID):
+    def cancel_task(self, task_exec_id: TaskExecutionID):
         """Subclasses should implement cancellation logic for their specific executors."""
         raise NotImplementedError("Base class")
 
@@ -196,8 +196,8 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         # OWEwoksWidgetOneThread only supports one task at a time, so canceling all tasks is the same as canceling the running task.
         self.cancel_running_task()
 
-    def cancel_task(self, task_id: TaskExecutionID):
-        if task_id == self._current_task_exec_id:
+    def cancel_task(self, task_exec_id: TaskExecutionID):
+        if task_exec_id == self._current_task_exec_id:
             self.cancel_running_task()
 
 
@@ -233,18 +233,18 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )
-        task_id = str(uuid.uuid4())
-        with self.__init_task_executor(task_executor, propagate, task_id):
+        task_exec_id = str(uuid.uuid4())
+        with self.__init_task_executor(task_executor, propagate, task_exec_id):
             if task_executor.has_task:
                 with self._ewoks_task_start_context():
                     task_executor.start()
             else:
                 task_executor.finished.emit()
-        return task_id
+        return task_exec_id
 
     @contextmanager
     def __init_task_executor(
-        self, task_executor, propagate: bool, task_id: TaskExecutionID
+        self, task_executor, propagate: bool, task_exec_id: TaskExecutionID
     ):
         """
         Register a task executor and connect its finished callback for safe cleanup.
@@ -253,7 +253,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         :param propagate: Propagate flag to store with the executor.
         """
         task_executor.finished.connect(self._ewoks_task_finished_callback)
-        self.__add_task_executor(task_executor, propagate, task_id)
+        self.__add_task_executor(task_executor, propagate, task_exec_id)
         try:
             yield
         except Exception:
@@ -294,10 +294,14 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executors.clear()
 
     def __add_task_executor(
-        self, task_executor, propagate: bool, task_id
+        self, task_executor, propagate: bool, task_exec_id
     ) -> TaskExecutionID:
         """Internal: register a new task executor with its propagate flag."""
-        self.__task_executors[id(task_executor)] = task_executor, propagate, task_id
+        self.__task_executors[id(task_executor)] = (
+            task_executor,
+            propagate,
+            task_exec_id,
+        )
 
     def __remove_task_executor(self, task_executor: ThreadedTaskExecutor):
         """Internal: unregister a task executor and disconnect its signals."""
@@ -312,14 +316,15 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         return self.__task_executors.get(id(task_executor), (None, False, ""))[1]
 
     def _get_task_executor(
-        self, task_id: TaskExecutionID
+        self, task_exec_id: TaskExecutionID
     ) -> ThreadedTaskExecutor | None:
         """Return outputs from the last finished task executor."""
-        # FIXME: This lookup is inefficient; consider maintaining a separate dict mapping task_id to executor for O(1) access if needed.
-        task_id_to_executor = {
-            task_id: executor for executor, _, task_id in self.__task_executors.values()
+        # FIXME: This lookup is inefficient; consider maintaining a separate dict mapping task_exec_id to executor for O(1) access if needed.
+        task_exec_id_to_executor = {
+            task_exec_id: executor
+            for executor, _, task_exec_id in self.__task_executors.values()
         }
-        return task_id_to_executor.get(task_id, None)
+        return task_exec_id_to_executor.get(task_exec_id, None)
 
     @property
     def task_succeeded(self) -> Optional[bool]:
@@ -340,11 +345,11 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def cancel_all_tasks(self):
         raise NotImplementedError
 
-    def cancel_task(self, task_id: TaskExecutionID):
-        self._cancel_running_task(task_id)
+    def cancel_task(self, task_exec_id: TaskExecutionID):
+        self._cancel_running_task(task_exec_id)
 
-    def _cancel_running_task(self, task_id):
-        executor = self._get_task_executor(task_id)
+    def _cancel_running_task(self, task_exec_id):
+        executor = self._get_task_executor(task_exec_id)
         if executor is not None:
             executor.cancel_running_task()
 
@@ -389,12 +394,12 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             self._ewoks_task_finished_callback(propagate)
 
         with self._ewoks_task_start_context():
-            task_id = self.__task_executor_queue.add(
+            task_exec_id = self.__task_executor_queue.add(
                 _callbacks=(callback,),
                 _log_missing_inputs=log_missing_inputs,
                 **self._get_task_arguments(),
             )
-        return task_id
+        return task_exec_id
 
     @property
     def task_succeeded(self) -> Optional[bool]:
@@ -441,11 +446,11 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         """Cancel (or abort) all pending and running tasks in the queue."""
         self.__task_executor_queue.cancel_all_tasks()
 
-    def cancel_task(self, task_id):
+    def cancel_task(self, task_exec_id):
         """
         Cancel a specific task by ID, whether it's currently running or still in the queue.
 
-        :param task_id: The ID of the task to cancel.
+        :param task_exec_id: The ID of the task to cancel.
         :return: True if the task was found and cancellation was initiated, False otherwise.
         """
-        self.__task_executor_queue.cancel_task(task_id)
+        self.__task_executor_queue.cancel_task(task_exec_id)
