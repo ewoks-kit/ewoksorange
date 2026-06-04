@@ -120,11 +120,9 @@ class TaskExecutorQueue(QObject):
 
     def cancel_all_tasks(self, wait=True):
         """Cancel all pending and running tasks in the queue."""
-        # first clear the queue of pending tasks
-        self._task_queue.clear()
-        self._task_exec_ids.clear()
-        # then cancel the currently running task, if any
-        self.cancel_running_task(wait=wait)
+        tasks_exec_ids = self._task_exec_ids.keys()
+        for tasks_exec_id in tasks_exec_ids:
+            self.cancel_task(task_exec_id=tasks_exec_id)
 
     def stop(self):
         """
