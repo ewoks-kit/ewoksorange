@@ -92,7 +92,7 @@ class TaskExecutor:
         return self.__task
 
     def cancel_task(self, task_exec_id: TaskExecutionID) -> None:
-        raise NotImplementedError("Task cancellation is not implemented yet")
+        pass
 
     def cancel_all_tasks(self) -> None:
-        raise NotImplementedError("Task cancellation is not implemented yet")
+        pass
