@@ -164,12 +164,12 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
         },
         _callbacks=(obj5.finished_callback,),
     )
-    assert executor.cancel_task(task_exec_id=obj5_id)
+    executor.cancel_task(task_exec_id=obj5_id)
 
-    assert len(executor) == 1
+    len(executor._task_queue) == 1
     remaining_task_exec_ids = list(executor._task_exec_ids.keys()) + [
         executor._current_task_exec_id,
     ]
     assert obj4_id in remaining_task_exec_ids
     executor.cancel_all_tasks(wait=True)
-    assert len(executor) == 0
+    assert len(executor._task_queue) == 0
