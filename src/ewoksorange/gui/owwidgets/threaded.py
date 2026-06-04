@@ -343,7 +343,11 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         return self.__last_output_variables
 
     def cancel_all_tasks(self):
-        raise NotImplementedError
+        task_exec_ids = [
+            task_exec_id for _, _, task_exec_id in self.__task_executors.values()
+        ]
+        for task_exec_id in task_exec_ids:
+            self.cancel_task(task_exec_id=task_exec_id)
 
     def cancel_task(self, task_exec_id: TaskExecutionID):
         self._cancel_running_task(task_exec_id)
