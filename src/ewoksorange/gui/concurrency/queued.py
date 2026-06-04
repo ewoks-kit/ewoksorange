@@ -144,9 +144,6 @@ class TaskExecutorQueue(QObject):
     def current_task(self):
         return self._task_executor.current_task
 
-    def __len__(self):
-        return len(self._task_queue) + (1 if self._current_task_exec_id else 0)
-
 
 class _ThreadedTaskExecutor(ThreadedTaskExecutor):
     """Processing thread with some information on callbacks to be executed"""
