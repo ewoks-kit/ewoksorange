@@ -18,6 +18,7 @@ from typing import Union
 from AnyQt import QtCore
 from AnyQt import QtWidgets
 from ewokscore import missing_data
+from silx.gui import qt
 from silx.gui.dialog.DataFileDialog import DataFileDialog
 
 from ..qt_utils.signals import block_signals
@@ -294,6 +295,15 @@ class ParameterForm(QtWidgets.QWidget):
                 )
             else:
                 select_widget = None
+            if select in (SelectMode.DIRECTORY, SelectMode.DIRECTORIES):
+                self._attach_path_completer(value_widget, dir_only=True)
+            elif select in (
+                SelectMode.FILE,
+                SelectMode.NEW_FILE,
+                SelectMode.FILES,
+                SelectMode.NEW_FILES,
+            ):
+                self._attach_path_completer(value_widget, dir_only=False)
         elif isinstance(value_for_type, bool):
             value_widget = QtWidgets.QCheckBox(bool_label)
             if value_change_callback:
@@ -709,6 +719,16 @@ class ParameterForm(QtWidgets.QWidget):
             return lst[-1]
         else:
             raise TypeError(lst)
+
+    def _attach_path_completer(
+        self, widget: QtWidgets.QLineEdit, dir_only: bool = False
+    ) -> None:
+        completer = QtWidgets.QCompleter(widget)
+        model = qt.QDirModel(completer)
+        if dir_only:
+            model.setFilter(QtCore.QDir.AllDirs | QtCore.QDir.NoDotAndDotDot)
+        completer.setModel(model)
+        widget.setCompleter(completer)
 
     def keyPressEvent(self, event):
         key = event.key()

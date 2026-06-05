@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix `ParameterForm` file system selection in QT6 (Replace `QDialog.exec_` with `QDialog.exec`).
 
+# Added
+
+- `ParameterForm`: add an auto-completer for file / directory selection
+
 ## [5.0.1] - 2026-04-17
 
 ### Fixed
