@@ -55,15 +55,12 @@ First we will create a dedicated widget to display the inputs.
             self._minPercentiles.setValue(percentiles[0])
             self._maxPercentiles.setValue(percentiles[1])
 
-        def getPercentiles(self) -> tuple:
-            return (
-                self._minPercentiles.value(), self._maxPercentiles.value()
-            )
-
 
 .. hint::
 
     * l10\: At the moment we only want to provide feedback tot the users and not let them define this value
+
+
 
 Then we can link it to the ewoksorange widget
 
@@ -72,7 +69,7 @@ Then we can link it to the ewoksorange widget
 
     from ewokscore.missing_data import is_missing_data
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -109,7 +106,13 @@ Then once you will reprocess your workflow you should have:
 .. admonition:: Results
     :class: dropdown
 
-    .. include:: materials/input_gui_read_only.py
+    .. include:: materials/input_gui_read_only/clipdata.py
+        :literal:
+
+    .. include:: materials/input_gui_read_only/MyWidget.py
+        :literal:
+
+    .. include:: materials/input_gui_read_only/OWClipData.py
         :literal:
 
 Further reading

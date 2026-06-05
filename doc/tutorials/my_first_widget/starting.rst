@@ -19,32 +19,18 @@ Defining an ewoks task
 For this tutorial we would like to add a dedicated interface for the a task performing some data clipping from percentiles.
 We already have implemented it with `ewokscore <https://gitlab.esrf.fr/workflow/ewoks/ewokscore>`_.
 
-.. code-block:: python
+.. include:: materials/starting/clipdata.py
+    :literal:
 
-    from ewokscore.task import Task
-    import numpy
 
-    class ClipDataTask(
-        Task,
-        input_names=["data", "percentiles"],
-        output_names=["data"],
-    ):
-        """
-        Task to rescale 'data' (numpy array) to the given percentiles.
-        """
+.. note::
+    
+    While ``input_model`` and ``output_model`` are optional, using them ensures type consistency and improves integration with Orange (allows link type data checking for example).
+    For this tutorial, assume they are defined.
 
-        def run(self):
-            data = self.inputs.data
-            # compute data min and max
-            percentiles = self.inputs.percentiles
-            assert isinstance(percentiles, tuple) and len(percentiles) == 2, "incoherent input"
-            assert percentiles[0] <= percentiles[1], "incoherent percentiles value"
+.. hint::
 
-            self.outputs.data = numpy.clip(
-                data,
-                a_min=numpy.percentile(data, percentiles[0]),
-                a_max=numpy.percentile(data, percentiles[1]),
-            )
+    For simplicity, this tutorial keeps models in the same file as the task. For complex projects please consider defining them in a dedicated file (e.g., ``my_project.models.clip_data``) and import them.
 
 
 Associate a task to a dedicated orange widget
@@ -62,7 +48,10 @@ Widget 'skeleton' is the following:
 .. code-block:: python
     :linenos:
 
-    class ClipDataOW(
+    from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
+    from [my_project].tasks.clipdata import ClipDataTask
+
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -76,18 +65,23 @@ Widget 'skeleton' is the following:
 
 .. hint::
 
-    * l1\: OW stand for Orange Widget
-    * l2\: inheritance with the ewoks orange widget
-    * l3\: definition of the ewoks task to bind. This is usually given with the full module path. For example if `RescaleDataTask` is saved in `my_project.tasks.rescale` the value would be `my_project.tasks.rescale.RescaleDataTask`
-    * l5\: the name of the widget (will be displayed in the canvas)
-    * l6\: id from the orange point of view. It should be constant with time to make insure workflow compatibility.
-    * l7\: tooltip of the widget
+    * `l1`\: import of the required base class for the widget.
+    * `l2`\: import of the task to bind with the widget.
+    * `l4`\: OW stand for Orange Widget.
+    * `l5`\: inheritance with the ewoks orange widget.
+    * `l6`\: definition of the ewoks task to bind. This is usually given with the full module path. For example if `RescaleDataTask` is saved in `my_project.tasks.rescale` the value would be `my_project.tasks.rescale.RescaleDataTask`.
+    * `l8`\: the name of the widget (will be displayed in the canvas).
+    * `l9`\: id from the orange point of view. It should be constant with time to ensure workflow compatibility.
+    * `l10`\: tooltip of the widget.
 
 
 .. admonition:: Results
     :class: dropdown
 
-    .. include:: materials/starting.py
+    .. include:: materials/starting/clipdata.py
+        :literal:
+
+    .. include:: materials/starting/OWClipData.py
         :literal:
 
 Further reading

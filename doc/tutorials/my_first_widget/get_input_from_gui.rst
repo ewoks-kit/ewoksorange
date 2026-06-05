@@ -13,38 +13,18 @@ Now we want to go further and let the user provide input directly from the GUI.
 
 First think to do is update `MyWidget` widget to allow user edition of 'percentiles':
 
-.. code-block:: diff
 
-    diff --git a/src/orangecontrib/testtuto/ClipDataOW.py b/src/orangecontrib/testtuto/ClipDataOW.py
-    index e52788b..821428c 100644
-    --- a/src/orangecontrib/testtuto/ClipDataOW.py
-    +++ b/src/orangecontrib/testtuto/ClipDataOW.py
-    @@ -61,7 +61,6 @@ class MyWidget(qt.QWidget):
-    
-            self._minPercentiles = qt.QSlider(qt.Qt.Orientation.Horizontal)
-            self._minPercentiles.setTickPosition(qt.QSlider.TickPosition.TicksBelow)
-    -        self._minPercentiles.setEnabled(False)
-            self._minPercentiles.setRange(0, 100)
-            self._minPercentiles.setTickInterval(10)
-            self.layout().addRow(
-    @@ -72,7 +71,6 @@ class MyWidget(qt.QWidget):
-            # max percentiles
-            self._maxPercentiles = qt.QSlider(qt.Qt.Orientation.Horizontal)
-            self._maxPercentiles.setTickPosition(qt.QSlider.TickPosition.TicksBelow)
-    -        self._maxPercentiles.setEnabled(False)
-            self._maxPercentiles.setRange(0, 100)
-            self._maxPercentiles.setTickInterval(10)
-            self.layout().addRow(
+.. literalinclude:: materials/input_gui_user_input/MyWidget.py
+   :diff: materials/input_gui_read_only/MyWidget.py
 
 
 Then we can know when the sliders are updated from the QSlider `valueChanged <https://doc.qt.io/qt-6/qabstractslider.html#valueChanged>`_ signal. And use it to keep the ewoks task up to date as well.
-
 
 .. code-block:: python
     :linenos:
 
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -85,7 +65,7 @@ In this case you can hide the input from the link by using the `_ewoks_inputs_to
 
 .. code-block:: python
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -98,8 +78,9 @@ And we can also remove update of the QSlider when receiving a 'percentiles' inpu
 And only initialize it in the constructor.
 
 .. code-block:: python
+    :linenos:
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -128,6 +109,10 @@ And only initialize it in the constructor.
             self.set_dynamic_input("percentiles", self._myWidget.getPercentiles())
             self.execute_ewoks_task()
 
+.. hint::
+
+    * l20\: We define percentiles values directly from the GUI. This could be done by reading pydantic models default value. See :ref:`tuto_retrieve_pydantic_model_fields_default_values` for more details.
+
 
 Now the python widget 'input_percentiles' can be removed as it has been replace by the GUI.
 
@@ -135,7 +120,7 @@ Now the python widget 'input_percentiles' can be removed as it has been replace 
 
 .. note:: `setPercentiles` function will not automatically call 'valueChanged' of the QSlider. So to have `percentiles` input defined automatically you can either call `_percentileChanged` in the constructor or update the `setPercentiles` function.
 
-.. hint:: to make sure the input are propagated you can add a print of the inputs in the EwoksTask (ClipDataTask)
+.. hint:: to make sure the inputs are propagated you can add a print of the inputs in the EwoksTask (ClipDataTask)
 
 .. warning:: You have to be careful when triggering the processing. You might not want to launch the processing each time one input is updated. Especially if the processing is very time consuming. But maybe when one particular input is changed.
 
@@ -143,8 +128,15 @@ Now the python widget 'input_percentiles' can be removed as it has been replace 
 .. admonition:: Results
     :class: dropdown
 
-    .. include:: materials/input_gui_user_input.py
+    .. include:: materials/input_gui_user_input/clipdata.py
         :literal:
+
+    .. include:: materials/input_gui_user_input/MyWidget.py
+        :literal:
+
+    .. include:: materials/input_gui_user_input/OWClipData.py
+        :literal:
+
 
 Further reading
 ---------------

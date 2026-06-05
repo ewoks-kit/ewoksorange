@@ -18,7 +18,7 @@ We also need to reimplement the `handleNewSignals` function that will call by de
 
 .. code-block:: python
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -39,7 +39,7 @@ Add a ok button that triggers downstream processing
 for this we will take the shortest way to do it:
 
 * append a QPushButton to the control widget `MyWidget`
-* connect the `released` signal to the ewoks orange function `trigger_downstream`
+* connect the `clicked` signal to the ewoks orange function `trigger_downstream`
 
 .. code-block:: python
 
@@ -50,8 +50,8 @@ for this we will take the shortest way to do it:
             # ok button
             self._okButton = qt.QPushButton("ok", self)
             self.layout().addRow(self._okButton)
-    
-    class ClipDataOW(
+
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -59,17 +59,29 @@ for this we will take the shortest way to do it:
             ...
             # connect signal / slot
             ...
-            self._myWidget._okButton.released.connect(self.trigger_downstream)
+            self._myWidget._okButton.clicked.connect(self.trigger_downstream)
 
 Now your workflow should look like:
 
 .. image:: img/user_validation.gif
 
-.. warning:: be careful that in this use case you don;t have 'angle mort': at some point some (mandatory) input might not be defined abd this can be confusing to the user.
+.. warning::
+
+    Be careful that when user trigger downstream processing (click on the button) nothing makes sure all required input are defined.
+
+    This is up to you to make it clear to the user.
+
+    Either displaying a clear warning about missing input or disabling the 'ok' button until all required input are provided can be good solution to avoid user confusion.
 
 
 .. admonition:: Results
     :class: dropdown
 
-    .. include:: materials/waiting_for_user_validation.py
+    .. include:: materials/waiting_for_user_validation/clipdata.py
+        :literal:
+
+    .. include:: materials/waiting_for_user_validation/MyWidget.py
+        :literal:
+
+    .. include:: materials/waiting_for_user_validation/OWClipData.py
         :literal:

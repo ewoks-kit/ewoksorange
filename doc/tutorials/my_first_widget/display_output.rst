@@ -5,7 +5,7 @@ Provide feedback on task output
 
 In this chapter we will:
 
-* add a plot widget to 'ClipDataOW' that displays histogram values of 'data' in [0.0, 1.0]
+* add a plot widget to 'OWClipData' that displays histogram values of 'data' in [0.0, 1.0]
 * update the plot widget when ewoks task output changes.
 
 First let's move the 'MyWidget' to the control area
@@ -13,13 +13,17 @@ First let's move the 'MyWidget' to the control area
 From orange main area to control area
 """""""""""""""""""""""""""""""""""""
 
+.. comment::
+
+    The following code-block is only a subset of the full diff. This is why it is displayed in raw format.
+
 .. code-block:: diff
 
-    diff --git a/src/orangecontrib/testtuto/ClipDataOW.py b/src/orangecontrib/testtuto/ClipDataOW.py
+    diff --git a/src/orangecontrib/testtuto/OWClipData.py b/src/orangecontrib/testtuto/OWClipData.py
     index 131e5da..606e74d 100644
-    --- a/src/orangecontrib/testtuto/ClipDataOW.py
-    +++ b/src/orangecontrib/testtuto/ClipDataOW.py
-    @@ -40,7 +40,7 @@ class ClipDataOW(
+    --- a/src/orangecontrib/testtuto/OWClipData.py
+    +++ b/src/orangecontrib/testtuto/OWClipData.py
+    @@ -40,7 +40,7 @@ class OWClipData(
         id = "orange.widgets.my_project.ClipDataTask"
         description = "widget to clip data (numpy array) within a percentile range."
         want_main_area = True
@@ -28,7 +32,7 @@ From orange main area to control area
     
         _ewoks_inputs_to_hide_from_orange = ("percentiles", )
     
-    @@ -48,7 +48,7 @@ class ClipDataOW(
+    @@ -48,7 +48,7 @@ class OWClipData(
             super().__init__(parent)
     
             self._myWidget = MyWidget(self)
@@ -48,7 +52,7 @@ Adding a plot to the OrangeWidget
 .. code-block:: python
     :linenos:
 
-    class ClipDataOW(
+    class OWClipData(
         OWEwoksWidgetOneThread,
         ewokstaskclass=ClipDataTask,
     ):
@@ -112,8 +116,15 @@ Now your processing should looks like:
 .. admonition:: Results
     :class: dropdown
 
-    .. include:: materials/display_output.py
+    .. include:: materials/display_output/clipdata.py
         :literal:
+
+    .. include:: materials/display_output/MyWidget.py
+        :literal:
+
+    .. include:: materials/display_output/OWClipData.py
+        :literal:
+
 
 Further reading
 ---------------
