@@ -15,7 +15,7 @@ From orange main area to control area
 
 .. comment::
 
-    for the following code-block this is not the full diff. But only a subset. This is why we are force to have it in "raw".
+    The following code-block is only a subset of the full diff. This is why it is displayed in raw format.
 
 .. code-block:: diff
 
