@@ -13,6 +13,8 @@ See `qtawesome usage examples <https://qtawesome.readthedocs.io/en/latest/usage.
 More usage of the pydantic models
 ---------------------------------
 
+.. _tuto_retrieve_pydantic_model_fields_default_values:
+
 Retrieving pydantic model fields default values
 '''''''''''''''''''''''''''''''''''''''''''''''
 

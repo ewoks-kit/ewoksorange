@@ -13,6 +13,10 @@ First let's move the 'MyWidget' to the control area
 From orange main area to control area
 """""""""""""""""""""""""""""""""""""
 
+.. comment::
+
+    The following code-block is only a subset of the full diff. This is why it is displayed in raw format.
+
 .. code-block:: diff
 
     diff --git a/src/orangecontrib/testtuto/OWClipData.py b/src/orangecontrib/testtuto/OWClipData.py
@@ -112,8 +116,15 @@ Now your processing should looks like:
 .. admonition:: Results
     :class: dropdown
 
-    .. include:: materials/display_output.py
+    .. include:: materials/display_output/clipdata.py
         :literal:
+
+    .. include:: materials/display_output/MyWidget.py
+        :literal:
+
+    .. include:: materials/display_output/OWClipData.py
+        :literal:
+
 
 Further reading
 ---------------
