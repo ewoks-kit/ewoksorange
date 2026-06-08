@@ -10,8 +10,10 @@ from contextlib import contextmanager
 from typing import Dict
 from typing import Optional
 from typing import Tuple
+from concurrent.futures import InvalidStateError
 
 from ..concurrency.base import TaskExecutionID
+from ..concurrency._future import TaskFuture
 from ..concurrency.queued import TaskExecutorQueue
 from ..concurrency.threaded import ThreadedTaskExecutor
 from ..qt_utils.progress import QProgress
@@ -125,7 +127,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
-    ) -> TaskExecutionID:
+    ) -> TaskFuture:
         """
         Prepare and start the background thread if idle.
 
@@ -139,17 +141,23 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )
+        future = TaskFuture(
+            task_exec_id=str(uuid.uuid4()),
+            executor=self.__task_executor,
+        )
+        future.task_kwargs = self._get_task_arguments()
         if self.__task_executor.has_task:
-            with self._ewoks_task_start_context():
+            with self._ewoks_task_start_context(future=future):
+                # TODO: add callback on the future.
                 self.__propagate = propagate
                 self.__task_executor.start()
-                self._current_task_exec_id = str(uuid.uuid4())
-                return self._current_task_exec_id
+                self._current_task_exec_id = future.task_exec_id
         else:
+            future.set_exception(InvalidStateError("Task already running."))
             self.__propagate = propagate
             self.__task_executor.finished.emit()
             self._current_task_exec_id = ""
-            return self._current_task_exec_id
+        return future
 
     @property
     def task_executor(self):
@@ -221,7 +229,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
-    ) -> TaskExecutionID:
+    ) -> TaskFuture:
         """
         Create a fresh ThreadedTaskExecutor, register it, and start it if it has work.
 
@@ -233,14 +241,17 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )
-        task_exec_id = str(uuid.uuid4())
-        with self.__init_task_executor(task_executor, propagate, task_exec_id):
+        future = TaskFuture(
+            task_exec_id=str(uuid.uuid4()),
+            executor=self.__task_executors,
+        )
+        with self.__init_task_executor(task_executor, propagate, future):
             if task_executor.has_task:
                 with self._ewoks_task_start_context():
                     task_executor.start()
             else:
                 task_executor.finished.emit()
-        return task_exec_id
+        return future
 
     @contextmanager
     def __init_task_executor(
@@ -385,7 +396,7 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
-    ) -> TaskExecutionID:
+    ) -> TaskFuture:
         """
         Queue the task for later execution in FIFO order.
 
@@ -398,12 +409,12 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             self._ewoks_task_finished_callback(propagate)
 
         with self._ewoks_task_start_context():
-            task_exec_id = self.__task_executor_queue.add(
+            future = self.__task_executor_queue.add(
                 _callbacks=(callback,),
                 _log_missing_inputs=log_missing_inputs,
                 **self._get_task_arguments(),
             )
-        return task_exec_id
+        return future
 
     @property
     def task_succeeded(self) -> Optional[bool]:

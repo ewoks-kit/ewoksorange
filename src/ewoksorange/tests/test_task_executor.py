@@ -1,4 +1,5 @@
 import time
+import pytest
 
 from AnyQt.QtCore import QObject
 from ewokscore import Task
@@ -77,7 +78,8 @@ def test_threaded_task_executor_queue(qtapp):
     assert obj.results == {"result": 3}
 
 
-def test_cancel_current_task_in_task_executor_queue(qtapp):
+@pytest.mark.parametrize("cancellation_api", ("executor", "future"))
+def test_cancel_current_task_in_task_executor_queue(qtapp, cancellation_api):
     """test an 'infinite' task that we want to kill and launch another task behind"""
 
     class MyObject(QObject):
@@ -152,24 +154,27 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
     obj4 = MyObject()
     obj5 = MyObject()
 
-    obj4_id = executor.add(
+    obj4_future = executor.add(
         inputs={
             "duration": 2,
         },
         _callbacks=(obj4.finished_callback,),
     )
-    obj5_id = executor.add(
+    executor.add(
         inputs={
             "duration": 2,
         },
         _callbacks=(obj5.finished_callback,),
     )
-    executor.cancel_task(task_exec_id=obj5_id)
+    if cancellation_api == "future":
+        assert obj4.cancel(), "future cancellation failed"
+    elif cancellation_api == "executor":
+        executor.cancel_task(task_exec_id=obj4_future.task_exec_id)
 
     len(executor._task_queue) == 1
     remaining_task_exec_ids = list(executor._task_exec_ids.keys()) + [
         executor._current_task_exec_id,
     ]
-    assert obj4_id in remaining_task_exec_ids
+    assert obj4_future in remaining_task_exec_ids
     executor.cancel_all_tasks(wait=True)
     assert len(executor._task_queue) == 0

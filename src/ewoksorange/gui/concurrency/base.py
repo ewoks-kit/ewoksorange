@@ -7,6 +7,8 @@ from typing import TypeAlias
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
+from ._future import TaskFuture
+from concurrent.futures import InvalidStateError
 
 _logger = logging.getLogger(__name__)
 
@@ -35,24 +37,30 @@ class TaskExecutor:
             else:
                 _logger.info(f"task initialization failed: {e}")
 
-    def execute_task(self) -> TaskExecutionID:
+    def execute_task(self) -> TaskFuture:
         """
         Execute the task and return a tuple indicating success of the submission and the execution ID.
         """
-        if not self.has_task:
-            return str(
+        future = TaskFuture(
+            task_exec_id=str(
                 uuid.uuid4()
-            )  # Return a dummy TaskExecutionID since we couldn't create the task
+            ),  # Use a dummy TaskExecutionID since we couldn't create the task)
+            executor=self,
+        )
+        if not self.has_task:
+            # if no task defined this mean that initialization has failed.
+            future.set_exception(InvalidStateError("Task not defined."))
+            return future
+
         try:
             self.__task.execute()
         except Exception as e:
             _logger.error(f"task failed: {e}", exc_info=True)
-            return str(
-                uuid.uuid4()
-            )  # Return a dummy TaskExecutionID since we couldn't create the task
-        return str(
-            uuid.uuid4()
-        )  # Return a dummy TaskExecutionID since we couldn't create the task
+            future.set_exception(exception=e)
+        else:
+            # To be discussed. What should be the result ? output_values
+            future.set_result(self.__task.output_values)
+        return future
 
     @property
     def has_task(self) -> bool:
