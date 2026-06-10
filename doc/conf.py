@@ -65,6 +65,12 @@ html_theme_options = {
             "url": "https://pypi.org/project/ewoksorange/",
             "icon": "fa-brands fa-python",
         },
+        {
+            "name": "ewoks",
+            "url": "https://ewoks.readthedocs.io/en/stable",
+            "icon": "https://gitlab.esrf.fr/workflow/ewoksadmin/ewoksdoc/-/raw/main/logos/ewoks_for_sphinx_theme.svg",  # This svg contains dark / light mode information
+            "type": "local",
+        },
     ],
     "logo": {
         "text": docstitle,
