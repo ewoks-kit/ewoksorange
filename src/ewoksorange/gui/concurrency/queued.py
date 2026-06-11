@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import concurrent.futures
 import uuid
+import warnings
 from collections import deque
 from concurrent.futures import Future
 from typing import Deque
@@ -11,9 +13,10 @@ from AnyQt.QtCore import QObject
 from AnyQt.QtCore import pyqtSignal as Signal
 
 from ..qt_utils.signals import block_signals
+from ._future import ExecutorFutureHandler
+from ._future import TaskFuture
 from .base import TaskExecutionID
 from .threaded import ThreadedTaskExecutor
-from ._future import ExecutorFutureHandler, TaskFuture
 
 
 class TaskExecutorQueue(QObject, ExecutorFutureHandler):
@@ -45,7 +48,7 @@ class TaskExecutorQueue(QObject, ExecutorFutureHandler):
     def is_available(self) -> bool:
         return self._current_task_future is None
 
-    def add(self, **kwargs) -> Future:
+    def add(self, **kwargs) -> TaskFuture:
         """Add a task `ewokstaskclass` execution request
 
         :return: Task identifier (UUID) that can be used to cancel the task
@@ -82,9 +85,13 @@ class TaskExecutorQueue(QObject, ExecutorFutureHandler):
         self._process_ended_direct(self.sender())
 
     def _process_ended_direct(self, task_executor: "_ThreadedTaskExecutor"):
-        self._current_task_future.set_result(
-            self._task_executor.current_task.get_output_values()
-        )
+        if self._task_executor.current_task and (
+            not self._task_executor.current_task.cancelled
+        ):
+            self._current_task_future.set_result(
+                self._task_executor.current_task.get_output_values()
+            )
+
         for callback in task_executor.callbacks:
             callback()
         self.sigComputationEnded.emit()
@@ -93,12 +100,17 @@ class TaskExecutorQueue(QObject, ExecutorFutureHandler):
             self._process_next()
 
     def cancel_running_task(self, wait=True):
+        warnings.warn(
+            f"'cancel_running_task' has been deprecated. Processing cancellation can now be done by the Future created during the task submission",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # To check: at the moment the closest would be something like:
         current_future = self._current_task_future
         if not current_future:
             return
         if wait:
-            current_future.result()
+            concurrent.futures.wait(current_future)
         else:
             current_future.cancel()
 
@@ -117,44 +129,23 @@ class TaskExecutorQueue(QObject, ExecutorFutureHandler):
             # signal that processing is done
             self._process_ended_direct(task_executor=self._task_executor)
 
-    def cancel_task(self, task_exec_id: TaskExecutionID) -> None:
-        """Cancel a task by its identifier
-
-        :param task_exec_id: The identifier returned by add()
-        :return: True if the task was successfully cancelled, False otherwise
-        """
-        # If task is currently running, use existing cancel method
-        if self._current_task_future.task_exec_id == task_exec_id:
-            self._cancel_running_task()
-        else:
-            self._cancel_pending_task(task_exec_id)
-
     def _cancel_future(self, future) -> bool:
         task_exec_id = future.task_exec_id
-
-        # If task is currently running
-        if future.task_exec_id == self._current_task_future.task_exec_id:
-            self._cancel_running_task()
-            return True
-        elif task_exec_id in self._task_futures:
+        if task_exec_id in self._task_futures.keys():
             self._cancel_pending_task(task_exec_id=task_exec_id)
             return True
         return False
 
-    def _cancel_pending_task(self, task_exec_id: TaskExecutionID):
-        # If task is not currently running, remove from queue
-        if task_exec_id in self._task_futures:
-            # Remove from queue
-            if task_exec_id in self._task_queue:
-                self._task_queue.remove(task_exec_id)
-                future = self._task_futures.pop(task_exec_id)
-                future.set_running_or_notify_cancel()
+    def _abort_future(self, future) -> bool:
+        if future.task_exec_id == self._current_task_future.task_exec_id:
+            self._cancel_running_task()
+            return True
+        return False
 
-    def cancel_all_tasks(self, wait=True):
-        """Cancel all pending and running tasks in the queue."""
-        tasks_exec_ids = self._task_futures.keys()
-        for tasks_exec_id in tasks_exec_ids:
-            self.cancel_task(task_exec_id=tasks_exec_id)
+    def _cancel_pending_task(self, task_exec_id: TaskExecutionID):
+        future = self._task_futures.pop(task_exec_id, None)
+        if future in self._task_queue:
+            self._task_queue.remove(future)
 
     def stop(self):
         """

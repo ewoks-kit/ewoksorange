@@ -59,7 +59,9 @@ class TaskExecutor(ExecutorFutureHandler):
             _logger.error(f"task failed: {e}", exc_info=True)
             future.set_exception(exception=e)
         else:
-            future.set_result(self.__task.output_values)
+            if not self.__task.cancelled:
+                # TODO: investigate, this enter in conflict in the case of the "TaskExecutorQueue" setting result is called twice.
+                future.set_result(self.__task.get_output_values())
         return future
 
     @property
@@ -99,11 +101,10 @@ class TaskExecutor(ExecutorFutureHandler):
     def current_task(self) -> Optional[Task]:
         return self.__task
 
-    def cancel_task(self, task_exec_id: TaskExecutionID) -> None:
-        pass
+    def _cancel_future(self, future: TaskFuture) -> bool:
+        raise NotImplementedError
+        return False
 
-    def cancel_all_tasks(self) -> None:
-        pass
-
-    def _cancel_future(self, future: TaskFuture):
-        pass
+    def _abort_future(self, future: TaskFuture) -> bool:
+        raise NotImplementedError
+        return False

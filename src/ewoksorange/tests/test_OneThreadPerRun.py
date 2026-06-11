@@ -1,7 +1,6 @@
 from time import sleep
 
 import pytest
-from ewokscore import Task
 
 from ..gui.owwidgets.meta import ow_build_opts
 from ..gui.owwidgets.threaded import (
@@ -32,8 +31,7 @@ class OWEwoksWidgetOneThreadPerRun(
     "test_case, expected_values",
     [
         ("standard_execution", [0, 1, 2]),
-        ("cancellation_task_by_task", ["cancelled", "cancelled", "cancelled"]),
-        ("cancellation_all_tasks", ["cancelled", "cancelled", "cancelled"]),
+        ("cancel_futures", ["cancelled", "cancelled", "cancelled"]),
     ],
 )
 def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_values):
@@ -54,17 +52,15 @@ def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_values):
     for value, obj in enumerate(objects):
         widget.set_dynamic_input("value", value)
         widget.set_dynamic_input("my_object", obj)
-        if test_case in ("cancellation_task_by_task", "cancellation_all_tasks"):
+        if test_case == "cancel_futures":
             widget.set_dynamic_input("sleep_duration", 0.5)
 
         # Start calculation
         futures.append(widget.execute_ewoks_task())
 
-    if test_case == "cancellation_task_by_task":
-        for exec_id in futures:
-            widget.cancel_task(exec_id)
-    elif test_case == "cancellation_all_tasks":
-        widget.cancel_all_tasks()
+    if test_case == "cancel_futures":
+        for future in futures:
+            assert future.abort(), f"Future cannot be aborted."
 
     for obj in objects:
         obj.finished.wait(timeout=3)

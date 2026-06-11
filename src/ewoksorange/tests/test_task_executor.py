@@ -1,6 +1,6 @@
+import threading
 import time
 
-import pytest
 from AnyQt.QtCore import QObject
 from ewokscore import Task
 from ewokscore.missing_data import MISSING_DATA
@@ -33,9 +33,8 @@ def test_task_executor():
     assert future_task.exception() is None
 
     # dummy test of the API
-    executor.cancel_task(task_exec_id=future_task.task_exec_id)
-    executor.cancel_all_tasks()
     assert future_task.cancel() is False
+    assert future_task.abort() is False
 
 
 def test_threaded_task_executor(qtapp):
@@ -108,12 +107,23 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
             self.finished.set()
 
     class InfiniteTask(Task, input_names=["duration"], output_names=["result"]):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._cancel_event = threading.Event()
+
         def run(self):
-            time.sleep(self.inputs.duration)
+            remaining_sleeping_time = self.inputs.duration
+            while remaining_sleeping_time > 0:
+                remaining_sleeping_time -= 1
+                if self._cancel_event.is_set():
+                    return
+                time.sleep(1)
+
             self.outputs.result = f"have waited {self.inputs.duration}s"
 
         def cancel(self):
-            self._cancel = True
+            self._cancel_event.set()
+            self.cancelled = True
 
     executor = TaskExecutorQueue(ewokstaskclass=InfiniteTask)
 
@@ -125,25 +135,35 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
     # expected behavior:
     # the first task is cancelled (so result is MISSING_DATA)
     # then the second task is executed (results is 'have waited 1s')
-    executor.add(
+    future_1 = executor.add(
         inputs={
-            "duration": 100,
+            "duration": 10,
         },
         _callbacks=(obj1.finished_callback,),
     )
-    executor.add(
+    future_2 = executor.add(
         inputs={
             "duration": 1,
         },
         _callbacks=(obj2.finished_callback,),
     )
+    future_3 = executor.add(
+        inputs={
+            "duration": 5,
+        },
+        _callbacks=(obj3.finished_callback,),
+    )
+
     assert not executor.is_available
-    # cancel obj 1
-    executor._cancel_running_task(wait=False)
-    assert obj2.finished.wait(timeout=30)
-    assert obj1.results["result"] is MISSING_DATA
+    # cancel future_1
+    assert future_1.abort()
+    assert future_3.cancel()
+
+    assert obj2.finished.wait(timeout=2)
     assert executor.is_available
+    assert obj1.results["result"] is MISSING_DATA
     assert obj2.results["result"] == "have waited 1s"
+    assert obj3.results is None
 
     # then try to sending an new job
     executor.add(
@@ -163,23 +183,23 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
 
     obj4_future = executor.add(
         inputs={
-            "duration": 2,
+            "duration": 5,
         },
         _callbacks=(obj4.finished_callback,),
     )
     obj5_future = executor.add(
         inputs={
-            "duration": 2,
+            "duration": 1,
         },
         _callbacks=(obj5.finished_callback,),
     )
     assert obj4_future.running()
-    assert obj4_future.cancel(), "future cancellation failed"
+    assert not obj4_future.cancel(), "can cancel an on-going task"
+    assert obj4_future.abort()
 
     len(executor._task_queue) == 1
     remaining_futures = list(executor._task_futures.keys()) + [
         executor._current_task_future,
     ]
     assert obj5_future in remaining_futures
-    executor.cancel_all_tasks(wait=True)
     assert len(executor._task_queue) == 0

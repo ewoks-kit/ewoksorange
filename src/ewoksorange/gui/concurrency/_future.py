@@ -1,4 +1,3 @@
-import logging
 import weakref
 from concurrent.futures import Future as _Future
 from typing import TYPE_CHECKING
@@ -6,13 +5,16 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .base import TaskExecutionID
 
-_logger = logging.getLogger(__name__)
-
 
 class ExecutorFutureHandler:
     """Define internal API to cancel a future."""
 
-    def _cancel_future(self, future: TaskFuture) -> None:
+    def _cancel_future(self, future: TaskFuture) -> bool:
+        """Cancel a pending future"""
+        raise NotImplementedError("Base class")
+
+    def _abort_future(self, future: TaskFuture) -> bool:
+        """Abort a running future"""
         raise NotImplementedError("Base class")
 
 
@@ -35,9 +37,16 @@ class TaskFuture(_Future):
         return self._executor()
 
     def cancel(self) -> bool:
+        # The Future 'cancel' API only works if the start hasn't cancel yet...
         if self.done():
             return False
-        if self.executor:
-            self.executor._cancel_future(self)
-
+        if not self.executor:
+            return False
+        self.executor._cancel_future(self)
         return super().cancel()
+
+    def abort(self) -> bool:
+        if not self.executor:
+            return False
+        res = self.executor._abort_future(self)
+        return res
