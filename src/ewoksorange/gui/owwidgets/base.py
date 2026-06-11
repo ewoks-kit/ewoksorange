@@ -683,11 +683,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             execinfo = scheme_ewoks_events(scheme, self._ewoks_execinfo)
 
         if self._ewoks_task_options:
-            print(
-                "self._ewoks_task_options = ",
-                self._ewoks_task_options,
-                type(self._ewoks_task_options),
-            )
             task_arguments = dict(self._ewoks_task_options)
         else:
             task_arguments = dict()
