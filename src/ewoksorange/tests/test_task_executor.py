@@ -1,12 +1,13 @@
 import time
-import pytest
 
+import pytest
 from AnyQt.QtCore import QObject
 from ewokscore import Task
 from ewokscore.missing_data import MISSING_DATA
 from ewokscore.tests.examples.tasks.sumtask import SumTask
 
-from ..gui.concurrency.base import TaskExecutor, TaskExecutionID
+from ..gui.concurrency.base import TaskExecutionID
+from ..gui.concurrency.base import TaskExecutor
 from ..gui.concurrency.queued import TaskExecutorQueue
 from ..gui.concurrency.threaded import ThreadedTaskExecutor
 from ..gui.qt_utils.app import QtEvent
@@ -17,19 +18,24 @@ def test_task_executor():
     assert not executor.has_task
     assert not executor.succeeded
 
-    executor.create_task(inputs={"a": 1, "b": 2})
+    executor.create_task(inputs={"a": 1, "b": 2, "delay": 0.5})
     assert executor.has_task
     assert not executor.succeeded
 
-    task_exec_id = executor.execute_task()
-    assert task_exec_id not in ("", None) and isinstance(task_exec_id, TaskExecutionID)
+    future_task = executor.execute_task()
+    assert future_task.task_exec_id not in ("", None) and isinstance(
+        future_task.task_exec_id, TaskExecutionID
+    )
     assert executor.succeeded
     results = {k: v.value for k, v in executor.output_variables.items()}
     assert results == {"result": 3}
+    assert future_task.result(timeout=1) == results
+    assert future_task.exception() is None
 
     # dummy test of the API
-    executor.cancel_task(task_exec_id=task_exec_id)
+    executor.cancel_task(task_exec_id=future_task.task_exec_id)
     executor.cancel_all_tasks()
+    assert future_task.cancel() is False
 
 
 def test_threaded_task_executor(qtapp):
@@ -73,9 +79,10 @@ def test_threaded_task_executor_queue(qtapp):
 
     obj = MyObject()
     executor = TaskExecutorQueue(ewokstaskclass=SumTask)
-    executor.add(inputs={"a": 1, "b": 2}, _callbacks=(obj.finished_callback,))
+    future = executor.add(inputs={"a": 1, "b": 2}, _callbacks=(obj.finished_callback,))
     assert obj.finished.wait(timeout=3)
     assert obj.results == {"result": 3}
+    assert future.result() == obj.results
 
 
 @pytest.mark.parametrize("cancellation_api", ("executor", "future"))
@@ -88,6 +95,7 @@ def test_cancel_current_task_in_task_executor_queue(qtapp, cancellation_api):
         """
 
         def __init__(self):
+            super().__init__()
             self.results = None
             self.finished = QtEvent()
 
@@ -132,7 +140,7 @@ def test_cancel_current_task_in_task_executor_queue(qtapp, cancellation_api):
     )
     assert not executor.is_available
     # cancel obj 1
-    executor.cancel_running_task(wait=False)
+    executor._cancel_running_task(wait=False)
     assert obj2.finished.wait(timeout=30)
     assert obj1.results["result"] is MISSING_DATA
     assert executor.is_available

@@ -50,7 +50,7 @@ def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_values):
         MyObject(),
     )
 
-    execution_ids = []
+    futures = []
     for value, obj in enumerate(objects):
         widget.set_dynamic_input("value", value)
         widget.set_dynamic_input("my_object", obj)
@@ -58,10 +58,10 @@ def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_values):
             widget.set_dynamic_input("sleep_duration", 0.5)
 
         # Start calculation
-        execution_ids.append(widget.execute_ewoks_task())
+        futures.append(widget.execute_ewoks_task())
 
     if test_case == "cancellation_task_by_task":
-        for exec_id in execution_ids:
+        for exec_id in futures:
             widget.cancel_task(exec_id)
     elif test_case == "cancellation_all_tasks":
         widget.cancel_all_tasks()

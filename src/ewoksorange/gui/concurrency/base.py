@@ -7,15 +7,16 @@ from typing import TypeAlias
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
+
 from ._future import TaskFuture
-from concurrent.futures import InvalidStateError
 
 _logger = logging.getLogger(__name__)
 
 TaskExecutionID: TypeAlias = str
+from ._future import ExecutorFutureHandler
 
 
-class TaskExecutor:
+class TaskExecutor(ExecutorFutureHandler):
     """Create and execute an Ewoks task"""
 
     def __init__(self, ewokstaskclass: Type[Task]) -> None:
@@ -49,7 +50,7 @@ class TaskExecutor:
         )
         if not self.has_task:
             # if no task defined this mean that initialization has failed.
-            future.set_exception(InvalidStateError("Task not defined."))
+            future.set_exception(RuntimeError("Task not defined."))
             return future
 
         try:
@@ -58,7 +59,6 @@ class TaskExecutor:
             _logger.error(f"task failed: {e}", exc_info=True)
             future.set_exception(exception=e)
         else:
-            # To be discussed. What should be the result ? output_values
             future.set_result(self.__task.output_values)
         return future
 
@@ -103,4 +103,7 @@ class TaskExecutor:
         pass
 
     def cancel_all_tasks(self) -> None:
+        pass
+
+    def _cancel_future(self, future: TaskFuture):
         pass

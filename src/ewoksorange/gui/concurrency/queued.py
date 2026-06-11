@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import uuid
-
-from concurrent.futures import Future
 from collections import deque
+from concurrent.futures import Future
 from typing import Deque
 from typing import Dict
 from typing import Iterable
@@ -14,9 +13,10 @@ from AnyQt.QtCore import pyqtSignal as Signal
 from ..qt_utils.signals import block_signals
 from .base import TaskExecutionID
 from .threaded import ThreadedTaskExecutor
+from ._future import ExecutorFutureHandler, TaskFuture
 
 
-class TaskExecutorQueue(QObject):
+class TaskExecutorQueue(QObject, ExecutorFutureHandler):
     """
     Processing Queue with a First In, First Out behavior.
 
@@ -35,7 +35,7 @@ class TaskExecutorQueue(QObject):
         """Queue storing task IDs in FIFO order"""
         self._task_futures: Dict[str:Future] = {}
         """Dictionary mapping task IDs to their keyword arguments"""
-        self._current_task_exec_id: TaskExecutionID | None = None
+        self._current_task_future: TaskFuture | None = None
         self._task_executor: ThreadedTaskExecutor = _ThreadedTaskExecutor(
             ewokstaskclass=ewokstaskclass
         )
@@ -43,7 +43,7 @@ class TaskExecutorQueue(QObject):
 
     @property
     def is_available(self) -> bool:
-        return self._current_task_exec_id is None
+        return self._current_task_future is None
 
     def add(self, **kwargs) -> Future:
         """Add a task `ewokstaskclass` execution request
@@ -51,7 +51,7 @@ class TaskExecutorQueue(QObject):
         :return: Task identifier (UUID) that can be used to cancel the task
         """
         task_exec_id = str(uuid.uuid4())
-        future = Future(task_exec_id=task_exec_id, executor=self)
+        future = TaskFuture(task_exec_id=task_exec_id, executor=self)
 
         future.task_kwargs = kwargs
 
@@ -69,13 +69,9 @@ class TaskExecutorQueue(QObject):
 
         self._current_task_future = self._task_queue.popleft()
         task_kwargs = self._current_task_future.task_kwargs
+        self._current_task_future.set_running_or_notify_cancel()
 
-        # Set up a callback to mark the future as done when task completes
-        def on_task_done(result):
-            if not self._current_task_future.done():
-                self._current_task_future.set_result(result)
-
-        self._task_executor.create_task(**task_kwargs, _callbacks=[on_task_done])
+        self._task_executor.create_task(**task_kwargs)
         if self._task_executor.has_task:
             self.sigComputationStarted.emit()
             self._task_executor.start()
@@ -86,14 +82,17 @@ class TaskExecutorQueue(QObject):
         self._process_ended_direct(self.sender())
 
     def _process_ended_direct(self, task_executor: "_ThreadedTaskExecutor"):
+        self._current_task_future.set_result(
+            self._task_executor.current_task.get_output_values()
+        )
         for callback in task_executor.callbacks:
             callback()
         self.sigComputationEnded.emit()
-        self._current_task_exec_id = None
+        self._current_task_future = None
         if self.is_available:
             self._process_next()
 
-    def cancel_running_task(self, wait=True):
+    def _cancel_running_task(self, wait=True):
         """
         will abort current task.
         task_executor signal 'finished' will be blocked but callbacks will be executed to ensure a safe processing
@@ -102,12 +101,7 @@ class TaskExecutorQueue(QObject):
             return
 
         with block_signals(self._task_executor):
-            current_task_future = self._task_futures.get(
-                self._current_task_exec_id, None
-            )
-            self._task_executor.cancel_running_task()
-            if current_task_future is not None and not current_task_future.done():
-                current_task_future.cancel()
+            self._task_executor._cancel_running_task()
             # stop and remove the current task from the stack
             self._task_executor.stop(wait=wait)
             # signal that processing is done
@@ -120,18 +114,17 @@ class TaskExecutorQueue(QObject):
         :return: True if the task was successfully cancelled, False otherwise
         """
         # If task is currently running, use existing cancel method
-        if self._current_task_exec_id == task_exec_id:
-            self.cancel_running_task()
+        if self._current_task_future.task_exec_id == task_exec_id:
+            self._cancel_running_task()
         else:
             self._cancel_pending_task(task_exec_id)
 
     def _cancel_future(self, future) -> bool:
-        current_task_future = self._task_futures.get(self._current_task_exec_id, None)
         task_exec_id = future.task_exec_id
 
         # If task is currently running
-        if future == current_task_future:
-            self.cancel_running_task()
+        if future.task_exec_id == self._current_task_future.task_exec_id:
+            self._cancel_running_task()
             return True
         elif task_exec_id in self._task_futures:
             self._cancel_pending_task(task_exec_id=task_exec_id)
@@ -160,7 +153,7 @@ class TaskExecutorQueue(QObject):
         self._task_executor.finished.disconnect(self._process_ended)
         self._task_queue.clear()
         self._task_futures.clear()
-        self._current_task_exec_id = None
+        self._current_task_future = None
         self._task_executor.stop(wait=True)
         self._task_executor = None
 
