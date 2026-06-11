@@ -45,8 +45,6 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         except Exception as e:
             _logger.error(f"task failed: {e}", exc_info=True)
             future.set_exception(e)
-        else:
-            future.set_result(self.__task_executor.current_task.output_values)
 
         try:
             self.__post_task_exception = None
