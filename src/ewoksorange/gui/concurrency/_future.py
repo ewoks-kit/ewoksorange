@@ -38,7 +38,6 @@ class TaskFuture(_Future):
         if self.done():
             return False
         if self.executor:
-            return self.executor._cancel_future(self)
-        # this should never happen but safer to log this us case
-        _logger.error("executor has been deleted. Unable to cancel.")
-        return False
+            self.executor._cancel_future(self)
+
+        return super().cancel()
