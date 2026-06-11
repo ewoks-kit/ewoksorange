@@ -92,6 +92,14 @@ class TaskExecutorQueue(QObject, ExecutorFutureHandler):
         if self.is_available:
             self._process_next()
 
+    def cancel_running_task(self, wait=True):
+        # To check: at the moment the closest would be something like:
+        if wait:
+            self._current_task_future.result()
+        else:
+            self._current_task_future.cancel()
+        self._current_task_future.wai
+
     def _cancel_running_task(self, wait=True):
         """
         will abort current task.
