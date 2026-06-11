@@ -12,7 +12,6 @@ class PrintSum(Task, input_names=["sum"]):
     def run(self):
         if self.inputs.sum is None:
             raise ValueError("'value' should be provided")
-        print("input value is", self.inputs.sum)
 
 
 class SumList1(SumList):
