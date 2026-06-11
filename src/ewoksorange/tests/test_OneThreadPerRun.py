@@ -8,6 +8,7 @@ from ..gui.owwidgets.threaded import (
     OWEwoksWidgetOneThreadPerRun as _OWEwoksWidgetOneThreadPerRun,
 )
 from ..gui.qt_utils.app import QtEvent
+from .utils import DummyTask
 
 
 class MyObject:
@@ -17,33 +18,6 @@ class MyObject:
 
     def finished_callback(self):
         self.finished.set()
-
-
-class DummyTask(
-    Task,
-    input_names=("my_object", "value"),
-    optional_input_names=("sleep_duration",),
-    output_names=("my_object",),
-):
-    """Task that set a value to MyObject and set a 'finished' Event"""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.__cancelled = False
-
-    def run(self):
-        sleep(self.input_values.get("sleep_duration", 0))
-        my_object = self.inputs.my_object
-
-        if self.__cancelled:
-            my_object.value = "cancelled"
-        else:
-            my_object.value = self.inputs.value
-        self.outputs.my_object = my_object
-        my_object.finished_callback()
-
-    def cancel(self):
-        self.__cancelled = True
 
 
 class OWEwoksWidgetOneThreadPerRun(
