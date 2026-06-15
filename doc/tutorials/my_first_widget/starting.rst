@@ -75,6 +75,17 @@ Widget 'skeleton' is the following:
     * `l10`\: tooltip of the widget.
 
 
+.. tip::
+
+     If Orange is installed, you can preview the widget by running
+
+     .. code:: python
+
+              from Orange.widgets.utils.widgetpreview import WidgetPreview
+
+              WidgetPreview(OWClipData).run()
+
+
 .. admonition:: Results
     :class: dropdown
 
