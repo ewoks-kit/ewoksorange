@@ -1,15 +1,22 @@
 import logging
+import uuid
 from typing import Optional
 from typing import Type
+from typing import TypeAlias
 
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
+from ._future import TaskFuture
+
 _logger = logging.getLogger(__name__)
 
+TaskExecutionID: TypeAlias = str
+from ._future import ExecutorFutureHandler
 
-class TaskExecutor:
+
+class TaskExecutor(ExecutorFutureHandler):
     """Create and execute an Ewoks task"""
 
     def __init__(self, ewokstaskclass: Type[Task]) -> None:
@@ -31,13 +38,31 @@ class TaskExecutor:
             else:
                 _logger.info(f"task initialization failed: {e}")
 
-    def execute_task(self) -> None:
+    def execute_task(self) -> TaskFuture:
+        """
+        Execute the task and return a tuple indicating success of the submission and the execution ID.
+        """
+        future = TaskFuture(
+            task_exec_id=str(
+                uuid.uuid4()
+            ),  # Use a dummy TaskExecutionID since we couldn't create the task)
+            executor=self,
+        )
         if not self.has_task:
-            return
+            # if no task defined this mean that initialization has failed.
+            future.set_exception(RuntimeError("Task not defined."))
+            return future
+
         try:
             self.__task.execute()
         except Exception as e:
             _logger.error(f"task failed: {e}", exc_info=True)
+            future.set_exception(exception=e)
+        else:
+            if not self.__task.cancelled:
+                # TODO: investigate, this enter in conflict in the case of the "TaskExecutorQueue" setting result is called twice.
+                future.set_result(self.__task.get_output_values())
+        return future
 
     @property
     def has_task(self) -> bool:
@@ -75,3 +100,11 @@ class TaskExecutor:
     @property
     def current_task(self) -> Optional[Task]:
         return self.__task
+
+    def _cancel_future(self, future: TaskFuture) -> bool:
+        raise NotImplementedError
+        return False
+
+    def _abort_future(self, future: TaskFuture) -> bool:
+        raise NotImplementedError
+        return False

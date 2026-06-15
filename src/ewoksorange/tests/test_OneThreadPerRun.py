@@ -1,10 +1,13 @@
-from ewokscore import Task
+from time import sleep
+
+import pytest
 
 from ..gui.owwidgets.meta import ow_build_opts
 from ..gui.owwidgets.threaded import (
     OWEwoksWidgetOneThreadPerRun as _OWEwoksWidgetOneThreadPerRun,
 )
 from ..gui.qt_utils.app import QtEvent
+from .utils import DummyTask
 
 
 class MyObject:
@@ -16,20 +19,6 @@ class MyObject:
         self.finished.set()
 
 
-class DummyTask(
-    Task,
-    input_names=("my_object", "value"),
-    output_names=("my_object",),
-):
-    """Task that set a value to MyObject and set a 'finished' Event"""
-
-    def run(self):
-        my_object = self.inputs.my_object
-        my_object.value = self.inputs.value
-        self.outputs.my_object = my_object
-        my_object.finished_callback()
-
-
 class OWEwoksWidgetOneThreadPerRun(
     _OWEwoksWidgetOneThreadPerRun,
     **ow_build_opts,
@@ -38,7 +27,14 @@ class OWEwoksWidgetOneThreadPerRun(
     name = "test_OW"
 
 
-def test_OWEwoksWidgetOneThreadPerRun(qtapp):
+@pytest.mark.parametrize(
+    "test_case, expected_values",
+    [
+        ("standard_execution", [0, 1, 2]),
+        ("cancel_futures", ["cancelled", "cancelled", "cancelled"]),
+    ],
+)
+def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_values):
     """
     Test processing several tasks.
     The widget will create one thread per task and execution will be done in parallel.
@@ -52,16 +48,22 @@ def test_OWEwoksWidgetOneThreadPerRun(qtapp):
         MyObject(),
     )
 
+    futures = []
     for value, obj in enumerate(objects):
         widget.set_dynamic_input("value", value)
         widget.set_dynamic_input("my_object", obj)
+        if test_case == "cancel_futures":
+            widget.set_dynamic_input("sleep_duration", 0.5)
 
         # Start calculation
-        widget.handleNewSignals()
+        futures.append(widget.execute_ewoks_task())
+
+    if test_case == "cancel_futures":
+        for future in futures:
+            assert future.abort(), f"Future cannot be aborted."
 
     for obj in objects:
         obj.finished.wait(timeout=3)
 
     values = [obj.value for obj in objects]
-    expected = [0, 1, 2]
-    assert values == expected
+    assert values == expected_values
