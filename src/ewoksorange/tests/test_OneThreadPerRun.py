@@ -28,13 +28,23 @@ class OWEwoksWidgetOneThreadPerRun(
 
 
 @pytest.mark.parametrize(
-    "test_case, expected_values",
+    "test_case, expected_obj_values, expected_future_values",
     [
-        ("standard_execution", [0, 1, 2]),
-        ("cancel_futures", ["cancelled", "cancelled", "cancelled"]),
+        (
+            "standard_execution",
+            [0, 1, 2],
+            [0, 1, 2],
+        ),
+        (
+            "cancel_futures",
+            ["cancelled", "cancelled", "cancelled"],
+            [Exception, Exception, Exception],
+        ),
     ],
 )
-def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_values):
+def test_OWEwoksWidgetOneThreadPerRun(
+    qtapp, test_case, expected_obj_values, expected_future_values
+):
     """
     Test processing several tasks.
     The widget will create one thread per task and execution will be done in parallel.
@@ -59,11 +69,22 @@ def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_values):
         futures.append(widget.execute_ewoks_task())
 
     if test_case == "cancel_futures":
+        # wait for the future to be started. Should be done through a QtEvent
+        sleep(0.2)
         for future in futures:
-            assert future.abort(), f"Future cannot be aborted."
-
+            assert future.abort(), "Future cannot be aborted."
     for obj in objects:
         obj.finished.wait(timeout=3)
 
     values = [obj.value for obj in objects]
-    assert values == expected_values
+    assert values == expected_obj_values
+
+    for future, expected_future_value in zip(futures, expected_future_values):
+        assert future.done(), "future is done"
+        if expected_future_value is Exception:
+            assert future.exception() is not None
+        else:
+            assert future.exception() is None
+            assert (
+                future.result()["my_object"].value == expected_future_value
+            ), f"future result is {future.result()!r} when {expected_future_value!r} expected."

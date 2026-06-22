@@ -10,6 +10,14 @@ from .base import TaskExecutor
 class ThreadedTaskExecutor(QThread, TaskExecutor):
     """Create and execute an Ewoks task in a dedicated thread."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__current_future = None
+
+    def _build_future(self):
+        self.__current_future = super()._build_future()
+        return self.__current_future
+
     def stop(self, timeout: Optional[float] = None, wait: bool = False) -> None:
         """Stop the current thread"""
         with block_signals(self):
@@ -26,7 +34,6 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
 
     def _abort_future(self, future: TaskFuture) -> bool:
         # TODO: this class must store the future or the task_exec_id in order to be able to cancel it
-
         if (
             self.__current_future
             and future.task_exec_id == self.__current_future.task_exec_id

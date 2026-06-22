@@ -8,15 +8,16 @@ from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
+# from ._future import TaskFuture
+from ._Executor import CancellableExecutor, AbortableExecutor
 from ._future import TaskFuture
 
 _logger = logging.getLogger(__name__)
 
 TaskExecutionID: TypeAlias = str
-from ._future import ExecutorFutureHandler
 
 
-class TaskExecutor(ExecutorFutureHandler):
+class TaskExecutor(CancellableExecutor, AbortableExecutor):
     """Create and execute an Ewoks task"""
 
     def __init__(self, ewokstaskclass: Type[Task]) -> None:
@@ -38,16 +39,19 @@ class TaskExecutor(ExecutorFutureHandler):
             else:
                 _logger.info(f"task initialization failed: {e}")
 
-    def execute_task(self) -> TaskFuture:
-        """
-        Execute the task and return a tuple indicating success of the submission and the execution ID.
-        """
-        future = TaskFuture(
+    def _build_future(self) -> TaskFuture:
+        return TaskFuture(
             task_exec_id=str(
                 uuid.uuid4()
             ),  # Use a dummy TaskExecutionID since we couldn't create the task)
             executor=self,
         )
+
+    def execute_task(self) -> TaskFuture:
+        """
+        Execute the task and return a tuple indicating success of the submission and the execution ID.
+        """
+        future = self._build_future()
         if not self.has_task:
             # if no task defined this mean that initialization has failed.
             future.set_exception(RuntimeError("Task not defined."))
@@ -101,10 +105,8 @@ class TaskExecutor(ExecutorFutureHandler):
     def current_task(self) -> Optional[Task]:
         return self.__task
 
-    def _cancel_future(self, future: TaskFuture) -> bool:
-        raise NotImplementedError
+    def _cancel_future(self, future) -> bool:
         return False
 
-    def _abort_future(self, future: TaskFuture) -> bool:
-        raise NotImplementedError
+    def _abort_future(self, future) -> bool:
         return False

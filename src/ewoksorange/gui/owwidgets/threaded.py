@@ -11,7 +11,7 @@ from typing import Dict
 from typing import Optional
 from typing import Tuple
 
-from ..concurrency._future import ExecutorFutureHandler
+from ..concurrency._Executor import AbortableExecutor, CancellableExecutor
 from ..concurrency._future import TaskFuture
 from ..concurrency.base import TaskExecutionID
 from ..concurrency.queued import TaskExecutorQueue
@@ -206,7 +206,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
 
 class OWEwoksWidgetOneThreadPerRun(
-    _OWEwoksThreadedBaseWidget, ExecutorFutureHandler, **ow_build_opts
+    _OWEwoksThreadedBaseWidget, AbortableExecutor, CancellableExecutor, **ow_build_opts
 ):
     """
     Creates a new ThreadedTaskExecutor for every task run so multiple runs can overlap.
@@ -241,7 +241,7 @@ class OWEwoksWidgetOneThreadPerRun(
         )
         future = TaskFuture(
             task_exec_id=str(uuid.uuid4()),
-            executor=task_executor,
+            executor=self,
         )
         with self.__init_task_executor(task_executor, propagate, future):
             if task_executor.has_task:
@@ -284,6 +284,10 @@ class OWEwoksWidgetOneThreadPerRun(
             task_executor = None
             try:
                 task_executor = self.sender()
+
+                future: TaskFuture = self.__task_executors[id(task_executor)][2]
+                future.set_result(task_executor.current_task.get_output_values())
+
                 self.__last_output_variables = task_executor.output_variables
                 self.__last_task_succeeded = task_executor.succeeded
                 self.__last_task_done = task_executor.done
@@ -355,7 +359,7 @@ class OWEwoksWidgetOneThreadPerRun(
     def _abort_future(self, future: TaskFuture) -> None:
         executor = self._get_task_executor(future)
         if executor is not None:
-            executor._cancel_running_task()
+            executor._abort_future(future=future)
             return True
         return False
 

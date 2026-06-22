@@ -1,39 +1,28 @@
+from typing import TYPE_CHECKING
 import weakref
 from concurrent.futures import Future as _Future
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .base import TaskExecutionID
-
-
-class ExecutorFutureHandler:
-    """Define internal API to cancel a future."""
-
-    def _cancel_future(self, future: TaskFuture) -> bool:
-        """Cancel a pending future"""
-        raise NotImplementedError("Base class")
-
-    def _abort_future(self, future: TaskFuture) -> bool:
-        """Abort a running future"""
-        raise NotImplementedError("Base class")
 
 
 class TaskFuture(_Future):
     """Implementation of Future for tasks and 'ExecutorFutureHandler'"""
 
     def __init__(
-        self, task_exec_id: TaskExecutionID, executor: ExecutorFutureHandler, **kwargs
+        self,
+        task_exec_id: "TaskExecutionID",
+        executor,
+        **kwargs,
     ):
         super().__init__()
-        if not isinstance(executor, ExecutorFutureHandler):
-            raise TypeError
 
         self._executor = weakref.ref(executor)
         self.task_kwargs = {}
         self.task_exec_id = task_exec_id
 
     @property
-    def executor(self) -> ExecutorFutureHandler | None:
+    def executor(self):
         return self._executor()
 
     def cancel(self) -> bool:
