@@ -7,6 +7,7 @@ from ewokscore.tests.examples.tasks.sumtask import SumTask
 
 from ..gui.concurrency.base import TaskExecutor
 from ..gui.concurrency.queued import TaskExecutorQueue
+from ..gui.concurrency.threaded import MultiThreadedTaskExecutor
 from ..gui.concurrency.threaded import ThreadedTaskExecutor
 from ..gui.qt_utils.app import QtEvent
 
@@ -49,6 +50,48 @@ def test_threaded_task_executor(qtapp):
     assert results == {"result": 3}
 
     executor.finished.disconnect(finished_callback)
+
+
+def test_multi_threaded_task_executor(qtapp):
+    class MyObject(QObject):
+        def __init__(self, expected_results):
+            self.results = None
+            self.expected_results = expected_results
+            self.finished = QtEvent()
+
+        def finished_callback(self, task_executor):
+            self.results = {
+                k: v.value for k, v in task_executor.output_variables.items()
+            }
+            assert self.results == self.expected_results
+            self.finished.set()
+
+    executor = MultiThreadedTaskExecutor(ewokstaskclass=SumTask)
+    objects = [
+        MyObject({"result": 3}),
+        MyObject({"result": 7}),
+        MyObject({"result": 11}),
+    ]
+    inputs = [
+        {"a": 1, "b": 2},
+        {"a": 3, "b": 4},
+        {"a": 5, "b": 6},
+    ]
+
+    for obj, input_values in zip(objects, inputs):
+        executor.create_task(
+            inputs=input_values,
+            _callbacks=(obj.finished_callback,),
+        )
+        executor.execute_task()
+
+    for obj in objects:
+        assert obj.finished.wait(timeout=3)
+        assert obj.results == obj.expected_results
+
+    expected_results = [obj.expected_results for obj in objects]
+    results = {k: v.value for k, v in executor.output_variables.items()}
+    assert results in expected_results
 
 
 def test_threaded_task_executor_queue(qtapp):
