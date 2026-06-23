@@ -1,12 +1,15 @@
 import logging
 from typing import Optional
 from typing import Type
+from typing import TypeAlias
 
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
 _logger = logging.getLogger(__name__)
+
+TaskExecutionID: TypeAlias = str
 
 
 class TaskExecutor:
