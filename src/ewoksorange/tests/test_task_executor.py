@@ -9,6 +9,7 @@ from ewokscore.tests.examples.tasks.sumtask import SumTask
 from ..gui.concurrency.base import TaskExecutionID
 from ..gui.concurrency.base import TaskExecutor
 from ..gui.concurrency.queued import TaskExecutorQueue
+from ..gui.concurrency.threaded import MultiThreadedTaskExecutor
 from ..gui.concurrency.threaded import ThreadedTaskExecutor
 from ..gui.qt_utils.app import QtEvent
 
@@ -60,6 +61,32 @@ def test_threaded_task_executor(qtapp):
     assert results == {"result": 3}
 
     executor.finished.disconnect(finished_callback)
+
+
+def test_multi_threaded_task_executor(qtapp):
+    class MyObject(QObject):
+        def __init__(self):
+            self.results = None
+            self.finished = QtEvent()
+
+        def finished_callback(self, task_executor, future):
+            self.results = {
+                k: v.value for k, v in task_executor.output_variables.items()
+            }
+            assert future.result() == self.results
+            self.finished.set()
+
+    obj = MyObject()
+    executor = MultiThreadedTaskExecutor(ewokstaskclass=SumTask)
+    executor.create_task(
+        inputs={"a": 1, "b": 2},
+        _callbacks=(obj.finished_callback,),
+    )
+    future = executor.execute_task()
+
+    assert obj.finished.wait(timeout=3)
+    assert obj.results == {"result": 3}
+    assert future.result() == obj.results
 
 
 def test_threaded_task_executor_queue(qtapp):

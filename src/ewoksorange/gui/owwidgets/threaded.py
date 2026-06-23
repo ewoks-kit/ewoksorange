@@ -7,14 +7,13 @@ from __future__ import annotations
 import logging
 import uuid
 from contextlib import contextmanager
-from typing import Dict
 from typing import Optional
-from typing import Tuple
 
 from ..concurrency._Executor import AbortableExecutor, CancellableExecutor
 from ..concurrency._future import TaskFuture
 from ..concurrency.base import TaskExecutionID
 from ..concurrency.queued import TaskExecutorQueue
+from ..concurrency.threaded import MultiThreadedTaskExecutor
 from ..concurrency.threaded import ThreadedTaskExecutor
 from ..qt_utils.progress import QProgress
 from .base import OWEwoksBaseWidget
@@ -131,17 +130,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         :param log_missing_inputs: Whether to log missing input warnings.
         :return: Future of the task execution.
         """
-        future = TaskFuture(
-            task_exec_id=str(uuid.uuid4()),
-            executor=self.__task_executor,
-        )
-
-        if self.__task_executor.isRunning():
-            err = "A processing is already ongoing"
-            future.set_exception(RuntimeError(err))
-            _logger.error(err)
-            return future
-        self.__task_executor.create_task(
+        future = self.__task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )
         future.task_kwargs = self._get_task_arguments()
@@ -205,163 +194,80 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             self._cancel_running_task()
 
 
-class OWEwoksWidgetOneThreadPerRun(
-    _OWEwoksThreadedBaseWidget, AbortableExecutor, CancellableExecutor, **ow_build_opts
-):
+class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     """
     Creates a new ThreadedTaskExecutor for every task run so multiple runs can overlap.
     """
 
     def __init__(self, *args, **kwargs):
         """
-        Initialize per-run executor storage.
+        Initialize the multi-thread task executor.
         """
         super().__init__(*args, **kwargs)
-        self.__task_executors: Dict[
-            int, Tuple[ThreadedTaskExecutor, bool, TaskExecutionID]
-        ] = dict()
-        self.__last_output_variables = dict()
-        self.__last_task_succeeded = None
-        self.__last_task_done = None
-        self.__last_task_exception = None
+        self.__task_executor = MultiThreadedTaskExecutor(
+            ewokstaskclass=self.ewokstaskclass
+        )
 
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
     ) -> TaskFuture:
         """
-        Create a fresh ThreadedTaskExecutor, register it, and start it if it has work.
+        Submit a task to the multi-thread executor.
 
         :param propagate: Whether to propagate outputs after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
         :return: Future of the task execution.
         """
-        task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
-        task_executor.create_task(
-            log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
-        )
-        future = TaskFuture(
-            task_exec_id=str(uuid.uuid4()),
-            executor=self,
-        )
-        with self.__init_task_executor(task_executor, propagate, future):
-            if task_executor.has_task:
-                with self._ewoks_task_start_context():
-                    task_executor.start()
-            else:
-                task_executor.finished.emit()
-        return future
+        with self._ewoks_task_start_context():
+            self.__task_executor.create_task(
+                _callbacks=(
+                    lambda task_executor, future: self._ewoks_task_finished_callback(
+                        task_executor, propagate
+                    ),
+                ),
+                log_missing_inputs=log_missing_inputs,
+                **self._get_task_arguments(),
+            )
+            return self.__task_executor.execute_task()
 
-    @contextmanager
-    def __init_task_executor(
-        self, task_executor, propagate: bool, future: TaskExecutionID
+    def _ewoks_task_finished_callback(
+        self, task_executor: ThreadedTaskExecutor, propagate: bool
     ):
-        """
-        Register a task executor and connect its finished callback for safe cleanup.
-
-        :param task_executor: The ThreadedTaskExecutor instance.
-        :param propagate: Propagate flag to store with the executor.
-        """
-        task_executor.finished.connect(self._ewoks_task_finished_callback)
-        self.__add_task_executor(task_executor, propagate, future)
-        try:
-            yield
-        except Exception:
-            task_executor.finished.disconnect(self._ewoks_task_finished_callback)
-            self.__remove_task_executor(task_executor)
-            raise
-
-    def __disconnect_all_task_executors(self):
-        """Disconnect all connected finished signals from tracked executors."""
-        for task_executor, _ in self.__task_executors.values():
-            if task_executor.receivers(task_executor.finished) > 0:
-                task_executor.finished.disconnect(self._ewoks_task_finished_callback)
-
-    def _ewoks_task_finished_callback(self):
         """
         Slot invoked when a per-run executor finishes; stores its outputs and optionally propagates.
         """
         with self._ewoks_task_finished_context():
-            task_executor = None
-            try:
-                task_executor = self.sender()
-
-                future: TaskFuture = self.__task_executors[id(task_executor)][2]
-                future.set_result(task_executor.current_task.get_output_values())
-
-                self.__last_output_variables = task_executor.output_variables
-                self.__last_task_succeeded = task_executor.succeeded
-                self.__last_task_done = task_executor.done
-                self.__last_task_exception = task_executor.exception
-                self.__post_task_exception = None
-                propagate = self.__is_task_executor_propagated(task_executor)
-                if propagate:
-                    self.propagate_downstream(succeeded=task_executor.succeeded)
-            finally:
-                self.__remove_task_executor(task_executor)
+            self.__post_task_exception = None
+            if propagate:
+                self.propagate_downstream(succeeded=task_executor.succeeded)
 
     def _cleanup_task_executor(self):
-        """Disconnect and quit all tracked executors on widget cleanup."""
-        self.__disconnect_all_task_executors()
-        for task_executor, _ in self.__task_executors.values():
-            task_executor.quit()
-        self.__task_executors.clear()
-
-    def __add_task_executor(
-        self, task_executor, propagate: bool, future: TaskFuture
-    ) -> TaskExecutionID:
-        """Internal: register a new task executor with its propagate flag."""
-        self.__task_executors[id(task_executor)] = (
-            task_executor,
-            propagate,
-            future,
-        )
-
-    def __remove_task_executor(self, task_executor: ThreadedTaskExecutor):
-        """Internal: unregister a task executor and disconnect its signals."""
-        if task_executor is None:
-            return
-        if task_executor.receivers(task_executor.finished) > 0:
-            task_executor.finished.disconnect(self._ewoks_task_finished_callback)
-        self.__task_executors.pop(id(task_executor), None)
-
-    def __is_task_executor_propagated(self, task_executor) -> bool:
-        """Return whether the given executor was registered to propagate."""
-        return self.__task_executors.get(id(task_executor), (None, False, ""))[1]
-
-    def _get_task_executor(self, future: TaskFuture) -> ThreadedTaskExecutor | None:
-        """Return outputs from the last finished task executor."""
-        # FIXME: This lookup is inefficient; consider maintaining a separate dict mapping task_exec_id to executor for O(1) access if needed.
-        future_to_executor = {
-            future: executor for executor, _, future in self.__task_executors.values()
-        }
-        return future_to_executor.get(future, None)
+        """Stop all tracked per-run executors on widget cleanup."""
+        self.__task_executor.stop()
+        self.__task_executor = None
 
     @property
     def task_succeeded(self) -> Optional[bool]:
-        return self.__last_task_succeeded
+        return self.__task_executor.task_succeeded
 
     @property
     def task_done(self) -> Optional[bool]:
-        return self.__last_task_done
+        return self.__task_executor.task_done
 
     @property
     def task_exception(self) -> Optional[Exception]:
-        return self.__last_task_exception
+        return self.__task_executor.task_exception
 
     def _get_task_outputs(self) -> dict:
         """Return the last finished task's outputs."""
-        return self.__last_output_variables
+        return self.__task_executor.output_variables
 
     def _cancel_future(self, future: TaskFuture) -> None:
         """In the case of 'one thread per run' we can only abort."""
         return False
 
     def _abort_future(self, future: TaskFuture) -> None:
-        executor = self._get_task_executor(future)
-        if executor is not None:
-            executor._abort_future(future=future)
-            return True
-        return False
+        return self.__task_executor._abort_future(future)
 
 
 class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):

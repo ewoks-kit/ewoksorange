@@ -1,6 +1,7 @@
 import warnings
 
 from ..gui.concurrency.base import TaskExecutor  # noqa F401
+from ..gui.concurrency.threaded import MultiThreadedTaskExecutor  # noqa F401
 from ..gui.concurrency.threaded import ThreadedTaskExecutor  # noqa F401
 
 warnings.warn(
