@@ -87,7 +87,7 @@ class MultiThreadedTaskExecutor(QObject):
             self.sigComputationStarted.emit()
             task_executor.start()
         else:
-            task_executor.finished.emit()
+            self.__process_ended_direct(task_executor)
 
     def __process_ended(self):
         self.__process_ended_direct(self.sender())
