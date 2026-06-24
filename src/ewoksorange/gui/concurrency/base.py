@@ -3,7 +3,6 @@ import uuid
 from typing import Any
 from typing import Optional
 from typing import Type
-from typing import TypeAlias
 
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
@@ -15,7 +14,7 @@ from ._future import TaskFuture
 
 _logger = logging.getLogger(__name__)
 
-TaskExecutionID: TypeAlias = str
+TaskExecutionID = str
 
 
 class TaskExecutor(CancellableAndAbortableExecutor):
