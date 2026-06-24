@@ -203,12 +203,14 @@ class MultiThreadedTaskExecutor(QObject, CancellableExecutor, AbortableExecutor)
                 break
 
     def __get_task_executor(self, future: TaskFuture) -> Optional[ThreadedTaskExecutor]:
-        for state in self.__task_executors.values():
-            task_executor = state.task_executor
-            current_future = task_executor.current_future
-            if current_future and current_future.task_exec_id == future.task_exec_id:
-                return task_executor
-        return None
+        return next(
+            (
+                state
+                for state in self.__task_executors
+                if state.current_future is future
+            ),
+            None,
+        )
 
     @property
     def task_succeeded(self) -> Optional[bool]:
