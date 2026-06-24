@@ -19,6 +19,8 @@ from ewokscore import missing_data
 from ewokscore.variable import value_from_transfer
 
 from ...orange_version import ORANGE_VERSION
+from ..concurrency._future import TaskFuture
+from ..concurrency.base import TaskExecutionID
 from ..utils.invalid_data import is_invalid_data
 
 # OWBaseWidget: lowest level Orange widget base class
@@ -606,21 +608,26 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         pass
 
-    def execute_ewoks_task(self, log_missing_inputs: bool = True) -> None:
+    def execute_ewoks_task(self, log_missing_inputs: bool = True) -> TaskFuture:
         """
         Execute the Ewoks task and propagate downstream on completion.
 
         :param log_missing_inputs: Whether missing inputs should be logged.
+        :return: Future of the task execution.
         """
         _logger.debug("%s: execute ewoks task (with propagation)", self)
-        self._execute_ewoks_task(propagate=True, log_missing_inputs=log_missing_inputs)
+        return self._execute_ewoks_task(
+            propagate=True, log_missing_inputs=log_missing_inputs
+        )
 
-    def execute_ewoks_task_without_propagation(self) -> None:
+    def execute_ewoks_task_without_propagation(self) -> TaskFuture:
         """
         Execute the Ewoks task without propagating outputs downstream.
+
+        :return: Future of the task execution.
         """
         _logger.debug("%s: execute ewoks task (without propagation)", self)
-        self._execute_ewoks_task(propagate=False, log_missing_inputs=False)
+        return self._execute_ewoks_task(propagate=False, log_missing_inputs=False)
 
     @property
     def task_succeeded(self) -> Optional[bool]:
@@ -676,11 +683,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             execinfo = scheme_ewoks_events(scheme, self._ewoks_execinfo)
 
         if self._ewoks_task_options:
-            print(
-                "self._ewoks_task_options = ",
-                self._ewoks_task_options,
-                type(self._ewoks_task_options),
-            )
             task_arguments = dict(self._ewoks_task_options)
         else:
             task_arguments = dict()
@@ -723,11 +725,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             if ncallbacks > 1:
                 self.__post_task_execute(callbacks[1:])
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> TaskFuture:
         """
         Subclasses must implement how the task is created and executed.
 
         :param propagate: Whether to propagate outputs downstream after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
+        :return: Future of the task execution.
         """
         raise NotImplementedError("Base class")

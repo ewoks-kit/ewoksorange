@@ -3,8 +3,10 @@ Synchronous (no-thread) Ewoks widget implementation.
 """
 
 import logging
+import uuid
 from typing import Optional
 
+from ..concurrency._future import TaskFuture
 from ..concurrency.base import TaskExecutor
 from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
@@ -26,7 +28,9 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         super().__init__(*args, **kwargs)
         self.__task_executor = TaskExecutor(self.ewokstaskclass)
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> TaskFuture:
         """
         Create and execute the Task synchronously.
 
@@ -37,15 +41,20 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )
         try:
-            self.__task_executor.execute_task()
+            future: TaskFuture = self.__task_executor.execute_task()
         except Exception as e:
             _logger.error(f"task failed: {e}", exc_info=True)
+            future.set_exception(e)
+
         try:
             self.__post_task_exception = None
             if propagate:
                 self.propagate_downstream()
         finally:
             self._output_changed()
+        # debattable implementation has the future could be returned before. Anyway this is simpler this way
+        # and processing design (processing in the main Qt thread) will block any other processing.
+        return future
 
     @property
     def task_succeeded(self) -> Optional[bool]:

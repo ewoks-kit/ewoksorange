@@ -1,3 +1,6 @@
+import concurrent.futures
+import uuid
+import logging
 from dataclasses import dataclass
 from typing import Callable
 from typing import Iterable
@@ -9,32 +12,58 @@ from AnyQt.QtCore import QThread
 from AnyQt.QtCore import pyqtSignal as Signal
 
 from .base import TaskExecutor
+from ..concurrency._Executor import AbortableExecutor, CancellableExecutor
+from ..concurrency._future import TaskFuture
+from ..qt_utils.signals import block_signals
+
+_logger = logging.getLogger(__name__)
 
 
 class ThreadedTaskExecutor(QThread, TaskExecutor):
     """Create and execute an Ewoks task in a dedicated thread."""
 
-    def run(self) -> None:
-        self.execute_task()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__current_future = None
+
+    def create_task(self, log_missing_inputs=False, **kwargs):
+        future = self._build_future()
+
+        if self.isRunning():
+            err = "A processing is already ongoing"
+            future.set_exception(RuntimeError(err))
+            _logger.error(err)
+            return future
+        super().create_task(log_missing_inputs, **kwargs)
+        return future
+
+    def _build_future(self):
+        self.__current_future = super()._build_future()
+        return self.__current_future
 
     def stop(self, timeout: Optional[float] = None, wait: bool = False) -> None:
         """Stop the current thread"""
-        self.blockSignals(True)
-        if wait:
-            if timeout:
-                self.wait(timeout * 1000)
-            else:
-                self.wait()
-        if self.isRunning():
-            self.quit()
+        with block_signals(self):
+            if wait:
+                if timeout:
+                    self.wait(timeout * 1000)
+                else:
+                    self.wait()
+            if self.isRunning():
+                self.quit()
 
-    def cancel_running_task(self):
-        """
-        cancel current processing.
-        The targetted EwoksTask must have implemented the 'cancel' function
-        """
-        if self.current_task is not None:
+    def _cancel_future(self, future: TaskFuture) -> bool:
+        raise NotImplementedError("Cannot cancel a task")
+
+    def _abort_future(self, future: TaskFuture) -> bool:
+        # TODO: this class must store the future or the task_exec_id in order to be able to cancel it
+        if (
+            self.__current_future
+            and future.task_exec_id == self.__current_future.task_exec_id
+        ):
             self.current_task.cancel()
+            return True
+        return False
 
 
 @dataclass
@@ -45,7 +74,7 @@ class _TaskExecutorState:
     task_executor: Optional[ThreadedTaskExecutor] = None
 
 
-class MultiThreadedTaskExecutor(QObject):
+class MultiThreadedTaskExecutor(QObject, CancellableExecutor, AbortableExecutor):
     """Create and execute each Ewoks task in its own dedicated thread."""
 
     sigComputationStarted = Signal()
@@ -171,3 +200,16 @@ class MultiThreadedTaskExecutor(QObject):
     @property
     def output_variables(self) -> dict:
         return self.__last_output_variables
+
+    def _cancel_future(self, future: TaskFuture) -> bool:
+        return False
+
+    def _abort_future(self, future: TaskFuture) -> bool:
+        task_executor = self.__get_task_executor(future)
+        if task_executor is None or task_executor.current_task is None:
+            return False
+
+        task_executor.current_task.cancel()
+        if not future.done():
+            future.set_exception(concurrent.futures.CancelledError())
+        return True

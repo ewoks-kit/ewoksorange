@@ -1,3 +1,4 @@
+from time import sleep
 from typing import Mapping
 from typing import Optional
 from typing import Type
@@ -32,3 +33,30 @@ def execute_task(
         task.execute()
         return task.get_output_values()
     raise TypeError("task")
+
+
+class DummyTask(
+    Task,
+    input_names=("my_object", "value"),
+    optional_input_names=("sleep_duration",),
+    output_names=("my_object",),
+):
+    """Task that set a value to MyObject and set a 'finished' Event"""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.__cancelled = False
+
+    def run(self):
+        sleep(self.get_input_values().get("sleep_duration", 0))
+        my_object = self.inputs.my_object
+
+        if self.__cancelled:
+            my_object.value = "cancelled"
+        else:
+            my_object.value = self.inputs.value
+        self.outputs.my_object = my_object
+        my_object.finished_callback()
+
+    def cancel(self):
+        self.__cancelled = True
