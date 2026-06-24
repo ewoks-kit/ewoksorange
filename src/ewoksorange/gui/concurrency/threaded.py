@@ -1,11 +1,21 @@
 import concurrent.futures
-import uuid
 import logging
 from dataclasses import dataclass
+from typing import Any
 from typing import Callable
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Type
+
+from AnyQt.QtCore import QObject
+from AnyQt.QtCore import QThread
+from AnyQt.QtCore import pyqtSignal as Signal
+
+from .base import TaskExecutor
+from ..concurrency._Executor import AbortableExecutor, CancellableExecutor
+from ..concurrency._future import TaskFuture
+from ..qt_utils.signals import block_signals
 
 from AnyQt.QtCore import QObject
 from AnyQt.QtCore import QThread
@@ -22,11 +32,11 @@ _logger = logging.getLogger(__name__)
 class ThreadedTaskExecutor(QThread, TaskExecutor):
     """Create and execute an Ewoks task in a dedicated thread."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.__current_future = None
+        self.__current_future: Optional[TaskFuture] = None
 
-    def create_task(self, log_missing_inputs=False, **kwargs):
+    def create_task(self, log_missing_inputs: bool = False, **kwargs) -> TaskFuture:
         future = self._build_future()
 
         if self.isRunning():
@@ -86,7 +96,7 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
 @dataclass
 class _TaskExecutorState:
     callbacks: Iterable[Callable[[ThreadedTaskExecutor], None]]
-    task_kwargs: dict
+    task_kwargs: dict[str, Any]
     log_missing_inputs: bool = False
     task_executor: Optional[ThreadedTaskExecutor] = None
 
@@ -100,9 +110,9 @@ class MultiThreadedTaskExecutor(QObject, CancellableExecutor, AbortableExecutor)
     sigComputationEnded = Signal()
     """Signal emitted when a computation is ended"""
 
-    def __init__(self, ewokstaskclass):
+    def __init__(self, ewokstaskclass: Type[TaskFuture]) -> None:
         super().__init__()
-        self.__ewokstaskclass = ewokstaskclass
+        self.__ewokstaskclass: Type[TaskFuture] = ewokstaskclass
         self.__task_executors: List[_TaskExecutorState] = []
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
@@ -114,7 +124,7 @@ class MultiThreadedTaskExecutor(QObject, CancellableExecutor, AbortableExecutor)
         _callbacks: Iterable[Callable[[ThreadedTaskExecutor], None]] = tuple(),
         log_missing_inputs: bool = False,
         **kwargs,
-    ) -> Optional[ThreadedTaskExecutor]:
+    ) -> Optional[TaskFuture]:
         """Execute a prepared task, or directly create and execute a new one."""
         task_executor = ThreadedTaskExecutor(ewokstaskclass=self.__ewokstaskclass)
         task_executor.create_task(

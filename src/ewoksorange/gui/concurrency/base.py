@@ -1,5 +1,6 @@
 import logging
 import uuid
+from typing import Any
 from typing import Optional
 from typing import Type
 from typing import TypeAlias
@@ -22,8 +23,8 @@ class TaskExecutor(CancellableExecutor, AbortableExecutor):
 
     def __init__(self, ewokstaskclass: Type[Task]) -> None:
         self.__ewokstaskclass = ewokstaskclass
-        self.__task = None
-        self.__task_init_exception = None
+        self.__task: Optional[Task] = None
+        self.__task_init_exception: Optional[Exception] = None
 
     def create_task(self, log_missing_inputs: bool = False, **kwargs) -> None:
         if not issubclass(self.__ewokstaskclass, TaskWithProgress):
@@ -96,7 +97,7 @@ class TaskExecutor(CancellableExecutor, AbortableExecutor):
         return self.__task.exception
 
     @property
-    def output_variables(self) -> Optional[dict]:
+    def output_variables(self) -> dict[str, Any]:
         if self.__task is None:
             return dict()
         return self.__task.output_variables
@@ -105,8 +106,8 @@ class TaskExecutor(CancellableExecutor, AbortableExecutor):
     def current_task(self) -> Optional[Task]:
         return self.__task
 
-    def _cancel_future(self, future) -> bool:
+    def _cancel_future(self, future: TaskFuture) -> bool:
         return False
 
-    def _abort_future(self, future) -> bool:
+    def _abort_future(self, future: TaskFuture) -> bool:
         return False
