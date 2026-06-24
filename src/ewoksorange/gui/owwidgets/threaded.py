@@ -5,11 +5,9 @@ Threaded Ewoks widget implementations.
 from __future__ import annotations
 
 import logging
-import uuid
 from contextlib import contextmanager
 from typing import Optional
 
-from ..concurrency._Executor import AbortableExecutor, CancellableExecutor
 from ..concurrency._future import TaskFuture
 from ..concurrency.base import TaskExecutionID
 from ..concurrency.queued import TaskExecutorQueue

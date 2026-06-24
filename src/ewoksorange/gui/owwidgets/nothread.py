@@ -3,7 +3,6 @@ Synchronous (no-thread) Ewoks widget implementation.
 """
 
 import logging
-import uuid
 from typing import Optional
 
 from ..concurrency._future import TaskFuture

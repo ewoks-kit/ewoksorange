@@ -20,7 +20,6 @@ from ewokscore.variable import value_from_transfer
 
 from ...orange_version import ORANGE_VERSION
 from ..concurrency._future import TaskFuture
-from ..concurrency.base import TaskExecutionID
 from ..utils.invalid_data import is_invalid_data
 
 # OWBaseWidget: lowest level Orange widget base class

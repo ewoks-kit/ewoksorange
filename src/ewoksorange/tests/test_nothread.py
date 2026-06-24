@@ -1,8 +1,3 @@
-from time import sleep
-
-import pytest
-from ewokscore import Task
-
 from ..gui.owwidgets.meta import ow_build_opts
 from ..gui.owwidgets.nothread import OWEwoksWidgetNoThread as _OWEwoksWidgetNoThread
 from ..gui.qt_utils.app import QtEvent

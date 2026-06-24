@@ -12,10 +12,10 @@ from AnyQt.QtCore import QObject
 from AnyQt.QtCore import QThread
 from AnyQt.QtCore import pyqtSignal as Signal
 
-from .base import TaskExecutor
 from ..concurrency._Executor import CancellableAndAbortableExecutor
 from ..concurrency._future import TaskFuture
 from ..qt_utils.signals import block_signals
+from .base import TaskExecutor
 
 _logger = logging.getLogger(__name__)
 

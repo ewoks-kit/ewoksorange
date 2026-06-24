@@ -142,7 +142,7 @@ def test_cancel_current_task_in_task_executor_queue(qtapp):
         },
         _callbacks=(obj1.finished_callback,),
     )
-    future_2 = executor.add(
+    executor.add(
         inputs={
             "duration": 1,
         },
