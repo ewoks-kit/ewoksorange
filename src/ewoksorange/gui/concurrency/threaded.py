@@ -127,10 +127,11 @@ class MultiThreadedTaskExecutor(QObject):
         """Stop all tracked task threads."""
         for state in list(self.__task_executors):
             task_executor = state.task_executor
-            if task_executor is not None:
-                if task_executor.receivers(task_executor.finished) > 0:
-                    task_executor.finished.disconnect(self.__process_ended)
-                task_executor.stop(timeout=timeout, wait=wait)
+            if task_executor is None:
+                continue
+            if task_executor.receivers(task_executor.finished) > 0:
+                task_executor.finished.disconnect(self.__process_ended)
+            task_executor.stop(timeout=timeout, wait=wait)
         self.__task_executors.clear()
 
     def cancel_running_tasks(self, wait=True):
