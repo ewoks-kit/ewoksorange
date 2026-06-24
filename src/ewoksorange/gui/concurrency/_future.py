@@ -25,7 +25,11 @@ class TaskFuture(_Future):
         return self._executor()
 
     def cancel(self) -> bool:
-        # The Future 'cancel' API only works if the start hasn't cancel yet...
+        """
+        Cancel a pending processing.
+
+        :return: True if cancellation succeded.
+        """
         if self.done():
             return False
         if not self.executor:
@@ -34,6 +38,11 @@ class TaskFuture(_Future):
         return super().cancel()
 
     def abort(self) -> bool:
+        """
+        Abort (if possible) an on-going processing.
+
+        :return: True if abortion succeded.
+        """
         if not self.executor:
             return False
         res = self.executor._abort_future(self)
