@@ -13,7 +13,6 @@ class TaskFuture(_Future):
         self,
         task_exec_id: "TaskExecutionID",
         executor,
-        **kwargs,
     ):
         super().__init__()
 
