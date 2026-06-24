@@ -96,8 +96,8 @@ class MultiThreadedTaskExecutor(QObject):
     def __process_ended(self):
         self.__process_ended_direct(self.sender())
 
-    def __process_ended_direct(self, task_executor: ThreadedTaskExecutor):
-        state = next(
+    def _getState(self, task_executor: ThreadedTaskExecutor) -> _TaskExecutorState:
+        return next(
             (
                 state
                 for state in self.__task_executors
@@ -105,6 +105,9 @@ class MultiThreadedTaskExecutor(QObject):
             ),
             None,
         )
+
+    def __process_ended_direct(self, task_executor: ThreadedTaskExecutor):
+        state = self._getState()
         if state is None:
             return
 
