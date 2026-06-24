@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable
-from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Optional
 
 from AnyQt.QtCore import QObject
@@ -39,8 +39,10 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
 
 @dataclass
 class _TaskExecutorState:
-    task_executor: ThreadedTaskExecutor
     callbacks: Iterable[Callable[[ThreadedTaskExecutor], None]]
+    task_kwargs: dict
+    log_missing_inputs: bool = False
+    task_executor: Optional[ThreadedTaskExecutor] = None
     started: bool = False
 
 
@@ -56,30 +58,33 @@ class MultiThreadedTaskExecutor(QObject):
     def __init__(self, ewokstaskclass):
         super().__init__()
         self.__ewokstaskclass = ewokstaskclass
-        self.__task_executors: Dict[int, _TaskExecutorState] = dict()
+        self.__task_executors: List[_TaskExecutorState] = []
         self.__last_output_variables = dict()
         self.__last_task_succeeded = None
         self.__last_task_done = None
         self.__last_task_exception = None
 
-    def create_task(
+    def execute_task(
         self,
         _callbacks: Iterable[Callable[[ThreadedTaskExecutor], None]] = tuple(),
         log_missing_inputs: bool = False,
         **kwargs,
-    ) -> None:
-        """Create the next task to be executed in a dedicated thread."""
+    ) -> Optional[ThreadedTaskExecutor]:
+        """Execute a prepared task, or directly create and execute a new one."""
         task_executor = ThreadedTaskExecutor(ewokstaskclass=self.__ewokstaskclass)
-        task_executor.create_task(log_missing_inputs=log_missing_inputs, **kwargs)
-        self.__add_task_executor(task_executor, _callbacks)
+        task_executor.create_task(
+            log_missing_inputs=log_missing_inputs,
+            **kwargs,
+        )
 
-    def execute_task(self) -> None:
-        """Execute the task created by :meth:`create_task`."""
-        state = self.__get_pending_state()
-        if state is None:
-            return
+        state = _TaskExecutorState(
+            callbacks=tuple(_callbacks),
+            task_kwargs=kwargs,
+            log_missing_inputs=log_missing_inputs,
+            task_executor=task_executor,
+        )
+        self.__add_task_executor(state)
 
-        task_executor = state.task_executor
         state.started = True
 
         if task_executor.has_task:
@@ -89,11 +94,20 @@ class MultiThreadedTaskExecutor(QObject):
         else:
             self.__process_ended_direct(task_executor)
 
+        return task_executor
+
     def __process_ended(self):
         self.__process_ended_direct(self.sender())
 
     def __process_ended_direct(self, task_executor: ThreadedTaskExecutor):
-        state = self.__task_executors.get(id(task_executor))
+        state = next(
+            (
+                state
+                for state in self.__task_executors
+                if state.task_executor is task_executor
+            ),
+            None,
+        )
         if state is None:
             return
 
@@ -111,44 +125,35 @@ class MultiThreadedTaskExecutor(QObject):
 
     def stop(self, timeout: Optional[float] = None, wait: bool = False) -> None:
         """Stop all tracked task threads."""
-        for state in list(self.__task_executors.values()):
+        for state in list(self.__task_executors):
             task_executor = state.task_executor
-            if task_executor.receivers(task_executor.finished) > 0:
-                task_executor.finished.disconnect(self.__process_ended)
-            task_executor.stop(timeout=timeout, wait=wait)
+            if task_executor is not None:
+                if task_executor.receivers(task_executor.finished) > 0:
+                    task_executor.finished.disconnect(self.__process_ended)
+                task_executor.stop(timeout=timeout, wait=wait)
         self.__task_executors.clear()
 
     def cancel_running_tasks(self, wait=True):
         """Request cancellation of all running tasks."""
-        for state in list(self.__task_executors.values()):
-            if not state.started:
+        for state in list(self.__task_executors):
+            if not state.started or state.task_executor is None:
                 continue
             task_executor = state.task_executor
             task_executor.cancel_running_task()
             task_executor.stop(wait=wait)
 
-    def __add_task_executor(
-        self,
-        task_executor: ThreadedTaskExecutor,
-        callbacks: Iterable[Callable[[ThreadedTaskExecutor], None]],
-    ) -> None:
-        self.__task_executors[id(task_executor)] = _TaskExecutorState(
-            task_executor=task_executor,
-            callbacks=tuple(callbacks),
-        )
+    def __add_task_executor(self, state: _TaskExecutorState) -> None:
+        self.__task_executors.append(state)
 
     def __remove_task_executor(self, task_executor: ThreadedTaskExecutor) -> None:
         if task_executor is None:
             return
-        if task_executor.receivers(task_executor.finished) > 0:
-            task_executor.finished.disconnect(self.__process_ended)
-        self.__task_executors.pop(id(task_executor), None)
-
-    def __get_pending_state(self) -> Optional[_TaskExecutorState]:
-        for state in self.__task_executors.values():
-            if not state.started:
-                return state
-        return None
+        for state in list(self.__task_executors):
+            if state.task_executor is task_executor:
+                if task_executor.receivers(task_executor.finished) > 0:
+                    task_executor.finished.disconnect(self.__process_ended)
+                self.__task_executors.remove(state)
+                break
 
     @property
     def task_succeeded(self) -> Optional[bool]:

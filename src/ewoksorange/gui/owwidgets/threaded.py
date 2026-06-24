@@ -197,7 +197,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         :param log_missing_inputs: Whether to log missing input warnings.
         """
         with self._ewoks_task_start_context():
-            self.__task_executor.create_task(
+            self.__task_executor.execute_task(
                 _callbacks=(
                     lambda task_executor: self._ewoks_task_finished_callback(
                         task_executor, propagate
@@ -206,7 +206,6 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
                 log_missing_inputs=log_missing_inputs,
                 **self._get_task_arguments(),
             )
-            self.__task_executor.execute_task()
 
     def _ewoks_task_finished_callback(
         self, task_executor: ThreadedTaskExecutor, propagate: bool

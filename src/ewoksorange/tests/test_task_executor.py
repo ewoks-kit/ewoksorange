@@ -79,7 +79,7 @@ def test_multi_threaded_task_executor(qtapp):
     ]
 
     for obj, input_values in zip(objects, inputs):
-        executor.create_task(
+        executor.execute_task(
             inputs=input_values,
             _callbacks=(obj.finished_callback,),
         )
