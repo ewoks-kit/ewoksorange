@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 
 class TaskFuture(_Future):
-    """Implementation of Future for tasks and 'ExecutorFutureHandler'"""
+    """Future associated to an ewoks Tasks that can be cancelled and / or aborted."""
 
     def __init__(
         self,
