@@ -119,8 +119,8 @@ class MultiThreadedTaskExecutor(QObject):
         try:
             for callback in state.callbacks:
                 callback(task_executor)
-            self.sigComputationEnded.emit()
         finally:
+            self.sigComputationEnded.emit()
             self.__remove_task_executor(task_executor)
 
     def stop(self, timeout: Optional[float] = None, wait: bool = False) -> None:
