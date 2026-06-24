@@ -13,16 +13,7 @@ from AnyQt.QtCore import QThread
 from AnyQt.QtCore import pyqtSignal as Signal
 
 from .base import TaskExecutor
-from ..concurrency._Executor import AbortableExecutor, CancellableExecutor
-from ..concurrency._future import TaskFuture
-from ..qt_utils.signals import block_signals
-
-from AnyQt.QtCore import QObject
-from AnyQt.QtCore import QThread
-from AnyQt.QtCore import pyqtSignal as Signal
-
-from .base import TaskExecutor
-from ..concurrency._Executor import AbortableExecutor, CancellableExecutor
+from ..concurrency._Executor import CancellableAndAbortableExecutor
 from ..concurrency._future import TaskFuture
 from ..qt_utils.signals import block_signals
 
@@ -101,7 +92,7 @@ class _TaskExecutorState:
     task_executor: Optional[ThreadedTaskExecutor] = None
 
 
-class MultiThreadedTaskExecutor(QObject, CancellableExecutor, AbortableExecutor):
+class MultiThreadedTaskExecutor(QObject, CancellableAndAbortableExecutor):
     """Create and execute each Ewoks task in its own dedicated thread."""
 
     sigComputationStarted = Signal()

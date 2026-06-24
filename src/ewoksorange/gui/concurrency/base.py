@@ -10,7 +10,7 @@ from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
 # from ._future import TaskFuture
-from ._Executor import CancellableExecutor, AbortableExecutor
+from ._Executor import CancellableAndAbortableExecutor
 from ._future import TaskFuture
 
 _logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 TaskExecutionID: TypeAlias = str
 
 
-class TaskExecutor(CancellableExecutor, AbortableExecutor):
+class TaskExecutor(CancellableAndAbortableExecutor):
     """Create and execute an Ewoks task"""
 
     def __init__(self, ewokstaskclass: Type[Task]) -> None:

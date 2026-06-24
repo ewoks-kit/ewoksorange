@@ -8,3 +8,7 @@ class AbortableExecutor:
     def _abort_future(self, future) -> bool:
         """Abort a running future"""
         raise NotImplementedError("Base class")
+
+
+class CancellableAndAbortableExecutor(CancellableExecutor, AbortableExecutor):
+    pass

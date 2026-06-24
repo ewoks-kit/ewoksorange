@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 import weakref
 from concurrent.futures import Future as _Future
+from ._Executor import CancellableAndAbortableExecutor
 
 if TYPE_CHECKING:
     from .base import TaskExecutionID
@@ -12,7 +13,7 @@ class TaskFuture(_Future):
     def __init__(
         self,
         task_exec_id: "TaskExecutionID",
-        executor,
+        executor: CancellableAndAbortableExecutor,
     ):
         super().__init__()
 
@@ -21,7 +22,7 @@ class TaskFuture(_Future):
         self.task_exec_id = task_exec_id
 
     @property
-    def executor(self):
+    def executor(self) -> CancellableAndAbortableExecutor:
         return self._executor()
 
     def cancel(self) -> bool:

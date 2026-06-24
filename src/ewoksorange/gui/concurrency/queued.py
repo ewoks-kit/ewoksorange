@@ -13,14 +13,14 @@ from AnyQt.QtCore import QObject
 from AnyQt.QtCore import pyqtSignal as Signal
 
 from ..qt_utils.signals import block_signals
-from ._Executor import CancellableExecutor, AbortableExecutor
+from ._Executor import CancellableAndAbortableExecutor
 
 from ._future import TaskFuture
 from .base import TaskExecutionID
 from .threaded import ThreadedTaskExecutor
 
 
-class TaskExecutorQueue(QObject, CancellableExecutor, AbortableExecutor):
+class TaskExecutorQueue(QObject, CancellableAndAbortableExecutor):
     """
     Processing Queue with a First In, First Out behavior.
 
