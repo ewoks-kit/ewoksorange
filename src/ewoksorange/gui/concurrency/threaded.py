@@ -43,7 +43,6 @@ class _TaskExecutorState:
     task_kwargs: dict
     log_missing_inputs: bool = False
     task_executor: Optional[ThreadedTaskExecutor] = None
-    started: bool = False
 
 
 class MultiThreadedTaskExecutor(QObject):
@@ -84,8 +83,6 @@ class MultiThreadedTaskExecutor(QObject):
             task_executor=task_executor,
         )
         self.__add_task_executor(state)
-
-        state.started = True
 
         if task_executor.has_task:
             task_executor.finished.connect(self.__process_ended)
@@ -136,7 +133,7 @@ class MultiThreadedTaskExecutor(QObject):
     def cancel_running_tasks(self, wait=True):
         """Request cancellation of all running tasks."""
         for state in list(self.__task_executors):
-            if not state.started or state.task_executor is None:
+            if state.task_executor is None or not state.task_executor.isRunning():
                 continue
             task_executor = state.task_executor
             task_executor.cancel_running_task()
