@@ -221,7 +221,7 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         with self._ewoks_task_start_context():
             return self.__task_executor.execute_task(
                 _callbacks=(
-                    lambda task_executor, future: self._ewoks_task_finished_callback(
+                    lambda task_executor: self._ewoks_task_finished_callback(
                         task_executor, propagate
                     ),
                 ),

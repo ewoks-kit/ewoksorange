@@ -49,7 +49,7 @@ class TaskExecutor(CancellableExecutor, AbortableExecutor):
 
     def execute_task(self) -> TaskFuture:
         """
-        Execute the task and return a tuple indicating success of the submission and the execution ID.
+        Execute the task and return a future representing the execution.
         """
         future = self._build_future()
         if not self.has_task:

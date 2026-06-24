@@ -37,8 +37,14 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
         super().create_task(log_missing_inputs, **kwargs)
         return future
 
-    def _build_future(self):
-        self.__current_future = super()._build_future()
+    def run(self) -> None:
+        self.execute_task()
+
+    def _build_future(self) -> TaskFuture:
+        # Used to store the current future before it is finished
+        # and optionnally abort it.
+        if self.__current_future is None:
+            self.__current_future = super()._build_future()
         return self.__current_future
 
     def stop(self, timeout: Optional[float] = None, wait: bool = False) -> None:
@@ -55,15 +61,26 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
     def _cancel_future(self, future: TaskFuture) -> bool:
         raise NotImplementedError("Cannot cancel a task")
 
+    def _cancel_running_task(self) -> None:
+        if self.current_task is not None:
+            self.current_task.cancel()
+
     def _abort_future(self, future: TaskFuture) -> bool:
         # TODO: this class must store the future or the task_exec_id in order to be able to cancel it
         if (
             self.__current_future
             and future.task_exec_id == self.__current_future.task_exec_id
+            and self.current_task is not None
         ):
             self.current_task.cancel()
+            if not future.done():
+                future.set_exception(concurrent.futures.CancelledError())
             return True
         return False
+
+    @property
+    def current_future(self) -> Optional[TaskFuture]:
+        return self.__current_future
 
 
 @dataclass
@@ -118,9 +135,9 @@ class MultiThreadedTaskExecutor(QObject, CancellableExecutor, AbortableExecutor)
             self.sigComputationStarted.emit()
             task_executor.start()
         else:
+            task_executor.execute_task()
             self.__process_ended_direct(task_executor)
-
-        return task_executor
+        return task_executor.current_future
 
     def __process_ended(self):
         self.__process_ended_direct(self.sender())
@@ -184,6 +201,14 @@ class MultiThreadedTaskExecutor(QObject, CancellableExecutor, AbortableExecutor)
                     task_executor.finished.disconnect(self.__process_ended)
                 self.__task_executors.remove(state)
                 break
+
+    def __get_task_executor(self, future: TaskFuture) -> Optional[ThreadedTaskExecutor]:
+        for state in self.__task_executors.values():
+            task_executor = state.task_executor
+            current_future = task_executor.current_future
+            if current_future and current_future.task_exec_id == future.task_exec_id:
+                return task_executor
+        return None
 
     @property
     def task_succeeded(self) -> Optional[bool]:
