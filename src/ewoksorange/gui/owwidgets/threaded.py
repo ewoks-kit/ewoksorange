@@ -116,7 +116,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__task_executor = ThreadedTaskExecutor(ewokstaskclass=self.ewokstaskclass)
         self.__task_executor.finished.connect(self._ewoks_task_finished_callback)
         self.__propagate = None
-        self._current_task_exec_id = ""
+        self._current_task_exec_id: None | str = None
 
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
@@ -143,7 +143,7 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
             _logger.error(err)
             self.__propagate = propagate
             self.__task_executor.finished.emit()
-            self._current_task_exec_id = ""
+            self._current_task_exec_id = None
         return future
 
     @property
