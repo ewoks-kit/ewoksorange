@@ -2,9 +2,8 @@ import weakref
 from concurrent.futures import Future as _Future
 from typing import TYPE_CHECKING
 
-from ._Executor import CancellableAndAbortableExecutor
-
 if TYPE_CHECKING:
+    from .base import CancellableAndAbortableExecutor
     from .base import TaskExecutionID
 
 

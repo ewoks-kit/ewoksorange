@@ -12,8 +12,8 @@ from AnyQt.QtCore import QObject
 from AnyQt.QtCore import QThread
 from AnyQt.QtCore import pyqtSignal as Signal
 
-from ..concurrency._Executor import CancellableAndAbortableExecutor
 from ..concurrency._future import TaskFuture
+from ..concurrency.base import CancellableAndAbortableExecutor
 from ..qt_utils.signals import block_signals
 from .base import TaskExecutor
 

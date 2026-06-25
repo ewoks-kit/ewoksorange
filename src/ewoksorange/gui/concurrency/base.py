@@ -8,13 +8,27 @@ from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
-# from ._future import TaskFuture
-from ._Executor import CancellableAndAbortableExecutor
 from ._future import TaskFuture
 
 _logger = logging.getLogger(__name__)
 
 TaskExecutionID = str
+
+
+class CancellableExecutor:
+    def _cancel_future(self, future) -> bool:
+        """Cancel a pending future"""
+        raise NotImplementedError("Base class")
+
+
+class AbortableExecutor:
+    def _abort_future(self, future) -> bool:
+        """Abort a running future"""
+        raise NotImplementedError("Base class")
+
+
+class CancellableAndAbortableExecutor(CancellableExecutor, AbortableExecutor):
+    pass
 
 
 class TaskExecutor(CancellableAndAbortableExecutor):
@@ -64,7 +78,6 @@ class TaskExecutor(CancellableAndAbortableExecutor):
             future.set_exception(exception=e)
         else:
             if not self.__task.cancelled:
-                # TODO: investigate, this enter in conflict in the case of the "TaskExecutorQueue" setting result is called twice.
                 future.set_result(self.__task.get_output_values())
         return future
 

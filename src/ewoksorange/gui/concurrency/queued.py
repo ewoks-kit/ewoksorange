@@ -13,8 +13,8 @@ from AnyQt.QtCore import QObject
 from AnyQt.QtCore import pyqtSignal as Signal
 
 from ..qt_utils.signals import block_signals
-from ._Executor import CancellableAndAbortableExecutor
 from ._future import TaskFuture
+from .base import CancellableAndAbortableExecutor
 from .base import TaskExecutionID
 from .threaded import ThreadedTaskExecutor
 
