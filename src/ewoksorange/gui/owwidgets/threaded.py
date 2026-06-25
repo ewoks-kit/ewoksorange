@@ -259,11 +259,11 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         """Return the last finished task's outputs."""
         return self.__task_executor.output_variables
 
-    def _cancel_future(self, future: TaskFuture) -> None:
+    def _cancel_future(self, future: TaskFuture) -> bool:
         """In the case of 'one thread per run' we can only abort."""
         return False
 
-    def _abort_future(self, future: TaskFuture) -> None:
+    def _abort_future(self, future: TaskFuture) -> bool:
         return self.__task_executor._abort_future(future)
 
 
