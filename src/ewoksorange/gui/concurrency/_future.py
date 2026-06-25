@@ -13,7 +13,7 @@ class TaskFuture(_Future):
     def __init__(
         self,
         task_exec_id: "TaskExecutionID",
-        executor: CancellableAndAbortableExecutor,
+        executor: "CancellableAndAbortableExecutor",
     ):
         super().__init__()
 
@@ -22,7 +22,7 @@ class TaskFuture(_Future):
         self.task_exec_id = task_exec_id
 
     @property
-    def executor(self) -> CancellableAndAbortableExecutor:
+    def executor(self) -> "CancellableAndAbortableExecutor":
         return self._executor()
 
     def cancel(self) -> bool:
