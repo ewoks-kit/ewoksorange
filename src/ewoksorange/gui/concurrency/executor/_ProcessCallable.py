@@ -4,6 +4,9 @@ from typing import Type
 
 from ewokscore.task import Task
 
+# Picklable substitute for ewokscore Variable — exposes .value so that the
+# same ``{k: v.value for k, v in result.items()}`` pattern works for both
+# thread and process executors.
 _Var = namedtuple("_Var", ["value"])
 
 
