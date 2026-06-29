@@ -117,14 +117,18 @@ class EwoksExecutor(QObject):
         )
         return task_future
 
-    def _submit_process(self, task_class, task_kwargs) -> TaskFuture:
+    def _get_manager(self):
         if self._manager is None:
             # SyncManager server process provides proxy objects that are
             # picklable and safe to pass through ProcessPoolExecutor's pickle
             # serialisation.  A plain multiprocessing.Queue is NOT picklable.
             self._manager = multiprocessing.Manager()
-        started_queue = self._manager.Queue()
-        abort_event = self._manager.Event()
+        return self._manager
+
+    def _submit_process(self, task_class, task_kwargs) -> TaskFuture:
+        manager = self._get_manager()
+        started_queue = manager.Queue()
+        abort_event = manager.Event()
 
         callable_obj = _ProcessCallable(
             task_class, task_kwargs, started_queue, abort_event
