@@ -40,7 +40,7 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
 @dataclass
 class _TaskExecutorState:
     callbacks: Iterable[Callable[[ThreadedTaskExecutor], None]]
-    task_kwargs: dict
+    task_kwargs: Dict[str, Any]
     log_missing_inputs: bool = False
     task_executor: Optional[ThreadedTaskExecutor] = None
 
