@@ -1,7 +1,8 @@
 """Tests for EwoksExecutor."""
 
 import time
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from ewokscore import Task
