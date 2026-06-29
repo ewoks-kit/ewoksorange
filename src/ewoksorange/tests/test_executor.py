@@ -1,16 +1,16 @@
 """Tests for EwoksExecutor."""
 
 import time
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 import pytest
-from concurrent.futures import ThreadPoolExecutor
 from ewokscore import Task
-from ewokscore.missing_data import MISSING_DATA
+from ewokscore.missing_data import MissingData
 from ewokscore.tests.examples.tasks.sumtask import SumTask as _SumTask
 
+from ewoksorange.gui.concurrency.executor.EwoksExecutor import EwoksExecutor
+from ewoksorange.gui.concurrency.executor.EwoksExecutor import SubmitPolicy
 from ewoksorange.gui.qt_utils.app import QtEvent
-from ewoksorange.gui.concurrency.EwoksExecutor import EwoksExecutor
-from ewoksorange.gui.concurrency.EwoksExecutor import SubmitPolicy
 
 
 class SumTask(_SumTask):
@@ -53,14 +53,21 @@ def _make_executor(policy=SubmitPolicy.ALWAYS, workers=1):
 
 @pytest.fixture(
     params=[
-        pytest.param((1, SubmitPolicy.DROP_IF_BUSY), id="thread-1-drop"),
-        pytest.param((1, SubmitPolicy.ALWAYS), id="thread-1-queue"),
-        pytest.param((4, SubmitPolicy.ALWAYS), id="thread-4-parallel"),
+        pytest.param(
+            (ThreadPoolExecutor, 1, SubmitPolicy.DROP_IF_BUSY), id="thread-1-drop"
+        ),
+        pytest.param((ThreadPoolExecutor, 1, SubmitPolicy.ALWAYS), id="thread-1-queue"),
+        pytest.param(
+            (ThreadPoolExecutor, 4, SubmitPolicy.ALWAYS), id="thread-4-parallel"
+        ),
+        pytest.param(
+            (ProcessPoolExecutor, 2, SubmitPolicy.ALWAYS), id="process-2-parallel"
+        ),
     ]
 )
 def executor(request, qtapp):
-    workers, policy = request.param
-    exe = EwoksExecutor(ThreadPoolExecutor(max_workers=workers), policy)
+    PoolClass, workers, policy = request.param
+    exe = EwoksExecutor(PoolClass(max_workers=workers), policy)
     yield exe
     exe.shutdown(wait=False)
 
@@ -127,7 +134,7 @@ def test_abort_running_task(executor):
 
     assert done.wait(timeout=5)
     assert "result" in result_holder, f"expected succeeded, got: {result_holder}"
-    assert _output_values(result_holder["result"])["result"] is MISSING_DATA
+    assert isinstance(_output_values(result_holder["result"])["result"], MissingData)
 
 
 def test_submitted_returns_task_future(executor):
