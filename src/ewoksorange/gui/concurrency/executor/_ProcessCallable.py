@@ -28,13 +28,8 @@ class ProcessCallable:
         self._abort_event = abort_event
 
     def __call__(self):
-        from ewokscore import TaskWithProgress  # re-import in the subprocess
-
         task_class = self._task_class
         kwargs = dict(self._task_kwargs)
-        if not issubclass(task_class, TaskWithProgress):
-            kwargs.pop("progress", None)
-
         task = task_class(**kwargs)
 
         # A daemon thread watches for the abort signal and calls task.cancel().
