@@ -115,7 +115,7 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.progressBarFinished()
         try:
             if propagate:
-                self.propagate_downstream()
+                self.propagate_downstream(succeeded=True)
         finally:
             self._output_changed()
 
@@ -128,7 +128,7 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.progressBarFinished()
         try:
             if propagate:
-                self.propagate_downstream()
+                self.propagate_downstream(succeeded=False)
         finally:
             self._output_changed()
 

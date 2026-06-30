@@ -54,7 +54,7 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         try:
             self.__post_task_exception = None
             if propagate:
-                self.propagate_downstream()
+                self.propagate_downstream(succeeded=self.__task_executor.succeeded)
         finally:
             self._output_changed()
 
