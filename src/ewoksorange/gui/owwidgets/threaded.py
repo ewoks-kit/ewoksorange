@@ -3,8 +3,8 @@ Threaded Ewoks widget implementations.
 """
 
 from __future__ import annotations
-import warnings
 
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from typing import Dict
