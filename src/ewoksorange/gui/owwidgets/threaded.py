@@ -85,7 +85,7 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__executor.failed.connect(self.__on_failed)
         self.__propagate_by_future: Dict[TaskFuture, bool] = {}
 
-        # Note: all the following variable to be removed since executor refactoring
+        # Note: all the following variables might be removed in the future. Please avoid using them.
         self.__current_task_future: Optional[TaskFuture] = None
         self.__last_output_variables: dict = {}
         self.__last_task_succeeded: Optional[bool] = None
