@@ -3,6 +3,7 @@ Threaded Ewoks widget implementations.
 """
 
 from __future__ import annotations
+import warnings
 
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -83,6 +84,8 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__executor.succeeded.connect(self.__on_succeeded)
         self.__executor.failed.connect(self.__on_failed)
         self.__propagate_by_future: Dict[TaskFuture, bool] = {}
+
+        # Note: all the following variable to be removed since executor refactoring
         self.__current_task_future: Optional[TaskFuture] = None
         self.__last_output_variables: dict = {}
         self.__last_task_succeeded: Optional[bool] = None
@@ -136,17 +139,37 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     @property
     def task_succeeded(self) -> Optional[bool]:
+        warnings.warn(
+            f"'task_succeeded' is deprecated since 6.0 Please use directly the future provided during task submission.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.__last_task_succeeded
 
     @property
     def task_done(self) -> Optional[bool]:
+        warnings.warn(
+            f"'task_done' is deprecated since 6.0 Please use directly the future provided during task submission.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.__last_task_done
 
     @property
     def task_exception(self) -> Optional[Exception]:
+        warnings.warn(
+            f"'task_exception' is deprecated since 6.0 Please use directly the future provided during task submission.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.__last_task_exception
 
     def _get_task_outputs(self) -> dict:
+        warnings.warn(
+            f"'cancel_running_task' is deprecated since 6.0 Please use directly the future provided during task submission.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.__last_output_variables
 
     def _cleanup_task_executor(self) -> None:
@@ -155,6 +178,11 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     def cancel_running_task(self) -> None:
         """Abort the currently running task."""
+        warnings.warn(
+            f"'cancel_running_task' is deprecated since 6.0 Please use directly the future provided during task submission.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if self.__current_task_future is not None:
             self.__current_task_future.abort()
 
