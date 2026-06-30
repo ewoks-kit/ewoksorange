@@ -68,22 +68,16 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
 
 
 class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
-    """Base for all EwoksExecutor-backed widgets.
+    """Base for all EwoksExecutor-backed widgets."""
 
-    Subclasses configure execution via class variables:
-
-    * ``_max_workers``          — ``ThreadPoolExecutor`` max_workers (``None`` = unlimited)
-    * ``_ewoks_submit_policy``  — :class:`SubmitPolicy` (default: ``ALWAYS``)
-    """
-
-    _max_workers: Optional[int] = 1
-    _ewoks_submit_policy: SubmitPolicy = SubmitPolicy.ALWAYS
+    _MAX_WORKERS: Optional[int] = 1
+    _SUBMIT_POLICY: SubmitPolicy = SubmitPolicy.ALWAYS
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__executor = EwoksExecutor(
-            ThreadPoolExecutor(max_workers=self._max_workers),
-            self._ewoks_submit_policy,
+            ThreadPoolExecutor(max_workers=self._MAX_WORKERS),
+            self._SUBMIT_POLICY,
         )
         self.__executor.started.connect(self.__on_started)
         self.__executor.succeeded.connect(self.__on_succeeded)
@@ -168,17 +162,20 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 class OWEwoksWidgetOneThread(_OWEwoksExecutorWidget, **ow_build_opts):
     """Single background thread; submissions while busy are dropped."""
 
-    _ewoks_submit_policy = SubmitPolicy.DROP_IF_BUSY
+    _MAX_WORKERS: Optional[int] = 1
+    _SUBMIT_POLICY = SubmitPolicy.DROP_IF_BUSY
 
 
 class OWEwoksWidgetOneThreadPerRun(_OWEwoksExecutorWidget, **ow_build_opts):
     """Submits each task to a shared thread pool; multiple runs may overlap."""
 
-    _max_workers = None
+    _MAX_WORKERS = None
 
 
 class OWEwoksWidgetWithTaskStack(_OWEwoksExecutorWidget, **ow_build_opts):
     """FIFO queue: tasks are queued and run sequentially in a single thread."""
+
+    _MAX_WORKERS: Optional[int] = 1
 
     @property
     def task_executor_queue(self) -> EwoksExecutor:
