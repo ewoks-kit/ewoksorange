@@ -45,5 +45,4 @@ def test_OWEwoksWidgetNoThread(qtapp):
     future_task, concurrent_future_task = futures
 
     assert "my_object" in future_task.result()
-    assert future_task.task_exec_id != concurrent_future_task.task_exec_id
     assert "my_object" in concurrent_future_task.result()

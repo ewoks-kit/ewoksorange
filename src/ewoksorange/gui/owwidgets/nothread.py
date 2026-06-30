@@ -3,12 +3,14 @@ Synchronous (no-thread) Ewoks widget implementation.
 """
 
 import logging
-from typing import Optional
-
+from concurrent.futures import Future as _ConcurrentFuture
 from typing import Optional
 
 from ..concurrency.base import TaskExecutor
 from ..concurrency.executor import TaskFuture
+from ..concurrency.executor._EwoksCompletedWorker import (
+    CompletedWorker as _CompletedWorker,
+)
 from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
 
@@ -44,13 +46,24 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         try:
             self.__task_executor.execute_task()
         except Exception as e:
+            exception = e
             _logger.error(f"task failed: {e}", exc_info=True)
+        else:
+            exception = None
+
         try:
             self.__post_task_exception = None
             if propagate:
                 self.propagate_downstream()
         finally:
             self._output_changed()
+
+        raw_future = _ConcurrentFuture()
+        if exception is not None:
+            raw_future.set_exception(exception)
+        else:
+            raw_future.set_result(self.__task_executor.output_variables)
+        return TaskFuture(raw_future, _CompletedWorker())
 
     @property
     def task_succeeded(self) -> Optional[bool]:
