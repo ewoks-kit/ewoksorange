@@ -30,12 +30,14 @@ class EwoksThreadWorker(EwoksWorkerBase):
         task.execute()
         return task.output_variables
 
-    def abort(self) -> None:
-        """Call the ewoks task's cancel() to stop a running task."""
+    def abort(self) -> bool:
+        """Call the ewoks task's cancel() to stop a running task. Returns True if the task was reached."""
         with self._lock:
             task = self._task
             if task is not None:
                 task.cancel()
+                return True
+            return False
 
     def aborted(self) -> bool:
         with self._lock:

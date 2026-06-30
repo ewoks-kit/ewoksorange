@@ -12,9 +12,9 @@ class TaskFuture:
         """Prevent execution if the task has not started (native future cancel)."""
         return self._future.cancel()
 
-    def abort(self) -> None:
-        """Abort a running ewoks task by calling its cancel() method."""
-        self._worker.abort()
+    def abort(self) -> bool:
+        """Abort a running ewoks task. Returns True if the task was reached and cancelled."""
+        return self._worker.abort()
 
     def aborted(self) -> bool:
         """Return True if the underlying ewoks task was aborted."""

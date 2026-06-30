@@ -8,8 +8,9 @@ class EwoksProcessWorker(EwoksWorkerBase):
         self._abort_event = abort_event
         self._aborted_event = aborted_event
 
-    def abort(self) -> None:
+    def abort(self) -> bool:
         self._abort_event.set()
+        return True
 
     def aborted(self) -> bool:
         return self._aborted_event.is_set()
