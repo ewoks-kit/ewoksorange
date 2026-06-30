@@ -188,4 +188,10 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksExecutorWidget, **ow_build_opts):
     @property
     def task_executor_queue(self) -> EwoksExecutor:
         """Alias for :attr:`task_executor` kept for backward compatibility."""
+        warnings.warn(
+            "'task_executor_queue' is deprecated since 6.0. Replaced by 'task_executor'.",
+            DeprecationWarning,
+            stacklevel=1,
+        )
+
         return self.task_executor
