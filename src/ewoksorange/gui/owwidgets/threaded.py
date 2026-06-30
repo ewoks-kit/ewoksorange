@@ -141,9 +141,11 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_done = True
         self.__last_task_exception = None
         self.progressBarFinished()
-        if self.__propagate:
-            self.propagate_downstream()
-        self._output_changed()
+        try:
+            if self.__propagate:
+                self.propagate_downstream()
+        finally:
+            self._output_changed()
 
     def __on_failed(self, task_future: TaskFuture, exc: Exception) -> None:
         self.__last_output_variables = {}
@@ -151,9 +153,11 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_done = True
         self.__last_task_exception = exc
         self.progressBarFinished()
-        if self.__propagate:
-            self.propagate_downstream()
-        self._output_changed()
+        try:
+            if self.__propagate:
+                self.propagate_downstream()
+        finally:
+            self._output_changed()
 
     @property
     def task_executor(self) -> EwoksExecutor:
@@ -224,8 +228,11 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_done = True
         self.__last_task_exception = None
         self.progressBarFinished()
-        if propagate:
-            self.propagate_downstream(succeeded=True)
+        try:
+            if propagate:
+                self.propagate_downstream(succeeded=True)
+        except Exception:
+            pass
         self._output_changed()
 
     def __on_failed(self, task_future: TaskFuture, exc: Exception) -> None:
@@ -235,8 +242,11 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_done = True
         self.__last_task_exception = exc
         self.progressBarFinished()
-        if propagate:
-            self.propagate_downstream(succeeded=False)
+        try:
+            if propagate:
+                self.propagate_downstream(succeeded=False)
+        except Exception:
+            pass
         self._output_changed()
 
     @property
@@ -308,9 +318,11 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_done = True
         self.__last_task_exception = None
         self.progressBarFinished()
-        if propagate:
-            self.propagate_downstream()
-        self._output_changed()
+        try:
+            if propagate:
+                self.propagate_downstream()
+        finally:
+            self._output_changed()
 
     def __on_failed(self, task_future: TaskFuture, exc: Exception) -> None:
         propagate = self.__propagate_by_future.pop(task_future, False)
@@ -319,9 +331,11 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_done = True
         self.__last_task_exception = exc
         self.progressBarFinished()
-        if propagate:
-            self.propagate_downstream()
-        self._output_changed()
+        try:
+            if propagate:
+                self.propagate_downstream()
+        finally:
+            self._output_changed()
 
     @property
     def task_succeeded(self) -> Optional[bool]:
