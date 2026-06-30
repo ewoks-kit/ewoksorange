@@ -16,6 +16,7 @@ class EwoksThreadWorker(EwoksWorkerBase):
         self._task_kwargs = task_kwargs
         self._task: Optional[Task] = None
         self._lock = Lock()
+        # Guard access to self._task
 
     def __call__(self):
         task_class = self._task_class
