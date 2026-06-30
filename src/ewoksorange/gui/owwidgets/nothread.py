@@ -2,7 +2,6 @@
 Synchronous (no-thread) Ewoks widget implementation.
 """
 
-import logging
 from concurrent.futures import Future as _ConcurrentFuture
 from typing import Optional
 
@@ -14,8 +13,6 @@ from ..concurrency.executor._EwoksCompletedWorker import (
 from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
 
-_logger = logging.getLogger(__name__)
-
 
 class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
     """
@@ -25,42 +22,31 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
     """
 
     def __init__(self, *args, **kwargs):
-        """
-        Initialize the no-thread widget and preparer a TaskExecutor.
-        """
         super().__init__(*args, **kwargs)
         self.__task_executor = TaskExecutor(self.ewokstaskclass)
 
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
     ) -> Optional[TaskFuture]:
-        """
-        Create and execute the Task synchronously.
-
-        :param propagate: Whether to propagate outputs after execution.
-        :param log_missing_inputs: Whether to log missing input warnings.
-        """
+        # Both methods handle exceptions internally (ewokscore >= 4.0.1):
+        # create_task() stores TaskInputError silently; execute_task() never raises.
         self.__task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )
-        try:
-            self.__task_executor.execute_task()
-        except Exception as e:
-            exception = e
-            _logger.error(f"task failed: {e}", exc_info=True)
-        else:
-            exception = None
+        self.__task_executor.execute_task()
 
+        task_exception = self.__task_executor.exception
         try:
-            self.__post_task_exception = None
             if propagate:
-                self.propagate_downstream(succeeded=self.__task_executor.succeeded)
+                # Always pass an explicit bool — passing None triggers a DeprecationWarning
+                # (base.py:533) which becomes an error under pytest -W error.
+                self.propagate_downstream(succeeded=task_exception is None)
         finally:
             self._output_changed()
 
         raw_future = _ConcurrentFuture()
-        if exception is not None:
-            raw_future.set_exception(exception)
+        if task_exception is not None:
+            raw_future.set_exception(task_exception)
         else:
             raw_future.set_result(self.__task_executor.output_variables)
         return TaskFuture(raw_future, _CompletedWorker())
