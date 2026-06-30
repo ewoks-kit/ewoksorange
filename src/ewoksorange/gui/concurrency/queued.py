@@ -1,3 +1,4 @@
+import warnings
 from queue import Queue
 from typing import Iterable
 
@@ -9,7 +10,10 @@ from .threaded import ThreadedTaskExecutor
 
 
 class TaskExecutorQueue(QObject, Queue):
-    """Processing Queue with a First In, First Out behavior"""
+    """Processing Queue with a First In, First Out behavior
+
+    .. warning:: deprecated since version 6.0
+    """
 
     sigComputationStarted = Signal()
     """Signal emitted when a computation is started"""
@@ -18,6 +22,13 @@ class TaskExecutorQueue(QObject, Queue):
 
     def __init__(self, ewokstaskclass):
         super().__init__()
+
+        warnings.warn(
+            f"TaskExecutorQueue is deprecated since version 6.0."
+            "Please use 'ewoksorange.gui.concurrency.executor.EwoksExecutor' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._task_executor = _ThreadedTaskExecutor(ewokstaskclass=ewokstaskclass)
         self._task_executor.finished.connect(self._process_ended)
         self._available = True
