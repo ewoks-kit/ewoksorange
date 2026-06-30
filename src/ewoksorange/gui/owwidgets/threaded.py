@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import warnings
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import contextmanager
 from typing import Dict
 from typing import Optional
 
@@ -33,31 +32,6 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
 
     def _cleanup_task_executor(self):
         raise NotImplementedError("Base class")
-
-    @contextmanager
-    def _ewoks_task_start_context(self):
-        """Context manager that initialises progress before a task starts."""
-        try:
-            self.__ewoks_task_init()
-            yield
-        except Exception:
-            self.__ewoks_task_finished()
-            raise
-
-    @contextmanager
-    def _ewoks_task_finished_context(self):
-        """Context manager that finalises progress after a task ends."""
-        try:
-            yield
-        finally:
-            self.__ewoks_task_finished()
-
-    def __ewoks_task_init(self):
-        self.progressBarInit()
-
-    def __ewoks_task_finished(self):
-        self.progressBarFinished()
-        self._output_changed()
 
     def _get_task_arguments(self):
         adict = super()._get_task_arguments()
