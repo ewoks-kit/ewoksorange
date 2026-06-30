@@ -12,7 +12,7 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
     def __init__(self, ewokstaskclass, parent=None):
         super().__init__(parent=parent, ewokstaskclass=ewokstaskclass)
         warnings.warn(
-            f"ThreadedTaskExecutor is deprecated since version 6.0."
+            "ThreadedTaskExecutor is deprecated since version 6.0."
             "Please use 'ewoksorange.gui.concurrency.executor.EwoksExecutor' instead.",
             DeprecationWarning,
             stacklevel=2,

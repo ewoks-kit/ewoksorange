@@ -531,7 +531,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         if succeeded is None:
             warnings.warn(
-                f"'succeeded' should be always provided from version 7.0.",
+                "'succeeded' should be always provided from version 7.0.",
                 DeprecationWarning,
                 stacklevel=2,
             )

@@ -159,7 +159,7 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def cancel_running_task(self) -> None:
         """Abort the currently running task."""
         warnings.warn(
-            f"'cancel_running_task' is deprecated since 6.0 Please use directly the future provided during task submission.",
+            "'cancel_running_task' is deprecated since 6.0 Please use directly the future provided during task submission.",
             DeprecationWarning,
             stacklevel=2,
         )

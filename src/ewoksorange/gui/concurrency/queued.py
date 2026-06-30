@@ -24,7 +24,7 @@ class TaskExecutorQueue(QObject, Queue):
         super().__init__()
 
         warnings.warn(
-            f"TaskExecutorQueue is deprecated since version 6.0."
+            "TaskExecutorQueue is deprecated since version 6.0."
             "Please use 'ewoksorange.gui.concurrency.executor.EwoksExecutor' instead.",
             DeprecationWarning,
             stacklevel=2,
