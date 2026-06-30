@@ -533,7 +533,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             warnings.warn(
                 "'succeeded' should be always provided from version 7.0.",
                 DeprecationWarning,
-                stacklevel=2,
             )
             succeeded = self.task_succeeded
         if succeeded:

@@ -27,7 +27,6 @@ class TaskExecutorQueue(QObject, Queue):
             "TaskExecutorQueue is deprecated since version 6.0."
             "Please use 'ewoksorange.gui.concurrency.executor.EwoksExecutor' instead.",
             DeprecationWarning,
-            stacklevel=2,
         )
         self._task_executor = _ThreadedTaskExecutor(ewokstaskclass=ewokstaskclass)
         self._task_executor.finished.connect(self._process_ended)

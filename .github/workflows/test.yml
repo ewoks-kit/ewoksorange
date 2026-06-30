@@ -60,6 +60,7 @@ jobs:
       pytest-args: >-
         -v -ra -W error
         ${{ matrix.extra-pytest-args }}
+        -W ignore::DeprecationWarning:ewoksorange.gui.owwidgets.threaded
         -W ignore::ResourceWarning:orangecanvas.utils.localization
         -W ignore::DeprecationWarning:orangecanvas.utils.localization
         -W ignore::DeprecationWarning:orangecanvas.utils.localization.si

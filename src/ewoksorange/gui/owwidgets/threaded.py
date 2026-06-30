@@ -161,7 +161,6 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         warnings.warn(
             "'cancel_running_task' is deprecated since 6.0 Please use directly the future provided during task submission.",
             DeprecationWarning,
-            stacklevel=2,
         )
         if self.__current_task_future is not None:
             self.__current_task_future.abort()
@@ -191,7 +190,6 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksExecutorWidget, **ow_build_opts):
         warnings.warn(
             "'task_executor_queue' is deprecated since 6.0. Replaced by 'task_executor'.",
             DeprecationWarning,
-            stacklevel=1,
         )
 
         return self.task_executor
