@@ -530,6 +530,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         :param succeeded: Optional override of the current task success flag.
         """
         if succeeded is None:
+            warnings.warn(
+                f"'succeeded' should be always provided from version 7.0.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             succeeded = self.task_succeeded
         if succeeded:
             self.__post_task_execute([self.trigger_downstream])
