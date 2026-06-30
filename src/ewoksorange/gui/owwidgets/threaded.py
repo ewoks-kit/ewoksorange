@@ -119,14 +119,17 @@ class OWEwoksWidgetOneThread(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_done: Optional[bool] = None
         self.__last_task_exception: Optional[Exception] = None
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> Optional[TaskFuture]:
         task_future = self.__executor.submit_task(
             self.ewokstaskclass, **self._get_task_arguments()
         )
         if task_future is None:
             _logger.error("A processing is already ongoing")
-            return
+            return None
         self.__propagate = propagate
+        return task_future
 
     def __on_started(self, task_future: TaskFuture) -> None:
         self.__current_task_future = task_future
@@ -201,12 +204,15 @@ class OWEwoksWidgetOneThreadPerRun(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_done: Optional[bool] = None
         self.__last_task_exception: Optional[Exception] = None
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> Optional[TaskFuture]:
         task_future = self.__executor.submit_task(
             self.ewokstaskclass, **self._get_task_arguments()
         )
         if task_future is not None:
             self.__propagate_by_future[task_future] = propagate
+        return task_future
 
     def __on_started(self, task_future: TaskFuture) -> None:
         self.progressBarInit()
@@ -281,12 +287,15 @@ class OWEwoksWidgetWithTaskStack(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         """Access the underlying EwoksExecutor."""
         return self.__executor
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> Optional[TaskFuture]:
         task_future = self.__executor.submit_task(
             self.ewokstaskclass, **self._get_task_arguments()
         )
         if task_future is not None:
             self.__propagate_by_future[task_future] = propagate
+        return task_future
 
     def __on_started(self, task_future: TaskFuture) -> None:
         self.__current_task_future = task_future

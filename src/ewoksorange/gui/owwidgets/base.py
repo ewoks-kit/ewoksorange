@@ -35,6 +35,7 @@ else:
 
     OWWidget = OWBaseWidget
 
+from ..concurrency.executor import TaskFuture
 from ..orange_utils._signals import get_signal
 from ..orange_utils.orange_imports import OWBaseWidget
 from ..orange_utils.orange_imports import OWWidget
@@ -606,21 +607,28 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         pass
 
-    def execute_ewoks_task(self, log_missing_inputs: bool = True) -> None:
+    def execute_ewoks_task(
+        self, log_missing_inputs: bool = True
+    ) -> Optional[TaskFuture]:
         """
         Execute the Ewoks task and propagate downstream on completion.
 
         :param log_missing_inputs: Whether missing inputs should be logged.
+        :return: TaskFuture for async widgets, None for synchronous widgets.
         """
         _logger.debug("%s: execute ewoks task (with propagation)", self)
-        self._execute_ewoks_task(propagate=True, log_missing_inputs=log_missing_inputs)
+        return self._execute_ewoks_task(
+            propagate=True, log_missing_inputs=log_missing_inputs
+        )
 
-    def execute_ewoks_task_without_propagation(self) -> None:
+    def execute_ewoks_task_without_propagation(self) -> Optional[TaskFuture]:
         """
         Execute the Ewoks task without propagating outputs downstream.
+
+        :return: TaskFuture for async widgets, None for synchronous widgets.
         """
         _logger.debug("%s: execute ewoks task (without propagation)", self)
-        self._execute_ewoks_task(propagate=False, log_missing_inputs=False)
+        return self._execute_ewoks_task(propagate=False, log_missing_inputs=False)
 
     @property
     def task_succeeded(self) -> Optional[bool]:
@@ -723,11 +731,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             if ncallbacks > 1:
                 self.__post_task_execute(callbacks[1:])
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> Optional[TaskFuture]:
         """
         Subclasses must implement how the task is created and executed.
 
         :param propagate: Whether to propagate outputs downstream after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
+        :return: TaskFuture for async widgets, None for synchronous widgets.
         """
         raise NotImplementedError("Base class")
