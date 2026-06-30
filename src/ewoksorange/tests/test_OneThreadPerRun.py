@@ -28,23 +28,19 @@ class OWEwoksWidgetOneThreadPerRun(
 
 
 @pytest.mark.parametrize(
-    "test_case, expected_obj_values, expected_future_values",
+    "test_case, expected_obj_values",
     [
         (
             "standard_execution",
-            [0, 1, 2],
             [0, 1, 2],
         ),
         (
             "cancel_futures",
             ["cancelled", "cancelled", "cancelled"],
-            [Exception, Exception, Exception],
         ),
     ],
 )
-def test_OWEwoksWidgetOneThreadPerRun(
-    qtapp, test_case, expected_obj_values, expected_future_values
-):
+def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_obj_values):
     """
     Test processing several tasks.
     The widget will create one thread per task and execution will be done in parallel.
@@ -79,12 +75,8 @@ def test_OWEwoksWidgetOneThreadPerRun(
     values = [obj.value for obj in objects]
     assert values == expected_obj_values
 
-    for future, expected_future_value in zip(futures, expected_future_values):
+    for future, expected_value in zip(futures, expected_obj_values):
         assert future.done(), "future is done"
-        if expected_future_value is Exception:
-            assert future.exception() is not None
-        else:
-            assert future.exception() is None
-            assert (
-                future.result()["my_object"].value == expected_future_value
-            ), f"future result is {future.result()!r} when {expected_future_value!r} expected."
+        assert (
+            future.result()["my_object"].value == expected_value
+        ), f"future result is {future.result()!r} when {expected_value!r} expected."
