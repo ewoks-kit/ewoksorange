@@ -5,8 +5,10 @@ from typing import Type
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 
+from ._EwoksWorkerBase import EwoksWorkerBase
 
-class EwoksThreadWorker:
+
+class EwoksThreadWorker(EwoksWorkerBase):
     """Callable that instantiates and executes an ewoks task in the worker thread."""
 
     def __init__(self, task_class: Type[Task], **task_kwargs):
@@ -34,8 +36,3 @@ class EwoksThreadWorker:
             task = self._task
             if task is not None:
                 task.cancel()
-
-    @property
-    def has_task(self) -> bool:
-        with self._lock:
-            return self._task is not None
