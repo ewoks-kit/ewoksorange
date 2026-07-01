@@ -129,11 +129,12 @@ class EwoksExecutor(QObject):
         manager = self._get_manager()
         started_queue = manager.Queue()
         abort_event = manager.Event()
+        aborted_event = manager.Event()
 
         callable_obj = _ProcessCallable(
-            task_class, task_kwargs, started_queue, abort_event
+            task_class, task_kwargs, started_queue, abort_event, aborted_event
         )
-        worker = _EwoksProcessWorker(abort_event)
+        worker = _EwoksProcessWorker(abort_event, aborted_event)
         self_ref = weakref.ref(self)
         _holder: list = [None]
 
