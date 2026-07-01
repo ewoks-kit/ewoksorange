@@ -87,6 +87,34 @@ class EwoksExecutor(QObject):
             return self._submit_process(task_class, task_kwargs)
         return self._submit_thread(task_class, task_kwargs)
 
+    @staticmethod
+    def _emit_started(self_ref, holder: list) -> None:
+        exe = self_ref()
+        if exe is not None:
+            exe.started.emit(holder[0])
+
+    def _finalize_submission(
+        self,
+        raw_future: Future,
+        worker,
+        self_ref,
+        holder: list,
+        ready: Optional[Event] = None,
+    ) -> TaskFuture:
+        task_future = TaskFuture(raw_future, worker)
+        holder[0] = task_future
+        if ready is not None:
+            ready.set()
+
+        # submitted fires before add_done_callback so it is always the first
+        # signal — even when the task finishes so fast that add_done_callback
+        # calls the callback synchronously in this thread.
+        self.submitted.emit(task_future)
+        raw_future.add_done_callback(
+            lambda f: self._done_callback(self_ref, f, task_future)
+        )
+        return task_future
+
     def _submit_thread(self, task_class, task_kwargs) -> TaskFuture:
         worker = _EwoksThreadWorker(task_class, **task_kwargs)
         self_ref = weakref.ref(self)
@@ -98,24 +126,13 @@ class EwoksExecutor(QObject):
 
         def _run():
             _ready.wait()
-            exe = self_ref()
-            if exe is not None:
-                exe.started.emit(_holder[0])
+            self._emit_started(self_ref, _holder)
             return worker()
 
         raw_future = self._executor.submit(_run)
-        task_future = TaskFuture(raw_future, worker)
-        _holder[0] = task_future
-        _ready.set()
-
-        # submitted fires before add_done_callback so it is always the first
-        # signal — even when the task finishes so fast that add_done_callback
-        # calls the callback synchronously in this thread.
-        self.submitted.emit(task_future)
-        raw_future.add_done_callback(
-            lambda f: self._done_callback(self_ref, f, task_future)
+        return self._finalize_submission(
+            raw_future, worker, self_ref, _holder, ready=_ready
         )
-        return task_future
 
     def _get_manager(self):
         if self._manager is None:
@@ -144,24 +161,14 @@ class EwoksExecutor(QObject):
             try:
                 msg = started_queue.get(timeout=300)
                 if msg == "started":
-                    exe = self_ref()
-                    if exe is not None:
-                        exe.started.emit(_holder[0])
+                    self._emit_started(self_ref, _holder)
             except Exception:
                 _logger.debug("started relay timed out or failed", exc_info=True)
 
-        relay = threading.Thread(target=_relay_started, daemon=True)
-        relay.start()
+        threading.Thread(target=_relay_started, daemon=True).start()
 
         raw_future = self._executor.submit(callable_obj)
-        task_future = TaskFuture(raw_future, worker)
-        _holder[0] = task_future
-
-        self.submitted.emit(task_future)
-        raw_future.add_done_callback(
-            lambda f: self._done_callback(self_ref, f, task_future)
-        )
-        return task_future
+        return self._finalize_submission(raw_future, worker, self_ref, _holder)
 
     def _handle_done(self, raw_future: Future, task_future: TaskFuture) -> None:
         with self._lock:
