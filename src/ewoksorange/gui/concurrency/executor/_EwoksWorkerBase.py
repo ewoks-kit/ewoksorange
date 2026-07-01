@@ -12,8 +12,3 @@ class EwoksWorkerBase(ABC):
     @abstractmethod
     def abort(self) -> None:
         """Abort the running ewoks task."""
-
-    @property
-    @abstractmethod
-    def has_task(self) -> bool:
-        """Whether a task has been assigned to this worker."""
