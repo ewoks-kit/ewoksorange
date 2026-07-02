@@ -151,6 +151,7 @@ class EwoksExecutor(QObject):
         ready: Optional[Event] = None,
     ) -> TaskFuture:
         task_future = TaskFuture(raw_future, worker)
+        # Store the TaskFuture in a mutable list so the _run() closure can see it after _ready is set.
         holder[0] = task_future
         if ready is not None:
             ready.set()
