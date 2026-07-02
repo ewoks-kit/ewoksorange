@@ -12,3 +12,7 @@ class EwoksWorkerBase(ABC):
     @abstractmethod
     def abort(self) -> None:
         """Abort the running ewoks task."""
+
+    @abstractmethod
+    def aborted(self) -> bool:
+        """Return True if the task was aborted."""

@@ -12,3 +12,6 @@ class EwoksProcessWorker(EwoksWorkerBase):
 
     def abort(self) -> None:
         self._abort_event.set()
+
+    def aborted(self) -> bool:
+        return self._aborted_event.is_set()

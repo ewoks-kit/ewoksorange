@@ -109,10 +109,11 @@ def test_submit_task_failed(executor):
 
 
 def test_abort_running_task(executor):
-    """abort() exits the task early; succeeded fires with MISSING_DATA output."""
+    """abort() exits the task early; succeeded and aborted both fire."""
     started = QtEvent()
     done = QtEvent()
     result_holder = {}
+    aborted_holder = {}
 
     executor.started.connect(lambda task_future: started.set())
     executor.succeeded.connect(
@@ -127,6 +128,9 @@ def test_abort_running_task(executor):
             done.set(),
         )
     )
+    executor.aborted.connect(
+        lambda task_future: aborted_holder.update({"task_future": task_future})
+    )
 
     task_future = executor.submit_task(SleepTask, inputs={"duration": 60.0})
     assert started.wait(timeout=5), "task never started"
@@ -136,6 +140,7 @@ def test_abort_running_task(executor):
     assert done.wait(timeout=5)
     assert "result" in result_holder, f"expected succeeded, got: {result_holder}"
     assert isinstance(_output_values(result_holder["result"])["result"], MissingData)
+    assert aborted_holder.get("task_future") is task_future
 
 
 def test_submitted_returns_task_future(executor):

@@ -16,6 +16,10 @@ class TaskFuture:
         """Abort a running ewoks task by calling its cancel() method."""
         self._worker.abort()
 
+    def aborted(self) -> bool:
+        """Return True if the underlying ewoks task was aborted."""
+        return self._worker.aborted()
+
     def cancelled(self) -> bool:
         return self._future.cancelled()
 

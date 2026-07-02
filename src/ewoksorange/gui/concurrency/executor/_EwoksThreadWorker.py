@@ -36,3 +36,8 @@ class EwoksThreadWorker(EwoksWorkerBase):
             task = self._task
             if task is not None:
                 task.cancel()
+
+    def aborted(self) -> bool:
+        with self._lock:
+            task = self._task
+        return task is not None and task.cancelled

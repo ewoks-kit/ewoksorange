@@ -48,6 +48,7 @@ class EwoksExecutor(QObject):
     succeeded = Signal(object, object)
     failed = Signal(object, object)
     ignored = Signal()
+    aborted = Signal(object)
     finished = Signal(object)
 
     def __init__(
@@ -170,6 +171,9 @@ class EwoksExecutor(QObject):
 
         if raw_future.cancelled():
             return
+
+        if task_future.aborted():
+            self.aborted.emit(task_future)
 
         try:
             result = raw_future.result()
