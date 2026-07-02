@@ -87,34 +87,6 @@ class EwoksExecutor(QObject):
             return self._submit_process(task_class, task_kwargs)
         return self._submit_thread(task_class, task_kwargs)
 
-    @staticmethod
-    def _emit_started(self_ref, holder: list) -> None:
-        exe = self_ref()
-        if exe is not None:
-            exe.started.emit(holder[0])
-
-    def _finalize_submission(
-        self,
-        raw_future: Future,
-        worker,
-        self_ref,
-        holder: list,
-        ready: Optional[Event] = None,
-    ) -> TaskFuture:
-        task_future = TaskFuture(raw_future, worker)
-        holder[0] = task_future
-        if ready is not None:
-            ready.set()
-
-        # submitted fires before add_done_callback so it is always the first
-        # signal — even when the task finishes so fast that add_done_callback
-        # calls the callback synchronously in this thread.
-        self.submitted.emit(task_future)
-        raw_future.add_done_callback(
-            lambda f: self._done_callback(self_ref, f, task_future)
-        )
-        return task_future
-
     def _submit_thread(self, task_class, task_kwargs) -> TaskFuture:
         worker = _EwoksThreadWorker(task_class, **task_kwargs)
         self_ref = weakref.ref(self)
@@ -133,14 +105,6 @@ class EwoksExecutor(QObject):
         return self._finalize_submission(
             raw_future, worker, self_ref, _holder, ready=_ready
         )
-
-    def _get_manager(self):
-        if self._manager is None:
-            # SyncManager server process provides proxy objects that are
-            # picklable and safe to pass through ProcessPoolExecutor's pickle
-            # serialisation.  A plain multiprocessing.Queue is NOT picklable.
-            self._manager = multiprocessing.Manager()
-        return self._manager
 
     def _submit_process(self, task_class, task_kwargs) -> TaskFuture:
         manager = self._get_manager()
@@ -169,6 +133,36 @@ class EwoksExecutor(QObject):
 
         raw_future = self._executor.submit(callable_obj)
         return self._finalize_submission(raw_future, worker, self_ref, _holder)
+
+    def _finalize_submission(
+        self,
+        raw_future: Future,
+        worker,
+        self_ref,
+        holder: list,
+        ready: Optional[Event] = None,
+    ) -> TaskFuture:
+        task_future = TaskFuture(raw_future, worker)
+        holder[0] = task_future
+        if ready is not None:
+            ready.set()
+
+        # submitted fires before add_done_callback so it is always the first
+        # signal — even when the task finishes so fast that add_done_callback
+        # calls the callback synchronously in this thread.
+        self.submitted.emit(task_future)
+        raw_future.add_done_callback(
+            lambda f: self._done_callback(self_ref, f, task_future)
+        )
+        return task_future
+
+    def _get_manager(self):
+        if self._manager is None:
+            # SyncManager server process provides proxy objects that are
+            # picklable and safe to pass through ProcessPoolExecutor's pickle
+            # serialisation.  A plain multiprocessing.Queue is NOT picklable.
+            self._manager = multiprocessing.Manager()
+        return self._manager
 
     def _handle_done(self, raw_future: Future, task_future: TaskFuture) -> None:
         with self._lock:
@@ -200,3 +194,9 @@ class EwoksExecutor(QObject):
         if executor is None:
             return
         executor._handle_done(raw_future, task_future)
+
+    @staticmethod
+    def _emit_started(self_ref, holder: list) -> None:
+        exe = self_ref()
+        if exe is not None:
+            exe.started.emit(holder[0])
