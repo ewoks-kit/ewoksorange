@@ -1,18 +1,10 @@
-from abc import ABC
-from abc import abstractmethod
+class EwoksWorkerBase:
+    """Common interface for objects that control a running ewoks task."""
 
-
-class EwoksWorkerBase(ABC):
-    """Common interface for objects that control a running ewoks task.
-
-    Instances are handed to `TaskFuture` so it can abort the underlying
-    ewoks task regardless of whether it runs in a thread or a subprocess.
-    """
-
-    @abstractmethod
     def abort(self) -> None:
         """Abort the running ewoks task."""
+        raise NotImplementedError("Base class")
 
-    @abstractmethod
     def aborted(self) -> bool:
         """Return True if the task was aborted."""
+        raise NotImplementedError("Base class")
