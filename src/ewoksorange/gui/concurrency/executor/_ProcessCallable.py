@@ -1,5 +1,4 @@
 import threading
-from collections import namedtuple
 from typing import Type
 
 from ewokscore.task import Task
