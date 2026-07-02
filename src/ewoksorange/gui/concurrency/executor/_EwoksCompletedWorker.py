@@ -1,10 +1,12 @@
-class CompletedWorker:
+from ._EwoksWorkerBase import EwoksWorkerBase
+
+
+class CompletedWorker(EwoksWorkerBase):
     """No-op worker for an already-finished synchronous task."""
 
     def abort(self) -> None:
         # no abortion possible. We expect the Worker to be created once the task is completed.
         pass
 
-    @property
-    def has_task(self) -> bool:
+    def aborted(self) -> bool:
         return False
