@@ -40,16 +40,23 @@ class EwoksExecutor(QObject):
     The `started` signal is always emitted in the main thread regardless of
     the executor type.
 
-    Warning: the `ProcessPoolExecutor` implementation is a beta-version. Please.
+    Warning: the `ProcessPoolExecutor` implementation is a beta-version.
     """
 
     submitted = Signal(object)
+    """Emitted when a task is submitted. Argument is the TaskFuture."""
     started = Signal(object)
+    """Emitted when a task starts executing. Argument is the TaskFuture."""
     succeeded = Signal(object, object)
+    """Emitted when a task finishes successfully. Arguments are the TaskFuture and the result dict."""
     failed = Signal(object, object)
+    """Emitted when a task raises an exception. Arguments are the TaskFuture and the exception."""
     ignored = Signal()
+    """Emitted when a task submission is ignored due to the DROP_IF_BUSY policy."""
     aborted = Signal(object)
+    """Emitted when a task was aborted. Argument is the TaskFuture."""
     finished = Signal(object)
+    """Emitted when a task finishes (success, failure, or abort). Argument is the TaskFuture."""
 
     def __init__(
         self,
