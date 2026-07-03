@@ -1,5 +1,8 @@
+import warnings
+
 import pytest
 from ewokscore import execute_graph
+from ewoksutils.exceptions import TaskInputWarning
 
 from ..gui.workflows.owscheme import ows_to_ewoks
 from ..orange_version import ORANGE_VERSION
@@ -145,6 +148,10 @@ def assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename):
 def assert_mixed_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
     graph = ows_to_ewoks(filename)
-    tasks = execute_graph(graph, output_tasks=True)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", TaskInputWarning)
+        tasks = execute_graph(graph, output_tasks=True)
+
     results = tasks["2"].get_output_values()
     assert results == {"result": 3}
