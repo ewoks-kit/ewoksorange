@@ -28,13 +28,7 @@ class EwoksThreadWorker(EwoksWorkerBase):
         with self._lock:
             self._task = task
 
-        try:
-            task.execute()
-        except Exception as exc:
-            # ewokscore wraps run() exceptions in RuntimeError; re-raise the
-            # original so callers see the same type as the nothread path.
-            original = task.exception
-            raise original if original is not None else exc
+        task.execute()
         return task.output_variables
 
     def abort(self) -> bool:
