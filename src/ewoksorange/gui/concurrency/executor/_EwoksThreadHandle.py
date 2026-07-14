@@ -5,10 +5,10 @@ from typing import Type
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 
-from ._EwoksWorkerBase import EwoksWorkerBase
+from ._EwoksTaskHandle import EwoksTaskHandle
 
 
-class EwoksThreadWorker(EwoksWorkerBase):
+class EwoksThreadHandle(EwoksTaskHandle):
     """Callable that instantiates and executes an ewoks task in the worker thread."""
 
     def __init__(self, task_class: Type[Task], **task_kwargs):

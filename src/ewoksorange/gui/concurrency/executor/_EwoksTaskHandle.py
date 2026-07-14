@@ -1,4 +1,4 @@
-class EwoksWorkerBase:
+class EwoksTaskHandle:
     """Common interface for objects that control a running ewoks task."""
 
     def abort(self) -> None:

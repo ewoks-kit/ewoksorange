@@ -1,7 +1,7 @@
-from ._EwoksWorkerBase import EwoksWorkerBase
+from ._EwoksTaskHandle import EwoksTaskHandle
 
 
-class EwoksProcessWorker(EwoksWorkerBase):
+class EwoksProcessHandle(EwoksTaskHandle):
     """Controls a task running in a subprocess via multiprocessing.Event objects."""
 
     def __init__(self, abort_event, aborted_event):

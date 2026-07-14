@@ -17,8 +17,8 @@ from AnyQt.QtCore import QObject
 from AnyQt.QtCore import Signal
 from ewokscore.task import Task
 
-from ._EwoksProcessWorker import EwoksProcessWorker as _EwoksProcessWorker
-from ._EwoksThreadWorker import EwoksThreadWorker as _EwoksThreadWorker
+from ._EwoksProcessHandle import EwoksProcessHandle as _EwoksProcessHandle
+from ._EwoksThreadHandle import EwoksThreadHandle as _EwoksThreadHandle
 from ._ProcessCallable import ProcessCallable as _ProcessCallable
 from .TaskFuture import TaskFuture
 
@@ -96,7 +96,7 @@ class EwoksExecutor(QObject):
         return self._submit_thread(task_class, task_kwargs)
 
     def _submit_thread(self, task_class, task_kwargs) -> TaskFuture:
-        worker = _EwoksThreadWorker(task_class, **task_kwargs)
+        worker = _EwoksThreadHandle(task_class, **task_kwargs)
         self_ref = weakref.ref(self)
 
         # _ready gates the worker until task_future is assigned so that
@@ -123,7 +123,7 @@ class EwoksExecutor(QObject):
         callable_obj = _ProcessCallable(
             task_class, task_kwargs, started_queue, abort_event, aborted_event
         )
-        worker = _EwoksProcessWorker(abort_event, aborted_event)
+        worker = _EwoksProcessHandle(abort_event, aborted_event)
         self_ref = weakref.ref(self)
         _holder: list = [None]
 

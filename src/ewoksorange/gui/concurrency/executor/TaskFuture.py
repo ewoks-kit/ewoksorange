@@ -1,12 +1,12 @@
 from concurrent.futures import Future
 
-from ._EwoksWorkerBase import EwoksWorkerBase as _EwoksWorkerBase
+from ._EwoksTaskHandle import EwoksTaskHandle as _EwoksTaskHandle
 
 
 class TaskFuture:
     """Wraps a concurrent.futures.Future with ewoks-specific abort support."""
 
-    def __init__(self, raw_future: Future, worker: _EwoksWorkerBase):
+    def __init__(self, raw_future: Future, worker: _EwoksTaskHandle):
         self._future = raw_future
         self._worker = worker
 
