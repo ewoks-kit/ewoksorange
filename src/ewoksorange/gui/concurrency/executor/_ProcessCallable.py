@@ -63,6 +63,8 @@ class ProcessCallable:
             task.execute()
         finally:
             done.set()
+            # '_watch_abort' is waiting over the '_abort_event'. Release it.
+            # If done is already set will just release the thread.
             self._abort_event.set()
             watcher.join(timeout=5)
 
