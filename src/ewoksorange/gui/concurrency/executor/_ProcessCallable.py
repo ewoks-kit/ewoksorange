@@ -40,11 +40,17 @@ class ProcessCallable:
         done = threading.Event()
 
         def _watch_abort():
-            self._abort_event.wait()
-            if not done.is_set():
+            try:
+                self._abort_event.wait()
+                if done.is_set():
+                    # abort_event was only set to release this thread.
+                    return
                 task.cancel()
-            done.wait()
-            self._aborted_event.set()
+                done.wait()
+                self._aborted_event.set()
+            except (EOFError, BrokenPipeError, ConnectionError):
+                # The manager providing the event proxies shut down.
+                pass
 
         watcher = threading.Thread(target=_watch_abort, daemon=True)
         watcher.start()
@@ -57,5 +63,9 @@ class ProcessCallable:
             task.execute()
         finally:
             done.set()
+            # '_watch_abort' is waiting over the '_abort_event'. Release it.
+            # If done is already set will just release the thread.
+            self._abort_event.set()
+            watcher.join(timeout=5)
 
         return task.output_variables
