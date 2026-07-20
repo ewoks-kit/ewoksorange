@@ -1,8 +1,8 @@
-from ._EwoksWorkerBase import EwoksWorkerBase
+from ._EwoksTaskHandle import EwoksTaskHandle as _EwoksTaskHandle
 
 
-class CompletedWorker(EwoksWorkerBase):
-    """No-op worker for an already-finished synchronous task."""
+class EwoksCompletedHandled(_EwoksTaskHandle):
+    """No-op handler for an already-finished synchronous task."""
 
     def abort(self) -> None:
         # no abortion possible. We expect the Worker to be created once the task is completed.

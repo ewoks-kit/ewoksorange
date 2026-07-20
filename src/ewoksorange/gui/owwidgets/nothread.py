@@ -7,8 +7,8 @@ from typing import Optional
 
 from ..concurrency.base import TaskExecutor
 from ..concurrency.executor import TaskFuture
-from ..concurrency.executor._EwoksCompletedWorker import (
-    CompletedWorker as _CompletedWorker,
+from ..concurrency.executor._EwoksCompletedHandle import (
+    EwoksCompletedHandled as _EwoksCompletedHandled,
 )
 from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
@@ -49,7 +49,7 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
             raw_future.set_exception(task_exception)
         else:
             raw_future.set_result(self.__task_executor.output_variables)
-        return TaskFuture(raw_future, _CompletedWorker())
+        return TaskFuture(raw_future, _EwoksCompletedHandled())
 
     @property
     def task_succeeded(self) -> Optional[bool]:
