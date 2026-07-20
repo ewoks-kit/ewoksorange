@@ -22,12 +22,21 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Initialize the no-thread widget and preparer a TaskExecutor.
+        """
         super().__init__(*args, **kwargs)
         self.__task_executor = TaskExecutor(self.ewokstaskclass)
 
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
     ) -> Optional[TaskFuture]:
+        """
+        Create and execute the Task synchronously.
+
+        :param propagate: Whether to propagate outputs after execution.
+        :param log_missing_inputs: Whether to log missing input warnings.
+        """
         # Both methods handle exceptions internally (ewokscore >= 4.0.1):
         # create_task() stores TaskInputError silently; execute_task() never raises.
         self.__task_executor.create_task(
