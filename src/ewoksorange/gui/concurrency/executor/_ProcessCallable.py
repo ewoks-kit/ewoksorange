@@ -59,11 +59,8 @@ class ProcessCallable:
         # abort() arriving right after started cannot race with reset_state().
         self._started_queue.put("started")
 
-        task_exc = None
         try:
             task.execute()
-        except Exception as e:
-            task_exc = e
         finally:
             done.set()
             # '_watch_abort' is waiting over the '_abort_event'. Release it.
@@ -71,6 +68,4 @@ class ProcessCallable:
             self._abort_event.set()
             watcher.join(timeout=5)
 
-        if task_exc is not None:
-            raise task_exc
         return task.output_variables
