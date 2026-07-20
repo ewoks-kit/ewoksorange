@@ -121,7 +121,12 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
 
     @property
     def task_exception(self) -> Optional[Exception]:
-        return self.__last_task_exception
+        exc = self.__last_task_exception
+        # task.execute() wraps run() exceptions as RuntimeError(...) from original;
+        # surface the original so callers see the exception the task actually raised.
+        if isinstance(exc, RuntimeError) and exc.__cause__ is not None:
+            return exc.__cause__
+        return exc
 
     def _get_task_outputs(self) -> dict:
         return self.__last_output_variables
