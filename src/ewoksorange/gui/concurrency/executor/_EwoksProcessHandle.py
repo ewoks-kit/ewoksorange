@@ -1,4 +1,4 @@
-import multiprocessing
+from multiprocessing.synchronize import Event
 
 from ._EwoksTaskHandle import EwoksTaskHandle
 
@@ -6,7 +6,7 @@ from ._EwoksTaskHandle import EwoksTaskHandle
 class EwoksProcessHandle(EwoksTaskHandle):
     """Controls a task running in a subprocess via multiprocessing.Event objects."""
 
-    def __init__(self, abort_event: multiprocessing.Event, aborted_event: multiprocessing.Event):  # type: ignore
+    def __init__(self, abort_event: Event, aborted_event: Event):
         self._abort_event = abort_event
         self._aborted_event = aborted_event
 
