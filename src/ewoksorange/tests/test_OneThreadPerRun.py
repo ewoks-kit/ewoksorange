@@ -65,7 +65,7 @@ def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_obj_values):
         futures.append(widget.execute_ewoks_task())
 
     if test_case == "cancel_futures":
-        # wait for the future to be started. Should be done through a QtEvent
+        # wait for the future to be started.
         sleep(0.2)
         for future in futures:
             assert future.abort(), "Future cannot be aborted."
