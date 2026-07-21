@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - ̀OWEwoksBaseWidget: `execute_ewoks_task` return now when possible a TaskFuture
+- ewoksorange.gui.concurrency.queued.TaskExecutorQueue is deprecated.
+- ewoksorange.gui.concurrency.threaded.ThreadedTaskExecutor is deprecated.
 
 ## [5.0.1] - 2026-04-17
 
