@@ -1,7 +1,7 @@
 from ._EwoksTaskHandle import EwoksTaskHandle as _EwoksTaskHandle
 
 
-class EwoksCompletedHandled(_EwoksTaskHandle):
+class EwoksCompletedHandle(_EwoksTaskHandle):
     """No-op handler for an already-finished synchronous task."""
 
     def abort(self) -> None:
