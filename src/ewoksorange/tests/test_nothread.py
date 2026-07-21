@@ -23,7 +23,7 @@ class OWEwoksWidgetNoThread(
 
 def test_OWEwoksWidgetNoThread(qtapp):
     """
-    Test processing of two tasks.
+    Test sequential of two tasks.
     The first task will be executed, prevent any other execution of code. Then the second will aldo be executed.
     """
     widget = OWEwoksWidgetNoThread()
