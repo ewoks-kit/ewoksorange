@@ -37,8 +37,6 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         :param propagate: Whether to propagate outputs after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
         """
-        # Both methods handle exceptions internally (ewokscore >= 4.0.1):
-        # create_task() stores TaskInputError silently; execute_task() never raises.
         self.__task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )

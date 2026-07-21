@@ -28,7 +28,7 @@ class EwoksThreadHandle(EwoksTaskHandle):
         with self._lock:
             self._task = task
 
-        task.execute()
+        task.execute(raise_on_error=True)
         return task.output_variables
 
     def abort(self) -> bool:

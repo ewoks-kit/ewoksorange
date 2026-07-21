@@ -60,7 +60,7 @@ class ProcessCallable:
         self._started_queue.put("started")
 
         try:
-            task.execute()
+            task.execute(raise_on_error=True)
         finally:
             done.set()
             # '_watch_abort' is waiting over the '_abort_event'. Release it.
