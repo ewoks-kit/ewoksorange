@@ -7,16 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## Fixed 
+### Fixed
 
 - Fix `ParameterForm` file system selection in QT6 (Replace `QDialog.exec_` with `QDialog.exec`).
 
-# Added
+### Added
 
 - `ParameterForm`: add an auto-completer for file / directory selection
 - `ewoksorange.gui.concurrency` add module `executor` for ewoks task execution through thread or sub-processes.
 
-# Changed
+### Changed
 
 - ̀OWEwoksBaseWidget: `execute_ewoks_task` return now when possible a TaskFuture
 
