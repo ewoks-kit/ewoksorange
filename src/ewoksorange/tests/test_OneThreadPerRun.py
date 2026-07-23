@@ -77,6 +77,7 @@ def test_OWEwoksWidgetOneThreadPerRun(qtapp, test_case, expected_obj_values):
 
     for future, expected_value in zip(futures, expected_obj_values):
         assert future.done(), "future is done"
+        my_object_instance = future.result()["my_object"].value
         assert (
-            future.result()["my_object"].value == expected_value
+            my_object_instance.value == expected_value
         ), f"future result is {future.result()!r} when {expected_value!r} expected."
