@@ -32,8 +32,7 @@ class TaskFuture:
         return self._future.done()
 
     def result(self, timeout=None):
-        raw = self._future.result(timeout=timeout)
-        return {k: v.value for k, v in raw.items()}
+        return self._future.result(timeout=timeout)
 
     def exception(self, timeout=None):
         return self._future.exception(timeout=timeout)
