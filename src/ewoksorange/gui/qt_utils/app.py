@@ -154,13 +154,13 @@ def get_all_qtwidgets() -> list:
 
 
 def qt_message_handler(level, context, message) -> None:
-    if level == QtCore.QtInfoMsg:
+    if level == QtCore.QtMsgType.QtInfoMsg:
         log = logger.info
-    elif level == QtCore.QtWarningMsg:
+    elif level == QtCore.QtMsgType.QtWarningMsg:
         log = logger.warning
-    elif level == QtCore.QtCriticalMsg:
+    elif level == QtCore.QtMsgType.QtCriticalMsg:
         log = logger.error
-    elif level == QtCore.QtFatalMsg:
+    elif level == QtCore.QtMsgType.QtFatalMsg:
         log = logger.fatal
     else:
         log = logger.debug
