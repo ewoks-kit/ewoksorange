@@ -154,14 +154,15 @@ class EwoksExecutor(QObject):
         # Store the TaskFuture in a mutable list so the _run() closure can see it after _ready is set.
         holder[0] = task_future
 
+        self.submitted.emit(task_future)
+        # emit submitted BEFORE _ready.set() so the task cannot finish before this signal is emitted.
+        if ready is not None:
+            ready.set()
+        # Register done callback. concurrent.futures specifies that 'If the future has already completed or been cancelled, fn will be called immediately.'
         raw_future.add_done_callback(
             lambda f: self._done_callback(self_ref, f, task_future)
         )
-        self.submitted.emit(task_future)
-        # Register the callback and emit submitted BEFORE _ready.set() so the
-        # task cannot finish before both are in place.
-        if ready is not None:
-            ready.set()
+
         return task_future
 
     def _get_manager(self):
