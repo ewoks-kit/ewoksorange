@@ -45,7 +45,7 @@ class _OWEwoksThreadedBaseWidget(OWEwoksBaseWidget, **ow_build_opts):
 class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     """Base for all EwoksExecutor-backed widgets."""
 
-    _MAX_WORKERS: Optional[int] = 1
+    _MAX_WORKERS: Optional[int] = None
     _SUBMIT_POLICY: SubmitPolicy = SubmitPolicy.ALWAYS
 
     def __init__(self, *args, **kwargs):
