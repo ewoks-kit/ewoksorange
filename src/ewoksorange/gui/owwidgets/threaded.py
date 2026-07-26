@@ -69,6 +69,11 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
     ) -> Optional[TaskFuture]:
+        """
+        :param propagate: Whether to propagate outputs downstream after execution.
+        :param log_missing_inputs: Whether to log missing input warnings.
+        :return: TaskFuture or None when the execution request was rejected.
+        """
         task_future = self.__executor.submit_task(
             self.ewokstaskclass, **self._get_task_arguments()
         )

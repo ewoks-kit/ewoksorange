@@ -743,6 +743,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
         :param propagate: Whether to propagate outputs downstream after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
-        :return: TaskFuture for async widgets, None for synchronous widgets.
+        :return: TaskFuture or None when the execution request was rejected.
         """
         raise NotImplementedError("Base class")

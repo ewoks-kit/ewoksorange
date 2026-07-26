@@ -30,12 +30,13 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
 
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
-    ) -> Optional[TaskFuture]:
+    ) -> TaskFuture:
         """
         Create and execute the Task synchronously.
 
         :param propagate: Whether to propagate outputs after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
+        :return: TaskFuture.
         """
         self.__task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
