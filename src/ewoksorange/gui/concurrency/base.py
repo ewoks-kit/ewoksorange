@@ -35,7 +35,7 @@ class TaskExecutor:
         if not self.has_task:
             return
         try:
-            self.__task.execute()
+            self.__task.execute(raise_on_error=True)
         except Exception as e:
             _logger.error(f"task failed: {e}", exc_info=True)
 

@@ -2,14 +2,16 @@
 Synchronous (no-thread) Ewoks widget implementation.
 """
 
-import logging
+from concurrent.futures import Future as _ConcurrentFuture
 from typing import Optional
 
 from ..concurrency.base import TaskExecutor
+from ..concurrency.executor import TaskFuture
+from ..concurrency.executor._EwoksCompletedHandle import (
+    EwoksCompletedHandle as _EwoksCompletedHandle,
+)
 from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
-
-_logger = logging.getLogger(__name__)
 
 
 class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
@@ -26,26 +28,36 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
         super().__init__(*args, **kwargs)
         self.__task_executor = TaskExecutor(self.ewokstaskclass)
 
-    def _execute_ewoks_task(self, propagate: bool, log_missing_inputs: bool) -> None:
+    def _execute_ewoks_task(
+        self, propagate: bool, log_missing_inputs: bool
+    ) -> TaskFuture:
         """
         Create and execute the Task synchronously.
 
         :param propagate: Whether to propagate outputs after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
+        :return: TaskFuture.
         """
         self.__task_executor.create_task(
             log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
         )
+        self.__task_executor.execute_task()
+
+        task_exception = self.__task_executor.exception
         try:
-            self.__task_executor.execute_task()
-        except Exception as e:
-            _logger.error(f"task failed: {e}", exc_info=True)
-        try:
-            self.__post_task_exception = None
             if propagate:
-                self.propagate_downstream()
+                # Always pass an explicit bool — passing None triggers a DeprecationWarning
+                # (base.py:533) which becomes an error under pytest -W error.
+                self.propagate_downstream(succeeded=task_exception is None)
         finally:
             self._output_changed()
+
+        raw_future = _ConcurrentFuture()
+        if task_exception is not None:
+            raw_future.set_exception(task_exception)
+        else:
+            raw_future.set_result(self.__task_executor.output_variables)
+        return TaskFuture(raw_future, _EwoksCompletedHandle())
 
     @property
     def task_succeeded(self) -> Optional[bool]:
