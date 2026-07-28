@@ -3,7 +3,10 @@ from abc import abstractmethod
 
 
 class TaskController(ABC):
-    """Interface for controlling a running ewoks task."""
+    """Interface for controlling a running ewoks task.
+
+    The task (instance) is expected to be executed at most once.
+    """
 
     @abstractmethod
     def abort(self) -> bool:
