@@ -135,11 +135,17 @@ def ows_to_ewoks(
     ows = read_ows(source)
 
     description = ows.description
+
     try:
         ewoksinfo = json.loads(description)
-        description = ewoksinfo["description"]
     except Exception:
-        ewoksinfo = dict()
+        ewoksinfo = {}
+
+    if isinstance(ewoksinfo, dict):
+        description = ewoksinfo.pop("description", description)
+    else:
+        ewoksinfo = {}
+
     if not description and isinstance(source, str):
         description = (
             "Ewoks workflow '%s'" % os.path.splitext(os.path.basename(source))[0]
@@ -214,6 +220,7 @@ def ows_to_ewoks(
     graph_attrs = dict()
     graph_attrs["id"] = title
     graph_attrs["label"] = description
+    graph_attrs.update(ewoksinfo)
     if ows.annotations:
         graph_attrs["ows"] = {
             "annotations": [
@@ -347,10 +354,16 @@ class OwsSchemeWrapper:
         if isinstance(graph, TaskGraph):
             graph = graph.dump()
 
-        self.title = graph["graph"].get("id", "")
-        self._description = graph["graph"].get("label", "")
+        graph_attrs = graph.get("graph", {})
 
-        ows = graph["graph"].get("ows", dict())
+        self.title = graph_attrs.get("id", "")
+        self._description = graph_attrs.get("label", "")
+
+        self._ewoks_graph_attrs = {
+            k: v for k, v in graph_attrs.items() if k not in ("id", "label", "ows")
+        }
+
+        ows = graph_attrs.get("ows", dict())
         self._annotations = [
             _deserialize_annotation(annotation)
             for annotation in ows.get("annotations", list())
@@ -414,14 +427,16 @@ class OwsSchemeWrapper:
 
     @property
     def description(self):
+        info = dict(self._ewoks_graph_attrs)
+
         if self.missing_links:
-            description = {
-                "description": self._description,
-                "missing_links": self.missing_links,
-            }
-            return json.dumps(description)
-        else:
-            return self._description
+            info["missing_links"] = self.missing_links
+
+        if info:
+            info["description"] = self._description
+            return json.dumps(info)
+
+        return self._description
 
     def _convert_link(self, link):
         """In Orange, a link must transfer data"""
