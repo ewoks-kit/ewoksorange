@@ -15,6 +15,8 @@ from ..orange_version import ORANGE_VERSION
 
 logger = logging.getLogger(__name__)
 
+pytest.register_assert_rewrite("ewoksorange.tests.executor.signals")
+
 
 def global_cleanup_orange():
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:

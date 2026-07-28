@@ -4,6 +4,7 @@ import signal
 import sys
 import time
 from contextlib import contextmanager
+from typing import Callable
 from typing import Iterator
 from typing import Optional
 
@@ -179,3 +180,23 @@ def absorb_nonbase_exception(exc_type, exc_value, exc_traceback) -> None:
         return
 
     logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+
+def wait_until(
+    predicate: Callable[[], bool],
+    timeout: float = 5.0,
+    interval: float = 0.01,
+) -> bool:
+    """Wait until ``predicate()`` becomes True while processing Qt events."""
+    deadline = time.monotonic() + timeout
+
+    while True:
+        process_qtapp_events()
+
+        if predicate():
+            return True
+
+        if time.monotonic() >= deadline:
+            return False
+
+        time.sleep(interval)

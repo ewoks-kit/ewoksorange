@@ -9,9 +9,9 @@ from ewokscore import Task
 from ewokscore.missing_data import MissingData
 from ewokscore.tests.examples.tasks.sumtask import SumTask as _SumTask
 
-from ewoksorange.gui.concurrency.executor.EwoksExecutor import EwoksExecutor
-from ewoksorange.gui.concurrency.executor.EwoksExecutor import SubmitPolicy
-from ewoksorange.gui.qt_utils.app import QtEvent
+from ...gui.concurrency.executor import EwoksExecutor
+from ...gui.concurrency.executor import SubmitPolicy
+from ...gui.qt_utils.app import QtEvent
 
 
 class SumTask(_SumTask):
