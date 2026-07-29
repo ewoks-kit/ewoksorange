@@ -38,7 +38,6 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
             return self._named_tuple._asdict()
 
     class Output:
-
         def __init__(
             self, name, type, flags=_Single, id=None, doc=None, ewoksname: str = ""
         ):

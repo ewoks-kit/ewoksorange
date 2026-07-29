@@ -42,8 +42,7 @@ test = [
 ]
 dev = [
     "ewoksorange[test]",
-    "black >=25",
-    "flake8 >=4",
+    "ruff>=0.16.0",
 ]
 doc = [
     "ewoksorange[test]",
@@ -123,6 +122,22 @@ ewoks-canvas = "ewoksorange.gui.canvas.main:main"
 [tool.pytest.ini_options]
 timeout = 120
 
-[tool.isort]
-profile = "black"
-force_single_line = "True"
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle errors
+    "F", # pyflakes
+    "I", # isort
+    "S", # flake8-bandit
+]
+ignore = [
+    "E501", # line too long
+]
+
+[tool.ruff.lint.per-file-ignores]
+"src/ewoksorange/tests/*.py" = [
+    "S101"  # allow asserts
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true
+known-first-party = ["ewoksorange"]

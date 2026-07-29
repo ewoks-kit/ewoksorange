@@ -37,6 +37,7 @@ else:
         from orangecanvas.application.canvasmain import (
             CanvasMainWindow as OWCanvasMainWindow,
         )
+
         from . import config as orangeconfig
 
 from ..orange_utils.signal_manager import SignalManagerWithOutputTracking
@@ -125,9 +126,10 @@ class OrangeCanvasHandler:
     @property
     def signal_manager(self) -> SignalManagerWithOutputTracking:
         signal_manager = self.scheme.signal_manager
-        assert isinstance(
-            signal_manager, SignalManagerWithOutputTracking
-        ), "Orange signal manager was not patched before instantiated"
+        if not isinstance(signal_manager, SignalManagerWithOutputTracking):
+            raise RuntimeError(
+                "Orange signal manager was not patched before instantiated"
+            )
         return signal_manager
 
     def iter_nodes(self):

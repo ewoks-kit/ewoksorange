@@ -15,7 +15,6 @@ from ewokscore.engine_interface import WorkflowEngineWithSerialization
 
 
 class OrangeWorkflowEngine(WorkflowEngineWithSerialization):
-
     def execute_graph(
         self,
         graph: Any,
