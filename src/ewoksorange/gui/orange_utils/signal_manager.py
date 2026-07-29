@@ -16,11 +16,11 @@ if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 
     notify_input_helper = None
 else:
+    import orangewidget.workflow.widgetsscheme as widgetsscheme_module
+    from orangewidget.utils.signals import notify_input_helper
     from orangewidget.workflow.widgetsscheme import (
         WidgetsSignalManager as _SignalManagerWithScheme,
     )
-    import orangewidget.workflow.widgetsscheme as widgetsscheme_module
-    from orangewidget.utils.signals import notify_input_helper
 
 from ewokscore.variable import Variable
 from ewokscore.variable import value_from_transfer

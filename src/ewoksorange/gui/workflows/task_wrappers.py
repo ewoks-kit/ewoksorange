@@ -55,7 +55,11 @@ def _ewoks_owwidget_task_wrapper(
         input_names = ewokstaskclass.required_input_names()
         optional_input_names = ewokstaskclass.optional_input_names()
         expected = set(input_names) | set(optional_input_names)
-        assert all_input_names == expected
+        if all_input_names != expected:
+            raise TypeError(
+                f"{widget_class} input names {all_input_names} do not match "
+                f"the ewoks task's input names {expected}"
+            )
     except AttributeError:
         input_names = all_input_names
         optional_input_names = tuple()
