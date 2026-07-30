@@ -12,6 +12,7 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 from uuid import uuid4
+from xml.etree import ElementTree
 
 from ewokscore import load_graph
 from ewokscore.graph import TaskGraph
@@ -133,18 +134,20 @@ def ows_to_ewoks(
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
     ows = read_ows(source)
+    ewoksinfo = _read_ewoks_graph_attrs(source)
 
     description = ows.description
 
-    try:
-        ewoksinfo = json.loads(description)
-    except Exception:
-        ewoksinfo = {}
-
-    if isinstance(ewoksinfo, dict):
-        description = ewoksinfo.pop("description", description)
-    else:
-        ewoksinfo = {}
+    if ewoksinfo is None:
+        # backward compatibility: extra attrs were stored as JSON in the description
+        try:
+            ewoksinfo = json.loads(description)
+        except Exception:
+            ewoksinfo = {}
+        if isinstance(ewoksinfo, dict):
+            description = ewoksinfo.pop("description", description)
+        else:
+            ewoksinfo = {}
 
     if not description and isinstance(source, str):
         description = (
@@ -427,16 +430,15 @@ class OwsSchemeWrapper:
 
     @property
     def description(self):
-        info = dict(self._ewoks_graph_attrs)
+        return self._description
 
+    @property
+    def ewoks_graph_attrs(self) -> Optional[dict]:
+        """Extra ewoks graph attributes beyond id/label/ows, plus missing_links."""
+        info = dict(self._ewoks_graph_attrs)
         if self.missing_links:
             info["missing_links"] = self.missing_links
-
-        if info:
-            info["description"] = self._description
-            return json.dumps(info)
-
-        return self._description
+        return info if info else None
 
     def _convert_link(self, link):
         """In Orange, a link must transfer data"""
@@ -482,6 +484,28 @@ class OwsSchemeWrapper:
         return list()
 
 
+_EWOKS_GRAPH_ATTRS_TAG = "ewoks_graph_attrs"
+
+
+def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
+    """Extract ewoks graph attributes from the dedicated XML element, if present."""
+    try:
+        if isinstance(source, str):
+            tree = ElementTree.parse(source)
+            root = tree.getroot()
+        else:
+            pos = source.tell() if hasattr(source, "tell") else None
+            root = ElementTree.fromstring(source.read())
+            if pos is not None:
+                source.seek(pos)
+        elem = root.find(_EWOKS_GRAPH_ATTRS_TAG)
+        if elem is not None and elem.text:
+            return json.loads(elem.text)
+    except Exception:
+        pass
+    return None
+
+
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:
     """Read an Orange Workflow Scheme from a file or a stream."""
     return _original_parse_ows_stream(source)
@@ -496,9 +520,14 @@ def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):
     tree = readwrite.scheme_to_etree(
         scheme, data_format="literal", pickle_fallback=True
     )
-    for node in tree.getroot().find("nodes"):
+    root = tree.getroot()
+    for node in root.find("nodes"):
         del node.attrib["scheme_node_type"]
-    readwrite.indent(tree.getroot(), 0)
+    ewoks_attrs = scheme.ewoks_graph_attrs
+    if ewoks_attrs is not None:
+        elem = ElementTree.SubElement(root, _EWOKS_GRAPH_ATTRS_TAG)
+        elem.text = json.dumps(ewoks_attrs)
+    readwrite.indent(root, 0)
     if isinstance(destination, str) and os.path.dirname(destination):
         os.makedirs(os.path.dirname(destination), exist_ok=True)
     tree.write(destination, encoding="utf-8", xml_declaration=True)
