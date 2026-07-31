@@ -415,6 +415,8 @@ class OwsSchemeWrapper:
                     f"Orange workflows only support task of types 'class' or 'generated'. Got {task_type!r}"
                 )
 
+        self._runtime_env = dict()
+
         self.links = list()
         self.missing_links = list()
         for link in graph["links"]:
@@ -439,6 +441,12 @@ class OwsSchemeWrapper:
         if self.missing_links:
             info["missing_links"] = self.missing_links
         return info if info else None
+
+    def get_runtime_env(self, key, default=None):
+        return self._runtime_env.get(key, default)
+
+    def set_runtime_env(self, key, value):
+        self._runtime_env[key] = value
 
     def _convert_link(self, link):
         """In Orange, a link must transfer data"""
