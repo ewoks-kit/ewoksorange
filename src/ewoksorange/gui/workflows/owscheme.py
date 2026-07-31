@@ -577,3 +577,39 @@ def _patched_parse_ows_stream(*args, **kwargs) -> ReadSchemeType:
 
 def patch_parse_ows_stream():
     readwrite.parse_ows_stream = _patched_parse_ows_stream
+
+
+_original_scheme_load = readwrite.scheme_load
+_original_scheme_to_etree = readwrite.scheme_to_etree
+
+
+def _patched_scheme_load(scheme, stream, *args, **kwargs):
+    """Preserve `_EWOKS_GRAPH_ATTRS_TAG` across a live canvas edit/save
+    round-trip.
+    """
+    ewoks_attrs = _read_ewoks_graph_attrs(stream)
+    scheme = _original_scheme_load(scheme, stream, *args, **kwargs)
+    if ewoks_attrs is not None:
+        scheme.set_runtime_env(_EWOKS_GRAPH_ATTRS_TAG, ewoks_attrs)
+    return scheme
+
+
+def _patched_scheme_to_etree(scheme, *args, **kwargs):
+    """Counterpart of `_patched_scheme_load`: re-attach the ewoks graph attrs
+    (if any were stashed in the scheme's runtime environment)
+    """
+    tree = _original_scheme_to_etree(scheme, *args, **kwargs)
+    ewoks_attrs = scheme.get_runtime_env(_EWOKS_GRAPH_ATTRS_TAG)
+    print("ewoks_attrs are", ewoks_attrs)
+    if ewoks_attrs is not None:
+        elem = ElementTree.SubElement(tree.getroot(), _EWOKS_GRAPH_ATTRS_TAG)
+        elem.text = json.dumps(ewoks_attrs)
+    return tree
+
+
+def patch_scheme_to_etree():
+    readwrite.scheme_to_etree = _patched_scheme_to_etree
+
+
+def patch_scheme_load():
+    readwrite.scheme_load = _patched_scheme_load
