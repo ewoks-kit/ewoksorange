@@ -13,7 +13,7 @@ from ..gui.workflows.owscheme import graph_is_supported
 from ..gui.workflows.owscheme import ows_to_ewoks
 
 
-def test_ows_to_ewoks_sumtask_tutorial(tmpdir):
+def test_ows_to_ewoks_sumtask_tutorial(tmpdir, qtapp):
     """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.ewokstest import tutorials
 
@@ -26,7 +26,7 @@ def test_ows_to_ewoks_sumtask_tutorial(tmpdir):
     assert ewoksgraph == ewoksgraph2
 
 
-def test_ows_to_ewoks_sumlist_tutorial(tmpdir):
+def test_ows_to_ewoks_sumlist_tutorial(tmpdir, qtapp):
     """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.ewokstest import tutorials
 
