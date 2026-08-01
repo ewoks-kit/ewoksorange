@@ -5,7 +5,7 @@ from ewokscore.tests.test_workflow_events import run_failed_workfow
 from ewokscore.tests.test_workflow_events import run_succesfull_workfow
 from ewokscore.tests.test_workflow_events import sqlite_path  # noqa F401
 
-from ..gui.workflows.owscheme import ewoks_to_ows
+from ...gui.workflows.owscheme import ewoks_to_ows
 
 
 def test_succesfull_workfow(sqlite_path, ewoks_orange_canvas):  # noqa 811

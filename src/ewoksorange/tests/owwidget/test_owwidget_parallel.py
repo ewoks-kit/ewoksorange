@@ -6,8 +6,8 @@ import pytest
 from ewokscore.task import Task
 from ewoksutils.exceptions import TaskExecutionError
 
-from ..gui.owwidgets.meta import ow_build_opts
-from ..gui.owwidgets.threaded import OWEwoksWidgetOneThreadPerRun
+from ...gui.owwidgets.meta import ow_build_opts
+from ...gui.owwidgets.threaded import OWEwoksWidgetOneThreadPerRun
 
 
 class Cancelled(Exception):

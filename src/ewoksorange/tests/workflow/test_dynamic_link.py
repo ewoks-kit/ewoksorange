@@ -2,12 +2,12 @@ import pytest
 from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
 
-from ..gui.orange_utils.signals import Input
-from ..gui.owwidgets.base import OWWidget
-from ..gui.owwidgets.nothread import OWEwoksWidgetNoThread
-from ..gui.owwidgets.registration import register_owwidget
-from ..gui.workflows.owscheme import ewoks_to_ows
-from ..orange_version import ORANGE_VERSION
+from ...gui.orange_utils.signals import Input
+from ...gui.owwidgets.base import OWWidget
+from ...gui.owwidgets.nothread import OWEwoksWidgetNoThread
+from ...gui.owwidgets.registration import register_owwidget
+from ...gui.workflows.owscheme import ewoks_to_ows
+from ...orange_version import ORANGE_VERSION
 
 
 class Mother(int): ...

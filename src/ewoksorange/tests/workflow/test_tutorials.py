@@ -4,8 +4,8 @@ import pytest
 from ewokscore import execute_graph
 from ewoksutils.exceptions import TaskInputWarning
 
-from ..gui.workflows.owscheme import ows_to_ewoks
-from ..orange_version import ORANGE_VERSION
+from ...gui.workflows.owscheme import ows_to_ewoks
+from ...orange_version import ORANGE_VERSION
 
 try:
     from importlib.resources import files as resource_files
