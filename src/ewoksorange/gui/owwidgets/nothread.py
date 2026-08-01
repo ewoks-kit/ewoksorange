@@ -5,11 +5,11 @@ Synchronous (no-thread) Ewoks widget implementation.
 from concurrent.futures import Future as _ConcurrentFuture
 from typing import Optional
 
-from ..concurrency.base import TaskExecutor
-from ..concurrency.executor import TaskFuture
-from ..concurrency.executor._EwoksCompletedHandle import (
+from ..concurrency._executor import TaskFuture
+from ..concurrency._executor._EwoksCompletedHandle import (
     EwoksCompletedHandle as _EwoksCompletedHandle,
 )
+from ..concurrency.base import TaskExecutor
 from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
 

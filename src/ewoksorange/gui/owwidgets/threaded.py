@@ -85,9 +85,9 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__current_task_future = task_future
         self.progressBarInit()
 
-    def __on_succeeded(self, task_future: TaskFuture, result: dict) -> None:
+    def __on_succeeded(self, task_future: TaskFuture) -> None:
         propagate = self.__propagate_by_future.pop(task_future, False)
-        self.__last_output_variables = result
+        self.__last_output_variables = task_future.result()
         self.__last_task_succeeded = True
         self.__last_task_done = True
         self.__last_task_exception = None
@@ -98,12 +98,12 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         finally:
             self._output_changed()
 
-    def __on_failed(self, task_future: TaskFuture, exc: Exception) -> None:
+    def __on_failed(self, task_future: TaskFuture) -> None:
         propagate = self.__propagate_by_future.pop(task_future, False)
         self.__last_output_variables = {}
         self.__last_task_succeeded = False
         self.__last_task_done = True
-        self.__last_task_exception = exc
+        self.__last_task_exception = task_future.exception()
         self.progressBarFinished()
         try:
             if propagate:

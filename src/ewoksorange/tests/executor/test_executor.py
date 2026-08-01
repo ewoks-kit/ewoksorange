@@ -9,9 +9,9 @@ from ewokscore import Task
 from ewokscore.missing_data import MissingData
 from ewokscore.tests.examples.tasks.sumtask import SumTask as _SumTask
 
-from ewoksorange.gui.concurrency.executor.EwoksExecutor import EwoksExecutor
-from ewoksorange.gui.concurrency.executor.EwoksExecutor import SubmitPolicy
-from ewoksorange.gui.qt_utils.app import QtEvent
+from ...gui.concurrency.executor import EwoksExecutor
+from ...gui.concurrency.executor import SubmitPolicy
+from ...gui.qt_utils.app import QtEvent
 
 
 class SumTask(_SumTask):
@@ -78,8 +78,8 @@ def test_submit_task_succeeded(executor):
     done = QtEvent()
 
     executor.succeeded.connect(
-        lambda task_future, result: (
-            result_holder.update({"result": result}),
+        lambda task_future: (
+            result_holder.update({"result": task_future.result()}),
             done.set(),
         )
     )
@@ -95,8 +95,8 @@ def test_submit_task_failed(executor):
     done = QtEvent()
 
     executor.failed.connect(
-        lambda task_future, exception: (
-            exc_holder.update({"exception": exception}),
+        lambda task_future: (
+            exc_holder.update({"exception": task_future.exception()}),
             done.set(),
         )
     )
@@ -117,14 +117,14 @@ def test_abort_running_task(executor):
 
     executor.started.connect(lambda task_future: started.set())
     executor.succeeded.connect(
-        lambda task_future, result: (
-            result_holder.update({"result": result}),
+        lambda task_future: (
+            result_holder.update({"result": task_future.result()}),
             done.set(),
         )
     )
     executor.failed.connect(
-        lambda task_future, exception: (
-            result_holder.update({"exception": exception}),
+        lambda task_future: (
+            result_holder.update({"exception": task_future.exception()}),
             done.set(),
         )
     )
@@ -146,7 +146,7 @@ def test_abort_running_task(executor):
 def test_submitted_returns_task_future(executor):
     done = QtEvent()
 
-    executor.succeeded.connect(lambda task_future, result: done.set())
+    executor.succeeded.connect(lambda task_future: done.set())
 
     task_future = executor.submit_task(SumTask, inputs={"a": 1, "b": 1})
     assert task_future is not None
@@ -164,7 +164,7 @@ def test_drop_if_busy_policy(qtapp):
         lambda task_future: submitted_count.__setitem__(0, submitted_count[0] + 1)
     )
     exe.ignored.connect(lambda: ignored_count.__setitem__(0, ignored_count[0] + 1))
-    exe.succeeded.connect(lambda task_future, result: done.set())
+    exe.succeeded.connect(lambda task_future: done.set())
 
     # First submit starts, the rest should be dropped
     for _ in range(5):
@@ -186,7 +186,7 @@ def test_cancel_queued_task(qtapp):
     second_ran = [False]
 
     exe = _make_executor(policy=SubmitPolicy.ALWAYS, workers=1)
-    exe.succeeded.connect(lambda task_future, result: done.set())
+    exe.succeeded.connect(lambda task_future: done.set())
 
     # Block the single worker thread
     exe.submit_task(SleepTask, inputs={"duration": 2.0})
@@ -194,7 +194,7 @@ def test_cancel_queued_task(qtapp):
 
     # This one is pending — cancel it before it runs
     tf = exe.submit_task(SumTask, inputs={"a": 1, "b": 2})
-    exe.succeeded.connect(lambda task_future, result: second_ran.__setitem__(0, True))
+    exe.succeeded.connect(lambda task_future: second_ran.__setitem__(0, True))
     cancelled = tf.cancel()
 
     assert cancelled is True
@@ -209,8 +209,8 @@ def test_multiple_parallel_tasks(qtapp):
 
     exe = _make_executor(policy=SubmitPolicy.ALWAYS, workers=4)
     exe.succeeded.connect(
-        lambda task_future, result: (
-            results.append(_output_values(result)["result"]),
+        lambda task_future: (
+            results.append(_output_values(task_future.result())["result"]),
             (done.set() if len(results) == 4 else None),
         )
     )
