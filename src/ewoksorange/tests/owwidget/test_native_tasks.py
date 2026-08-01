@@ -1,8 +1,8 @@
 import pytest
 
-from ..gui.owwidgets.base import OWWidget
-from ..orange_version import ORANGE_VERSION
-from .utils import execute_task
+from ...gui.owwidgets.base import OWWidget
+from ...orange_version import ORANGE_VERSION
+from ..utils import execute_task
 
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
 

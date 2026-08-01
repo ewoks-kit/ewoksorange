@@ -5,12 +5,12 @@ import pytest
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
-from ..gui.owwidgets.meta import ow_build_opts
-from ..gui.owwidgets.nothread import OWEwoksWidgetNoThread
-from ..gui.owwidgets.threaded import OWEwoksWidgetOneThread
-from ..gui.owwidgets.threaded import OWEwoksWidgetOneThreadPerRun
-from ..gui.owwidgets.threaded import OWEwoksWidgetWithTaskStack
-from .utils import execute_task
+from ...gui.owwidgets.meta import ow_build_opts
+from ...gui.owwidgets.nothread import OWEwoksWidgetNoThread
+from ...gui.owwidgets.threaded import OWEwoksWidgetOneThread
+from ...gui.owwidgets.threaded import OWEwoksWidgetOneThreadPerRun
+from ...gui.owwidgets.threaded import OWEwoksWidgetWithTaskStack
+from ..utils import execute_task
 
 
 class TaskForTesting(

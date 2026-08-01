@@ -2,12 +2,12 @@ import pytest
 from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
 
-from ..gui.orange_utils.signals import Input
-from ..gui.owwidgets.base import OWWidget
-from ..gui.owwidgets.nothread import OWEwoksWidgetNoThread
-from ..gui.owwidgets.registration import register_owwidget
-from ..gui.workflows.owscheme import ewoks_to_ows
-from ..orange_version import ORANGE_VERSION
+from ...gui.orange_utils.signals import Input
+from ...gui.owwidgets.base import OWWidget
+from ...gui.owwidgets.nothread import OWEwoksWidgetNoThread
+from ...gui.owwidgets.registration import register_owwidget
+from ...gui.workflows.owscheme import ewoks_to_ows
+from ...orange_version import ORANGE_VERSION
 
 
 class Mother(int): ...
@@ -49,7 +49,7 @@ class EwoksOrangeWidget(OWEwoksWidgetNoThread, ewokstaskclass=EwoksTask):
 @pytest.mark.skipif(
     ORANGE_VERSION == ORANGE_VERSION.oasys_fork, reason="hanging with oasys binding."
 )
-def test_dynamic_link(tmpdir, ewoks_orange_canvas):
+def test_dynamic_link(tmp_path, ewoks_orange_canvas):
     """Test that a dynamic link in orange will be processed as expected."""
     # Create an Orange workflows
     workflow = {
@@ -79,7 +79,7 @@ def test_dynamic_link(tmpdir, ewoks_orange_canvas):
             },
         ],
     }
-    destination = str(tmpdir / "ewoksgraph.ows")
+    destination = str(tmp_path / "ewoksgraph.ows")
     ewoks_to_ows(workflow, destination)
 
     for widget in (NativeWidget, EwoksOrangeWidget):

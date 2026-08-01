@@ -4,8 +4,8 @@ import time
 import numpy
 from ewokscore.task import Task
 
-from ..gui.owwidgets.meta import ow_build_opts
-from ..gui.owwidgets.threaded import OWEwoksWidgetOneThread
+from ...gui.owwidgets.meta import ow_build_opts
+from ...gui.owwidgets.threaded import OWEwoksWidgetOneThread
 
 
 class Sequential(

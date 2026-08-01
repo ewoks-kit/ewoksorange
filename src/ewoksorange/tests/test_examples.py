@@ -10,16 +10,16 @@ from ..gui.workflows.owscheme import graph_is_supported
 
 
 @pytest.mark.parametrize("graph_name", graph_names())
-def test_execute_graph(graph_name, tmpdir, ewoks_orange_canvas):
+def test_execute_graph(graph_name, tmp_path, ewoks_orange_canvas):
     """Test graph execution like the Orange canvas would do it"""
     graph, expected = get_graph(graph_name)
     ewoksgraph = load_graph(graph)
-    varinfo = {"root_uri": str(tmpdir)}
+    varinfo = {"root_uri": str(tmp_path)}
     if not graph_is_supported(ewoksgraph):
         pytest.skip("graph not supported by orange")
 
     ewoks_orange_canvas.load_graph(
-        ewoksgraph, varinfo=varinfo, error_on_duplicates=False, tmpdir=tmpdir
+        ewoksgraph, varinfo=varinfo, error_on_duplicates=False, tmpdir=tmp_path
     )
     ewoks_orange_canvas.start_workflow()
     ewoks_orange_canvas.wait_widgets(timeout=10)
@@ -28,7 +28,7 @@ def test_execute_graph(graph_name, tmpdir, ewoks_orange_canvas):
 
 
 @pytest.mark.parametrize("graph_name", graph_names())
-def test_convert_graph(graph_name, tmpdir):
+def test_convert_graph(graph_name, tmp_path):
     graph, _ = get_graph(graph_name)
     ewoksgraph = load_graph(graph)
     ewoksgraph.graph.graph.pop("ows", None)
@@ -50,10 +50,10 @@ def test_convert_graph(graph_name, tmpdir):
     ]
     if graph_is_supported(ewoksgraph):
         assert_convert_graph(
-            convert_graph, ewoksgraph, tmpdir, representations=representations
+            convert_graph, ewoksgraph, tmp_path, representations=representations
         )
     else:
         with pytest.raises(RuntimeError):
             assert_convert_graph(
-                convert_graph, ewoksgraph, tmpdir, representations=representations
+                convert_graph, ewoksgraph, tmp_path, representations=representations
             )
