@@ -14,6 +14,8 @@ from typing import Union
 from uuid import uuid4
 from xml.etree import ElementTree
 
+from defusedxml.ElementTree import parse as xml_fromstring
+from defusedxml.ElementTree import parse as xml_parse
 from ewokscore import load_graph
 from ewokscore.graph import TaskGraph
 from ewokscore.graph.serialize import GraphRepresentation
@@ -499,18 +501,18 @@ def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
     """Extract ewoks graph attributes from the dedicated XML element, if present."""
     try:
         if isinstance(source, str):
-            tree = ElementTree.parse(source)
+            tree = xml_parse(source)
             root = tree.getroot()
         else:
             pos = source.tell() if hasattr(source, "tell") else None
-            root = ElementTree.fromstring(source.read())
+            root = xml_fromstring(source.read())
             if pos is not None:
                 source.seek(pos)
         elem = root.find(_EWOKS_GRAPH_ATTRS_TAG)
         if elem is not None and elem.text:
             return json.loads(elem.text)
     except Exception:
-        pass
+        logger.debug("Failed to read ewoks graph attributes", exc_info=True)
     return None
 
 
