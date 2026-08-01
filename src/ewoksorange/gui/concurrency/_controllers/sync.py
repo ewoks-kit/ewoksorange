@@ -1,15 +1,9 @@
-from .abstract import TaskController
+from ._in_process import _InProcessTaskController
 
 
-class SyncTaskController(TaskController):
-    """Controller for a task that already finished.
+class SyncTaskController(_InProcessTaskController):
+    """Controls a task running on the (blocked) calling thread.
 
-    Used for synchronous execution where abort is impossible because the task
-    has already returned.
+    `abort()` only has an effect when called concurrently from another
+    thread, since the calling thread is busy running the task.
     """
-
-    def abort(self) -> bool:
-        return False
-
-    def aborted(self) -> bool:
-        return False

@@ -24,7 +24,7 @@ class Parallel(
 ):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.__cancelled = False
+        self.__cancel_requested = False
 
     def run(self):
         # Wait for all parallel task to start
@@ -36,7 +36,7 @@ class Parallel(
         tm = time.perf_counter()
 
         # Return value as output or exception
-        if self.__cancelled:
+        if self.__cancel_requested:
             try:
                 raise Cancelled(self.inputs.value, tm)
             finally:
@@ -46,7 +46,8 @@ class Parallel(
         self.outputs.value = self.inputs.value
 
     def cancel(self):
-        self.__cancelled = True
+        # Interpretation #1: self.cancelled is the state not the request
+        self.__cancel_requested = True
 
 
 class OWParallel(
