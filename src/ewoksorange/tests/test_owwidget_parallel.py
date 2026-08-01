@@ -72,7 +72,7 @@ def test_owwidget_parallel(qtapp):
     # cancel some jobs
     for future, cancel in zip(futures, cancels):
         if cancel:
-            assert future.abort(), "Future cannot be aborted."
+            _ = future.abort()
 
     # check results
     times = []
@@ -81,12 +81,17 @@ def test_owwidget_parallel(qtapp):
             with pytest.raises(TaskExecutionError) as exc_info:
                 _ = future.result(timeout=10)
 
+            assert future.aborted()
+
             assert isinstance(exc_info.value.__cause__, Cancelled)
             assert exc_info.value.__cause__.value == value
 
             times.append(exc_info.value.__cause__.time)
         else:
             outputs = future.result(timeout=10)
+
+            assert not future.aborted()
+
             assert outputs["value"].value == value
             times.append(outputs["time"].value)
 
