@@ -1,13 +1,13 @@
 import logging
 import multiprocessing
 import multiprocessing.managers
-import threading
 import weakref
 from concurrent import futures
 from enum import Enum
 from enum import auto
 from threading import Event
 from threading import Lock
+from typing import Any
 from typing import Callable
 from typing import List
 from typing import Optional
@@ -96,46 +96,42 @@ class EwoksExecutor(QObject):
 
     def _submit_sync(self, task_class: Type[Task], task_kwargs: dict) -> TaskFuture:
         controller = _controllers.SyncTaskController()
-
-        def ready():
-            try:
-                result = run()
-            except BaseException as exc:
-                raw_future.set_exception(exc)
-            else:
-                raw_future.set_result(result)
-
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
-        runner = _runners.SyncTaskRunner(task_class, task_kwargs)
-
-        def run():
-            _emit_started(self_ref, holder)
-            return runner()
+        runner = _runners.SyncTaskRunner(
+            task_class,
+            task_kwargs,
+            controller,
+            on_started=lambda: _emit_started(self_ref, holder),
+        )
 
         raw_future = futures.Future()
 
         return self._finalize_submission(
-            raw_future, controller, holder, self_ref, ready
+            raw_future,
+            controller,
+            holder,
+            self_ref,
+            after_submitted=lambda: _sync_submit(runner, raw_future),
         )
 
     def _submit_thread(self, task_class: Type[Task], task_kwargs: dict) -> TaskFuture:
         controller = _controllers.ThreadTaskController()
-
-        ready = Event()
+        ready_event = Event()
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
-        runner = _runners.ThreadTaskRunner(task_class, task_kwargs, controller)
+        runner = _runners.ThreadTaskRunner(
+            task_class,
+            task_kwargs,
+            controller,
+            ready_event,
+            on_started=lambda: _emit_started(self_ref, holder),
+        )
 
-        def run():
-            ready.wait()
-            _emit_started(self_ref, holder)
-            return runner()
-
-        raw_future = self._executor.submit(run)
+        raw_future = self._executor.submit(runner)
 
         return self._finalize_submission(
-            raw_future, controller, holder, self_ref, ready.set
+            raw_future, controller, holder, self_ref, after_submitted=ready_event.set
         )
 
     def _submit_process(self, task_class: Type[Task], task_kwargs: dict) -> TaskFuture:
@@ -146,8 +142,9 @@ class EwoksExecutor(QObject):
         abort_event = manager.Event()
         aborted_event = manager.Event()
 
-        controller = _controllers.ProcessTaskController(abort_event, aborted_event)
-
+        controller = _controllers.ProcessTaskController(
+            abort_event, aborted_event, started_queue
+        )
         runner = _runners.ProcessTaskRunner(
             task_class,
             task_kwargs,
@@ -158,23 +155,13 @@ class EwoksExecutor(QObject):
         )
 
         self_ref = weakref.ref(self)
-        holder = [None]
-
-        def relay_started():
-            try:
-                msg = started_queue.get(timeout=300)
-
-                if msg == "started":
-                    _emit_started(self_ref, holder)
-            except Exception:
-                _logger.debug("started relay failed", exc_info=True)
-
-        threading.Thread(target=relay_started, daemon=True).start()
+        holder: List[Optional[TaskFuture]] = [None]
+        controller.watch_started(lambda: _emit_started(self_ref, holder))
 
         raw_future = self._executor.submit(runner)
 
         return self._finalize_submission(
-            raw_future, controller, holder, self_ref, ready_event.set
+            raw_future, controller, holder, self_ref, after_submitted=ready_event.set
         )
 
     def _finalize_submission(
@@ -183,7 +170,7 @@ class EwoksExecutor(QObject):
         controller: _controllers.TaskController,
         holder: List[Optional[TaskFuture]],
         self_ref: weakref.ReferenceType["EwoksExecutor"],
-        ready: Callable[[], None],
+        after_submitted: Callable[[], None],
     ) -> TaskFuture:
         task_future = TaskFuture(raw_future, controller)
 
@@ -191,8 +178,7 @@ class EwoksExecutor(QObject):
 
         self.submitted.emit(task_future)
 
-        if ready is not None:
-            ready()
+        after_submitted()
 
         raw_future.add_done_callback(lambda f: _done_callback(self_ref, f, task_future))
 
@@ -249,3 +235,21 @@ def _emit_started(
     executor = executor_ref()
     if executor is not None and holder and holder[0] is not None:
         executor.started.emit(holder[0])
+
+
+def _sync_submit(fn: Callable[[], Any], raw_future: futures.Future) -> None:
+    """Run `fn` and store its outcome in `raw_future`."""
+    # `ThreadPoolExecutor`/`ProcessPoolExecutor` already do this internally
+    # (via `set_running_or_notify_cancel()`) before invoking a submitted
+    # callable, honoring a `cancel()` that raced with the start of execution
+    # instead of silently overwriting it. The sync case has no real
+    # `Executor` behind it doing that for us, so it's done here explicitly.
+    if not raw_future.set_running_or_notify_cancel():
+        return
+
+    try:
+        result = fn()
+    except BaseException as exc:
+        raw_future.set_exception(exc)
+    else:
+        raw_future.set_result(result)

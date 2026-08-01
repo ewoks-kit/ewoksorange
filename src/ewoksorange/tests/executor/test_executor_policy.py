@@ -1,6 +1,4 @@
-import time
-
-import pytest
+import threading
 
 from ...gui.concurrency.executor import SubmitPolicy
 from .tasks import AddTask
@@ -12,25 +10,32 @@ def test_drop_if_busy(qtapp, executor_context_factory):
         executor,
         recorder,
     ):
+        inputs = {"a": 1, "delay": 2}
+        thread = None
         if kind == "sync":
-            pytest.skip(f"abort not supported by {kind!r} executor")
-            return
+            # submit_task() blocks until the task finishes, so it must run
+            # on its own thread to still be "busy" when the second is submitted.
+            thread = threading.Thread(
+                target=executor.submit_task, args=(AddTask,), kwargs={"inputs": inputs}
+            )
+            thread.start()
+        else:
+            executor.submit_task(AddTask, inputs=inputs)
 
-        first = executor.submit_task(AddTask, inputs={"a": 1, "delay": 2})
+        first = recorder.wait_future("started")
 
-        time.sleep(0.1)
-
-        second = executor.submit_task(AddTask, inputs={"a": 2})
-
-        assert first is not None
-        assert second is None
+        # Every submission while busy is dropped, not just the first excess one.
+        extra = [executor.submit_task(AddTask, inputs={"a": i}) for i in range(4)]
+        assert extra == [None] * len(extra)
 
         first.result(timeout=10)
 
         recorder.wait_for("finished", 1)
         recorder.assert_counts(
-            submitted=1, ignored=1, started=1, succeeded=1, finished=1
+            submitted=1, ignored=len(extra), started=1, succeeded=1, finished=1
         )
+        if thread is not None:
+            thread.join(timeout=10)
 
 
 def test_always_queue(qtapp, executor_context_factory):

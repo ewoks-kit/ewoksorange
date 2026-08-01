@@ -104,3 +104,10 @@ class SignalRecorder:
 
     def wait_for(self, name: str, count: int = 1, timeout: float = 5.0) -> None:
         assert wait_until(lambda: len(self._events[name]) >= count, timeout=timeout)
+
+    def wait_future(
+        self, name: str, index: int = 0, timeout: float = 5.0
+    ) -> TaskFuture:
+        """Wait for the `index`-th `name` signal and return its future."""
+        self.wait_for(name, count=index + 1, timeout=timeout)
+        return self.future(name, index=index)
