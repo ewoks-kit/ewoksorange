@@ -12,7 +12,9 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 from uuid import uuid4
+from xml.etree import ElementTree
 
+from defusedxml.ElementTree import parse as xml_parse
 from ewokscore import load_graph
 from ewokscore.graph import TaskGraph
 from ewokscore.graph.serialize import GraphRepresentation
@@ -133,13 +135,21 @@ def ows_to_ewoks(
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
     ows = read_ows(source)
+    ewoksinfo = _read_ewoks_graph_attrs(source)
 
     description = ows.description
-    try:
-        ewoksinfo = json.loads(description)
-        description = ewoksinfo["description"]
-    except Exception:
-        ewoksinfo = dict()
+
+    if ewoksinfo is None:
+        # backward compatibility: extra attrs were stored as JSON in the description
+        try:
+            ewoksinfo = json.loads(description)
+        except Exception:
+            ewoksinfo = {}
+        if isinstance(ewoksinfo, dict):
+            description = ewoksinfo.pop("description", description)
+        else:
+            ewoksinfo = {}
+
     if not description and isinstance(source, str):
         description = (
             "Ewoks workflow '%s'" % os.path.splitext(os.path.basename(source))[0]
@@ -214,6 +224,7 @@ def ows_to_ewoks(
     graph_attrs = dict()
     graph_attrs["id"] = title
     graph_attrs["label"] = description
+    graph_attrs.update(ewoksinfo)
     if ows.annotations:
         graph_attrs["ows"] = {
             "annotations": [
@@ -347,10 +358,16 @@ class OwsSchemeWrapper:
         if isinstance(graph, TaskGraph):
             graph = graph.dump()
 
-        self.title = graph["graph"].get("id", "")
-        self._description = graph["graph"].get("label", "")
+        graph_attrs = graph.get("graph", {})
 
-        ows = graph["graph"].get("ows", dict())
+        self.title = graph_attrs.get("id", "")
+        self._description = graph_attrs.get("label", "")
+
+        self._ewoks_graph_attrs = {
+            k: v for k, v in graph_attrs.items() if k not in ("id", "label", "ows")
+        }
+
+        ows = graph_attrs.get("ows", dict())
         self._annotations = [
             _deserialize_annotation(annotation)
             for annotation in ows.get("annotations", list())
@@ -399,6 +416,8 @@ class OwsSchemeWrapper:
                     f"Orange workflows only support task of types 'class' or 'generated'. Got {task_type!r}"
                 )
 
+        self._runtime_env = dict()
+
         self.links = list()
         self.missing_links = list()
         for link in graph["links"]:
@@ -414,14 +433,21 @@ class OwsSchemeWrapper:
 
     @property
     def description(self):
+        return self._description
+
+    @property
+    def ewoks_graph_attrs(self) -> Optional[dict]:
+        """Extra ewoks graph attributes beyond id/label/ows, plus missing_links."""
+        info = dict(self._ewoks_graph_attrs)
         if self.missing_links:
-            description = {
-                "description": self._description,
-                "missing_links": self.missing_links,
-            }
-            return json.dumps(description)
-        else:
-            return self._description
+            info["missing_links"] = self.missing_links
+        return info if info else None
+
+    def get_runtime_env(self, key, default=None):
+        return self._runtime_env.get(key, default)
+
+    def set_runtime_env(self, key, value):
+        self._runtime_env[key] = value
 
     def _convert_link(self, link):
         """In Orange, a link must transfer data"""
@@ -467,6 +493,27 @@ class OwsSchemeWrapper:
         return list()
 
 
+_EWOKS_GRAPH_ATTRS_TAG = "ewoks_graph_attrs"
+
+
+def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
+    """Extract ewoks graph attributes from the dedicated XML element, if present."""
+    pos = None
+    try:
+        if not isinstance(source, str) and hasattr(source, "tell"):
+            pos = source.tell()
+        root = xml_parse(source).getroot()
+        elem = root.find(_EWOKS_GRAPH_ATTRS_TAG)
+        if elem is not None and elem.text:
+            return json.loads(elem.text)
+    except Exception:
+        logger.debug("Failed to read ewoks graph attributes", exc_info=True)
+    finally:
+        if pos is not None and not isinstance(source, str):
+            source.seek(pos)
+    return None
+
+
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:
     """Read an Orange Workflow Scheme from a file or a stream."""
     return _original_parse_ows_stream(source)
@@ -481,9 +528,14 @@ def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):
     tree = readwrite.scheme_to_etree(
         scheme, data_format="literal", pickle_fallback=True
     )
-    for node in tree.getroot().find("nodes"):
+    root = tree.getroot()
+    for node in root.find("nodes"):
         del node.attrib["scheme_node_type"]
-    readwrite.indent(tree.getroot(), 0)
+    ewoks_attrs = scheme.ewoks_graph_attrs
+    if ewoks_attrs is not None:
+        elem = ElementTree.SubElement(root, _EWOKS_GRAPH_ATTRS_TAG)
+        elem.text = json.dumps(ewoks_attrs)
+    readwrite.indent(root, 0)
     if isinstance(destination, str) and os.path.dirname(destination):
         os.makedirs(os.path.dirname(destination), exist_ok=True)
     tree.write(destination, encoding="utf-8", xml_declaration=True)
@@ -533,3 +585,38 @@ def _patched_parse_ows_stream(*args, **kwargs) -> ReadSchemeType:
 
 def patch_parse_ows_stream():
     readwrite.parse_ows_stream = _patched_parse_ows_stream
+
+
+_original_scheme_load = readwrite.scheme_load
+_original_scheme_to_etree = readwrite.scheme_to_etree
+
+
+def _patched_scheme_load(scheme, stream, *args, **kwargs):
+    """Preserve `_EWOKS_GRAPH_ATTRS_TAG` across a live canvas edit/save
+    round-trip.
+    """
+    ewoks_attrs = _read_ewoks_graph_attrs(stream)
+    scheme = _original_scheme_load(scheme, stream, *args, **kwargs)
+    if ewoks_attrs is not None:
+        scheme.set_runtime_env(_EWOKS_GRAPH_ATTRS_TAG, ewoks_attrs)
+    return scheme
+
+
+def _patched_scheme_to_etree(scheme, *args, **kwargs):
+    """Counterpart of `_patched_scheme_load`: re-attach the ewoks graph attrs
+    (if any were stashed in the scheme's runtime environment)
+    """
+    tree = _original_scheme_to_etree(scheme, *args, **kwargs)
+    ewoks_attrs = scheme.get_runtime_env(_EWOKS_GRAPH_ATTRS_TAG)
+    if ewoks_attrs is not None:
+        elem = ElementTree.SubElement(tree.getroot(), _EWOKS_GRAPH_ATTRS_TAG)
+        elem.text = json.dumps(ewoks_attrs)
+    return tree
+
+
+def patch_scheme_to_etree():
+    readwrite.scheme_to_etree = _patched_scheme_to_etree
+
+
+def patch_scheme_load():
+    readwrite.scheme_load = _patched_scheme_load
