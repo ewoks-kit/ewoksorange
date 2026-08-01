@@ -1,4 +1,5 @@
 import logging
+import warnings
 from typing import Optional
 from typing import Type
 
@@ -10,12 +11,20 @@ _logger = logging.getLogger(__name__)
 
 
 class TaskExecutor:
-    """Create and execute an Ewoks task"""
+    """Create and execute an Ewoks task.
+
+    .. warning:: deprecated since version 6.0
+    """
 
     def __init__(self, ewokstaskclass: Type[Task]) -> None:
         self.__ewokstaskclass = ewokstaskclass
         self.__task = None
         self.__task_init_exception = None
+        warnings.warn(
+            f"{type(self).__name__} is deprecated since version 6.0."
+            "Please use 'ewoksorange.gui.concurrency.executor.EwoksExecutor' instead.",
+            DeprecationWarning,
+        )
 
     def create_task(self, log_missing_inputs: bool = False, **kwargs) -> None:
         if not issubclass(self.__ewokstaskclass, TaskWithProgress):

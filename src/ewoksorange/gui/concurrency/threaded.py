@@ -1,4 +1,3 @@
-import warnings
 from typing import Optional
 
 from AnyQt.QtCore import QThread
@@ -11,11 +10,6 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
 
     def __init__(self, ewokstaskclass, parent=None):
         super().__init__(parent=parent, ewokstaskclass=ewokstaskclass)
-        warnings.warn(
-            "ThreadedTaskExecutor is deprecated since version 6.0."
-            "Please use 'ewoksorange.gui.concurrency.executor.EwoksExecutor' instead.",
-            DeprecationWarning,
-        )
 
     def run(self) -> None:
         self.execute_task()

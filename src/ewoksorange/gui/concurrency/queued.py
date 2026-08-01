@@ -96,7 +96,10 @@ class TaskExecutorQueue(QObject, Queue):
 
 
 class _ThreadedTaskExecutor(ThreadedTaskExecutor):
-    """Processing thread with some information on callbacks to be executed"""
+    """Processing thread with some information on callbacks to be executed.
+
+    .. warning:: deprecated since version 6.0
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
