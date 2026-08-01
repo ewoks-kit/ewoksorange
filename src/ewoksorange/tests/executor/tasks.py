@@ -17,7 +17,6 @@ class AddTask(
     optional_input_names=["b", "delay", "fail"],
     output_names=["result"],
 ):
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.__cancelled = False
@@ -28,7 +27,7 @@ class AddTask(
             for i in range(40):
                 time.sleep(period)
                 if self.__cancelled:
-                    raise CustomCancelled(f"cancelled after {(i+1)*period} seconds")
+                    raise CustomCancelled(f"cancelled after {(i + 1) * period} seconds")
 
         if self.inputs.fail:
             raise CustomFailure("intentional failure")

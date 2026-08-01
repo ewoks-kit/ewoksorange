@@ -7,7 +7,6 @@ from .tasks import AddTask
 
 def test_parallel_execution(qtapp, executor_context_factory):
     with executor_context_factory(workers=2) as (kind, executor, recorder):
-
         if kind == "sync":
             pytest.skip(f"abort not supported by {kind!r} executor")
             return

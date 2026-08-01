@@ -12,7 +12,6 @@ def test_drop_if_busy(qtapp, executor_context_factory):
         executor,
         recorder,
     ):
-
         if kind == "sync":
             pytest.skip(f"abort not supported by {kind!r} executor")
             return
@@ -41,7 +40,6 @@ def test_always_queue(qtapp, executor_context_factory):
         executor,
         recorder,
     ):
-
         futures = []
 
         for i in range(3):

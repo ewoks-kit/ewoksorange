@@ -6,7 +6,6 @@ from .tasks import AddTask
 
 def test_success(qtapp, executor_context_factory):
     with executor_context_factory() as (_, executor, recorder):
-
         future = executor.submit_task(AddTask, inputs={"a": 10, "b": 5})
 
         result = future.result(timeout=10)
@@ -25,7 +24,6 @@ def test_success(qtapp, executor_context_factory):
 def test_failure(qtapp, executor_context_factory):
 
     with executor_context_factory() as (_, executor, recorder):
-
         future = executor.submit_task(AddTask, inputs={"a": 1, "fail": True})
 
         match = "intentional failure"

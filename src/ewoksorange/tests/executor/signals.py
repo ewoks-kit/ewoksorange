@@ -103,21 +103,20 @@ class SignalRecorder:
             if (isinstance(event, tuple) and len(event) == 2 and event[0] is future)
         ]
 
-        assert (
-            len(exceptions) == 1
-        ), f"Expected one failed signal for {future!r}, got {len(exceptions)}."
+        assert len(exceptions) == 1, (
+            f"Expected one failed signal for {future!r}, got {len(exceptions)}."
+        )
 
         exception = exceptions[0]
         assert isinstance(exception, exc_type), (
-            f"Expected {exc_type.__name__}, "
-            f"got {type(exception).__name__}: {exception}"
+            f"Expected {exc_type.__name__}, got {type(exception).__name__}: {exception}"
         )
 
         if match is not None:
             ex_message = str(exception)
-            assert re.search(
-                match, ex_message
-            ), f"Exception message {ex_message!r} does not match pattern {match!r}."
+            assert re.search(match, ex_message), (
+                f"Exception message {ex_message!r} does not match pattern {match!r}."
+            )
 
     def assert_finished(self, future: TaskFuture) -> None:
         assert future in self._events["finished"]
