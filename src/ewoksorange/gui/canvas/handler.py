@@ -185,32 +185,45 @@ class OrangeCanvasHandler:
             _logger.warning("This workflow has no widgets that can be triggered")
 
     def wait_widgets(self, timeout=None, raise_error: bool = True):
-        """Wait for all widgets to be "finished". Widget failures are re-raised."""
+        """Wait for the workflow to be over, i.e. no more triggers pending.
+
+        This does not mean every widget was executed (e.g. a node skipped
+        because an upstream node failed).
+        """
         signal_manager = self.signal_manager
         widgets = list(self.iter_widgets())
+        nodes = list(self.iter_nodes())
         t0 = time.time()
 
         while True:
             self.process_events()
-            finished = list()
+
+            # Gather all Ewoks Task execution exceptions
+            # when we intend to raise the first when the
+            # workflow finished.
             exceptions = dict()
-            for widget in widgets:
-                is_finished = signal_manager.widget_is_finished(widget)
-                if raise_error and isinstance(widget, OWEwoksBaseWidget):
+            if raise_error:
+                for widget in widgets:
+                    if not isinstance(widget, OWEwoksBaseWidget):
+                        continue
                     exception = widget.task_exception or widget.post_task_exception
                     if exception is not None:
-                        if is_finished:
-                            raise exception
-                        else:
-                            exceptions[widget] = exception
-                finished.append(is_finished)
-            if all(finished):
+                        exceptions[widget] = exception
+
+            # Workflow finished?
+            settled = not signal_manager.has_pending() and not any(
+                signal_manager.is_active(node) for node in nodes
+            )
+            if settled:
                 if exceptions:
                     raise next(iter(exceptions.values()))
                 break
+            # Should we wait longer for the workflow to finish?
             if timeout is not None:
                 if (time.time() - t0) > timeout:
                     if exceptions:
                         raise next(iter(exceptions.values()))
                     raise TimeoutError(timeout)
+
+            # Wait longer for the workflow to finish
             time.sleep(0.1)
