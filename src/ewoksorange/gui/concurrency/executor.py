@@ -43,11 +43,11 @@ class EwoksExecutor(QObject):
     started = Signal(TaskFuture)
     """Emitted when a task starts executing."""
 
-    succeeded = Signal(TaskFuture, object)
-    """Emitted when a task finishes successfully. Second argument is the result dict."""
+    succeeded = Signal(TaskFuture)
+    """Emitted when a task finishes successfully."""
 
-    failed = Signal(TaskFuture, object)
-    """Emitted when a task raises an exception. Second argument is the result dict."""
+    failed = Signal(TaskFuture)
+    """Emitted when a task raises an exception."""
 
     ignored = Signal()
     """Emitted when a task submission is ignored due to the DROP_IF_BUSY policy."""
@@ -215,11 +215,11 @@ class EwoksExecutor(QObject):
             self.aborted.emit(task_future)
 
         try:
-            result = raw_future.result()
-        except Exception as exc:
-            self.failed.emit(task_future, exc)
+            raw_future.result()
+        except Exception:
+            self.failed.emit(task_future)
         else:
-            self.succeeded.emit(task_future, result)
+            self.succeeded.emit(task_future)
         finally:
             self.finished.emit(task_future)
 
