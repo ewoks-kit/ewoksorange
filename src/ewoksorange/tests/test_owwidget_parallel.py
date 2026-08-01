@@ -37,7 +37,10 @@ class Parallel(
 
         # Return value as output or exception
         if self.__cancelled:
-            raise Cancelled(self.inputs.value, tm)
+            try:
+                raise Cancelled(self.inputs.value, tm)
+            finally:
+                self.cancelled = True
 
         self.outputs.time = tm
         self.outputs.value = self.inputs.value
