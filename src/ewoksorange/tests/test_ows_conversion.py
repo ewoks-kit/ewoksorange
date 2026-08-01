@@ -8,6 +8,7 @@ from ewokscore import load_graph
 from ewokscore.tests.examples.graphs import get_graph
 from ewokscore.tests.examples.graphs import graph_names
 
+from ..gui.workflows.owscheme import _read_ewoks_graph_attrs
 from ..gui.workflows.owscheme import ewoks_to_ows
 from ..gui.workflows.owscheme import graph_is_supported
 from ..gui.workflows.owscheme import ows_to_ewoks
@@ -61,3 +62,31 @@ def test_ewoks_to_ows(graph_name, tmpdir):
         destination, title_as_node_id=True, preserve_ows_info=False
     )
     assert ewoksgraph == ewoksgraph2
+
+
+def test_read_ewoks_graph_attrs_from_path_and_stream(tmp_path):
+    content = (
+        b'<?xml version="1.0" ?>'
+        b"<scheme>"
+        b'<ewoks_graph_attrs>{"foo": "bar"}</ewoks_graph_attrs>'
+        b"</scheme>"
+    )
+    filename = tmp_path / "test.ows"
+    filename.write_bytes(content)
+
+    assert _read_ewoks_graph_attrs(str(filename)) == {"foo": "bar"}
+
+    with open(filename, "rb") as stream:
+        assert _read_ewoks_graph_attrs(stream) == {"foo": "bar"}
+        assert stream.tell() == 0  # stream position must be preserved
+
+
+def test_read_ewoks_graph_attrs_restores_stream_position_on_failure(tmp_path):
+    filename = tmp_path / "invalid.ows"
+    filename.write_bytes(b"not xml")
+
+    assert _read_ewoks_graph_attrs(str(filename)) is None
+
+    with open(filename, "rb") as stream:
+        assert _read_ewoks_graph_attrs(stream) is None
+        assert stream.tell() == 0
