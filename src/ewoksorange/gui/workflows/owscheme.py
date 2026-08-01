@@ -610,7 +610,6 @@ def _patched_scheme_to_etree(scheme, *args, **kwargs):
     """
     tree = _original_scheme_to_etree(scheme, *args, **kwargs)
     ewoks_attrs = scheme.get_runtime_env(_EWOKS_GRAPH_ATTRS_TAG)
-    print("ewoks_attrs are", ewoks_attrs)
     if ewoks_attrs is not None:
         elem = ElementTree.SubElement(tree.getroot(), _EWOKS_GRAPH_ATTRS_TAG)
         elem.text = json.dumps(ewoks_attrs)
