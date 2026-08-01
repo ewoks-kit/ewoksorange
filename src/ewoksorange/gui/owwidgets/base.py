@@ -571,13 +571,16 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         Useful to indicate that this node's outputs are invalid (e.g., after failure).
         """
         _logger.debug("%s: clear downstream", self)
+        # Use the task class's declared output names rather than the current
+        # (possibly empty, e.g. after a failed execution) task outputs, so
+        # downstream nodes are always invalidated regardless of the outcome.
         if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for ewoksname in self.get_task_outputs(exclude_hidden=True):
+            for ewoksname in self.get_output_names(exclude_hidden=True):
                 output = self._get_output_signal(ewoksname)
                 self.send(output.name, invalid_data.INVALIDATION_DATA)
                 # Note: perhaps `self.invalidate(output.name)` is equivalent
         else:
-            for ewoksname in self.get_task_outputs(exclude_hidden=True):
+            for ewoksname in self.get_output_names(exclude_hidden=True):
                 output = self._get_output_signal(ewoksname)
                 output.send(invalid_data.INVALIDATION_DATA)
                 # Note: perhaps `output.invalidate` is equivalent
