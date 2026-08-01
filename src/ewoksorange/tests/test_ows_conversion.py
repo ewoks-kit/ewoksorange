@@ -14,34 +14,34 @@ from ..gui.workflows.owscheme import graph_is_supported
 from ..gui.workflows.owscheme import ows_to_ewoks
 
 
-def test_ows_to_ewoks_sumtask_tutorial(tmpdir, qtapp):
+def test_ows_to_ewoks_sumtask_tutorial(tmp_path, qtapp):
     """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumtask_tutorial.ows")
     ewoksgraph = ows_to_ewoks(str(filename))
 
-    destination = str(tmpdir / "ewoksgraph.ows")
+    destination = str(tmp_path / "ewoksgraph.ows")
     ewoks_to_ows(ewoksgraph, destination, error_on_duplicates=False)
     ewoksgraph2 = ows_to_ewoks(destination)
     assert ewoksgraph == ewoksgraph2
 
 
-def test_ows_to_ewoks_sumlist_tutorial(tmpdir, qtapp):
+def test_ows_to_ewoks_sumlist_tutorial(tmp_path, qtapp):
     """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumlist_tutorial.ows")
     ewoksgraph = ows_to_ewoks(str(filename))
 
-    destination = str(tmpdir / "ewoksgraph.ows")
+    destination = str(tmp_path / "ewoksgraph.ows")
     ewoks_to_ows(ewoksgraph, destination)
     ewoksgraph2 = ows_to_ewoks(destination)
     assert ewoksgraph == ewoksgraph2
 
 
 @pytest.mark.parametrize("graph_name", graph_names())
-def test_ewoks_to_ows(graph_name, tmpdir):
+def test_ewoks_to_ows(graph_name, tmp_path):
     """Test conversion of ewoks to orange worflow files and back"""
     graph, _ = get_graph(graph_name)
     ewoksgraph = load_graph(graph)
@@ -51,7 +51,7 @@ def test_ewoks_to_ows(graph_name, tmpdir):
         node_attrs.pop("ows", None)
         node_attrs.pop("uiProps", None)
 
-    destination = str(tmpdir / "ewoksgraph2.ows")
+    destination = str(tmp_path / "ewoksgraph2.ows")
     if not graph_is_supported(ewoksgraph):
         with pytest.raises(RuntimeError):
             ewoks_to_ows(ewoksgraph, destination)
