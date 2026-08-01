@@ -2,14 +2,11 @@
 Synchronous (no-thread) Ewoks widget implementation.
 """
 
-from concurrent.futures import Future as _ConcurrentFuture
 from typing import Optional
 
-from ..concurrency._executor import TaskFuture
-from ..concurrency._executor._EwoksCompletedHandle import (
-    EwoksCompletedHandle as _EwoksCompletedHandle,
-)
-from ..concurrency.base import TaskExecutor
+from ..concurrency.executor import EwoksExecutor
+from ..concurrency.executor import SubmitPolicy
+from ..concurrency.executor import TaskFuture
 from .base import OWEwoksBaseWidget
 from .meta import ow_build_opts
 
@@ -22,58 +19,68 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
     """
 
     def __init__(self, *args, **kwargs):
-        """
-        Initialize the no-thread widget and preparer a TaskExecutor.
-        """
         super().__init__(*args, **kwargs)
-        self.__task_executor = TaskExecutor(self.ewokstaskclass)
+        self.__executor = EwoksExecutor(None, SubmitPolicy.ALWAYS)
+
+        self.__last_output_variables: dict = {}
+        self.__last_task_succeeded: Optional[bool] = None
+        self.__last_task_done: Optional[bool] = None
+        self.__last_task_exception: Optional[Exception] = None
 
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
-    ) -> TaskFuture:
+    ) -> Optional[TaskFuture]:
         """
         Create and execute the Task synchronously.
 
         :param propagate: Whether to propagate outputs after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
-        :return: TaskFuture.
+        :return: TaskFuture, or None when the execution request was rejected.
         """
-        self.__task_executor.create_task(
-            log_missing_inputs=log_missing_inputs, **self._get_task_arguments()
+        task_future = self.__executor.submit_task(
+            self.ewokstaskclass, **self._get_task_arguments()
         )
-        self.__task_executor.execute_task()
+        if task_future is None:
+            return None
 
-        task_exception = self.__task_executor.exception
+        # Submission runs (and completes) synchronously, so the result is
+        # already available here rather than through the executor's signals.
+        exception = task_future.exception()
+        self.__last_task_exception = exception
+        self.__last_task_succeeded = exception is None
+        self.__last_task_done = True
+        self.__last_output_variables = task_future.result() if exception is None else {}
+
         try:
             if propagate:
-                # Always pass an explicit bool — passing None triggers a DeprecationWarning
-                # (base.py:533) which becomes an error under pytest -W error.
-                self.propagate_downstream(succeeded=task_exception is None)
+                self.propagate_downstream(succeeded=exception is None)
         finally:
             self._output_changed()
 
-        raw_future = _ConcurrentFuture()
-        if task_exception is not None:
-            raw_future.set_exception(task_exception)
-        else:
-            raw_future.set_result(self.__task_executor.output_variables)
-        return TaskFuture(raw_future, _EwoksCompletedHandle())
+        return task_future
 
     @property
     def task_succeeded(self) -> Optional[bool]:
         """Return True if last task succeeded, False if failed, None if never run."""
-        return self.__task_executor.succeeded
+        return self.__last_task_succeeded
 
     @property
     def task_done(self) -> Optional[bool]:
         """Return True if last task finished (success/failure), None if never run."""
-        return self.__task_executor.done
+        return self.__last_task_done
 
     @property
     def task_exception(self) -> Optional[Exception]:
         """Return the exception raised during last task execution, if any."""
-        return self.__task_executor.exception
+        exc = self.__last_task_exception
+        if exc is None:
+            return None
+        # task.execute() wraps run() exceptions as TaskExecutionError(...) from
+        # the original; follow __cause__ to surface the exception the task
+        # actually raised. Task construction failures (TaskInputError) have
+        # no __cause__ and are returned as-is.
+        return exc.__cause__ or exc
 
     def _get_task_outputs(self) -> dict:
         """Return output variables produced by the last executed task."""
-        return self.__task_executor.output_variables
+        return self.__last_output_variables
