@@ -41,3 +41,22 @@ class AddTask(
 
     def cancel(self):
         self.__cancelled = True
+
+
+class TimedTask(
+    Task,
+    input_names=["value", "delay"],
+    output_names=["value", "start", "end"],
+):
+    """Sleeps for `delay` seconds, recording the wall-clock interval it ran in.
+
+    Used to verify that tasks actually overlap in time, rather than relying
+    on a flaky total-elapsed-time budget.
+    """
+
+    def run(self) -> None:
+        start = time.monotonic()
+        time.sleep(self.inputs.delay)
+        self.outputs.start = start
+        self.outputs.end = time.monotonic()
+        self.outputs.value = self.inputs.value
