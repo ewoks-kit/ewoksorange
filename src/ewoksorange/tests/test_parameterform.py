@@ -8,7 +8,7 @@ from ..gui.widgets.parameter_form import ParameterForm
 from ..gui.widgets.parameter_form import SelectMode
 
 
-def test_parameterform(qtapp):
+def test_parameterform(qtapp, tmp_path):
     qtapp.processEvents(QtCore.QEventLoop.AllEvents)
 
     nchanged = dict()
@@ -108,15 +108,15 @@ def test_parameterform(qtapp):
     assert form.get_parameter_value("choice") == missing_data.MISSING_DATA
 
     # Set file widget value from code
-    form.set_parameter_value("file", "/tmp/some_file.txt")
-    assert form.get_parameter_value("file") == "/tmp/some_file.txt"
+    form.set_parameter_value("file", str(tmp_path / "some_file.txt"))
+    assert form.get_parameter_value("file") == str(tmp_path / "some_file.txt")
 
     form.set_parameter_value("file", missing_data.MISSING_DATA)
     assert form.get_parameter_value("file") == missing_data.MISSING_DATA
 
     # Set directory widget value from code
-    form.set_parameter_value("directory", "/tmp")
-    assert form.get_parameter_value("directory") == "/tmp"
+    form.set_parameter_value("directory", str(tmp_path))
+    assert form.get_parameter_value("directory") == str(tmp_path)
 
     form.set_parameter_value("directory", missing_data.MISSING_DATA)
     assert form.get_parameter_value("directory") == missing_data.MISSING_DATA
