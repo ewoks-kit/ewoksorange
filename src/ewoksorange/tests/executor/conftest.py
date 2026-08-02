@@ -34,6 +34,6 @@ def executor_context_factory(request):
         try:
             yield kind, executor, recorder
         finally:
-            executor.shutdown(wait=False)
+            executor.shutdown(wait=True)
 
     return executor_context
