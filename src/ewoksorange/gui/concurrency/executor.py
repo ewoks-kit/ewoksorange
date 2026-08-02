@@ -76,6 +76,17 @@ class EwoksExecutor(QObject):
 
         self._manager: Optional[multiprocessing.managers.SyncManager] = None
 
+    @property
+    def is_running(self) -> bool:
+        """Whether a task is currently submitted or executing.
+
+        Unlike the Qt `started`/`succeeded`/`failed` signals, this reflects
+        the submission state synchronously, without waiting for a
+        (possibly cross-thread, queued) signal to be delivered.
+        """
+        with self._lock:
+            return self._running > 0
+
     def submit_task(
         self, task_class: Type[Task], **task_kwargs
     ) -> Optional[TaskFuture]:
