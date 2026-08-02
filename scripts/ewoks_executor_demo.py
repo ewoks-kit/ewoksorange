@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import sys
+import threading
 import time
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import ThreadPoolExecutor
@@ -10,7 +11,11 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 
+from AnyQt.QtCore import QEventLoop
+from AnyQt.QtCore import Qt
+from AnyQt.QtCore import QTimer
 from AnyQt.QtGui import QCloseEvent
+from AnyQt.QtTest import QTest
 from AnyQt.QtWidgets import QApplication
 from AnyQt.QtWidgets import QGridLayout
 from AnyQt.QtWidgets import QHBoxLayout
@@ -71,6 +76,9 @@ class Window(QWidget):
 
         self.pending = QListWidget()
         self.pending_items: Dict[int, QListWidgetItem] = {}
+        self.buttons: Dict[str, QPushButton] = {}
+
+        self.total_tasks: int = 0
 
         self.executors: Dict[str, EwoksExecutor] = {
             # Synchronous
@@ -148,6 +156,7 @@ class Window(QWidget):
             button = QPushButton(text)
             button.clicked.connect(partial(self.on_button_clicked, key))
             grid.addWidget(button, i // columns, i % columns)
+            self.buttons[key] = button
 
         layout.addLayout(grid)
 
@@ -159,7 +168,7 @@ class Window(QWidget):
         body.addLayout(log_box, 2)
 
         pending_box = QVBoxLayout()
-        pending_box.addWidget(QLabel("Pending jobs"))
+        pending_box.addWidget(QLabel("Pending tasks"))
         pending_box.addWidget(self.pending)
         body.addLayout(pending_box, 1)
 
@@ -184,29 +193,23 @@ class Window(QWidget):
         self.append_log(f"[{name}] ▶ Started -> {id(future)}")
 
     def on_ignored(self, name: str) -> None:
+        self.total_tasks += 1
         self.append_log(f"[{name}] ⚠ Ignored")
 
-    def on_succeeded(
-        self,
-        name: str,
-        future: Any,
-        result: Dict[str, Any],
-    ) -> None:
+    def on_succeeded(self, name: str, future: Any) -> None:
+        result = future.result()
         values = {key: value.value for key, value in result.items()}
         self.append_log(f"[{name}] ✅ {id(future)} -> {values}")
 
-    def on_failed(
-        self,
-        name: str,
-        future: Any,
-        exc: BaseException,
-    ) -> None:
+    def on_failed(self, name: str, future: Any) -> None:
+        exc = future.exception()
         self.append_log(f"[{name}] ❌ {id(future)} -> {exc}")
 
     def on_aborted(self, name: str, future: Any) -> None:
         self.append_log(f"[{name}] ⏹ Aborted -> {id(future)}")
 
     def on_finished(self, name: str, future: Any) -> None:
+        self.total_tasks += 1
         self.append_log(f"[{name}] ■ Finished -> {id(future)}")
         self.remove_pending(future)
 
@@ -243,6 +246,52 @@ class Window(QWidget):
         super().closeEvent(event)
 
 
+def run_self_test(window: Window, submit_count: int, timeout: float) -> bool:
+    """Click every button and wait until all submitted tasks finish.
+
+    Used in CI to smoke-test the demo without a real display.
+    """
+
+    def on_timeout() -> None:
+        print(f"Self-test FAILED: timed out after {timeout}s", flush=True)
+        os._exit(1)
+
+    watchdog = threading.Timer(timeout, on_timeout)
+    watchdog.daemon = True
+    watchdog.start()
+
+    for button in window.buttons.values():
+        QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+
+    total_tasks_expected = submit_count * len(window.buttons)
+
+    loop = QEventLoop()
+
+    poll_timer = QTimer()
+
+    def check_done() -> None:
+        if window.total_tasks >= total_tasks_expected:
+            loop.quit()
+
+    poll_timer.timeout.connect(check_done)
+    poll_timer.start(50)
+
+    loop.exec()
+
+    poll_timer.stop()
+    watchdog.cancel()
+
+    success = window.total_tasks == total_tasks_expected
+    if success:
+        print(f"Self-test OK: {window.total_tasks} tasks were recorded")
+    else:
+        print(
+            f"Self-test FAILED: {window.total_tasks} tasks were recorded instead of the expected {total_tasks_expected}"
+        )
+
+    return success
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="EwoksExecutor concurrency demo")
 
@@ -273,6 +322,19 @@ def parse_args() -> argparse.Namespace:
         help="Logging level.",
     )
 
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="Click every button, wait for completion and exit (used in CI).",
+    )
+
+    parser.add_argument(
+        "--self-test-timeout",
+        type=float,
+        default=60.0,
+        help="Maximum time in seconds to wait for the self-test to complete.",
+    )
+
     return parser.parse_args()
 
 
@@ -293,5 +355,10 @@ if __name__ == "__main__":
 
     window.resize(950, 550)
     window.show()
+
+    if args.self_test:
+        success = run_self_test(window, args.submit_count, args.self_test_timeout)
+        window.close()
+        sys.exit(0 if success else 1)
 
     sys.exit(app.exec())
