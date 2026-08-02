@@ -212,8 +212,23 @@ class OrangeCanvasHandler:
                         exceptions[widget] = exception
 
             # Workflow finished?
-            settled = not signal_manager.has_pending() and not any(
-                signal_manager.is_active(node) for node in nodes
+            #
+            # `signal_manager.is_active(node)` only turns True once the
+            # widget's `progressBarInit` slot has run, which itself only
+            # happens once Qt has delivered the executor's `started` signal
+            # (queued, since it is emitted from a background thread). A task
+            # can therefore be submitted and briefly look inactive before
+            # that signal is delivered. `TaskFuture` submission is tracked
+            # synchronously, so check it too.
+            no_running_tasks = not any(
+                getattr(widget, "task_executor", None) is not None
+                and widget.task_executor.is_running
+                for widget in widgets
+            )
+            settled = (
+                not signal_manager.has_pending()
+                and not any(signal_manager.is_active(node) for node in nodes)
+                and no_running_tasks
             )
             settled_streak = settled_streak + 1 if settled else 0
             # Require two consecutive settled reads: a node can finish (e.g.
@@ -224,6 +239,7 @@ class OrangeCanvasHandler:
                 if exceptions:
                     raise next(iter(exceptions.values()))
                 break
+
             # Should we wait longer for the workflow to finish?
             if timeout is not None:
                 if (time.time() - t0) > timeout:

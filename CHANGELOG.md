@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [6.0.0rc1] - 2026-08-02
+## [6.0.0rc2] - 2026-08-02
 
 ### Fixed
 
@@ -368,8 +368,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc1...HEAD
-[6.0.0rc1]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc1
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc2...HEAD
+[6.0.0rc2]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc2
 [5.0.1]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0
