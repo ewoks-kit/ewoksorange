@@ -5,6 +5,7 @@ from AnyQt import QtCore
 from ewokscore import missing_data
 
 from ..gui.widgets.parameter_form import ParameterForm
+from ..gui.widgets.parameter_form import SelectMode
 
 
 def test_parameterform(qtapp):
@@ -39,6 +40,16 @@ def test_parameterform(qtapp):
         value_for_type=["choice1", "choice2"],
         value_change_callback=partial(cb, "choice"),
     )
+    form.addParameter(
+        "file",
+        select=SelectMode.FILE,
+        value_change_callback=partial(cb, "file"),
+    )
+    form.addParameter(
+        "directory",
+        select=SelectMode.DIRECTORY,
+        value_change_callback=partial(cb, "directory"),
+    )
 
     values = form.get_parameter_values()
     expected = {
@@ -48,6 +59,8 @@ def test_parameterform(qtapp):
         "boolean": missing_data.MISSING_DATA,
         "json": missing_data.MISSING_DATA,
         "choice": missing_data.MISSING_DATA,
+        "file": missing_data.MISSING_DATA,
+        "directory": missing_data.MISSING_DATA,
     }
     assert values == expected
     assert not nchanged
@@ -94,6 +107,20 @@ def test_parameterform(qtapp):
     form.set_parameter_value("choice", missing_data.MISSING_DATA)
     assert form.get_parameter_value("choice") == missing_data.MISSING_DATA
 
+    # Set file widget value from code
+    form.set_parameter_value("file", "/tmp/some_file.txt")
+    assert form.get_parameter_value("file") == "/tmp/some_file.txt"
+
+    form.set_parameter_value("file", missing_data.MISSING_DATA)
+    assert form.get_parameter_value("file") == missing_data.MISSING_DATA
+
+    # Set directory widget value from code
+    form.set_parameter_value("directory", "/tmp")
+    assert form.get_parameter_value("directory") == "/tmp"
+
+    form.set_parameter_value("directory", missing_data.MISSING_DATA)
+    assert form.get_parameter_value("directory") == missing_data.MISSING_DATA
+
     qtapp.processEvents(QtCore.QEventLoop.AllEvents)
 
     # form.show()
@@ -106,6 +133,8 @@ def test_parameterform(qtapp):
         "boolean": missing_data.MISSING_DATA,
         "json": missing_data.MISSING_DATA,
         "choice": missing_data.MISSING_DATA,
+        "file": missing_data.MISSING_DATA,
+        "directory": missing_data.MISSING_DATA,
     }
     assert values == expected
     assert not nchanged
