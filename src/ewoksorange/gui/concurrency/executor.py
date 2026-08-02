@@ -182,7 +182,9 @@ class EwoksExecutor(QObject):
 
         after_submitted()
 
-        raw_future.add_done_callback(lambda f: _done_callback(self_ref, f, task_future))
+        raw_future.add_done_callback(
+            lambda f: _done_callback(self_ref, f, task_future, controller)
+        )
 
         return task_future
 
@@ -192,12 +194,22 @@ class EwoksExecutor(QObject):
 
         return self._manager
 
-    def _handle_done(self, raw_future: futures.Future, task_future: TaskFuture) -> None:
+    def _handle_done(
+        self,
+        raw_future: futures.Future,
+        task_future: TaskFuture,
+        controller: _controllers.TaskController,
+    ) -> None:
         with self._lock:
             self._running -= 1
 
         if raw_future.cancelled():
             return
+
+        # The task necessarily started before the raw future could finish, but
+        # "started" and "finished" travel through independent channels for the
+        # process backend, so wait for "started" to keep signal order sane.
+        controller.wait_started(timeout=5.0)
 
         if task_future.aborted():
             self.aborted.emit(task_future)
@@ -224,10 +236,11 @@ def _done_callback(
     executor_ref: weakref.ReferenceType[EwoksExecutor],
     raw_future: futures.Future,
     task_future: TaskFuture,
+    controller: _controllers.TaskController,
 ) -> None:
     executor = executor_ref()
     if executor is not None:
-        executor._handle_done(raw_future, task_future)
+        executor._handle_done(raw_future, task_future, controller)
 
 
 def _emit_started(
