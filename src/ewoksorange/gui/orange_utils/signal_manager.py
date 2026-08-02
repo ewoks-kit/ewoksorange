@@ -264,6 +264,17 @@ class SignalManagerWithScheme(
             return False  # The widget might be executed again
         return super().widget_is_executed(owwidget)
 
+    def is_active(self, node) -> bool:
+        """Is the node considered active (executing a task)."""
+        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+            # The oasys fork's vendored signal manager has no `is_active`,
+            # but its native `is_blocking` already tracks per-node
+            # processing state (driven by progressBarInit/Finished, which
+            # our threaded widgets call), unlike the widget's own
+            # `isBlocking()` which our widgets never set.
+            return self.is_blocking(node)
+        return super().is_active(node)
+
 
 def set_input_value(owwidget, signal, value, index) -> None:
     value = invalid_data.as_invalidation(value)

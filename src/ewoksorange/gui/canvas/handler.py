@@ -194,6 +194,7 @@ class OrangeCanvasHandler:
         widgets = list(self.iter_widgets())
         nodes = list(self.iter_nodes())
         t0 = time.time()
+        settled_streak = 0
 
         while True:
             self.process_events()
@@ -214,7 +215,12 @@ class OrangeCanvasHandler:
             settled = not signal_manager.has_pending() and not any(
                 signal_manager.is_active(node) for node in nodes
             )
-            if settled:
+            settled_streak = settled_streak + 1 if settled else 0
+            # Require two consecutive settled reads: a node can finish (e.g.
+            # a background thread) and briefly look settled before its
+            # output signal has actually been scheduled for delivery to
+            # downstream nodes.
+            if settled_streak >= 2:
                 if exceptions:
                     raise next(iter(exceptions.values()))
                 break

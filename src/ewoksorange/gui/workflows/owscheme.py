@@ -615,8 +615,12 @@ def _patched_scheme_to_etree(scheme, *args, **kwargs):
 
 
 def patch_scheme_to_etree():
+    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+        return
     readwrite.scheme_to_etree = _patched_scheme_to_etree
 
 
 def patch_scheme_load():
+    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+        return
     readwrite.scheme_load = _patched_scheme_load
