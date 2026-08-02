@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0rc1] - 2026-08-02
+
 ### Fixed
 
 - Fix `ParameterForm` file system selection in QT6 (Replace `QDialog.exec_` with `QDialog.exec`).
@@ -14,12 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `ParameterForm`: add an auto-completer for file / directory selection
-- `ewoksorange.gui.concurrency` add module `executor` for ewoks task execution through thread or sub-processes.
+- `ParameterForm`: add an auto-completer for file / directory selection.
+- `ewoksorange.gui.concurrency.executor.EwoksExecutor` for all ewoks task execution strategies
+  synchronous, multithreading and multiprocessing with Qt signals for the execution lifecycle.
 
 ### Changed
 
-- ̀`OWEwoksBaseWidget`: `execute_ewoks_task` return now a `TaskFuture` or `None` when request was dropped.
+- ̀`OWEwoksBaseWidget`: `execute_ewoks_task` now returns `TaskFuture` or `None` when the execution
+  request was dropped.
 
 ### Deprecated
 
@@ -364,7 +368,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...HEAD
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc1...HEAD
+[6.0.0rc1]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc1
 [5.0.1]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0
