@@ -17,6 +17,7 @@ jobs:
   tests:
     needs: build
     strategy:
+      fail-fast: false
       matrix:
         include:
           - name: "py3.12-linux-qt6-coverage"
@@ -24,31 +25,56 @@ jobs:
             python-version: "3.12"
             qt-api: "PyQt6"
             enable-coverage: "true"
-            extra-pytest-args: ""
           - name: "py3.13-linux-qt6"
             os: ubuntu-latest
             python-version: "3.13"
             qt-api: "PyQt6"
             enable-coverage: "false"
-            extra-pytest-args: ""
           - name: "py3.11-linux-qt6"
             os: ubuntu-latest
             python-version: "3.11"
             qt-api: "PyQt6"
             enable-coverage: "false"
-            extra-pytest-args: ""
           - name: "py3.10-windows-qt6"
             os: windows-latest
             python-version: "3.10"
             qt-api: "PyQt6"
             enable-coverage: "false"
-            extra-pytest-args: ""
           - name: "py3.9-linux-qt5"
             os: ubuntu-latest
             python-version: "3.9"
             qt-api: "PyQt5"
             enable-coverage: "false"
             extra-pytest-args: "-W ignore::RuntimeWarning:networkx.utils.backends"
+          - name: "py3.12-orange"
+            os: ubuntu-latest
+            python-version: "3.12"
+            qt-api: "PyQt6"
+            enable-coverage: "true"
+            install-extras: "test,orange"
+            strict-warnings: "false"
+            pre-install: |
+              pip install Orange3 --prefer-binary
+          - name: "py3.8-orange-old"
+            os: ubuntu-latest
+            python-version: "3.8"
+            qt-api: "PyQt6"
+            enable-coverage: "false"
+            install-extras: "test,orange"
+            strict-warnings: "false"
+            pre-install: |
+              pip install Orange3 --prefer-binary
+            post-install: |
+              pip install "orange-canvas-core<0.2a"
+          - name: "py3.8-oasys"
+            os: ubuntu-latest
+            python-version: "3.8"
+            qt-api: "PyQt5"
+            enable-coverage: "false"
+            strict-warnings: "false"
+            post-install: |
+              pip uninstall -y orange-canvas-core orange-widget-base
+              pip install oasys1 AnyQt
     uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
@@ -57,14 +83,19 @@ jobs:
       python-version: ${{ matrix.python-version }}
       qt-api: ${{ matrix.qt-api }}
       enable-coverage: ${{ matrix.enable-coverage }}
+      install-extras: ${{ matrix.install-extras || 'test' }}
+      pre-install: ${{ matrix.pre-install }}
+      post-install: ${{ matrix.post-install }}
       pytest-args: >-
-        -v -ra -W error
+        -v -ra
+        ${{ matrix.strict-warnings != 'false' && '-W error' || '' }}
         ${{ matrix.extra-pytest-args }}
         -W ignore::ResourceWarning:orangecanvas.utils.localization
         -W ignore::DeprecationWarning:orangecanvas.utils.localization
         -W ignore::DeprecationWarning:orangecanvas.utils.localization.si
         -W ignore::DeprecationWarning:matplotlib._fontconfig_pattern
         -W ignore::DeprecationWarning:matplotlib._mathtext
+        -W ignore::h5py.h5py_warnings.H5pyDeprecationWarning
 
   # Run linter / checks
   checks:
@@ -79,3 +110,26 @@ jobs:
   docs:
     needs: build
     uses: ewoks-kit/.github/.github/workflows/python-docs.yml@main
+
+  # Check that the orange engine can be instantiated without Qt installed
+  noqt:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: ewoks-kit/.github/.github/actions/setup-python-package@main
+        with:
+          python-version: "3.12"
+
+      - name: Check engine works without Qt, bindings/gui fail without Qt
+        shell: bash
+        run: |
+          python -c "from ewoksorange.engine import OrangeWorkflowEngine; OrangeWorkflowEngine()"
+          for mod in ewoksorange.bindings ewoksorange.gui; do
+            if python -c "import $mod"; then
+              echo "ERROR: $mod imported without Qt!"
+              exit 1
+            else
+              echo "Expected failure: $mod requires Qt"
+            fi
+          done
