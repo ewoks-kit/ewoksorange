@@ -111,6 +111,33 @@ jobs:
     needs: build
     uses: ewoks-kit/.github/.github/workflows/python-docs.yml@main
 
+  # Check that the EwoksExecutor demo script still works
+  qt-demo:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: ewoks-kit/.github/.github/actions/setup-python-package@main
+        with:
+          python-version: "3.12"
+          install-extras: "full"
+
+      - name: Install Qt runtime libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1
+
+      - name: Run ewoks_executor_demo.py self-test
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          python scripts/ewoks_executor_demo.py \
+            --self-test \
+            --submit-count 2 \
+            --task-duration 0.2 \
+            --self-test-timeout 60
+
   # Check that the orange engine can be instantiated without Qt installed
   noqt:
     needs: build
