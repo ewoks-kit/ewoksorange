@@ -72,15 +72,17 @@ class Window(QWidget):
 
         self.setWindowTitle("EwoksExecutor Demo")
 
-        self.log = QTextEdit(readOnly=True)
+        self._log = QTextEdit(readOnly=True)
 
-        self.pending = QListWidget()
-        self.pending_items: Dict[int, QListWidgetItem] = {}
-        self.buttons: Dict[str, QPushButton] = {}
+        self._pending = QListWidget()
+        self._pending_items: Dict[int, QListWidgetItem] = {}
+        self._buttons: Dict[str, QPushButton] = {}
 
-        self.total_tasks_handled: int = 0
+        self._counter: int = 1
+        self._total_tasks_triggered: int = 0
+        self._total_tasks_handled: int = 0
 
-        self.executors: Dict[str, EwoksExecutor] = {
+        self._executors: Dict[str, EwoksExecutor] = {
             # Synchronous
             "S DROP": EwoksExecutor(
                 None,
@@ -122,14 +124,14 @@ class Window(QWidget):
             ),
         }
 
-        for name, executor in self.executors.items():
-            executor.submitted.connect(partial(self.on_submitted, name))
-            executor.started.connect(partial(self.on_started, name))
-            executor.ignored.connect(partial(self.on_ignored, name))
-            executor.succeeded.connect(partial(self.on_succeeded, name))
-            executor.failed.connect(partial(self.on_failed, name))
-            executor.aborted.connect(partial(self.on_aborted, name))
-            executor.finished.connect(partial(self.on_finished, name))
+        for name, executor in self._executors.items():
+            executor.submitted.connect(partial(self._on_submitted, name))
+            executor.started.connect(partial(self._on_started, name))
+            executor.ignored.connect(partial(self._on_ignored, name))
+            executor.succeeded.connect(partial(self._on_succeeded, name))
+            executor.failed.connect(partial(self._on_failed, name))
+            executor.aborted.connect(partial(self._on_aborted, name))
+            executor.finished.connect(partial(self._on_finished, name))
 
         layout = QVBoxLayout(self)
 
@@ -154,9 +156,9 @@ class Window(QWidget):
 
         for i, (text, key) in enumerate(buttons):
             button = QPushButton(text)
-            button.clicked.connect(partial(self.on_button_clicked, key))
+            button.clicked.connect(partial(self._on_button_clicked, key))
             grid.addWidget(button, i // columns, i % columns)
-            self.buttons[key] = button
+            self._buttons[key] = button
 
         layout.addLayout(grid)
 
@@ -164,86 +166,91 @@ class Window(QWidget):
 
         log_box = QVBoxLayout()
         log_box.addWidget(QLabel("Logs"))
-        log_box.addWidget(self.log)
+        log_box.addWidget(self._log)
         body.addLayout(log_box, 2)
 
         pending_box = QVBoxLayout()
         pending_box.addWidget(QLabel("Pending tasks"))
-        pending_box.addWidget(self.pending)
+        pending_box.addWidget(self._pending)
         body.addLayout(pending_box, 1)
 
         layout.addLayout(body)
 
-        self.counter: int = 1
-
-    def append_log(self, message: str) -> None:
+    def _append_log(self, message: str) -> None:
         elapsed = time.monotonic() - self._start_time
         log = f"[{elapsed:8.3f}s] {message}"
         print(log)
-        self.log.append(log)
+        self._log.append(log)
 
-    def on_submitted(self, name: str, future: Any) -> None:
-        self.append_log(f"[{name}] Submitted -> {id(future)}")
+    def _on_submitted(self, name: str, future: Any) -> None:
+        self._append_log(f"[{name}] Submitted -> {id(future)}")
 
         item = QListWidgetItem(f"[{name}] {id(future)}")
-        self.pending.addItem(item)
-        self.pending_items[id(future)] = item
+        self._pending.addItem(item)
+        self._pending_items[id(future)] = item
 
-    def on_started(self, name: str, future: Any) -> None:
-        self.append_log(f"[{name}] ▶ Started -> {id(future)}")
+    def _on_started(self, name: str, future: Any) -> None:
+        self._append_log(f"[{name}] ▶ Started -> {id(future)}")
 
-    def on_ignored(self, name: str) -> None:
-        self.total_tasks_handled += 1
-        self.append_log(f"[{name}] ⚠ Ignored")
+    def _on_ignored(self, name: str) -> None:
+        self._total_tasks_handled += 1
+        self._append_log(f"[{name}] ⚠ Ignored")
 
-    def on_succeeded(self, name: str, future: Any) -> None:
+    def _on_succeeded(self, name: str, future: Any) -> None:
         result = future.result()
         values = {key: value.value for key, value in result.items()}
-        self.append_log(f"[{name}] ✅ {id(future)} -> {values}")
+        self._append_log(f"[{name}] ✅ {id(future)} -> {values}")
 
-    def on_failed(self, name: str, future: Any) -> None:
+    def _on_failed(self, name: str, future: Any) -> None:
         exc = future.exception()
-        self.append_log(f"[{name}] ❌ {id(future)} -> {exc}")
+        self._append_log(f"[{name}] ❌ {id(future)} -> {exc}")
 
-    def on_aborted(self, name: str, future: Any) -> None:
-        self.append_log(f"[{name}] ⏹ Aborted -> {id(future)}")
+    def _on_aborted(self, name: str, future: Any) -> None:
+        self._append_log(f"[{name}] ⏹ Aborted -> {id(future)}")
 
-    def on_finished(self, name: str, future: Any) -> None:
-        self.total_tasks_handled += 1
-        self.append_log(f"[{name}] ■ Finished -> {id(future)}")
-        self.remove_pending(future)
+    def _on_finished(self, name: str, future: Any) -> None:
+        self._total_tasks_handled += 1
+        self._append_log(f"[{name}] ■ Finished -> {id(future)}")
+        self._remove_pending(future)
 
-    def remove_pending(self, future: Any) -> None:
-        item: Optional[QListWidgetItem] = self.pending_items.pop(id(future), None)
+    def _remove_pending(self, future: Any) -> None:
+        item: Optional[QListWidgetItem] = self._pending_items.pop(id(future), None)
 
         if item is not None:
-            self.pending.takeItem(self.pending.row(item))
+            self._pending.takeItem(self._pending.row(item))
 
-    def on_button_clicked(
+    def _on_button_clicked(
         self,
         key: str,
         _checked: bool = False,
     ) -> None:
-        self.submit_many(self.executors[key])
+        self._submit_many(self._executors[key])
 
-    def submit_many(self, executor: EwoksExecutor) -> None:
+    def _submit_many(self, executor: EwoksExecutor) -> None:
         for _ in range(self._submit_count):
             executor.submit_task(
                 SumTask,
                 inputs={
-                    "a": self.counter,
-                    "b": self.counter,
+                    "a": self._counter,
+                    "b": self._counter,
                     "delay": self._task_duration,
                     "fail": self._fail_after_duration,
                 },
             )
-            self.counter += 1
+            self._total_tasks_triggered += 1
+            self._counter += 1
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        for executor in self.executors.values():
+        for executor in self._executors.values():
             executor.shutdown()
 
         super().closeEvent(event)
+
+    def is_finished(self, total_tasks: int) -> bool:
+        return (
+            self._total_tasks_triggered >= total_tasks
+            and self._total_tasks_handled >= total_tasks
+        )
 
 
 def run_self_test(window: Window, submit_count: int, timeout: float) -> bool:
@@ -260,17 +267,17 @@ def run_self_test(window: Window, submit_count: int, timeout: float) -> bool:
     watchdog.daemon = True
     watchdog.start()
 
-    for button in window.buttons.values():
+    total_tasks_expected = 0
+    for button in window._buttons.values():
         QTest.mouseClick(button, Qt.MouseButton.LeftButton)
-
-    total_tasks_expected = submit_count * len(window.buttons)
+        total_tasks_expected += submit_count
 
     loop = QEventLoop()
 
     poll_timer = QTimer()
 
     def check_done() -> None:
-        if window.total_tasks_handled >= total_tasks_expected:
+        if window.is_finished(total_tasks_expected):
             loop.quit()
 
     poll_timer.timeout.connect(check_done)
@@ -281,13 +288,16 @@ def run_self_test(window: Window, submit_count: int, timeout: float) -> bool:
     poll_timer.stop()
     watchdog.cancel()
 
-    success = window.total_tasks_handled == total_tasks_expected
+    success = window.is_finished(total_tasks_expected)
     if success:
-        print(f"Self-test OK: {window.total_tasks_handled} tasks were handled")
+        print(f"Self-test OK:\n {total_tasks_expected} tasks were handled")
     else:
         print(
-            f"Self-test FAILED: {window.total_tasks_handled} tasks were handled"
-            " instead of the expected {total_tasks_expected}"
+            f"Self-test FAILED:"
+            f"\n {window._total_tasks_triggered} tasks were triggered "
+            f"(expected {total_tasks_expected})"
+            f"\n {window._total_tasks_handled} tasks were handled "
+            f"(expected {total_tasks_expected})"
         )
 
     return success
