@@ -16,9 +16,9 @@ from typing import Set
 from typing import Union
 
 from AnyQt import QtCore
+from AnyQt import QtGui
 from AnyQt import QtWidgets
 from ewokscore import missing_data
-from silx.gui import qt
 from silx.gui.dialog.DataFileDialog import DataFileDialog
 
 from ..qt_utils.signals import block_signals
@@ -724,7 +724,8 @@ class ParameterForm(QtWidgets.QWidget):
         self, widget: QtWidgets.QLineEdit, dir_only: bool = False
     ) -> None:
         completer = QtWidgets.QCompleter(widget)
-        model = qt.QDirModel(completer)
+        model = QtGui.QFileSystemModel(completer)
+        model.setRootPath("")
         if dir_only:
             model.setFilter(QtCore.QDir.AllDirs | QtCore.QDir.NoDotAndDotDot)
         completer.setModel(model)
