@@ -91,11 +91,16 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_succeeded = True
         self.__last_task_done = True
         self.__last_task_exception = None
-        self.progressBarFinished()
+        # `propagate_downstream` must run before `progressBarFinished`: the
+        # latter flips `signal_manager.is_active(node)` to False, which is
+        # what `wait_widgets`-style polling relies on to know this widget is
+        # done. Clearing it first would let such polling observe "not
+        # active" before the outputs were actually sent downstream.
         try:
             if propagate:
                 self.propagate_downstream(succeeded=True)
         finally:
+            self.progressBarFinished()
             self._output_changed()
 
     def __on_failed(self, task_future: TaskFuture) -> None:
@@ -104,11 +109,12 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.__last_task_succeeded = False
         self.__last_task_done = True
         self.__last_task_exception = task_future.exception()
-        self.progressBarFinished()
+        # See ordering note in `__on_succeeded`.
         try:
             if propagate:
                 self.propagate_downstream(succeeded=False)
         finally:
+            self.progressBarFinished()
             self._output_changed()
 
     @property
