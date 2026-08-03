@@ -78,7 +78,7 @@ class Window(QWidget):
         self.pending_items: Dict[int, QListWidgetItem] = {}
         self.buttons: Dict[str, QPushButton] = {}
 
-        self.total_tasks: int = 0
+        self.total_tasks_handled: int = 0
 
         self.executors: Dict[str, EwoksExecutor] = {
             # Synchronous
@@ -193,7 +193,7 @@ class Window(QWidget):
         self.append_log(f"[{name}] ▶ Started -> {id(future)}")
 
     def on_ignored(self, name: str) -> None:
-        self.total_tasks += 1
+        self.total_tasks_handled += 1
         self.append_log(f"[{name}] ⚠ Ignored")
 
     def on_succeeded(self, name: str, future: Any) -> None:
@@ -209,7 +209,7 @@ class Window(QWidget):
         self.append_log(f"[{name}] ⏹ Aborted -> {id(future)}")
 
     def on_finished(self, name: str, future: Any) -> None:
-        self.total_tasks += 1
+        self.total_tasks_handled += 1
         self.append_log(f"[{name}] ■ Finished -> {id(future)}")
         self.remove_pending(future)
 
@@ -270,7 +270,7 @@ def run_self_test(window: Window, submit_count: int, timeout: float) -> bool:
     poll_timer = QTimer()
 
     def check_done() -> None:
-        if window.total_tasks >= total_tasks_expected:
+        if window.total_tasks_handled >= total_tasks_expected:
             loop.quit()
 
     poll_timer.timeout.connect(check_done)
@@ -281,12 +281,13 @@ def run_self_test(window: Window, submit_count: int, timeout: float) -> bool:
     poll_timer.stop()
     watchdog.cancel()
 
-    success = window.total_tasks == total_tasks_expected
+    success = window.total_tasks_handled == total_tasks_expected
     if success:
-        print(f"Self-test OK: {window.total_tasks} tasks were recorded")
+        print(f"Self-test OK: {window.total_tasks_handled} tasks were handled")
     else:
         print(
-            f"Self-test FAILED: {window.total_tasks} tasks were recorded instead of the expected {total_tasks_expected}"
+            f"Self-test FAILED: {window.total_tasks_handled} tasks were handled"
+            " instead of the expected {total_tasks_expected}"
         )
 
     return success
