@@ -339,35 +339,6 @@ Notes
 Ewoks-Orange Execution Call Stack
 ---------------------------------
 
-When the user executes an Ewoks-Orange widget from the canvas, the following sequence occurs:
-
-.. mermaid::
-
-    sequenceDiagram
-        participant User
-        participant Widget
-        participant Task as Ewoks Task
-        participant Channel as Output Channel(s)
-        participant SignalManager
-        participant DownstreamWidget as Downstream Widget(s)
-
-        User->>Widget: Click "Trigger"
-        Widget->>Task: execute_ewoks_task()
-        Task->>Widget: propagate_downstream()
-
-        loop For each output channel
-            Widget->>Channel: send()
-            Channel->>SignalManager: send()
-        end
-
-        Task->>Widget: 🔧 task_output_changed() 🔧
-
-        loop For each connected output channel
-            SignalManager->>DownstreamWidget: set_dynamic_input(output_name, value)
-        end
-
-        SignalManager->>DownstreamWidget: 🔧 handleNewSignals() 🔧
-        Note over SignalManager,DownstreamWidget: One handleNewSignals() call per downstream widget
-        Note over Widget,Task: Concurrent Task Execution
-
-🔧 : to be implemented like in the ``OWExampleTask`` widget above.
+For how a widget's execution actually propagates to downstream widgets
+(signal manager scheduling, background task execution, ordering
+guarantees), see :doc:`../explanations/execution`.

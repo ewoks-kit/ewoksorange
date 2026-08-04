@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `OrangeCanvasHandler.wait_widgets`: fix a race where a widget executing on a
+  background thread could briefly look "settled" (task finished, not active)
+  before its outputs were actually propagated downstream, by making
+  `OWEwoksBaseWidget` call `propagate_downstream` before `progressBarFinished`.
+
 ## [6.0.0rc2] - 2026-08-02
 
 ### Fixed

@@ -1,6 +1,5 @@
-===========
-ewoksorange
-===========
+ewoksorange |version|
+=====================
 
 *ewoksorange* provides a desktop graphical interface for `ewoks <https://ewoks.readthedocs.io/>`_
 based on `biolab <https://github.com/biolab>`_ libraries `orange-canvas-core <https://github.com/biolab/orange-canvas-core>`_
@@ -28,4 +27,5 @@ of the `European Synchrotron <https://www.esrf.eu/>`_.
 
     tutorials
     howtoguides
+    explanations
     reference

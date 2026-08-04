@@ -194,7 +194,6 @@ class OrangeCanvasHandler:
         widgets = list(self.iter_widgets())
         nodes = list(self.iter_nodes())
         t0 = time.time()
-        settled_streak = 0
 
         while True:
             self.process_events()
@@ -211,15 +210,34 @@ class OrangeCanvasHandler:
                     if exception is not None:
                         exceptions[widget] = exception
 
-            # Workflow finished?
+            # Workflow finished? All three checks below are needed, each
+            # closing a different gap between a task's real state and what
+            # the canvas machinery reports:
             #
-            # `signal_manager.is_active(node)` only turns True once the
-            # widget's `progressBarInit` slot has run, which itself only
-            # happens once Qt has delivered the executor's `started` signal
-            # (queued, since it is emitted from a background thread). A task
-            # can therefore be submitted and briefly look inactive before
-            # that signal is delivered. `TaskFuture` submission is tracked
-            # synchronously, so check it too.
+            # - `has_pending()`: nothing queued for delivery. A widget's
+            #   outputs are scheduled by `propagate_downstream()` (see
+            #   below) before its progress bar is cleared, so this stays
+            #   True until the signal manager's timer has actually
+            #   delivered them to downstream nodes.
+            # - `is_active(node)`: no node's progress bar is running. This
+            #   is the only signal available for a native `OWWidget` (it
+            #   has no `task_executor`), but for an Ewoks widget it only
+            #   turns True once Qt has delivered the executor's `started`
+            #   signal (queued, since it is emitted from a background
+            #   thread) - a task can be submitted and briefly look
+            #   inactive before that signal arrives.
+            # - `no_running_tasks`: no Ewoks task is currently
+            #   submitted/executing, checked synchronously via
+            #   `task_executor.is_running` instead of waiting for a
+            #   signal. This closes the submission gap `is_active(node)`
+            #   misses above.
+            #
+            # `OWEwoksBaseWidget`'s `__on_succeeded`/`__on_failed`
+            # callbacks always call `propagate_downstream()` before
+            # `progressBarFinished()` clears `is_active(node)`. So once
+            # `is_active(node)` is False and no task is running, this
+            # widget's outputs (or invalidation) are already scheduled,
+            # and `has_pending()` already reflects that.
             no_running_tasks = not any(
                 getattr(widget, "task_executor", None) is not None
                 and widget.task_executor.is_running
@@ -230,12 +248,7 @@ class OrangeCanvasHandler:
                 and not any(signal_manager.is_active(node) for node in nodes)
                 and no_running_tasks
             )
-            settled_streak = settled_streak + 1 if settled else 0
-            # Require two consecutive settled reads: a node can finish (e.g.
-            # a background thread) and briefly look settled before its
-            # output signal has actually been scheduled for delivery to
-            # downstream nodes.
-            if settled_streak >= 2:
+            if settled:
                 if exceptions:
                     raise next(iter(exceptions.values()))
                 break
