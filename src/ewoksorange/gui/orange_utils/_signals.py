@@ -242,15 +242,20 @@ def validate_signals(
     """
     ewoks_task = namespace["ewokstaskclass"]
     if direction == "inputs":
-        signal_class = Input
+
+        def create_signal(*, name, type, doc) -> Input:
+            return Input(name=name, type=type, doc=doc)
+
         ewoks_names = ewoks_task.input_names()
         ewoks_model = ewoks_task.input_model()
-        is_input = True
     elif direction == "outputs":
-        signal_class = Output
+
+        def create_signal(*, name, type, doc) -> Output:
+            # https://github.com/ewoks-kit/ewoksorange/issues/447
+            return Output(name=name, type=type, doc=doc, dynamic=False)
+
         ewoks_names = ewoks_task.output_names()
         ewoks_model = ewoks_task.output_model()
-        is_input = False
     else:
         raise ValueError(f"{direction=}")
     ewoks_names = tuple(name for name in ewoks_names if name not in name_to_ignore)
@@ -286,10 +291,10 @@ def validate_signals(
                 ewoksname,
             )
             orangename = ewoksname
-            signal = signal_class(name=orangename, type=data_type, doc=doc)
+            signal = create_signal(name=orangename, type=data_type, doc=doc)
             new_signals_class = True
 
-        if is_input:
+        if isinstance(signal, Input):
             # Create a handler for the input value provided
             # by upstream nodes at runtime, unless already provided.
             handler: str = signal.handler
