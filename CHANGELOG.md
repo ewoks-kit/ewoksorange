@@ -7,19 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- `OrangeCanvasHandler.wait_widgets`: fix a race where a widget executing on a
-  background thread could briefly look "settled" (task finished, not active)
-  before its outputs were actually propagated downstream, by making
-  `OWEwoksBaseWidget` call `propagate_downstream` before `progressBarFinished`.
-
-## [6.0.0rc2] - 2026-08-02
+## [6.0.0rc3] - 2026-08-04
 
 ### Fixed
 
 - Fix `ParameterForm` file system selection in QT6 (Replace `QDialog.exec_` with `QDialog.exec`).
 - Store all graph attributes in OWS format.
+- `OrangeCanvasHandler.wait_widgets`: fix a race where a widget executing on a
+  background thread could briefly look "settled" (task finished, not active)
+  before its outputs were actually propagated downstream, by making
+  `OWEwoksBaseWidget` call `propagate_downstream` before `progressBarFinished`.
 
 ### Added
 
@@ -375,8 +372,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc2...HEAD
-[6.0.0rc2]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc2
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc3...HEAD
+[6.0.0rc3]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc3
 [5.0.1]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0
