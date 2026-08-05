@@ -45,13 +45,13 @@ One execution cycle
         Note over SM: 100ms timer fires, node is next in line
         SM->>W: handleNewSignals()
         W->>EX: submit_task()
-        Note right of EX: is_running -> True (synchronous)
+        Note right of W: has_pending_task() -> True (synchronous)
         EX->>BG: run Task.execute()
         W->>W: progressBarInit()
         Note right of SM: is_active(node) -> True
 
         BG-->>BG: task runs
-        Note right of EX: is_running -> False (in worker thread,<br/>before any signal is delivered)
+        Note right of BG: has_pending_task() -> still True<br/>(succeeded/failed not delivered yet)
         BG--)EX: Future done callback
         EX--)W: succeeded/failed (queued across threads)
 
@@ -61,16 +61,29 @@ One execution cycle
         Note right of SM: has_pending() -> True for downstream nodes
         W->>W: progressBarFinished()
         Note right of SM: is_active(node) -> False
+        Note right of W: has_pending_task() -> False
 
         Note over SM: 100ms timer (re-armed), next node's turn
 
 Node "settledness"
 -------------------
 
-``SignalManager`` exposes predicates a caller can use to know whether there
-is still work in flight. A node cycles through five states; the same
-``Idle -> Queued`` transition applies whether the signal comes from the
-initial trigger or from an upstream node's propagation:
+There is no single "is this workflow done?" flag. "Settled" is spread
+across three independent flags, each owned by a different layer, each
+covering a different slice of one widget's execution:
+
+:meth:`has_pending_task() <ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget.has_pending_task>` (widget)
+    True while a task submission hasn't reached its GUI-thread completion
+    callback yet.
+:meth:`is_active(node) <ewoksorange.gui.orange_utils.signal_manager.SignalManagerWithScheme.is_active>` (canvas)
+    True while the widget's progress bar is running.
+:meth:`has_pending() <ewoksorange.gui.orange_utils.signal_manager.SignalManagerWithScheme.has_pending>` (canvas)
+    True while some node has a signal scheduled but not yet delivered.
+
+A workflow is settled only once **every one** of these reads "not busy",
+for every node and widget. A node cycles through five states on the way
+there; the same ``Idle -> Queued`` transition applies whether the signal
+comes from the initial trigger or from an upstream node's propagation:
 
 .. mermaid::
 
@@ -87,60 +100,58 @@ initial trigger or from an upstream node's propagation:
             has_pending() == True
         end note
         note right of Submitted
-            is_running == True
+            has_pending_task() == True
             is_active(node) == False
             (submission gap)
         end note
         note right of Running
-            is_running == True
+            has_pending_task() == True
             is_active(node) == True
         end note
         note right of Finishing
-            is_running == False
+            has_pending_task() == True
             is_active(node) == True
             (outputs not sent yet)
         end note
         note right of Idle
-            is_running == False
+            has_pending_task() == False
             is_active(node) == False
         end note
 
-The ``Submitted`` and ``Finishing`` states above are exactly where
-:attr:`is_running <ewoksorange.gui.concurrency.executor.EwoksExecutor.is_running>`
-and ``is_active(node)`` briefly disagree; see the two guarantees below for
-why polling both together is still reliable.
+The ``Submitted`` and ``Finishing`` states are exactly where a naive
+single-flag check would be fooled: the task's real state and what one
+flag reports can momentarily disagree. Checking all three together is
+only safe because of one rule, applied twice below: **a flag may only
+switch to "not busy" once whatever sits downstream of it already
+reflects the change** — never the other way around.
 
-A workflow is fully done once, for every node:
+1. ``has_pending()`` before ``is_active(node)``. Sending a task's
+   outputs
+   (:meth:`propagate_downstream() <ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget.propagate_downstream>`)
+   is what schedules delivery to downstream nodes, flipping
+   ``has_pending()`` to ``True`` — and that call always happens
+   *before*
+   :meth:`progressBarFinished() <ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget.progressBarFinished>`
+   clears ``is_active(node)``. So the moment ``is_active(node)`` is
+   observed ``False``, any output this widget just produced is already
+   visible through ``has_pending()``.
 
-- nothing is queued (not :meth:`signal_manager.has_pending() <ewoksorange.gui.orange_utils.signal_manager.SignalManagerWithScheme.has_pending>`) and
+2. ``is_active(node)`` before ``has_pending_task()``. Both calls
+   above run *inside* the widget's GUI-thread ``succeeded``/``failed``
+   callback — the same callback that finally clears
+   ``has_pending_task()``. That callback executes as one
+   uninterrupted, non-reentrant step on the GUI thread (the same thread
+   `wait_widgets`-style polling runs on), so a poller can only ever see
+   it from before it starts or after it has fully finished — never
+   midway. So the moment ``has_pending_task()`` is observed
+   ``False``, guarantee 1 has already played out too: ``is_active(node)``
+   is already ``False`` and ``has_pending()`` already reflects it.
 
-- nothing is executing (not :meth:`signal_manager.is_active(node) <ewoksorange.gui.orange_utils.signal_manager.SignalManagerWithScheme.is_active>`).
-
-The task itself runs on a background thread, but ``is_active(node)`` only
-changes when Qt delivers a *queued* cross-thread signal, so it does not
-necessarily flip at the exact moment the task actually starts or finishes.
-Two ordering guarantees close that gap, so polling ``has_pending()`` and
-``is_active(node)`` never gives a false "idle" reading:
-
-- **Start:**
-  :attr:`EwoksExecutor.is_running <ewoksorange.gui.concurrency.executor.EwoksExecutor.is_running>`
-  flips to ``True`` synchronously at submission time, on the GUI thread —
-  before ``is_active(node)`` catches up (which needs the queued
-  :attr:`started <ewoksorange.gui.concurrency.executor.EwoksExecutor.started>`
-  signal to be delivered first, triggering
-  :meth:`progressBarInit() <ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget.progressBarInit>`).
-  A caller must therefore check *both* ``is_active(node)`` and
-  ``task_executor.is_running`` to avoid a false "idle" reading right after
-  submission.
-- **Finish:** :class:`~ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget` always
-  calls
-  :meth:`propagate_downstream() <ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget.propagate_downstream>`
-  **before**
-  :meth:`progressBarFinished() <ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget.progressBarFinished>`.
-  So the moment ``is_active(node)`` becomes ``False``, this widget's outputs
-  have already been sent (or invalidated), and any newly pending downstream
-  signal is already reflected by ``has_pending()``.
+Chaining the two: checking ``has_pending_task()`` alone would be
+enough to know the other two are settled — but native ``OWWidget``\ s
+have no such flag, so ``is_active(node)`` is still checked directly for
+every node, and ``has_pending()`` for the signal manager as a whole.
 
 See :meth:`~ewoksorange.gui.canvas.handler.OrangeCanvasHandler.wait_widgets`
-for the polling loop that uses these predicates to wait for a workflow to
-finish outside of the Orange canvas GUI.
+for the polling loop that checks all three flags together to wait for a
+workflow to finish outside of the Orange canvas GUI.

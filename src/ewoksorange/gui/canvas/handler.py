@@ -40,7 +40,7 @@ else:
 
         from . import config as orangeconfig
 
-from ..orange_utils.signal_manager import SignalManagerWithOutputTracking
+from ..orange_utils.signal_manager import SignalManagerWithScheme
 from ..owwidgets.base import OWEwoksBaseWidget
 from ..qt_utils import app as qt_app
 from ..workflows.representation import ows_file_context
@@ -124,9 +124,9 @@ class OrangeCanvasHandler:
         return self.canvas.current_document().scheme()
 
     @property
-    def signal_manager(self) -> SignalManagerWithOutputTracking:
+    def signal_manager(self) -> SignalManagerWithScheme:
         signal_manager = self.scheme.signal_manager
-        if not isinstance(signal_manager, SignalManagerWithOutputTracking):
+        if not isinstance(signal_manager, SignalManagerWithScheme):
             raise RuntimeError(
                 "Orange signal manager was not patched before instantiated"
             )
@@ -210,45 +210,26 @@ class OrangeCanvasHandler:
                     if exception is not None:
                         exceptions[widget] = exception
 
-            # Workflow finished? All three checks below are needed, each
-            # closing a different gap between a task's real state and what
-            # the canvas machinery reports:
+            # Workflow "settled"? Meaning nothing happens anymore.
             #
-            # - `has_pending()`: nothing queued for delivery. A widget's
-            #   outputs are scheduled by `propagate_downstream()` (see
-            #   below) before its progress bar is cleared, so this stays
-            #   True until the signal manager's timer has actually
-            #   delivered them to downstream nodes.
-            # - `is_active(node)`: no node's progress bar is running. This
-            #   is the only signal available for a native `OWWidget` (it
-            #   has no `task_executor`), but for an Ewoks widget it only
-            #   turns True once Qt has delivered the executor's `started`
-            #   signal (queued, since it is emitted from a background
-            #   thread) - a task can be submitted and briefly look
-            #   inactive before that signal arrives.
-            # - `no_running_tasks`: no Ewoks task is currently
-            #   submitted/executing, checked synchronously via
-            #   `task_executor.is_running` instead of waiting for a
-            #   signal. This closes the submission gap `is_active(node)`
-            #   misses above.
+            # "Settled" is split across three flags, each owned by a
+            # different layer. ALL of them must read "not busy" for the
+            # workflow to be settled.
             #
-            # `OWEwoksBaseWidget`'s `__on_succeeded`/`__on_failed`
-            # callbacks always call `propagate_downstream()` before
-            # `progressBarFinished()` clears `is_active(node)`. So once
-            # `is_active(node)` is False and no task is running, this
-            # widget's outputs (or invalidation) are already scheduled,
-            # and `has_pending()` already reflects that.
-            no_running_tasks = not any(
-                getattr(widget, "task_executor", None) is not None
-                and widget.task_executor.is_running
+            # A flag is only allowed to switch to "not busy" once whatever
+            # sits downstream of it already reflects that, so checking all
+            # three together never gives a false "idle" reading.
+            #
+            # See doc/explanations/execution.rst ("Node settledness") for the
+            # full reasoning.
+            no_pending_signals = not signal_manager.has_pending()
+            no_active_nodes = not any(signal_manager.is_active(node) for node in nodes)
+            no_pending_tasks = not any(
+                isinstance(widget, OWEwoksBaseWidget) and widget.has_pending_task()
                 for widget in widgets
             )
-            settled = (
-                not signal_manager.has_pending()
-                and not any(signal_manager.is_active(node) for node in nodes)
-                and no_running_tasks
-            )
-            if settled:
+
+            if no_pending_signals and no_active_nodes and no_pending_tasks:
                 if exceptions:
                     raise next(iter(exceptions.values()))
                 break

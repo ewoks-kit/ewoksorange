@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ̀`OWEwoksBaseWidget`: `execute_ewoks_task` now returns `TaskFuture` or `None` when the execution
   request was dropped.
+- ̀`OWEwoksBaseWidget`: derived classes need to implement `is_ewoks_task_running`.
 
 ### Deprecated
 
