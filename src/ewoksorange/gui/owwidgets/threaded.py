@@ -122,6 +122,9 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         """The underlying :class:`EwoksExecutor`."""
         return self.__executor
 
+    def has_pending_task(self) -> bool:
+        return bool(self.__propagate_by_future)
+
     @property
     def task_succeeded(self) -> Optional[bool]:
         return self.__last_task_succeeded

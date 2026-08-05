@@ -59,6 +59,10 @@ class OWEwoksWidgetNoThread(OWEwoksBaseWidget, **ow_build_opts):
 
         return task_future
 
+    def has_pending_task(self) -> bool:
+        """Always False: submission runs synchronously to completion."""
+        return False
+
     @property
     def task_succeeded(self) -> Optional[bool]:
         """Return True if last task succeeded, False if failed, None if never run."""

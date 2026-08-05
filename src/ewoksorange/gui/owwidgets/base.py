@@ -7,6 +7,7 @@ from __future__ import annotations
 import functools
 import logging
 import warnings
+from abc import abstractmethod
 from typing import Any
 from typing import Callable
 from typing import List
@@ -65,7 +66,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
     Subclasses must implement:
 
-    - methods: get_task_outputs, _execute_ewoks_task
+    - methods: _get_task_outputs, _execute_ewoks_task, has_pending_task
     - properties: task_succeeded, task_done, task_exception
     """
 
@@ -479,6 +480,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             }
         return outputs
 
+    @abstractmethod
     def _get_task_outputs(self) -> dict:
         raise NotImplementedError("Base class")
 
@@ -638,6 +640,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         return self._execute_ewoks_task(propagate=False, log_missing_inputs=False)
 
     @property
+    @abstractmethod
     def task_succeeded(self) -> Optional[bool]:
         """
         Whether the most recent task execution succeeded.
@@ -647,6 +650,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         raise NotImplementedError("Base class")
 
     @property
+    @abstractmethod
     def task_done(self) -> Optional[bool]:
         """
         Whether the most recent task execution finished (success or failure).
@@ -656,11 +660,22 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         raise NotImplementedError("Base class")
 
     @property
+    @abstractmethod
     def task_exception(self) -> Optional[Exception]:
         """
         Exception raised during the most recent task execution, if any.
 
         :return: Exception instance or None.
+        """
+        raise NotImplementedError("Base class")
+
+    @abstractmethod
+    def has_pending_task(self) -> bool:
+        """
+        Whether a task submission is outstanding, from submission until its
+        completion callback (propagation + `progressBarFinished`) has run.
+
+        :return: True while a submission is outstanding.
         """
         raise NotImplementedError("Base class")
 
@@ -738,6 +753,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             if ncallbacks > 1:
                 self.__post_task_execute(callbacks[1:])
 
+    @abstractmethod
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
     ) -> Optional[TaskFuture]:

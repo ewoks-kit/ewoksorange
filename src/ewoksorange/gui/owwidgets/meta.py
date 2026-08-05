@@ -3,6 +3,7 @@ Metaclass and class preparation utilities for owwidgets package.
 """
 
 import inspect
+from abc import ABCMeta
 from typing import Any
 
 from ...orange_version import ORANGE_VERSION
@@ -23,7 +24,7 @@ else:
 from ..orange_utils import _signals
 
 
-class OWEwoksWidgetMetaClass(WidgetMetaClass):
+class OWEwoksWidgetMetaClass(ABCMeta, WidgetMetaClass):
     """
     Metaclass used to prepare widget classes with Ewoks bindings.
     """
