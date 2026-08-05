@@ -440,7 +440,11 @@ class DataViewer(qt.QWidget):
         except TypeError:
             # Support silx<2.0.0
             model.sigH5pyObjectLoaded.emit(h5file)
-        model.insertH5pyObject(h5file, filename=filename)
+        try:
+            model.insertH5pyObject(h5file, filename=filename)
+        except TypeError:
+            # Support silx<2.0.0
+            model.insertH5pyObject(h5file)
 
     def setContentSorted(self, sort):
         """Set whether file content should be sorted or not.
