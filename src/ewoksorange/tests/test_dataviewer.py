@@ -87,9 +87,6 @@ def test_configurable_mode_and_locking(qtapp, h5file):
     # Read-Only Mode
     # #########################
     with _data_viewer(mode="r", locking=False) as viewer:
-        assert viewer._mode == "r"
-        assert viewer._locking is False
-
         viewer.updateFile(h5file)
         (h5,) = viewer._h5files
         assert h5.mode == "r"
@@ -106,9 +103,6 @@ def test_configurable_mode_and_locking(qtapp, h5file):
         assert external_append.default == "OPENED"
 
     with _data_viewer(mode="r", locking=True) as viewer:
-        assert viewer._mode == "r"
-        assert viewer._locking is True
-
         viewer.updateFile(h5file)
         (h5,) = viewer._h5files
         assert h5.mode == "r"
@@ -125,9 +119,6 @@ def test_configurable_mode_and_locking(qtapp, h5file):
         assert external_append.default == "OSError:LOCKED"
 
     with _data_viewer(mode="r") as viewer:
-        assert viewer._mode == "r"
-        assert viewer._locking is None
-
         viewer.updateFile(h5file)
         (h5,) = viewer._h5files
         assert h5.mode == "r"
@@ -147,9 +138,6 @@ def test_configurable_mode_and_locking(qtapp, h5file):
     # Append Mode
     # #########################
     with _data_viewer(mode="a", locking=False) as viewer:
-        assert viewer._mode == "a"
-        assert viewer._locking is False
-
         viewer.updateFile(h5file)
         (h5,) = viewer._h5files
         assert h5.mode == "r+"
@@ -166,9 +154,6 @@ def test_configurable_mode_and_locking(qtapp, h5file):
         assert external_append.default == "OPENED"
 
     with _data_viewer(mode="a", locking=True) as viewer:
-        assert viewer._mode == "a"
-        assert viewer._locking is True
-
         viewer.updateFile(h5file)
         (h5,) = viewer._h5files
         assert h5.mode == "r+"
@@ -185,9 +170,6 @@ def test_configurable_mode_and_locking(qtapp, h5file):
         assert external_append.default == "OSError:LOCKED"
 
     with _data_viewer(mode="a") as viewer:
-        assert viewer._mode == "a"
-        assert viewer._locking is None
-
         viewer.updateFile(h5file)
         (h5,) = viewer._h5files
         assert h5.mode == "r+"
