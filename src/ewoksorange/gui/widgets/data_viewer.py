@@ -45,7 +45,7 @@ class DataViewer(qt.QWidget):
         viewer.closeAll()
     """
 
-    def __init__(self, parent, *, mode: str = "a", locking: bool | None = None):
+    def __init__(self, parent, *, mode: str = "a", locking: Optional[bool] = None):
         super().__init__(parent)
 
         self._h5files = list()
