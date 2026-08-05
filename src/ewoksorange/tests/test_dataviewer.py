@@ -59,7 +59,7 @@ def h5file(tmp_path):
 
 
 def test_default_mode_and_locking(qtapp, h5file):
-    """Verify DataViewer default append mode and locking enabled."""
+    """Verify DataViewer has append mode and locking enabled by default."""
     with _data_viewer() as viewer:
         assert viewer._mode == "a"
         assert viewer._locking is None
@@ -81,7 +81,7 @@ def test_default_mode_and_locking(qtapp, h5file):
 
 
 def test_configurable_mode_and_locking(qtapp, h5file):
-    """A DataViewer can be created read-only with locking disabled."""
+    """Verify configured modes and locked states match expectations."""
 
     # #########################
     # Read-Only Mode
