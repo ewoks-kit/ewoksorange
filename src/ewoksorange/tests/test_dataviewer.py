@@ -21,7 +21,7 @@ for locking in (True, False, None):
 """
 
 
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)
 class ExternalOpenResults:
     locking: str
     not_locking: str
