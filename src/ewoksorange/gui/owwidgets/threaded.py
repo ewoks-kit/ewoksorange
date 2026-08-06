@@ -86,7 +86,7 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         self.progressBarInit()
 
     def __on_succeeded(self, task_future: TaskFuture) -> None:
-        propagate = self.__propagate_by_future.pop(task_future, False)
+        propagate = self.__propagate_by_future.get(task_future, False)
         self.__last_output_variables = task_future.result()
         self.__last_task_succeeded = True
         self.__last_task_done = True
@@ -96,15 +96,18 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
         # what `wait_widgets`-style polling relies on to know this widget is
         # done. Clearing it first would let such polling observe "not
         # active" before the outputs were actually sent downstream.
+        # `has_pending_task()` must stay True until both of those have run,
+        # for the same reason, so the future is only popped last.
         try:
             if propagate:
                 self.propagate_downstream(succeeded=True)
         finally:
             self.progressBarFinished()
+            self.__propagate_by_future.pop(task_future, None)
             self._output_changed()
 
     def __on_failed(self, task_future: TaskFuture) -> None:
-        propagate = self.__propagate_by_future.pop(task_future, False)
+        propagate = self.__propagate_by_future.get(task_future, False)
         self.__last_output_variables = {}
         self.__last_task_succeeded = False
         self.__last_task_done = True
@@ -115,6 +118,7 @@ class _OWEwoksExecutorWidget(_OWEwoksThreadedBaseWidget, **ow_build_opts):
                 self.propagate_downstream(succeeded=False)
         finally:
             self.progressBarFinished()
+            self.__propagate_by_future.pop(task_future, None)
             self._output_changed()
 
     @property
