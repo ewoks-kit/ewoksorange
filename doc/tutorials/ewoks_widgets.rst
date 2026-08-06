@@ -3,7 +3,9 @@
 Ewoks widgets and execution
 ===========================
 
-There are several ways of defining how your Orange Widget will handle the execution of its associated Ewoks task.
+All Ewoks widgets derive from :class:`~ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget`,
+which executes the Ewoks task as :ref:`configured with class arguments
+<design configuration>`. The most common configurations also have a named class:
 
 * :ref:`design qt main thread (OWEwoksWidgetNoThread)`: simple, robust. Long processings can prevent the GUI from responding.
 * :ref:`design single thread no stack (OWEwoksWidgetOneThread)`: execution is separate from the GUI thread. Can only handle one task at once.
@@ -15,18 +17,54 @@ The choice of design depends on your use case: for example, if you deal with sma
 the first design (the simplest one) is the best. Other designs allow more flexibility but are more complex.
 
 
-.. table:: Differences between Ewoks widgets
+.. list-table:: Differences between Ewoks widgets
+   :header-rows: 1
    :widths: auto
 
-   ============================  =======================================  ============================    
-     Widget                       GUI is responsive during execution      Tasks can be run in parallel
-   ============================  =======================================  ============================  
-   OWEwoksWidgetNoThread            No                                     No                       
-   OWEwoksWidgetOneThread           Yes                                    No                       
-   OWEwoksWidgetOneThreadPerRun     Yes                                    Yes                        
-   OWEwoksWidgetWithTaskStack       Yes                                    Yes                        
-   No widget                        Depends on implementation              Depends on implementation 
-   ============================  =======================================  ============================  
+   * - Widget
+     - GUI is responsive during execution
+     - Tasks can be run in parallel
+   * - :ref:`OWEwoksWidgetNoThread <design qt main thread (OWEwoksWidgetNoThread)>`
+     - No
+     - No
+   * - :ref:`OWEwoksWidgetOneThread <design single thread no stack (OWEwoksWidgetOneThread)>`
+     - Yes
+     - No
+   * - :ref:`OWEwoksWidgetOneThreadPerRun <design several thread (OWEwoksWidgetOneThreadPerRun)>`
+     - Yes
+     - Yes
+   * - :ref:`OWEwoksWidgetWithTaskStack <design single thread and stack (OWEwoksWidgetWithTaskStack)>`
+     - Yes
+     - Yes
+   * - :ref:`Native Orange widget <design free implementation (No direct ewoks inheritance)>`
+     - Depends
+     - Depends
+
+.. _design configuration:
+
+Configure the base widget
+-------------------------
+
+Instead of picking one of the classes above, the execution strategy can be given
+directly to :class:`~ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget`
+
+.. code-block:: python
+
+    from ewoksorange.gui.owwidgets.base import OWEwoksBaseWidget
+    from ewokscore.tests.examples.tasks.sumtask import SumTask
+
+    class OWSumTask(
+        OWEwoksBaseWidget,
+        ewokstaskclass=SumTask,
+        concurrency="process",   # "sync", "thread" (default) or "process"
+        max_workers=2,           # None for the pool default
+        submit_policy="always",  # or "drop_if_busy" while the executor is busy
+        mp_context="spawn",      # "spawn" (default), "fork", "forkserver" or None
+    ):
+        pass
+
+Class arguments that are not provided are inherited, so a subclass can change one
+knob without repeating the others.
 
 
 .. _design qt main thread (OWEwoksWidgetNoThread):
@@ -107,9 +145,11 @@ For this, make the Orange widget inherit from :class:`OWEwoksWidgetOneThread`
 
 
 
-The Orange widget is holding a processing thread (`_processingThread`) that will execute the `ewokstaskclass`.
+The Orange widget holds a single-threaded executor
+(:attr:`~ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget.task_executor`) that will
+execute the `ewokstaskclass`.
 
-.. note:: 
+.. note::
     
     The thread can only execute one task at a time: it will refuse to execute further tasks if the current task is still executing. 
     
@@ -176,8 +216,6 @@ To access it you can create a widget inheriting from :class:`OWEwoksWidgetWithTa
 
         want_main_area = False
 
-
-The :class:`SumListWithTaskStack` holds an instance of `progress` in its task arguments.
 
 .. _design free implementation (No direct ewoks inheritance):
 

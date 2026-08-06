@@ -2,24 +2,30 @@ from __future__ import annotations
 
 import logging
 import multiprocessing
+import multiprocessing.context
 import multiprocessing.managers
 import weakref
 from concurrent import futures
 from enum import Enum
 from enum import auto
+from queue import Queue
 from threading import Event
 from threading import Lock
 from typing import Any
 from typing import Callable
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Type
 
 from AnyQt.QtCore import QObject
 from AnyQt.QtCore import Signal
+from ewokscore import TaskWithProgress
 from ewokscore.task import Task
+from ewokscore.variable import VariableContainer
 
 from . import _controllers
+from . import _progress
 from . import _runners
 from .future import TaskFuture
 
@@ -31,12 +37,49 @@ class SubmitPolicy(Enum):
     DROP_IF_BUSY = auto()
 
 
+class Concurrency(Enum):
+    """How an :class:`EwoksExecutor` executes ewoks tasks."""
+
+    SYNC = auto()
+    """In the calling thread."""
+
+    THREAD = auto()
+    """In a thread pool."""
+
+    PROCESS = auto()
+    """In a process pool."""
+
+
+def create_pool_executor(
+    concurrency: Concurrency,
+    max_workers: Optional[int] = None,
+    mp_context: Optional[multiprocessing.context.BaseContext] = None,
+) -> Optional[futures.Executor]:
+    """Create the `concurrent.futures` executor for a given concurrency.
+
+    :param concurrency: The execution backend.
+    :param max_workers: Maximum number of workers, `None` for the pool default.
+                        Ignored for `Concurrency.SYNC`.
+    :param mp_context: Multiprocessing context, only used for `Concurrency.PROCESS`.
+    :return: The executor, or `None` for `Concurrency.SYNC`.
+    """
+    if concurrency is Concurrency.SYNC:
+        return None
+    if concurrency is Concurrency.PROCESS:
+        return futures.ProcessPoolExecutor(
+            max_workers=max_workers, mp_context=mp_context
+        )
+    return futures.ThreadPoolExecutor(max_workers=max_workers)
+
+
 class EwoksExecutor(QObject):
     """Qt-aware executor for ewoks tasks.
 
     Wraps a `concurrent.futures.Executor` (thread, process or None) and emits Qt
     signals on task lifecycle events. Returns TaskFuture objects that support
     both native future cancellation (cancel()) and ewoks task abort (abort()).
+    Their result is the executed task's
+    :class:`~ewokscore.variable.VariableContainer` of output variables.
     """
 
     submitted = Signal(TaskFuture)
@@ -64,11 +107,20 @@ class EwoksExecutor(QObject):
         self,
         executor: Optional[futures.Executor],
         policy: SubmitPolicy = SubmitPolicy.ALWAYS,
+        mp_context: Optional[multiprocessing.context.BaseContext] = None,
     ):
+        """
+        :param executor: Wrapped executor, `None` to execute in the calling thread.
+        :param policy: What to do with submissions while the executor is busy.
+        :param mp_context: Multiprocessing context used for the IPC manager. Provide
+                           the context of `executor` so the manager process is created
+                           with the same start method.
+        """
         super().__init__()
 
         self._executor = executor
         self._policy = policy
+        self._mp_context = mp_context
         self._running = 0
         self._lock = Lock()
 
@@ -96,10 +148,13 @@ class EwoksExecutor(QObject):
 
         return self._submit_thread(task_class, task_kwargs)
 
-    def _submit_sync(self, task_class: Type[Task], task_kwargs: dict) -> TaskFuture:
+    def _submit_sync(
+        self, task_class: Type[Task], task_kwargs: Dict[str, Any]
+    ) -> TaskFuture:
         controller = _controllers.SyncTaskController()
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
+        task_kwargs = self._handle_progess_arg(task_class, task_kwargs)
         runner = _runners.SyncTaskRunner(
             task_class,
             task_kwargs,
@@ -107,7 +162,7 @@ class EwoksExecutor(QObject):
             on_started=lambda: _emit_started(self_ref, holder),
         )
 
-        raw_future = futures.Future()
+        raw_future: futures.Future[VariableContainer] = futures.Future()
 
         return self._finalize_submission(
             raw_future,
@@ -117,11 +172,14 @@ class EwoksExecutor(QObject):
             after_submitted=lambda: _sync_submit(runner, raw_future),
         )
 
-    def _submit_thread(self, task_class: Type[Task], task_kwargs: dict) -> TaskFuture:
+    def _submit_thread(
+        self, task_class: Type[Task], task_kwargs: Dict[str, Any]
+    ) -> TaskFuture:
         controller = _controllers.ThreadTaskController()
         ready_event = Event()
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
+        task_kwargs = self._handle_progess_arg(task_class, task_kwargs)
         runner = _runners.ThreadTaskRunner(
             task_class,
             task_kwargs,
@@ -136,17 +194,25 @@ class EwoksExecutor(QObject):
             raw_future, controller, holder, self_ref, after_submitted=ready_event.set
         )
 
-    def _submit_process(self, task_class: Type[Task], task_kwargs: dict) -> TaskFuture:
+    def _submit_process(
+        self, task_class: Type[Task], task_kwargs: Dict[str, Any]
+    ) -> TaskFuture:
         manager = self._get_manager()
 
         ready_event = manager.Event()
         started_queue = manager.Queue()
+        progress_queue = manager.Queue()
         abort_event = manager.Event()
         aborted_event = manager.Event()
 
         controller = _controllers.ProcessTaskController(
-            abort_event, aborted_event, started_queue
+            abort_event, aborted_event, started_queue, progress_queue
         )
+
+        task_kwargs = self._handle_progess_arg(
+            task_class, task_kwargs, controller, progress_queue
+        )
+
         runner = _runners.ProcessTaskRunner(
             task_class,
             task_kwargs,
@@ -166,9 +232,43 @@ class EwoksExecutor(QObject):
             raw_future, controller, holder, self_ref, after_submitted=ready_event.set
         )
 
+    def _handle_progess_arg(
+        self,
+        task_class: Type[Task],
+        task_kwargs: Dict[str, Any],
+        controller: Optional[_controllers.ProcessTaskController] = None,
+        progress_queue: Optional[Queue] = None,
+    ) -> Dict[str, Any]:
+        """Prepare the `progress` task argument for `task_class`.
+
+        Dropped outright if `task_class` does not support progress reporting.
+
+        For a process backend, the caller's progress object is usually
+        unpicklable (QObject), so it's replaced by a queue-backed
+        stand-in relaying values back to it.
+
+        :return: The task arguments to submit.
+        """
+        if "progress" not in task_kwargs:
+            return task_kwargs
+
+        task_kwargs = dict(task_kwargs)
+        progress = task_kwargs.pop("progress")
+
+        if progress is None or not issubclass(task_class, TaskWithProgress):
+            return task_kwargs
+
+        if controller is None or progress_queue is None:
+            task_kwargs["progress"] = progress
+            return task_kwargs
+
+        task_kwargs["progress"] = _progress.QueueProgress(progress_queue)
+        controller.watch_progress(lambda value: setattr(progress, "progress", value))
+        return task_kwargs
+
     def _finalize_submission(
         self,
-        raw_future: futures.Future,
+        raw_future: futures.Future[VariableContainer],
         controller: _controllers.TaskController,
         holder: List[Optional[TaskFuture]],
         self_ref: weakref.ReferenceType["EwoksExecutor"],
@@ -190,18 +290,24 @@ class EwoksExecutor(QObject):
 
     def _get_manager(self) -> multiprocessing.managers.SyncManager:
         if self._manager is None:
-            self._manager = multiprocessing.Manager()
+            context = self._mp_context or multiprocessing
+            self._manager = context.Manager()
 
         return self._manager
 
     def _handle_done(
         self,
-        raw_future: futures.Future,
+        raw_future: futures.Future[VariableContainer],
         task_future: TaskFuture,
         controller: _controllers.TaskController,
     ) -> None:
         with self._lock:
             self._running -= 1
+
+        # Before emitting anything: this delivers the progress values still in
+        # flight, so receivers of "succeeded"/"failed" cannot observe progress
+        # arriving after they considered the task finished.
+        controller.stop_progress()
 
         if raw_future.cancelled():
             return
@@ -234,7 +340,7 @@ class EwoksExecutor(QObject):
 
 def _done_callback(
     executor_ref: weakref.ReferenceType[EwoksExecutor],
-    raw_future: futures.Future,
+    raw_future: futures.Future[VariableContainer],
     task_future: TaskFuture,
     controller: _controllers.TaskController,
 ) -> None:
@@ -252,7 +358,10 @@ def _emit_started(
         executor.started.emit(holder[0])
 
 
-def _sync_submit(fn: Callable[[], Any], raw_future: futures.Future) -> None:
+def _sync_submit(
+    fn: Callable[[], VariableContainer],
+    raw_future: futures.Future[VariableContainer],
+) -> None:
     """Run `fn` and store its outcome in `raw_future`."""
     # `ThreadPoolExecutor`/`ProcessPoolExecutor` already do this internally
     # (via `set_running_or_notify_cancel()`) before invoking a submitted

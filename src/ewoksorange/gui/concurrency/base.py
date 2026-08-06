@@ -1,11 +1,13 @@
 import logging
 import warnings
+from typing import Mapping
 from typing import Optional
 from typing import Type
 
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
+from ewokscore.variable import Variable
 
 _logger = logging.getLogger(__name__)
 
@@ -76,7 +78,9 @@ class TaskExecutor:
         return self.__task.exception
 
     @property
-    def output_variables(self) -> Optional[dict]:
+    def output_variables(self) -> Mapping[str, Variable]:
+        """The task's :class:`~ewokscore.variable.VariableContainer`, or an empty
+        `dict` when there is no task."""
         if self.__task is None:
             return dict()
         return self.__task.output_variables

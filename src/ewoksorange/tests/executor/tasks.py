@@ -1,5 +1,7 @@
+import os
 import time
 
+from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 
 
@@ -148,3 +150,28 @@ class TimedTask(
         self.outputs.start = start
         self.outputs.end = time.monotonic()
         self.outputs.value = self.inputs.value
+
+
+class ProgressTask(
+    TaskWithProgress,
+    input_names=["percentages"],
+    output_names=["pid"],
+):
+    """Reports each of `percentages` as task progress.
+
+    Also outputs the pid it ran in, so tests can tell the execution backends
+    apart.
+    """
+
+    def run(self) -> None:
+        for percentage in self.inputs.percentages:
+            self.progress = percentage
+        self.outputs.pid = os.getpid()
+
+
+class PidTask(Task, input_names=["value"], output_names=["value", "pid"]):
+    """Outputs the pid it ran in. Not a `TaskWithProgress`."""
+
+    def run(self) -> None:
+        self.outputs.value = self.inputs.value
+        self.outputs.pid = os.getpid()

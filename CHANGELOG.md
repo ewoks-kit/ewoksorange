@@ -7,16 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `OWEwoksBaseWidget` executes the Ewoks task itself, configured by class arguments,
+  and drives the Orange progress bar.
+- `OWEwoksWidgetNoThread`, `OWEwoksWidgetOneThread`, `OWEwoksWidgetOneThreadPerRun`
+  and `OWEwoksWidgetWithTaskStack` set the class arguments and nothing else.
+- Orange widgets can execute their Ewoks task in a process pool.
+
+### Changed
+
+- `OWEwoksBaseWidget` is no longer abstract.
+- `OWEwoksWidgetNoThread` now drives the Orange progress bar like the others.
+
 ## [6.0.0rc4] - 2026-08-06
 
 ### Fixed
 
 - Fix `ParameterForm` file system selection in QT6 (Replace `QDialog.exec_` with `QDialog.exec`).
 - Store all graph attributes in OWS format.
-- `OrangeCanvasHandler.wait_widgets`: fix a race where a widget executing on a
-  background thread could briefly look "settled" (task finished, not active)
-  before its outputs were actually propagated downstream, by making
-  `OWEwoksBaseWidget` call `propagate_downstream` before `progressBarFinished`.
+- `OrangeCanvasHandler.wait_widgets`: check the running state instead of `widget_is_executed`
+  since it might be executed again.
 
 ### Added
 
@@ -28,7 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - ̀`OWEwoksBaseWidget`: `execute_ewoks_task` now returns `TaskFuture` or `None` when the execution
   request was dropped.
-- ̀`OWEwoksBaseWidget`: derived classes need to implement `has_pending_task`.
 
 ### Deprecated
 

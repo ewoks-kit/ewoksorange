@@ -6,7 +6,6 @@ from typing import Dict
 from typing import Tuple
 from typing import Type
 
-from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.variable import VariableContainer
 
@@ -50,12 +49,7 @@ class TaskRunner(ABC):
 
     def _create_task(self) -> Task:
         """Instantiate task class."""
-        kwargs = dict(self._task_kwargs)
-
-        if not issubclass(self._task_class, TaskWithProgress):
-            kwargs.pop("progress", None)
-
-        return self._task_class(**kwargs)
+        return self._task_class(**self._task_kwargs)
 
     def _execute(self, task: Task) -> VariableContainer:
         """Execute `task`, cancelling it for as long as `abort_event` is set."""

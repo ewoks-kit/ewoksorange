@@ -1,15 +1,16 @@
 """
-Abstract base class for Ewoks-Orange widgets.
+Base class for Ewoks-Orange widgets.
 """
-
-from __future__ import annotations
 
 import functools
 import logging
+import multiprocessing
+import multiprocessing.context
 import warnings
-from abc import abstractmethod
+from concurrent import futures
 from typing import Any
 from typing import Callable
+from typing import Dict
 from typing import List
 from typing import Mapping
 from typing import Optional
@@ -17,6 +18,8 @@ from typing import Set
 
 from AnyQt import QtWidgets
 from ewokscore import missing_data
+from ewokscore.variable import Variable
+from ewokscore.variable import VariableContainer
 from ewokscore.variable import value_from_transfer
 
 from ...orange_version import ORANGE_VERSION
@@ -36,14 +39,19 @@ else:
 
     OWWidget = OWBaseWidget
 
+from ..concurrency.executor import Concurrency
+from ..concurrency.executor import EwoksExecutor
+from ..concurrency.executor import SubmitPolicy
 from ..concurrency.executor import TaskFuture
+from ..concurrency.executor import create_pool_executor
 from ..orange_utils._signals import get_signal
 from ..orange_utils.orange_imports import OWBaseWidget
 from ..orange_utils.orange_imports import OWWidget
 from ..orange_utils.signals import Output
+from ..qt_utils.progress import QProgress
 from ..utils import invalid_data
 from ..utils.events import scheme_ewoks_events
-from ..utils.model import _get_model_default_values
+from ..utils.model import get_model_default_values
 from .meta import OWEwoksWidgetMetaClass
 from .meta import ow_build_opts
 
@@ -52,10 +60,11 @@ _logger = logging.getLogger(__name__)
 
 class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_opts):
     """
-    Abstract base class connecting Ewoks tasks with Orange workflow widgets.
+    Base class connecting Ewoks tasks with Orange workflow widgets.
 
-    This class manages inputs (default and dynamic), constructs task arguments,
-    and provides hooks for executing tasks and propagating outputs.
+    This class manages inputs (default and dynamic), executes the Ewoks task
+    through an :class:`~ewoksorange.gui.concurrency.executor.EwoksExecutor` and
+    propagates the outputs downstream.
 
     Default input values are saved in the workflow file.
     Typically default input values are provided by the user through a widget component.
@@ -64,10 +73,60 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
     Typically dynamic input values are send from the output if upstream tasks and wrapped
     by a `Variable` to handle things like Ewoks tasks output caching.
 
-    Subclasses must implement:
+    The Ewoks task class and the execution strategy are provided as class arguments:
 
-    - methods: _get_task_outputs, _execute_ewoks_task, has_pending_task
-    - properties: task_succeeded, task_done, task_exception
+    .. code-block:: python
+
+        class MyOwWidget(
+            OWEwoksBaseWidget,
+            ewokstaskclass=MyTask,
+            concurrency="thread",
+            max_workers=1,
+            submit_policy="always",
+            mp_context="spawn",
+        ):
+            ...
+
+    The defaults execute tasks one-at-a-time in a single background thread,
+    queueing submissions that arrive while busy.
+    """
+
+    _CONCURRENCY: Concurrency = Concurrency.THREAD
+    """Task execution backend, provided by the `concurrency` class argument.
+
+    - `Concurrency.SYNC` (`"sync"`): execute in the calling (GUI) thread.
+    - `Concurrency.THREAD` (`"thread"`): execute in a thread pool.
+    - `Concurrency.PROCESS` (`"process"`): execute in a process pool. This requires
+      all task inputs and outputs to be picklable.
+    """
+
+    _MAX_WORKERS: Optional[int] = 1
+    """Maximum number of task workers, provided by the `max_workers` class argument.
+    Ignored for `Concurrency.SYNC`.
+
+    - `1`: execute one task at a time.
+    - `n > 1`: execute at most `n` tasks at a time.
+    - `None`: use the pool default.
+    """
+
+    _SUBMIT_POLICY: SubmitPolicy = SubmitPolicy.ALWAYS
+    """What to do with a task submission while the executor is busy, provided by
+    the `submit_policy` class argument.
+
+    - `SubmitPolicy.ALWAYS` (`"always"`): submit, so it runs when a worker is free.
+    - `SubmitPolicy.DROP_IF_BUSY` (`"drop_if_busy"`): drop the submission.
+    """
+
+    _MP_CONTEXT: Optional[multiprocessing.context.BaseContext] = (
+        multiprocessing.get_context("spawn")
+    )
+    """Multiprocessing context for the task workers and their IPC manager, provided
+    by the `mp_context` class argument as a context or a start method name. Only
+    used for `Concurrency.PROCESS`.
+
+    Defaults to `"spawn"`: a Qt application is always multi-threaded and libraries
+    commonly used by Ewoks tasks (HDF5 in particular) are not fork-safe. Use
+    `mp_context=None` for the platform default instead, which is `"fork"` on Linux.
     """
 
     def __init__(self, *args, **kwargs):
@@ -83,6 +142,65 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             self.task_output_changed
         ]
         self.__post_task_exception: Optional[Exception] = None
+
+        self.__taskProgress = QProgress()
+        self.__taskProgress.sigProgressChanged.connect(self._onProgressChanged)
+
+        self.__executor = EwoksExecutor(
+            self._create_pool_executor(),
+            self._SUBMIT_POLICY,
+            mp_context=self._MP_CONTEXT,
+        )
+        self.__executor.submitted.connect(self.__on_submitted)
+        self.__executor.started.connect(self.__on_started)
+        self.__executor.succeeded.connect(self.__on_succeeded)
+        self.__executor.failed.connect(self.__on_failed)
+
+        self.__propagate_by_future: Dict[TaskFuture, bool] = {}
+        self.__propagate_next: bool = False
+
+        self.__last_output_variables: Optional[VariableContainer] = None
+        self.__last_task_succeeded: Optional[bool] = None
+        self.__last_task_done: Optional[bool] = None
+        self.__last_task_exception: Optional[Exception] = None
+
+        # Note: this might be removed in the future. Please avoid using it.
+        self.__current_task_future: Optional[TaskFuture] = None
+
+    @classmethod
+    def _create_pool_executor(cls) -> Optional[futures.Executor]:
+        """
+        Create the `concurrent.futures` executor that runs the Ewoks tasks.
+
+        Override to execute tasks in an executor that :class:`Concurrency` does
+        not cover.
+
+        :return: An executor or `None` to execute in the calling thread.
+        """
+        return create_pool_executor(cls._CONCURRENCY, cls._MAX_WORKERS, cls._MP_CONTEXT)
+
+    def onDeleteWidget(self):
+        """
+        Release the task executor and progress handling when the widget is removed.
+        """
+        self.__taskProgress.sigProgressChanged.disconnect(self._onProgressChanged)
+        self._cleanup_task_executor()
+        super().onDeleteWidget()
+
+    def _cleanup_task_executor(self) -> None:
+        """
+        Shut down the task executor without waiting for pending tasks.
+        """
+        self.__executor.shutdown(wait=False)
+        self.__executor = None
+
+    def _onProgressChanged(self, progress: int):
+        """
+        Forward Ewoks task progress to the Orange progress bar.
+
+        :param progress: Progress percentage.
+        """
+        self.progressBarSet(float(progress))
 
     # --- Control and Main area --------------------------------------------------------------
 
@@ -239,7 +357,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         return dict(
             filter(
                 lambda pair: not is_invalid_data(pair[1]),
-                _get_model_default_values(input_model).items(),
+                get_model_default_values(input_model).items(),
             )
         )
 
@@ -464,14 +582,21 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             names -= set(cls._ewoks_outputs_to_hide_from_orange)
         return names
 
-    def get_task_outputs(self, exclude_hidden: bool = False) -> dict:
+    def get_task_outputs(self, exclude_hidden: bool = False) -> Mapping[str, Variable]:
         """
         Return task output variables.
 
-        Subclasses must implement this to return a dict-like mapping of output name
-        to Variable.
+        :param exclude_hidden: Leave out the outputs hidden from Orange.
+        :return: The task's :class:`~ewokscore.variable.VariableContainer`, or a
+                 plain mapping when there are no outputs or when outputs were
+                 filtered out. The filtered result is deliberately not a
+                 `VariableContainer`: a new container would be a different
+                 hashable with its own `uhash`, while these are still the
+                 variables of the original one.
         """
         outputs = self._get_task_outputs()
+        if outputs is None:
+            return dict()
         if exclude_hidden:
             outputs = {
                 k: v
@@ -480,9 +605,16 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             }
         return outputs
 
-    @abstractmethod
-    def _get_task_outputs(self) -> dict:
-        raise NotImplementedError("Base class")
+    def _get_task_outputs(self) -> Optional[VariableContainer]:
+        """
+        Return the output variables produced by the last executed task.
+
+        :return: The task's :class:`~ewokscore.variable.VariableContainer`, or
+                 `None` when the last task failed or no task ran yet. An empty
+                 container cannot express that: it holds `MISSING_DATA` instead
+                 of a mapping, so `[]` and `in` raise `TypeError` on it.
+        """
+        return self.__last_output_variables
 
     def get_task_output_values(self, exclude_hidden: bool = False) -> dict:
         """
@@ -623,7 +755,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         Execute the Ewoks task and propagate downstream on completion.
 
         :param log_missing_inputs: Whether missing inputs should be logged.
-        :return: TaskFuture for async widgets, None for synchronous widgets.
+        :return: The future of the submitted task, whose result is the task's
+                 :class:`~ewokscore.variable.VariableContainer` of output
+                 variables. `None` when the submission was dropped by
+                 `SubmitPolicy.DROP_IF_BUSY`.
         """
         _logger.debug("%s: execute ewoks task (with propagation)", self)
         return self._execute_ewoks_task(
@@ -634,50 +769,76 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         Execute the Ewoks task without propagating outputs downstream.
 
-        :return: TaskFuture for async widgets, None for synchronous widgets.
+        :return: The future of the submitted task, or `None` when the submission
+                 was dropped by `SubmitPolicy.DROP_IF_BUSY`.
         """
         _logger.debug("%s: execute ewoks task (without propagation)", self)
         return self._execute_ewoks_task(propagate=False, log_missing_inputs=False)
 
     @property
-    @abstractmethod
+    def task_executor(self) -> EwoksExecutor:
+        """
+        The executor that runs the Ewoks tasks.
+
+        :return: The :class:`EwoksExecutor` instance.
+        """
+        return self.__executor
+
+    @property
     def task_succeeded(self) -> Optional[bool]:
         """
         Whether the most recent task execution succeeded.
 
         :return: True if succeeded, False if failed, or None if never run.
         """
-        raise NotImplementedError("Base class")
+        return self.__last_task_succeeded
 
     @property
-    @abstractmethod
     def task_done(self) -> Optional[bool]:
         """
         Whether the most recent task execution finished (success or failure).
 
         :return: True/False or None if never run.
         """
-        raise NotImplementedError("Base class")
+        return self.__last_task_done
 
     @property
-    @abstractmethod
     def task_exception(self) -> Optional[Exception]:
         """
         Exception raised during the most recent task execution, if any.
 
         :return: Exception instance or None.
         """
-        raise NotImplementedError("Base class")
+        exc = self.__last_task_exception
+        if exc is None:
+            return None
+        # task.execute() wraps run() exceptions as TaskExecutionError(...) from
+        # the original; follow __cause__ to surface the exception the task
+        # actually raised. Task construction failures (TaskInputError) have
+        # no __cause__ and are returned as-is.
+        return exc.__cause__ or exc
 
-    @abstractmethod
     def has_pending_task(self) -> bool:
         """
         Whether a task submission is outstanding, from submission until its
         completion callback (propagation + `progressBarFinished`) has run.
 
+        Always False when tasks execute synchronously (`concurrency="sync"`): the
+        completion callback has already run when the submission returns.
+
         :return: True while a submission is outstanding.
         """
-        raise NotImplementedError("Base class")
+        return bool(self.__propagate_by_future)
+
+    def cancel_running_task(self) -> None:
+        """Abort the currently running task."""
+        warnings.warn(
+            "'cancel_running_task' is deprecated since 6.0. Please cancel the task by calling the "
+            " `cancel` method of the future provided during task submission.",
+            DeprecationWarning,
+        )
+        if self.__current_task_future is not None:
+            self.__current_task_future.abort()
 
     @property
     def post_task_exception(self) -> Optional[Exception]:
@@ -706,11 +867,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             execinfo = scheme_ewoks_events(scheme, self._ewoks_execinfo)
 
         if self._ewoks_task_options:
-            print(
-                "self._ewoks_task_options = ",
-                self._ewoks_task_options,
-                type(self._ewoks_task_options),
-            )
             task_arguments = dict(self._ewoks_task_options)
         else:
             task_arguments = dict()
@@ -719,15 +875,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             varinfo=self._ewoks_varinfo,
             execinfo=execinfo,
             node_id=node_id,
+            progress=self.__taskProgress,
         )
         return task_arguments
 
     def _output_changed(self) -> None:
         """
         Called when the Ewoks task execution finishes and outputs changed.
-
-        This base class does not call it. It is up to the derived classes
-        that implement `_execute_ewoks_task` to call it.
 
         This invokes registered post-task callbacks.
         """
@@ -753,15 +907,86 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             if ncallbacks > 1:
                 self.__post_task_execute(callbacks[1:])
 
-    @abstractmethod
     def _execute_ewoks_task(
         self, propagate: bool, log_missing_inputs: bool
     ) -> Optional[TaskFuture]:
         """
-        Subclasses must implement how the task is created and executed.
+        Submit the Ewoks task to the task executor.
 
         :param propagate: Whether to propagate outputs downstream after execution.
         :param log_missing_inputs: Whether to log missing input warnings.
         :return: TaskFuture or None when the execution request was rejected.
         """
-        raise NotImplementedError("Base class")
+        # Read back by `__on_submitted`. Submission always happens in the GUI
+        # thread so a single slot is enough.
+        self.__propagate_next = propagate
+        return self.__executor.submit_task(
+            self.ewokstaskclass, **self._get_task_arguments()
+        )
+
+    def __on_submitted(self, task_future: TaskFuture) -> None:
+        """
+        Remember whether the submitted task should propagate its outputs.
+
+        The `submitted` signal is emitted before the task can start, which is
+        why this cannot wait for `submit_task` to return: with synchronous
+        execution (`concurrency="sync"`) the task already completed by then.
+
+        :param task_future: The future of the submitted task.
+        """
+        self.__propagate_by_future[task_future] = self.__propagate_next
+
+    def __on_started(self, task_future: TaskFuture) -> None:
+        """
+        Start the Orange progress bar when the task starts executing.
+
+        :param task_future: The future of the started task.
+        """
+        self.__current_task_future = task_future
+        self.progressBarInit()
+
+    def __on_succeeded(self, task_future: TaskFuture) -> None:
+        """
+        Store the outputs of a successful task and propagate them downstream.
+
+        :param task_future: The future of the successful task.
+        """
+        propagate = self.__propagate_by_future.get(task_future, False)
+        self.__last_output_variables = task_future.result()
+        self.__last_task_succeeded = True
+        self.__last_task_done = True
+        self.__last_task_exception = None
+        # `propagate_downstream` must run before `progressBarFinished`: the
+        # latter flips `signal_manager.is_active(node)` to False, which is
+        # what `wait_widgets`-style polling relies on to know this widget is
+        # done. Clearing it first would let such polling observe "not
+        # active" before the outputs were actually sent downstream.
+        # `has_pending_task()` must stay True until both of those have run,
+        # for the same reason, so the future is only popped last.
+        try:
+            if propagate:
+                self.propagate_downstream(succeeded=True)
+        finally:
+            self.progressBarFinished()
+            self.__propagate_by_future.pop(task_future, None)
+            self._output_changed()
+
+    def __on_failed(self, task_future: TaskFuture) -> None:
+        """
+        Store the exception of a failed task and invalidate downstream nodes.
+
+        :param task_future: The future of the failed task.
+        """
+        propagate = self.__propagate_by_future.get(task_future, False)
+        self.__last_output_variables = None
+        self.__last_task_succeeded = False
+        self.__last_task_done = True
+        self.__last_task_exception = task_future.exception()
+        # See ordering note in `__on_succeeded`.
+        try:
+            if propagate:
+                self.propagate_downstream(succeeded=False)
+        finally:
+            self.progressBarFinished()
+            self.__propagate_by_future.pop(task_future, None)
+            self._output_changed()
