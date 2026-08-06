@@ -45,7 +45,7 @@ class DataViewer(qt.QWidget):
         viewer.closeAll()
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent, *, mode: str = "a", locking: Optional[bool] = None):
         super().__init__(parent)
 
         self._h5files = list()
@@ -78,6 +78,9 @@ class DataViewer(qt.QWidget):
         self.__treeview.activated.connect(self.displaySelectedData)
         self.__treeview.addContextMenuCallback(self.treeContextMenu)
         self.__customizeTreeModelColumns()
+
+        self._mode = mode
+        self._locking = locking
 
     def __setLayout(self, mainWidget):
         layout = qt.QVBoxLayout()
@@ -431,13 +434,17 @@ class DataViewer(qt.QWidget):
             return
         self.closeFile(filename)
         model = self.__treeview.findHdf5TreeModel()
-        h5file = h5py.File(filename, mode="a")
+        h5file = h5py.File(filename, mode=self._mode, locking=self._locking)
         try:
             model.sigH5pyObjectLoaded.emit(h5file, filename)
         except TypeError:
             # Support silx<2.0.0
             model.sigH5pyObjectLoaded.emit(h5file)
-        model.insertH5pyObject(h5file, filename=filename)
+        try:
+            model.insertH5pyObject(h5file, filename=filename)
+        except TypeError:
+            # Support silx<2.0.0
+            model.insertH5pyObject(h5file)
 
     def setContentSorted(self, sort):
         """Set whether file content should be sorted or not.
