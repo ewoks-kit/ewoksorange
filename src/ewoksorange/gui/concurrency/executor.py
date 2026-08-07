@@ -11,6 +11,7 @@ from enum import auto
 from queue import Queue
 from threading import Event
 from threading import Lock
+from threading import Thread
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -330,12 +331,23 @@ class EwoksExecutor(QObject):
             self.finished.emit(task_future)
 
     def shutdown(self, wait: bool = False) -> None:
-        if self._executor is not None:
-            self._executor.shutdown(wait=wait)
+        executor, self._executor = self._executor, None
+        manager, self._manager = self._manager, None
 
-        if self._manager is not None:
-            self._manager.shutdown()
-            self._manager = None
+        def _shutdown() -> None:
+            if executor is not None:
+                executor.shutdown(wait=True)
+            if manager is not None:
+                manager.shutdown()
+
+        if wait:
+            _shutdown()
+            return
+
+        # Wait off-thread rather than `executor.shutdown(wait=False)`: on
+        # Python < 3.9, garbage-collecting a `ProcessPoolExecutor` mid-shutdown
+        # can orphan a worker process, hanging the interpreter at exit.
+        Thread(target=_shutdown, name="EwoksExecutorShutdown").start()
 
 
 def _done_callback(
