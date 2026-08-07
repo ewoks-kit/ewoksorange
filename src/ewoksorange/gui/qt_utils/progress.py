@@ -4,12 +4,8 @@ from ewokscore.progress import BasePercentageProgress
 
 
 class QProgress(QObject, BasePercentageProgress):
-    """
-    Progress associated to a QObject.
-    This is connected to the Orange :class:'ProgressBar' from classes:
-    * :class:`OWEwoksWidgetOneThread`
-    * :class:`OWEwoksWidgetWithTaskStack`
-    """
+    """Progress associated to a QObject used as an Ewoks task argument
+    to report task execution progress."""
 
     sigProgressChanged = Signal(int)
 

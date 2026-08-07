@@ -1,4 +1,11 @@
+from __future__ import annotations
+
 from concurrent.futures import Future
+from typing import Any
+from typing import Callable
+from typing import Optional
+
+from ewokscore.variable import VariableContainer
 
 from . import _controllers
 
@@ -8,7 +15,7 @@ class TaskFuture:
 
     def __init__(
         self,
-        raw_future: Future,
+        raw_future: Future[VariableContainer],
         controller: _controllers.TaskController,
     ):
         self._future = raw_future
@@ -44,11 +51,23 @@ class TaskFuture:
     def done(self) -> bool:
         return self._future.done()
 
-    def result(self, timeout=None):
+    def result(self, timeout: Optional[float] = None) -> VariableContainer:
+        """The output variables of the ewoks task.
+
+        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :raises TimeoutError: The task did not finish in time.
+        :raises CancelledError: The task was cancelled before it started.
+        :raises Exception: Whatever the task raised.
+        :return: An immutable mapping of output name to
+                 :class:`~ewokscore.variable.Variable`.
+        """
         return self._future.result(timeout=timeout)
 
-    def exception(self, timeout=None):
+    def exception(self, timeout: Optional[float] = None) -> Optional[BaseException]:
         return self._future.exception(timeout=timeout)
 
-    def add_done_callback(self, fn):
+    def add_done_callback(self, fn: Callable[[Future[VariableContainer]], Any]) -> None:
+        """
+        :param fn: Called with the wrapped future, not with this object.
+        """
         self._future.add_done_callback(fn)

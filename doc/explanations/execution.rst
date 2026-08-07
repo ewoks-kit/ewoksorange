@@ -65,6 +65,17 @@ One execution cycle
 
         Note over SM: 100ms timer (re-armed), next node's turn
 
+The diagram shows the default case, where the task runs on a background
+thread. The other backends only change who runs the task:
+
+``concurrency="sync"``
+    Every step runs on the GUI thread, inside the ``submit_task()`` call, so
+    ``handleNewSignals()`` only returns once the outputs have been propagated.
+``concurrency="process"``
+    A worker process runs the task. Its lifecycle events and progress travel
+    back over ``multiprocessing`` proxies, relayed onto the GUI thread by
+    :class:`~ewoksorange.gui.concurrency._controllers.process.ProcessTaskController`.
+
 Node "settledness"
 -------------------
 
