@@ -286,7 +286,16 @@ def validate_signals(
                 ewoksname,
             )
             orangename = ewoksname
-            signal = signal_class(name=orangename, type=data_type, doc=doc)
+
+            if is_input:
+                signal = signal_class(name=orangename, type=data_type, doc=doc)
+            else:
+                # To match with Pydantic Output and Input types must match exactly
+                # dynamic by default is True in Orange. It means Orange accept a connection if Output type is a base type
+                # of input type.
+                # We do not want that so we add `dynamic=False`
+                # https://github.com/ewoks-kit/ewoksorange/issues/447
+                signal = signal_class(name=orangename, type=data_type, doc=doc, dynamic=False)
             new_signals_class = True
 
         if is_input:
