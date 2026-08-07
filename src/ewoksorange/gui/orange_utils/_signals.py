@@ -295,7 +295,9 @@ def validate_signals(
                 # of input type.
                 # We do not want that so we add `dynamic=False`
                 # https://github.com/ewoks-kit/ewoksorange/issues/447
-                signal = signal_class(name=orangename, type=data_type, doc=doc, dynamic=False)
+                signal = signal_class(
+                    name=orangename, type=data_type, doc=doc, dynamic=False
+                )
             new_signals_class = True
 
         if is_input:
