@@ -107,9 +107,9 @@ class OWProcessPlatformContext(
 
 
 def test_default_configuration():
-    """Without class arguments: one task at a time in a single worker thread."""
+    """Without class arguments: unbounded workers in a single background thread."""
     assert OWDefault._CONCURRENCY is Concurrency.THREAD
-    assert OWDefault._MAX_WORKERS == 1
+    assert OWDefault._MAX_WORKERS is None
     assert OWDefault._SUBMIT_POLICY is SubmitPolicy.ALWAYS
     assert OWDefault._MP_CONTEXT.get_start_method() == "spawn"
 
@@ -117,7 +117,7 @@ def test_default_configuration():
 @pytest.mark.parametrize(
     "widget_class,concurrency,max_workers,submit_policy",
     [
-        (OWEwoksWidgetNoThread, Concurrency.SYNC, 1, SubmitPolicy.ALWAYS),
+        (OWEwoksWidgetNoThread, Concurrency.SYNC, None, SubmitPolicy.ALWAYS),
         (OWEwoksWidgetOneThread, Concurrency.THREAD, 1, SubmitPolicy.DROP_IF_BUSY),
         (OWEwoksWidgetOneThreadPerRun, Concurrency.THREAD, None, SubmitPolicy.ALWAYS),
         (OWEwoksWidgetWithTaskStack, Concurrency.THREAD, 1, SubmitPolicy.ALWAYS),

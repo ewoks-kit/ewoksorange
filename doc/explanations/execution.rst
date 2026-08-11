@@ -69,11 +69,11 @@ The diagram shows the default case, where the task runs on a background
 thread. The other backends only change who runs the task:
 
 ``concurrency="sync"``
-    Every step runs on the GUI thread, inside the ``submit_task()`` call, so
+    Every step runs on the Qt main thread, inside the ``submit_task()`` call, so
     ``handleNewSignals()`` only returns once the outputs have been propagated.
 ``concurrency="process"``
     A worker process runs the task. Its lifecycle events and progress travel
-    back over ``multiprocessing`` proxies, relayed onto the GUI thread by
+    back over ``multiprocessing`` proxies, relayed onto the Qt main thread by
     :class:`~ewoksorange.gui.concurrency._controllers.process.ProcessTaskController`.
 
 Node "settledness"

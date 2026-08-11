@@ -56,7 +56,7 @@ directly to :class:`~ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget`
     class OWSumTask(
         OWEwoksBaseWidget,
         ewokstaskclass=SumTask,
-        concurrency="process",   # "sync", "thread" (default) or "process"
+        concurrency="process",   # "thread" (default), "process" or "sync"
         max_workers=2,           # None for the pool default
         submit_policy="always",  # or "drop_if_busy" while the executor is busy
         mp_context="spawn",      # "spawn" (default), "fork", "forkserver" or None

@@ -100,7 +100,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
       all task inputs and outputs to be picklable.
     """
 
-    _MAX_WORKERS: Optional[int] = 1
+    _MAX_WORKERS: Optional[int] = None
     """Maximum number of task workers, provided by the `max_workers` class argument.
     Ignored for `Concurrency.SYNC`.
 
@@ -144,17 +144,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         self.__post_task_exception: Optional[Exception] = None
 
         self.__taskProgress = QProgress()
-        self.__taskProgress.sigProgressChanged.connect(self._onProgressChanged)
 
         self.__executor = EwoksExecutor(
             self._create_pool_executor(),
             self._SUBMIT_POLICY,
             mp_context=self._MP_CONTEXT,
         )
-        self.__executor.submitted.connect(self.__on_submitted)
-        self.__executor.started.connect(self.__on_started)
-        self.__executor.succeeded.connect(self.__on_succeeded)
-        self.__executor.failed.connect(self.__on_failed)
 
         self.__propagate_by_future: Dict[TaskFuture, bool] = {}
         self.__propagate_next: bool = False
@@ -166,6 +161,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
         # Note: this might be removed in the future. Please avoid using it.
         self.__current_task_future: Optional[TaskFuture] = None
+
+        # Connect signal / slots
+        self.__taskProgress.sigProgressChanged.connect(self._onProgressChanged)
+
+        self.__executor.submitted.connect(self.__on_submitted)
+        self.__executor.started.connect(self.__on_started)
+        self.__executor.succeeded.connect(self.__on_succeeded)
+        self.__executor.failed.connect(self.__on_failed)
 
     @classmethod
     def _create_pool_executor(cls) -> Optional[futures.Executor]:

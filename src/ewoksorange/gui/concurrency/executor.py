@@ -70,7 +70,9 @@ def create_pool_executor(
         return futures.ProcessPoolExecutor(
             max_workers=max_workers, mp_context=mp_context
         )
-    return futures.ThreadPoolExecutor(max_workers=max_workers)
+    if concurrency is Concurrency.THREAD:
+        return futures.ThreadPoolExecutor(max_workers=max_workers)
+    raise ValueError(f"Concurrency policy {concurrency} is not handled")
 
 
 class EwoksExecutor(QObject):
@@ -250,11 +252,7 @@ class EwoksExecutor(QObject):
 
         :return: The task arguments to submit.
         """
-        if "progress" not in task_kwargs:
-            return task_kwargs
-
-        task_kwargs = dict(task_kwargs)
-        progress = task_kwargs.pop("progress")
+        progress = task_kwargs.pop("progress", None)
 
         if progress is None or not issubclass(task_class, TaskWithProgress):
             return task_kwargs
