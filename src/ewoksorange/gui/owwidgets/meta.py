@@ -5,7 +5,6 @@ Metaclass and class preparation utilities for owwidgets package.
 import inspect
 import multiprocessing
 import multiprocessing.context
-from abc import ABCMeta
 from typing import Any
 from typing import Optional
 from typing import Union
@@ -32,7 +31,7 @@ from ..orange_utils import _signals
 _NOT_PROVIDED = object()
 
 
-class OWEwoksWidgetMetaClass(ABCMeta, WidgetMetaClass):
+class OWEwoksWidgetMetaClass(WidgetMetaClass):
     """
     Metaclass used to prepare widget classes with Ewoks bindings.
     """
