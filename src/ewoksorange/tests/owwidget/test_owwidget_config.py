@@ -13,6 +13,10 @@ from ewokscore.task import Task
 from ...gui.concurrency.executor import Concurrency
 from ...gui.concurrency.executor import SubmitPolicy
 from ...gui.owwidgets.base import OWEwoksBaseWidget
+from ...gui.owwidgets.meta import _parse_concurrency
+from ...gui.owwidgets.meta import _parse_max_workers
+from ...gui.owwidgets.meta import _parse_mp_context
+from ...gui.owwidgets.meta import _parse_submit_policy
 from ...gui.owwidgets.meta import ow_build_opts
 from ...gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ...gui.owwidgets.threaded import OWEwoksWidgetOneThread
@@ -123,7 +127,7 @@ def test_default_configuration():
         (OWEwoksWidgetWithTaskStack, Concurrency.THREAD, 1, SubmitPolicy.ALWAYS),
     ],
 )
-def test_legacy_classes_are_configurations(
+def test_sub_classes_are_configurations(
     widget_class, concurrency, max_workers, submit_policy
 ):
     """The pre-existing classes only differ from the base class by configuration."""
@@ -131,6 +135,46 @@ def test_legacy_classes_are_configurations(
     assert widget_class._CONCURRENCY is concurrency
     assert widget_class._MAX_WORKERS == max_workers
     assert widget_class._SUBMIT_POLICY is submit_policy
+
+
+def test_metaclass_only_sets_options_that_are_provided():
+    class OWParent(
+        OWEwoksBaseWidget,
+        **ow_build_opts,
+        ewokstaskclass=Sequential,
+        concurrency="thread",
+        max_workers=4,
+        submit_policy="drop_if_busy",
+        mp_context="spawn",
+    ):
+        name = "test_OW_parent"
+
+    # No execution class arguments provided: nothing should be written to
+    # OWChild's own namespace.
+    class OWChild(OWParent, **ow_build_opts):
+        name = "test_OW_child"
+
+    for attr in ("_CONCURRENCY", "_MAX_WORKERS", "_SUBMIT_POLICY", "_MP_CONTEXT"):
+        assert attr not in vars(OWChild)
+
+    # Values are still visible, inherited from OWParent.
+    assert OWChild._CONCURRENCY is Concurrency.THREAD
+    assert OWChild._MAX_WORKERS == 4
+    assert OWChild._SUBMIT_POLICY is SubmitPolicy.DROP_IF_BUSY
+    assert OWChild._MP_CONTEXT is OWParent._MP_CONTEXT
+
+    # Only the provided argument is written to OWGrandchild's own namespace.
+    class OWGrandchild(OWChild, **ow_build_opts, max_workers=2):
+        name = "test_OW_grandchild"
+
+    assert vars(OWGrandchild)["_MAX_WORKERS"] == 2
+    for attr in ("_CONCURRENCY", "_SUBMIT_POLICY", "_MP_CONTEXT"):
+        assert attr not in vars(OWGrandchild)
+
+    # The untouched options still climb the MRO up to OWParent's values.
+    assert OWGrandchild._CONCURRENCY is Concurrency.THREAD
+    assert OWGrandchild._SUBMIT_POLICY is SubmitPolicy.DROP_IF_BUSY
+    assert OWGrandchild._MP_CONTEXT is OWParent._MP_CONTEXT
 
 
 def test_configure_sync(qtapp):
@@ -344,3 +388,91 @@ def test_invalid_mp_context(mp_context):
             mp_context=mp_context,
         ):
             name = "test_OW_invalid"
+
+
+@pytest.mark.parametrize(
+    "concurrency,expected",
+    [
+        (Concurrency.SYNC, Concurrency.SYNC),
+        (Concurrency.THREAD, Concurrency.THREAD),
+        (Concurrency.PROCESS, Concurrency.PROCESS),
+        ("sync", Concurrency.SYNC),
+        ("thread", Concurrency.THREAD),
+        ("process", Concurrency.PROCESS),
+        ("THREAD", Concurrency.THREAD),
+        ("threads", ValueError("concurrency")),
+        ("", ValueError("concurrency")),
+        (1, ValueError("concurrency")),
+        (None, ValueError("concurrency")),
+    ],
+)
+def test_parse_concurrency(concurrency, expected):
+    if isinstance(expected, Exception):
+        with pytest.raises(type(expected), match=str(expected)):
+            _parse_concurrency(concurrency)
+    else:
+        assert _parse_concurrency(concurrency) is expected
+
+
+@pytest.mark.parametrize(
+    "max_workers,expected",
+    [
+        (None, None),
+        (1, 1),
+        (4, 4),
+        (0, ValueError("max_workers")),
+        (-1, ValueError("max_workers")),
+        (1.5, ValueError("max_workers")),
+        ("1", ValueError("max_workers")),
+        (True, ValueError("max_workers")),
+    ],
+)
+def test_parse_max_workers(max_workers, expected):
+    if isinstance(expected, Exception):
+        with pytest.raises(type(expected), match=str(expected)):
+            _parse_max_workers(max_workers)
+    else:
+        assert _parse_max_workers(max_workers) == expected
+
+
+@pytest.mark.parametrize(
+    "submit_policy,expected",
+    [
+        (SubmitPolicy.ALWAYS, SubmitPolicy.ALWAYS),
+        (SubmitPolicy.DROP_IF_BUSY, SubmitPolicy.DROP_IF_BUSY),
+        ("always", SubmitPolicy.ALWAYS),
+        ("drop_if_busy", SubmitPolicy.DROP_IF_BUSY),
+        ("ALWAYS", SubmitPolicy.ALWAYS),
+        ("never", ValueError("submit_policy")),
+        (1, ValueError("submit_policy")),
+        (None, ValueError("submit_policy")),
+    ],
+)
+def test_parse_submit_policy(submit_policy, expected):
+    if isinstance(expected, Exception):
+        with pytest.raises(type(expected), match=str(expected)):
+            _parse_submit_policy(submit_policy)
+    else:
+        assert _parse_submit_policy(submit_policy) is expected
+
+
+_SPAWN_CONTEXT = multiprocessing.get_context("spawn")
+
+
+@pytest.mark.parametrize(
+    "mp_context,expected",
+    [
+        (None, None),
+        ("spawn", _SPAWN_CONTEXT),
+        (_SPAWN_CONTEXT, _SPAWN_CONTEXT),
+        ("threads", ValueError("mp_context")),
+        ("", ValueError("mp_context")),
+        (1, ValueError("mp_context")),
+    ],
+)
+def test_parse_mp_context(mp_context, expected):
+    if isinstance(expected, Exception):
+        with pytest.raises(type(expected), match=str(expected)):
+            _parse_mp_context(mp_context)
+    else:
+        assert _parse_mp_context(mp_context) is expected
