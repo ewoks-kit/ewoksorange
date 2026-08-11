@@ -207,7 +207,8 @@ class OrangeCanvasHandler:
                     if not isinstance(widget, OWEwoksBaseWidget):
                         continue
                     exception = (
-                        widget._last_task_exception_cause() or widget.post_task_exception
+                        widget._last_task_exception_cause()
+                        or widget.post_task_exception
                     )
                     if exception is not None:
                         exceptions[widget] = exception
