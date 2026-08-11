@@ -38,3 +38,19 @@ class TaskController(ABC):
         No-op by default, since most controllers report "started" and
         completion through the same channel, in order.
         """
+
+    def watch_progress(self, on_progress: Callable[[int], None]) -> None:
+        """Register `on_progress` to be called for every progress value the
+        task reports.
+
+        Optional: only meaningful for controllers where the task cannot update
+        the caller's progress object directly.
+        """
+        raise NotImplementedError(f"{type(self).__name__} has no progress watcher")
+
+    def stop_progress(self) -> None:
+        """Stop watching progress, after delivering everything received so far.
+
+        No-op by default, since most controllers let the task update the
+        caller's progress object directly.
+        """

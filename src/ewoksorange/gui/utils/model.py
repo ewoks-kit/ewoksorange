@@ -1,15 +1,15 @@
-from __future__ import annotations
-
 from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import Tuple
+from typing import Type
 
 from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
 
 
-def _get_model_default_values(model: type[BaseModel]) -> dict[str, Any]:
+def get_model_default_values(model: Type[BaseModel]) -> Dict[str, Any]:
     """
-    Docstring for _get_model_default_values
-
     :return: Dict of input name -> value or missing marker.
     """
     field_with_values = filter(
@@ -19,6 +19,6 @@ def _get_model_default_values(model: type[BaseModel]) -> dict[str, Any]:
     return dict(field_with_values)
 
 
-def _get_default_field_factory(model):
+def _get_default_field_factory(model) -> Iterator[Tuple[str, Any]]:
     for field_name, field in model.model_fields.items():
         yield field_name, field.default
