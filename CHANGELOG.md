@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `OWEwoksBaseWidget` is no longer abstract.
 - `OWEwoksWidgetNoThread` now drives the Orange progress bar like the others.
 
+### Deprecated
+
+- `OWEwoksBaseWidget.task_succeeded`, `.task_done` and `.task_exception`. Use the
+  `TaskFuture` returned by `execute_ewoks_task`/`execute_ewoks_task_without_propagation`
+  instead.
+
 ## [6.0.0rc4] - 2026-08-06
 
 ### Fixed

@@ -159,7 +159,9 @@ def execute_ewoks_owwidget(
             nonlocal exception
 
             try:
-                exception = widget.task_exception or widget.post_task_exception
+                exception = (
+                    widget._last_task_exception_cause() or widget.post_task_exception
+                )
                 result.update(widget.get_task_output_values())
             finally:
                 outputsReceived.set()

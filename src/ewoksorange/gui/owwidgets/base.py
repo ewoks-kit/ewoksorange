@@ -676,7 +676,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
                 "'succeeded' should be always provided from version 7.0.",
                 DeprecationWarning,
             )
-            succeeded = self.task_succeeded
+            succeeded = self.__last_task_succeeded
         if succeeded:
             self.__post_task_execute([self.trigger_downstream])
         else:
@@ -797,8 +797,18 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         Whether the most recent task execution succeeded.
 
+        .. deprecated:: 6.0
+            Use the `TaskFuture` returned by `execute_ewoks_task`/
+            `execute_ewoks_task_without_propagation` instead
+            (`future.done() and future.exception() is None`).
+
         :return: True if succeeded, False if failed, or None if never run.
         """
+        warnings.warn(
+            "'task_succeeded' is deprecated since 6.0. Use the `TaskFuture` returned"
+            " by `execute_ewoks_task`/`execute_ewoks_task_without_propagation` instead.",
+            DeprecationWarning,
+        )
         return self.__last_task_succeeded
 
     @property
@@ -806,8 +816,17 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         Whether the most recent task execution finished (success or failure).
 
+        .. deprecated:: 6.0
+            Use the `TaskFuture` returned by `execute_ewoks_task`/
+            `execute_ewoks_task_without_propagation` instead (`future.done()`).
+
         :return: True/False or None if never run.
         """
+        warnings.warn(
+            "'task_done' is deprecated since 6.0. Use the `TaskFuture` returned by"
+            " `execute_ewoks_task`/`execute_ewoks_task_without_propagation` instead.",
+            DeprecationWarning,
+        )
         return self.__last_task_done
 
     @property
@@ -815,7 +834,25 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         Exception raised during the most recent task execution, if any.
 
+        .. deprecated:: 6.0
+            Use the `TaskFuture` returned by `execute_ewoks_task`/
+            `execute_ewoks_task_without_propagation` instead (`future.exception()`).
+
         :return: Exception instance or None.
+        """
+        warnings.warn(
+            "'task_exception' is deprecated since 6.0. Use the `TaskFuture` returned"
+            " by `execute_ewoks_task`/`execute_ewoks_task_without_propagation` instead.",
+            DeprecationWarning,
+        )
+        return self._last_task_exception_cause()
+
+    def _last_task_exception_cause(self) -> Optional[Exception]:
+        """
+        Exception raised during the most recent task execution, if any, with
+        `task.execute()`'s `TaskExecutionError` wrapping unwound.
+
+        Non-deprecated equivalent of `task_exception`, for internal use.
         """
         exc = self.__last_task_exception
         if exc is None:

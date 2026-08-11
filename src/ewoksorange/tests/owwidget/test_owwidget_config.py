@@ -185,11 +185,12 @@ def test_configure_sync(qtapp):
         widget.set_dynamic_input("sleep", 0)
 
         future = widget.execute_ewoks_task()
+        assert future is not None
 
         # Everything already happened when the submission returns.
         assert future.done()
         assert not widget.has_pending_task()
-        assert widget.task_succeeded
+        assert future.exception() is None
         assert widget.get_task_output_values()["value"] == 1
         assert widget.get_task_output_values()["thread_id"] == threading.get_ident()
     finally:
@@ -268,11 +269,11 @@ def test_configure_process(qtapp, widget_class):
     try:
         widget.set_dynamic_input("value", 3)
 
-        widget.execute_ewoks_task()
+        future = widget.execute_ewoks_task()
+        assert future is not None
 
         assert wait_until(lambda: not widget.has_pending_task(), timeout=120)
-        assert widget.task_exception is None
-        assert widget.task_succeeded
+        assert future.exception() is None
 
         outputs = widget.get_task_output_values()
         assert outputs["value"] == 3
@@ -294,10 +295,11 @@ def test_configure_process_progress(qtapp):
     try:
         widget.set_dynamic_input("percentages", percentages)
 
-        widget.execute_ewoks_task()
+        future = widget.execute_ewoks_task()
+        assert future is not None
 
         assert wait_until(lambda: not widget.has_pending_task(), timeout=120)
-        assert widget.task_exception is None
+        assert future.exception() is None
 
         assert widget.get_task_output_values()["pid"] != os.getpid()
         # `progressBarInit` reports 0 before the task starts.
