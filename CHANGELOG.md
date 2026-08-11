@@ -7,26 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- `OWEwoksBaseWidget` executes the Ewoks task itself, configured by class arguments,
-  and drives the Orange progress bar.
-- `OWEwoksWidgetNoThread`, `OWEwoksWidgetOneThread`, `OWEwoksWidgetOneThreadPerRun`
-  and `OWEwoksWidgetWithTaskStack` set the class arguments and nothing else.
-- Orange widgets can execute their Ewoks task in a process pool.
-
-### Changed
-
-- `OWEwoksBaseWidget` is no longer abstract.
-- `OWEwoksWidgetNoThread` now drives the Orange progress bar like the others.
-
-### Deprecated
-
-- `OWEwoksBaseWidget.task_succeeded`, `.task_done` and `.task_exception`. Use the
-  `TaskFuture` returned by `execute_ewoks_task`/`execute_ewoks_task_without_propagation`
-  instead.
-
-## [6.0.0rc4] - 2026-08-06
+## [6.0.0rc5] - 2026-08-11
 
 ### Fixed
 
@@ -40,17 +21,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ParameterForm`: add an auto-completer for file / directory selection.
 - `ewoksorange.gui.concurrency.executor.EwoksExecutor` for all ewoks task execution strategies
   synchronous, multithreading and multiprocessing with Qt signals for the execution lifecycle.
+- `OWEwoksBaseWidget` executes the Ewoks task itself, configured by class arguments,
+  and drives the Orange progress bar.
+- `OWEwoksWidgetNoThread`, `OWEwoksWidgetOneThread`, `OWEwoksWidgetOneThreadPerRun`
+  and `OWEwoksWidgetWithTaskStack` set the class arguments and nothing else.
+- Orange widgets can execute their Ewoks task in a process pool.
 
 ### Changed
 
 - ̀`OWEwoksBaseWidget`: `execute_ewoks_task` now returns `TaskFuture` or `None` when the execution
   request was dropped.
+- `OWEwoksBaseWidget` is no longer abstract.
+- `OWEwoksWidgetNoThread` now drives the Orange progress bar like the others.
 
 ### Deprecated
 
 - `ewoksorange.gui.concurrency.base.TaskExecutor`
 - `ewoksorange.gui.concurrency.threaded.ThreadedTaskExecutor`
 - `ewoksorange.gui.concurrency.queued.TaskExecutorQueue`
+- `OWEwoksBaseWidget.task_succeeded`, `.task_done` and `.task_exception`. Use the
+  `TaskFuture` returned by `execute_ewoks_task`/`execute_ewoks_task_without_propagation`
+  instead.
 
 ## [5.0.1] - 2026-04-17
 
@@ -389,8 +380,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc4...HEAD
-[6.0.0rc4]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc4
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc5...HEAD
+[6.0.0rc5]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc5
 [5.0.1]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0
