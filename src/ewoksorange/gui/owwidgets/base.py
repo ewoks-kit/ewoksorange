@@ -17,6 +17,7 @@ from typing import Optional
 from typing import Set
 
 from AnyQt import QtWidgets
+from ewokscore import TaskWithProgress
 from ewokscore import missing_data
 from ewokscore.variable import Variable
 from ewokscore.variable import VariableContainer
@@ -143,7 +144,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         ]
         self.__post_task_exception: Optional[Exception] = None
 
-        self.__taskProgress = QProgress()
+        self.__taskProgress = (
+            QProgress() if issubclass(self.ewokstaskclass, TaskWithProgress) else None
+        )
 
         self.__executor = EwoksExecutor(
             self._create_pool_executor(),
@@ -163,7 +166,8 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         self.__current_task_future: Optional[TaskFuture] = None
 
         # Connect signal / slots
-        self.__taskProgress.sigProgressChanged.connect(self._onProgressChanged)
+        if self.__taskProgress is not None:
+            self.__taskProgress.sigProgressChanged.connect(self._onProgressChanged)
 
         self.__executor.submitted.connect(self.__on_submitted)
         self.__executor.started.connect(self.__on_started)
@@ -186,7 +190,8 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         Release the task executor and progress handling when the widget is removed.
         """
-        self.__taskProgress.sigProgressChanged.disconnect(self._onProgressChanged)
+        if self.__taskProgress is not None:
+            self.__taskProgress.sigProgressChanged.disconnect(self._onProgressChanged)
         self._cleanup_task_executor()
         super().onDeleteWidget()
 
