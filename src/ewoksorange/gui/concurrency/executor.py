@@ -288,11 +288,12 @@ class EwoksExecutor(QObject):
         return task_future
 
     def _get_manager(self) -> multiprocessing.managers.SyncManager:
-        if self._manager is None:
-            context = self._mp_context or multiprocessing
-            self._manager = context.Manager()
+        with self._lock:
+            if self._manager is None:
+                context = self._mp_context or multiprocessing
+                self._manager = context.Manager()
 
-        return self._manager
+            return self._manager
 
     def _handle_done(
         self,
