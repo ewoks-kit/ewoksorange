@@ -6,6 +6,8 @@ from typing import Any
 from typing import Dict
 
 from AnyQt import QtWidgets
+from AnyQt.QtCore import QCoreApplication
+from AnyQt.QtCore import QEvent
 from AnyQt.QtCore import Qt
 
 from ...orange_version import ORANGE_VERSION
@@ -108,16 +110,27 @@ class OrangeCanvasHandler:
     def close(self, force=False):
         if self.canvas is None or (not self.__is_owner and not force):
             return
+
         canvas, self.canvas = self.canvas, None
         self.process_events()
-        # do not prompt for saving modification:
+
+        # Do not prompt for saving modification:
         canvas.current_document().setModified(False)
+
+        # `canvas.close()` only *schedules* deletion, as `QEvent.DeferredDelete`:
+        # `WA_DeleteOnClose` queues the canvas itself, and its `closeEvent`
+        # `deleteLater`s the outgoing scheme.
         canvas.close()
         self.process_events()
-        # `canvas.close()` schedules its child widgets (menu QActions, ...)
-        # for deletion via `deleteLater`, which Qt only performs once its
-        # event loop is idle. A single `processEvents()` call is not always
-        # enough to fully drain that.
+
+        # This test/no-GUI harness never runs a real `app.exec()`, so plain
+        # `processEvents()` never flushes `QEvent.DeferredDelete`.
+        # Force the flush explicitly.
+        QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+        self.process_events()
+
+        # Remove last reference to the canvas and garbage-collect
+        # while processing events.
         del canvas
         while gc.collect():
             self.process_events()
