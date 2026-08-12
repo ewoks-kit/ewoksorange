@@ -1,4 +1,5 @@
 from contextlib import ExitStack
+from typing import Optional
 
 from ewokscore import events
 from ewokscore.events.contexts import ExecInfoType
@@ -17,9 +18,17 @@ def scheme_ewoks_events(scheme, execinfo: RawExecInfoType = None) -> ExecInfoTyp
     execinfo = stack.enter_context(ctx)
     scheme.ewoks_execinfo = execinfo
 
-    def ewoks_finalize():
-        # TODO: job and workflow end event will never capture
-        #       node exceptions because they are absorbed by orange.
+    def ewoks_finalize(
+        *_qt_signal_args, exception: Optional[BaseException] = None
+    ) -> None:
+        # When executing a workflow without the Orange canvas GUI, pass the exception
+        # on finalization so the job/workflow end events report the failure.
+        #
+        # TODO: When executing a workflow without the Orange canvas GUI, job and
+        # workflow end event will never report node exceptions because they are
+        # absorbed by orange.
+        if exception is not None and not execinfo.get("exception"):
+            execinfo["exception"] = exception
         exitstack.close()
 
     scheme.ewoks_finalize = ewoks_finalize

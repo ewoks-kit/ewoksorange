@@ -1,16 +1,23 @@
+import contextlib
 import importlib
 import sys
 import warnings
 from pathlib import Path
 from typing import Any
+from typing import Dict
+from typing import Generator
 from typing import List
 from typing import Optional
 from typing import Union
 
 import ewokscore
+import networkx
 from ewokscore.graph import TaskGraph
+from ewokscore.graph import graph_io
 from ewokscore.graph.serialize import GraphRepresentation
+from ewokscore.node import get_node_label
 
+from ..gui.canvas.handler import OrangeCanvasHandler
 from ..gui.canvas.main import main as launchcanvas
 from ..gui.workflows import owscheme
 from ..gui.workflows.representation import get_representation
@@ -29,9 +36,18 @@ def execute_graph(
     merge_outputs: Optional[bool] = True,
     error_on_duplicates: bool = True,
     tmpdir: Optional[str] = None,
-) -> None:
-    if outputs:
-        raise ValueError("The Orange3 binding cannot return any results")
+    no_gui: bool = False,
+    orange_canvas_handler: Optional[OrangeCanvasHandler] = None,
+    timeout: Optional[float] = None,
+) -> Optional[Dict]:
+    """`orange_canvas_handler` (only relevant when `no_gui=True`) reuses that
+    `OrangeCanvasHandler` instead of creating and closing a fresh one for this
+    call.
+    """
+    if outputs and not no_gui:
+        raise ValueError(
+            "The Orange3 binding cannot return any results unless `no_gui=True`"
+        )
     with ows_file_context(
         graph,
         inputs=inputs,
@@ -42,8 +58,72 @@ def execute_graph(
         error_on_duplicates=error_on_duplicates,
         tmpdir=tmpdir,
     ) as ows_filename:
+        if no_gui:
+            with _orange_canvas_handler(orange_canvas_handler) as handler:
+                exception: Optional[BaseException] = None
+                try:
+                    handler.load_ows(ows_filename)
+                    handler.start_workflow()
+                    handler.wait_widgets(timeout=timeout)
+                    if outputs is None:
+                        return None
+                    taskgraph = load_graph(
+                        graph, inputs=inputs, **(load_options or dict())
+                    )
+                    return _get_output_values(
+                        handler, taskgraph.graph, outputs, merge_outputs=merge_outputs
+                    )
+                except BaseException as e:
+                    exception = e
+                    raise
+                finally:
+                    # Needed for the ewoks events
+                    try:
+                        handler.scheme.ewoks_finalize(exception=exception)
+                    except AttributeError:
+                        pass
         argv = [sys.argv[0], ows_filename]
         launchcanvas(argv=argv)
+
+
+@contextlib.contextmanager
+def _orange_canvas_handler(
+    handler: Optional[OrangeCanvasHandler] = None,
+) -> Generator[OrangeCanvasHandler, None, None]:
+    """Yield `handler` as-is, or a fresh `OrangeCanvasHandler` (created and closed
+    here) when not provided."""
+    if handler is not None:
+        yield handler
+        return
+    with OrangeCanvasHandler() as handler:
+        yield handler
+
+
+def _get_output_values(
+    handler: OrangeCanvasHandler,
+    graph,
+    outputs: List[dict],
+    merge_outputs: Optional[bool] = True,
+) -> Dict:
+    parsed_outputs = graph_io.parse_outputs(graph, outputs)
+    node_ids = {item["id"] for item in parsed_outputs}
+    output_values: Dict = dict()
+    for node_id in networkx.topological_sort(graph):
+        if node_id not in node_ids:
+            continue
+        label = get_node_label(node_id, graph.nodes[node_id])
+        widgets = list(handler.widgets_from_name(label))
+        if not widgets:
+            raise RuntimeError(f"No Orange widget found for node {node_id!r}")
+        task_output_values = widgets[0].get_task_output_values()
+        graph_io.add_output_values(
+            output_values,
+            node_id,
+            task_output_values,
+            parsed_outputs,
+            merge_outputs=merge_outputs,
+        )
+    return output_values
 
 
 def load_graph(
