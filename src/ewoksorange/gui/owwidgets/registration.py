@@ -4,6 +4,7 @@ Widget and example discovery is done from these entry-points.
 """
 
 import logging
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -83,6 +84,14 @@ NAMESPACE_PACKAGE = "orangecontrib"
 
 logger = logging.getLogger(__name__)
 
+# Widget qualifier to project name mapping for dynamically registered widgets.
+_DYNAMIC_WIDGET_PROJECT_NAMES: Dict[str, str] = {}
+
+
+def get_dynamic_widget_project_name(qualified_name: str) -> Optional[str]:
+    """The `project_name` a widget was given via `register_owwidget`, if any."""
+    return _DYNAMIC_WIDGET_PROJECT_NAMES.get(qualified_name)
+
 
 def widget_discovery(discovery, distroname, subpackages):
     """To be used by add-on which define widgets in categories"""
@@ -105,6 +114,7 @@ def register_owwidget(
     description = _get_owwidget_description(
         widget_class, package_name, category_name, project_name
     )
+    _DYNAMIC_WIDGET_PROJECT_NAMES[description.qualified_name] = project_name
 
     logger.debug("Register widget: %s", description.qualified_name)
     if discovery_object is None:
