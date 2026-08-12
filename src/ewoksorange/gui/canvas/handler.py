@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 import time
@@ -111,6 +112,13 @@ class OrangeCanvasHandler:
         canvas.current_document().setModified(False)
         canvas.close()
         self.process_events()
+        # `canvas.close()` schedules its child widgets (menu QActions, ...)
+        # for deletion via `deleteLater`, which Qt only performs once its
+        # event loop is idle. A single `processEvents()` call is not always
+        # enough to fully drain that.
+        del canvas
+        while gc.collect():
+            self.process_events()
 
     def load_graph(self, graph, **kwargs):
         with ows_file_context(graph, **kwargs) as filename:
