@@ -8,8 +8,8 @@ from ..gui.widgets.parameter_form import ParameterForm
 from ..gui.widgets.parameter_form import SelectMode
 
 
-def test_parameterform(qtapp, tmp_path):
-    qtapp.processEvents(QtCore.QEventLoop.AllEvents)
+def test_parameterform(ewoksorange_qtapp, tmp_path):
+    ewoksorange_qtapp.processEvents(QtCore.QEventLoop.AllEvents)
 
     nchanged = dict()
 
@@ -121,10 +121,10 @@ def test_parameterform(qtapp, tmp_path):
     form.set_parameter_value("directory", missing_data.MISSING_DATA)
     assert form.get_parameter_value("directory") == missing_data.MISSING_DATA
 
-    qtapp.processEvents(QtCore.QEventLoop.AllEvents)
+    ewoksorange_qtapp.processEvents(QtCore.QEventLoop.AllEvents)
 
     # form.show()
-    # qtapp.exec()
+    # ewoksorange_qtapp.exec()
 
     expected = {
         "string": missing_data.MISSING_DATA,

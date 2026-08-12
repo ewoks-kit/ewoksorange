@@ -5,45 +5,39 @@ from ewokscore.tests.test_workflow_events import run_failed_workfow
 from ewokscore.tests.test_workflow_events import run_succesfull_workfow
 from ewokscore.tests.test_workflow_events import sqlite_path  # noqa F401
 
-from ...gui.workflows.owscheme import ewoks_to_ows
+from ...bindings import execute_graph
 
 
-def test_succesfull_workfow(sqlite_path, ewoks_orange_canvas):  # noqa 811
+def test_succesfull_workfow(sqlite_path):  # noqa 811
     database = sqlite_path / "ewoks_events.db"
-    run_succesfull_workfow(
-        database,
-        _execute_graph,
-        tempdir=sqlite_path,
-        canvas_handler=ewoks_orange_canvas,
-    )
+    run_succesfull_workfow(database, _execute_graph, tempdir=sqlite_path)
     events = fetch_events(database, 14)
     _assert_succesfull_workfow_events(events)
 
 
-def test_failed_workfow(sqlite_path, ewoks_orange_canvas):  # noqa 811
+def test_failed_workfow(sqlite_path):  # noqa 811
     database = sqlite_path / "ewoks_events.db"
-    run_failed_workfow(
-        database,
-        _execute_graph,
-        tempdir=sqlite_path,
-        canvas_handler=ewoks_orange_canvas,
-    )
-    events = fetch_events(database, 8)
+    run_failed_workfow(database, _execute_graph, tempdir=sqlite_path)
+    events = fetch_events(database, 10)
     _assert_failed_workfow_events(events)
 
 
-def _execute_graph(
-    graph, tempdir=None, canvas_handler=None, execinfo: Optional[dict] = None
-):
+def _execute_graph(graph, tempdir=None, execinfo: Optional[dict] = None):
     try:
-        filename = str(tempdir / "test_graph.ows")
-        ewoks_to_ows(graph, filename, execinfo=execinfo, error_on_duplicates=False)
-        canvas_handler.load_ows(filename)
-        canvas_handler.start_workflow()
-        canvas_handler.wait_widgets(timeout=10, raise_error=False)
-    finally:
-        # Manually emit the end workflow and job event
-        canvas_handler.scheme.ewoks_finalize()
+        execute_graph(
+            graph,
+            execinfo=execinfo,
+            error_on_duplicates=False,
+            tmpdir=str(tempdir),
+            no_gui=True,
+            timeout=10,
+        )
+    except Exception:  # noqa: S110
+        # A failed task is expected to propagate its raw exception (unlike the
+        # sequential engine's wrapped RuntimeError); swallow it here so the
+        # workflow/job end events (already flushed by `execute_graph` itself)
+        # can be inspected regardless of success or failure.
+        pass
 
 
 def _assert_succesfull_workfow_events(events):
@@ -95,13 +89,13 @@ def _assert_failed_workfow_events(events):
             "context": "workflow",
             "node_id": None,
             "type": "end",
-            "error_message": None,  # TODO: should be "Task 'node2' failed"
+            "error_message": "abc",
         },
         {
             "context": "job",
             "node_id": None,
             "type": "end",
-            "error_message": None,  # TODO: should be "Task 'node2' failed"
+            "error_message": "abc",
         },
     ]
     captured = [

@@ -4,7 +4,7 @@ from ...gui.concurrency.executor import SubmitPolicy
 from .tasks import AddTask
 
 
-def test_cancel_queued_task(qtapp, executor_context_factory):
+def test_cancel_queued_task(ewoksorange_qtapp, executor_context_factory):
     """cancel() prevents a genuinely queued task from ever running."""
     with executor_context_factory(SubmitPolicy.ALWAYS, workers=1) as (
         kind,
@@ -61,7 +61,7 @@ def test_cancel_queued_task(qtapp, executor_context_factory):
             thread.join(timeout=10)
 
 
-def test_cancel_after_completion(qtapp, executor_context_factory):
+def test_cancel_after_completion(ewoksorange_qtapp, executor_context_factory):
     """cancel() on an already-finished task is a no-op."""
     with executor_context_factory() as (kind, executor, recorder):
         thread = None

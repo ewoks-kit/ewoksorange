@@ -1,7 +1,7 @@
 from ewokscore import Task
 from ewoksutils.import_utils import qualname
 
-from ...gui.workflows.owscheme import ewoks_to_ows
+from ...bindings import execute_graph
 
 
 class Dummy(Task, input_names=["a"], output_names=["b"]):
@@ -9,7 +9,7 @@ class Dummy(Task, input_names=["a"], output_names=["b"]):
         self.outputs.b = self.inputs.a + 1
 
 
-def test_default_widgets(tmp_path, ewoks_orange_canvas):
+def test_default_widgets(ewoksorange_qtapp):
     nodes = [
         {
             "id": "task1",
@@ -32,15 +32,10 @@ def test_default_widgets(tmp_path, ewoks_orange_canvas):
         }
     ]
 
-    # Create an Orange workflows
+    # Create and execute the orange workflow
     graph = {"graph": {"id": "test_graph"}, "nodes": nodes, "links": links}
-    destination = str(tmp_path / "ewoksgraph.ows")
-    ewoks_to_ows(graph, destination)
-
-    # Load and execute the orange workflow
-    ewoks_orange_canvas.load_ows(destination)
-    ewoks_orange_canvas.start_workflow()
-    ewoks_orange_canvas.wait_widgets(timeout=10)
-    results = dict(ewoks_orange_canvas.iter_output_values())
+    results = execute_graph(
+        graph, no_gui=True, outputs=[{"all": True}], merge_outputs=False, timeout=10
+    )
 
     assert results == {"task1": {"b": 2}, "task2": {"b": 3}}

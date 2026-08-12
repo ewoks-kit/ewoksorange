@@ -10,7 +10,7 @@ from .tasks import RequestCancelTask
 from .tasks import StateCancelTask
 
 
-def test_abort(qtapp, executor_context_factory):
+def test_abort(ewoksorange_qtapp, executor_context_factory):
     """Cancellation observed by run(): it raises, so the task fails."""
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"a": 1, "b": 2, "delay": 5}
@@ -43,7 +43,9 @@ def test_abort(qtapp, executor_context_factory):
 
 
 @pytest.mark.parametrize("task_class", [RequestCancelTask, StateCancelTask])
-def test_abort_leaves_outputs_undefined(qtapp, executor_context_factory, task_class):
+def test_abort_leaves_outputs_undefined(
+    ewoksorange_qtapp, executor_context_factory, task_class
+):
     """Cancellation observed by run(): it returns early, so no output is set.
 
     Covers both interpretations of `Task.cancelled` (RequestCancelTask:
@@ -79,7 +81,7 @@ def test_abort_leaves_outputs_undefined(qtapp, executor_context_factory, task_cl
             thread.join(timeout=10)
 
 
-def test_abort_leaves_partial_outputs(qtapp, executor_context_factory):
+def test_abort_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factory):
     """Cancellation observed by run(): it returns after only some outputs
     were set, leaving the rest undefined."""
     with executor_context_factory() as (kind, executor, recorder):
@@ -113,7 +115,9 @@ def test_abort_leaves_partial_outputs(qtapp, executor_context_factory):
             thread.join(timeout=10)
 
 
-def test_abort_does_not_guarantee_cancellation(qtapp, executor_context_factory):
+def test_abort_does_not_guarantee_cancellation(
+    ewoksorange_qtapp, executor_context_factory
+):
     """A task that never checks `self.cancelled` always completes normally.
 
     `aborted()` still reports True: it reflects that abort reached the task,

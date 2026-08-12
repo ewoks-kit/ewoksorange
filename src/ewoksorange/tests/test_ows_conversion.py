@@ -83,7 +83,7 @@ def test_native_widget_project_name_falls_back_to_dynamic_registration(
     assert _native_widget_project_name(widget_class) == "dynamic_distro"
 
 
-def test_ows_to_ewoks_sumtask_tutorial(tmp_path, qtapp):
+def test_ows_to_ewoks_sumtask_tutorial(tmp_path, ewoksorange_qtapp):
     """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.ewokstest import tutorials
 
@@ -96,7 +96,7 @@ def test_ows_to_ewoks_sumtask_tutorial(tmp_path, qtapp):
     assert ewoksgraph == ewoksgraph2
 
 
-def test_ows_to_ewoks_sumlist_tutorial(tmp_path, qtapp):
+def test_ows_to_ewoks_sumlist_tutorial(tmp_path, ewoksorange_qtapp):
     """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.ewokstest import tutorials
 

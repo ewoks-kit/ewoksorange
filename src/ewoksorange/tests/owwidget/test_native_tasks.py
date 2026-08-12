@@ -74,7 +74,7 @@ else:
 
 
 @pytest.mark.parametrize("widget_class", [NativeOldStyleWidget, NativeNewStyleWidget])
-def test_execute_native_widget(qtapp, widget_class):
+def test_execute_native_widget(ewoksorange_qtapp, widget_class):
     if widget_class is NotImplemented:
         pytest.skip(f"Not supported by {ORANGE_VERSION}")
     if widget_class is NativeOldStyleWidget:
@@ -87,7 +87,7 @@ def test_execute_native_widget(qtapp, widget_class):
     assert result == expected, result
 
 
-def test_execute_python_script(qtapp):
+def test_execute_python_script(ewoksorange_qtapp):
     if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
         from oasys.widgets.tools.ow_python_script import OWPythonScript
         from oasys.widgets.tools.ow_python_script import Script

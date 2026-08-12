@@ -32,7 +32,7 @@ class OWDummyWidget(OWEwoksWidgetNoThread, **ow_build_opts, ewokstaskclass=Dummy
         pytest.param(True, {"visible_input": "visible"}, id="exclude-hidden"),
     ],
 )
-def test_hidden_inputs(qtapp, exclude_hidden, expected):
+def test_hidden_inputs(ewoksorange_qtapp, exclude_hidden, expected):
     widget = OWDummyWidget()
 
     widget.set_default_input("visible_input", "visible_default")
@@ -71,7 +71,7 @@ def test_hidden_inputs(qtapp, exclude_hidden, expected):
         pytest.param(True, {"visible_output": "visible"}, id="exclude-hidden"),
     ],
 )
-def test_hidden_outputs(qtapp, exclude_hidden, expected):
+def test_hidden_outputs(ewoksorange_qtapp, exclude_hidden, expected):
     widget = OWDummyWidget()
 
     widget.set_default_input("visible_input", "visible_default")

@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `execute_graph(..., no_gui=True, orange_canvas_handler=None)`: execute
   with the Orange workflow engine but without a GUI.
+- `ewoksorange_pytest_plugin`: Qt/Orange related fixtures.
 
 ### Fixed
 

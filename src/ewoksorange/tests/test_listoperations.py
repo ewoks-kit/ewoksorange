@@ -11,7 +11,7 @@ _WIDGETS = [
 
 
 @pytest.mark.parametrize("widget_qualname", _WIDGETS)
-def test_sumlist(widget_qualname, qtapp):
+def test_sumlist(widget_qualname, ewoksorange_qtapp):
     widget = import_qualname(widget_qualname)
     result = execute_task(widget, inputs={"list": [1, 2, 3]})
     assert result == {"sum": 6}
@@ -19,7 +19,7 @@ def test_sumlist(widget_qualname, qtapp):
     assert result == {"sum": 6}
 
 
-def test_listgenerator(qtapp):
+def test_listgenerator(ewoksorange_qtapp):
     widget_qualname = "orangecontrib.ewokstest.listgenerator.ListGenerator"
     widget = import_qualname(widget_qualname)
     result = execute_task(widget, inputs={"length": 7})
@@ -28,7 +28,7 @@ def test_listgenerator(qtapp):
     assert len(result["list"]) == 7
 
 
-def test_printsum(qtapp):
+def test_printsum(ewoksorange_qtapp):
     widget_qualname = "orangecontrib.ewokstest.print_sum.PrintSumOW"
     widget = import_qualname(widget_qualname)
     result = execute_task(widget, inputs={"sum": 99})

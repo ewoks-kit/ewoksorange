@@ -22,7 +22,7 @@ class OWSequential(OWEwoksWidgetOneThread, **ow_build_opts, ewokstaskclass=Seque
     name = "test_OW"
 
 
-def test_owwidget_drop(qtapp):
+def test_owwidget_drop(ewoksorange_qtapp):
     """Test sequential task execution in one worker thread with drop-when-busy."""
     widget = OWSequential()
 

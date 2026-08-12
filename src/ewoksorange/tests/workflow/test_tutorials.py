@@ -1,9 +1,10 @@
 import warnings
 
 import pytest
-from ewokscore import execute_graph
+from ewokscore.bindings import execute_graph
 from ewoksutils.exceptions import TaskInputWarning
 
+from ...bindings import execute_graph as execute_graph_no_gui
 from ...gui.workflows.owscheme import ows_to_ewoks
 from ...orange_version import ORANGE_VERSION
 
@@ -13,35 +14,35 @@ except ImportError:
     from importlib_resources import files as resource_files
 
 
-def test_sumtask_tutorial_with_qt(ewoks_orange_canvas):
+def test_sumtask_tutorial_with_qt(ewoksorange_qtapp):
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumtask_tutorial.ows")
-    assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename)
+    assert_sumtask_tutorial_with_qt(filename)
 
 
-def test_sumtask_tutorial_without_qt(qtapp):
+def test_sumtask_tutorial_without_qt(ewoksorange_qtapp):
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumtask_tutorial.ows")
     assert_sumtask_tutorial_without_qt(filename)
 
 
-def test_list_operations_with_qt(ewoks_orange_canvas):
+def test_list_operations_with_qt(orange_canvas_handler):
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumlist_tutorial.ows")
-    assert_sumlist_tutorial_with_qt(ewoks_orange_canvas, filename)
+    assert_sumlist_tutorial_with_qt(orange_canvas_handler, filename)
 
 
-def test_list_operations_without_qt(qtapp):
+def test_list_operations_without_qt(ewoksorange_qtapp):
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumlist_tutorial.ows")
     assert_sumlist_tutorial_without_qt(filename)
 
 
-def test_mixed_tutorial_with_qt(ewoks_orange_canvas):
+def test_mixed_tutorial_with_qt(ewoksorange_qtapp):
     from orangecontrib.ewokstest import tutorials
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
@@ -52,10 +53,10 @@ def test_mixed_tutorial_with_qt(ewoks_orange_canvas):
         pytest.skip("Requires the Orange3 or Oasys1 python script widget")
 
     filename = resource_files(tutorials).joinpath(workflow)
-    assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename)
+    assert_mixed_tutorial_with_qt(filename)
 
 
-def test_mixed_tutorial_without_qt(qtapp):
+def test_mixed_tutorial_without_qt(ewoksorange_qtapp):
     from orangecontrib.ewokstest import tutorials
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
@@ -69,23 +70,21 @@ def test_mixed_tutorial_without_qt(qtapp):
     assert_mixed_tutorial_without_qt(filename)
 
 
-def assert_sumtask_tutorial_with_qt(ewoks_orange_canvas, filename):
+def assert_sumtask_tutorial_with_qt(filename):
     """Execute workflow using the Qt widgets and signals"""
-    ewoks_orange_canvas.load_ows(str(filename))
-    ewoks_orange_canvas.start_workflow()
-    ewoks_orange_canvas.wait_widgets(timeout=10)
-    widgets = list(ewoks_orange_canvas.widgets_from_name("task6"))
-    results = widgets[0].get_task_output_values()
+    results = execute_graph_no_gui(
+        str(filename), outputs=[{"label": "task6"}], no_gui=True, timeout=10
+    )
     assert results == {"result": 16}
 
-    ewoks_orange_canvas.load_ows(str(filename))
-    ewoks_orange_canvas.set_input_values(
-        [{"label": "task1", "name": "b", "value": "wrongtype"}]
-    )
-    ewoks_orange_canvas.start_workflow()
     with pytest.raises(TypeError):
         # Note: we get the original error, not "RuntimeError: Task 'task1' failed"
-        ewoks_orange_canvas.wait_widgets(timeout=10)
+        execute_graph_no_gui(
+            str(filename),
+            inputs=[{"label": "task1", "name": "b", "value": "wrongtype"}],
+            no_gui=True,
+            timeout=10,
+        )
 
 
 def assert_sumtask_tutorial_without_qt(filename):
@@ -95,28 +94,29 @@ def assert_sumtask_tutorial_without_qt(filename):
     assert results["5"].get_output_values() == {"result": 16}
 
 
-def assert_sumlist_tutorial_with_qt(ewoks_orange_canvas, filename):
-    """Execute workflow using the Qt widgets and signals"""
-    ewoks_orange_canvas.load_ows(str(filename))
+def assert_sumlist_tutorial_with_qt(handler, filename):
+    """Execute workflow using the Qt widgets and signals.
+
+    Uses the `OrangeCanvasHandler` directly (rather than
+    `execute_graph(..., no_gui=True)`) since it inspects the resolved *input*
+    values of "Print list sum" widgets, which have no Ewoks task output to
+    check against.
+    """
+    handler.load_ows(str(filename))
 
     # Remove artificial delay for this test
-    for widget in ewoks_orange_canvas.iter_widgets():
+    for widget in handler.iter_widgets():
         if "delay" in widget.get_default_input_names():
             widget.update_default_inputs(delay=0)
 
-    ewoks_orange_canvas.start_workflow()
-    ewoks_orange_canvas.wait_widgets(timeout=10)
+    handler.start_workflow()
+    handler.wait_widgets(timeout=10)
 
-    wgenerator = list(ewoks_orange_canvas.widgets_from_name("List generator"))[0]
-    results = wgenerator.get_task_output_values()
-    listsum = sum(results["list"])
-
-    widgets = list(ewoks_orange_canvas.widgets_from_name("Print list sum"))
-    widgets += list(ewoks_orange_canvas.widgets_from_name("Print list sum (1)"))
-    widgets += list(ewoks_orange_canvas.widgets_from_name("Print list sum (2)"))
-    for w in widgets:
-        results = {name: var.value for name, var in w.get_task_inputs().items()}
-        assert results == {"sum": listsum}
+    listsum = sum(handler.widget_from_id("0").get_task_output_values()["list"])
+    for i in [4, 5, 6]:
+        assert handler.widget_from_id(str(i)).get_task_input_values() == {
+            "sum": listsum
+        }
 
 
 def assert_sumlist_tutorial_without_qt(filename):
@@ -135,13 +135,16 @@ def assert_sumlist_tutorial_without_qt(filename):
         assert results[str(i)].get_input_values() == {"sum": listsum}
 
 
-def assert_mixed_tutorial_with_qt(ewoks_orange_canvas, filename):
+def assert_mixed_tutorial_with_qt(filename):
     """Execute workflow using the Qt widgets and signals"""
-    ewoks_orange_canvas.load_ows(str(filename))
-    ewoks_orange_canvas.start_workflow()
-    ewoks_orange_canvas.wait_widgets(timeout=10)
-    widget = ewoks_orange_canvas.widget_from_id("2")
-    results = widget.get_task_output_values()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", TaskInputWarning)
+        results = execute_graph_no_gui(
+            str(filename),
+            outputs=[{"id": "2"}],
+            no_gui=True,
+            timeout=10,
+        )
     assert results == {"result": 3}
 
 

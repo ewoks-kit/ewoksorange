@@ -120,7 +120,11 @@ ewoks-canvas = "ewoksorange.gui.canvas.main:main"
 [project.entry-points."ewoks.engines.serialization.representations"]
 "ows" = "ewoksorange.engine:OrangeWorkflowEngine"
 
+[project.entry-points."pytest11"]
+"ewoksorange" = "ewoksorange_pytest_plugin.pytest_plugin"
+
 [tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
 timeout = 120
 
 [tool.ruff.lint]
@@ -136,6 +140,9 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "src/ewoksorange/tests/*.py" = [
+    "S101"  # allow asserts
+]
+"src/ewoksorange_pytest_plugin/*.py" = [
     "S101"  # allow asserts
 ]
 

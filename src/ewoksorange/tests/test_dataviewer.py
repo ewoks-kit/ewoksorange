@@ -62,7 +62,7 @@ def h5file(tmp_path):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX-only")
-def test_default_mode_and_locking(qtapp, h5file):
+def test_default_mode_and_locking(ewoksorange_qtapp, h5file):
     """Verify DataViewer has append mode and locking enabled by default."""
     with _data_viewer() as viewer:
         assert viewer._mode == "a"
@@ -85,7 +85,7 @@ def test_default_mode_and_locking(qtapp, h5file):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX-only")
-def test_configurable_mode_and_locking(qtapp, h5file):
+def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
     """Verify configured modes and locked states match expectations."""
 
     # #########################
@@ -192,7 +192,7 @@ def test_configurable_mode_and_locking(qtapp, h5file):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
-def test_default_mode_and_locking_windows(qtapp, h5file):
+def test_default_mode_and_locking_windows(ewoksorange_qtapp, h5file):
     """Verify DataViewer has append mode and locking enabled by default."""
     with _data_viewer() as viewer:
         assert viewer._mode == "a"
@@ -215,7 +215,7 @@ def test_default_mode_and_locking_windows(qtapp, h5file):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
-def test_configurable_mode_and_locking_windows(qtapp, h5file):
+def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
     """Verify configured modes and locked states match expectations."""
 
     # #########################

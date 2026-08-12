@@ -12,6 +12,10 @@ from ...gui.owwidgets.threaded import OWEwoksWidgetOneThreadPerRun
 from ...gui.owwidgets.threaded import OWEwoksWidgetWithTaskStack
 from ..utils import execute_task
 
+# These tests deliberately raise from Qt slots; disable pytest-qt's default
+# failure on captured slot exceptions since the tests assert on them themselves.
+# pytestmark = pytest.mark.qt_no_exception_capture
+
 
 class TaskForTesting(
     Task, input_names=["a", "b", "recorded_calls", "failures"], output_names=["sum"]
