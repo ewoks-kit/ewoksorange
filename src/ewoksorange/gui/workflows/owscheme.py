@@ -373,7 +373,7 @@ class OwsNodeWrapper:
         default_inputs = node_attrs.get("default_inputs", list())
         default_inputs = {item["name"]: item["value"] for item in default_inputs}
         if native:
-            self.properties = dict(default_inputs)
+            self.properties = default_inputs
         else:
             self.properties = {"_ewoks_default_inputs": default_inputs}
         # Note: OWEwoksBaseWidget must have these settings in the Oasys fork
