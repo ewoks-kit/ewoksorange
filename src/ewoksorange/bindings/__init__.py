@@ -103,6 +103,7 @@ def _execute_graph_headless(
         try:
             handler.scheme.ewoks_finalize(exception=exception)
         except AttributeError:
+            # `scheme_ewoks_events` not called yet
             pass
 
 
