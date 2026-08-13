@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `.ows` round-trip (`ows_to_ewoks`/`ewoks_to_ows`) now preserves a native
+  Orange widget's settings and real distribution name.
 - `OrangeCanvasHandler` can be created/destroyed repeatedly in the same
   process.
 

@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 from collections import namedtuple
 from pathlib import Path
 from typing import IO
@@ -26,14 +27,23 @@ from ewoksutils.import_utils import qualname
 from orangecanvas.scheme import annotations
 from orangecanvas.scheme import readwrite
 
+from ... import pkg_meta
 from ...orange_version import ORANGE_VERSION
 from ..orange_utils._signals import signal_ewoks_to_orange_name
 from ..orange_utils._signals import signal_orange_to_ewoks_name
 from ..orange_utils.orange_imports import OWBaseWidget
+from ..owwidgets.registration import WIDGETS_ENTRY
+from ..owwidgets.registration import get_dynamic_widget_project_name
 from ..owwidgets.registration import get_owwidget_descriptions
 from ..owwidgets.types import is_ewoks_widget_class
 from ..utils import invalid_data
 from .task_wrappers import OWWIDGET_TASKS_GENERATOR
+
+if sys.version_info >= (3, 10):
+    from importlib.metadata import packages_distributions
+else:
+    # `importlib.metadata.packages_distributions` was added in Python 3.10.
+    from importlib_metadata import packages_distributions
 
 ReadSchemeType = readwrite._scheme
 _original_parse_ows_stream = readwrite.parse_ows_stream
@@ -71,6 +81,49 @@ def widget_to_task(
         }
         ewokstaskclass = None
     return widget_class, node_attrs, ewokstaskclass
+
+
+def _native_widget_project_name(widget_class: Type[OWBaseWidget]) -> str:
+    """The pip distribution name that owns a native (non-ewoks) Orange widget.
+
+    Must be a real distribution name (e.g. "Orange3"): Orange's
+    `check_requires` validates `.ows` nodes against installed distributions
+    using this exact field (see
+    `orangecanvas.application.canvasmain.scheme_requires`).
+    """
+    # Longest matching `WIDGETS_ENTRY` entry point gives the owning
+    # distribution. A plain top-level-package lookup can't do this: add-ons
+    # share the `orangecontrib` namespace package, so they'd all resolve to
+    # the same ambiguous set of distributions.
+    module_name = widget_class.__module__
+    project_name = None
+    best_match_length = -1
+    for entry_point in pkg_meta.entry_points(WIDGETS_ENTRY):
+        target = pkg_meta.get_entry_point_module_name(entry_point)
+        if module_name == target or module_name.startswith(f"{target}."):
+            if len(target) > best_match_length:
+                best_match_length = len(target)
+                project_name = pkg_meta.get_distribution_name(entry_point.dist)
+    if project_name:
+        return project_name
+
+    # No entry point: widget registered dynamically via `register_owwidget`,
+    # which is told the real project name at registration time.
+    project_name = get_dynamic_widget_project_name(qualname(widget_class))
+    if project_name:
+        return project_name
+
+    # Registered neither way (e.g. a native widget used in a test before
+    # `register_owwidget` runs for it): guess from the top-level package.
+    # Ambiguous for `orangecontrib`-rooted add-ons (see above), but still a
+    # real distribution name, unlike `widget_class.category` below.
+    top_level_package = module_name.split(".", 1)[0]
+    distributions = packages_distributions().get(top_level_package)
+    if distributions:
+        return distributions[0]
+
+    # Last resort.
+    return widget_class.category
 
 
 def task_to_widgets(task_qualname: str) -> Iterator[Tuple[OWBaseWidget, str]]:
@@ -303,7 +356,7 @@ class OwsNodeWrapper:
         ["name", "qualified_name", "version", "project_name"],
     )
 
-    def __init__(self, orangeid: int, node_attrs: dict):
+    def __init__(self, orangeid: int, node_attrs: dict, native: bool = False):
         self.id = str(orangeid)
         ows = node_attrs.get("ows", dict())
         node_id = node_attrs["id"]
@@ -319,15 +372,20 @@ class OwsNodeWrapper:
         )
         default_inputs = node_attrs.get("default_inputs", list())
         default_inputs = {item["name"]: item["value"] for item in default_inputs}
+        if native:
+            self.properties = default_inputs
+        else:
+            self.properties = {"_ewoks_default_inputs": default_inputs}
         # Note: OWEwoksBaseWidget must have these settings in the Oasys fork
         #       otherwise `WidgetsScheme.sync_node_properties` will remove the
         #       unknown properties
-        self.properties = {
-            "_ewoks_default_inputs": default_inputs,
-            "_ewoks_varinfo": node_attrs.get("varinfo", dict()),
-            "_ewoks_execinfo": node_attrs.get("execinfo", dict()),
-            "_ewoks_task_options": node_attrs.get("task_options", dict()),
-        }
+        self.properties.update(
+            {
+                "_ewoks_varinfo": node_attrs.get("varinfo", dict()),
+                "_ewoks_execinfo": node_attrs.get("execinfo", dict()),
+                "_ewoks_task_options": node_attrs.get("task_options", dict()),
+            }
+        )
 
     def __str__(self):
         return self.title
@@ -392,7 +450,9 @@ class OwsSchemeWrapper:
                     node_attrs["execinfo"] = execinfo
                 if task_options:
                     node_attrs["task_options"] = task_options
-                self._nodes[node_attrs["id"]] = OwsNodeWrapper(orangeid, node_attrs)
+                self._nodes[node_attrs["id"]] = OwsNodeWrapper(
+                    orangeid, node_attrs, native=False
+                )
                 self._widget_classes[node_attrs["id"]] = widget_class
             elif task_type == "generated":
                 # native widgets use-case
@@ -401,10 +461,12 @@ class OwsSchemeWrapper:
                     instance = widget_metaclass()
                     widget_class = instance.__class__
                     node_attrs["qualified_name"] = qualname(widget_class)
-                    node_attrs["project_name"] = widget_class.category
+                    node_attrs["project_name"] = _native_widget_project_name(
+                        widget_class
+                    )
 
                     self._nodes[node_attrs["id"]] = OwsNodeWrapper(
-                        orangeid, node_attrs=node_attrs
+                        orangeid, node_attrs=node_attrs, native=True
                     )
                     self._widget_classes[node_attrs["id"]] = widget_class
                 else:

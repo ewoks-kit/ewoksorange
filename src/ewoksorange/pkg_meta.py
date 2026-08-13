@@ -42,6 +42,9 @@ if _USE_IMPORTLIB:
     def get_distribution_name(distribution: importlib.metadata.Distribution) -> str:
         return distribution.name
 
+    def get_entry_point_module_name(entry_point: EntryPoint) -> str:
+        return entry_point.value.split(":", 1)[0]
+
 else:
     import pkg_resources
     from pkg_resources import EntryPoint  # noqa F401
@@ -58,3 +61,6 @@ else:
 
     def get_distribution_name(distribution: pkg_resources.Distribution) -> str:
         return distribution.project_name
+
+    def get_entry_point_module_name(entry_point: EntryPoint) -> str:
+        return entry_point.module_name
