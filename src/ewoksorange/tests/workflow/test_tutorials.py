@@ -4,7 +4,7 @@ import pytest
 from ewokscore.bindings import execute_graph
 from ewoksutils.exceptions import TaskInputWarning
 
-from ...bindings import execute_graph as execute_graph_no_gui
+from ...bindings import execute_graph as execute_graph_orange
 from ...gui.workflows.owscheme import ows_to_ewoks
 from ...orange_version import ORANGE_VERSION
 
@@ -72,14 +72,14 @@ def test_mixed_tutorial_without_qt(ewoksorange_qtapp):
 
 def assert_sumtask_tutorial_with_qt(filename):
     """Execute workflow using the Qt widgets and signals"""
-    results = execute_graph_no_gui(
+    results = execute_graph_orange(
         str(filename), outputs=[{"label": "task6"}], no_gui=True, timeout=10
     )
     assert results == {"result": 16}
 
     with pytest.raises(TypeError):
         # Note: we get the original error, not "RuntimeError: Task 'task1' failed"
-        execute_graph_no_gui(
+        execute_graph_orange(
             str(filename),
             inputs=[{"label": "task1", "name": "b", "value": "wrongtype"}],
             no_gui=True,
@@ -139,7 +139,7 @@ def assert_mixed_tutorial_with_qt(filename):
     """Execute workflow using the Qt widgets and signals"""
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", TaskInputWarning)
-        results = execute_graph_no_gui(
+        results = execute_graph_orange(
             str(filename),
             outputs=[{"id": "2"}],
             no_gui=True,
