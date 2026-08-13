@@ -59,30 +59,51 @@ def execute_graph(
     ) as ows_filename:
         if no_gui:
             with _orange_canvas_handler(orange_canvas_handler) as handler:
-                exception: Optional[BaseException] = None
-                try:
-                    handler.load_ows(ows_filename)
-                    handler.start_workflow()
-                    handler.wait_widgets(timeout=timeout)
-                    if outputs is None:
-                        return None
-                    taskgraph = load_graph(
-                        graph, inputs=inputs, **(load_options or dict())
-                    )
-                    return _get_output_values(
-                        handler, taskgraph.graph, outputs, merge_outputs=merge_outputs
-                    )
-                except BaseException as e:
-                    exception = e
-                    raise
-                finally:
-                    # Needed for the ewoks events
-                    try:
-                        handler.scheme.ewoks_finalize(exception=exception)
-                    except AttributeError:
-                        pass
-        argv = [sys.argv[0], ows_filename]
-        launchcanvas(argv=argv)
+                return _execute_graph_headless(
+                    graph,
+                    handler,
+                    ows_filename,
+                    inputs=inputs,
+                    outputs=outputs,
+                    merge_outputs=merge_outputs,
+                    timeout=timeout,
+                )
+        else:
+            argv = [sys.argv[0], ows_filename]
+            launchcanvas(argv=argv)
+            return None
+
+
+def _execute_graph_headless(
+    graph,
+    handler: OrangeCanvasHandler,
+    ows_filename: str,
+    inputs: Optional[List[dict]] = None,
+    outputs: Optional[List[dict]] = None,
+    merge_outputs: Optional[bool] = True,
+    load_options: Optional[dict] = None,
+    timeout: Optional[float] = None,
+):
+    exception: Optional[BaseException] = None
+    try:
+        handler.load_ows(ows_filename)
+        handler.start_workflow()
+        handler.wait_widgets(timeout=timeout)
+        if outputs is None:
+            return None
+        taskgraph = load_graph(graph, inputs=inputs, **(load_options or dict()))
+        return _get_output_values(
+            handler, taskgraph.graph, outputs, merge_outputs=merge_outputs
+        )
+    except BaseException as e:
+        exception = e
+        raise
+    finally:
+        # Needed for the ewoks events
+        try:
+            handler.scheme.ewoks_finalize(exception=exception)
+        except AttributeError:
+            pass
 
 
 @contextlib.contextmanager
