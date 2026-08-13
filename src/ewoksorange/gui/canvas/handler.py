@@ -44,6 +44,7 @@ else:
 
         from . import config as orangeconfig
 
+from ..orange_utils._signals import get_signal_orange_names
 from ..orange_utils.orange_imports import OWBaseWidget
 from ..orange_utils.signal_manager import SignalManagerWithScheme
 from ..owwidgets.base import OWEwoksBaseWidget
@@ -198,10 +199,26 @@ class OrangeCanvasHandler:
 
     def iter_output_values(self):
         for name, widget in self.iter_widgets_with_name():
-            yield name, widget.get_task_output_values()
+            yield name, self.get_task_output_values(widget)
 
     def get_output_values(self) -> Dict[str, dict]:
         return dict(self.iter_output_values())
+
+    def get_task_output_values(self, widget) -> dict:
+        """Output values of `widget`, keyed by Orange signal name.
+
+        Ewoks widgets return their task's outputs directly. Native Orange
+        widgets have no task, so their last-sent signal values (tracked by
+        the signal manager) are returned instead.
+        """
+        if isinstance(widget, OWEwoksBaseWidget):
+            return widget.get_task_output_values()
+        signal_manager = self.signal_manager
+        return {
+            name: signal_manager.get_output_value(widget, name)
+            for name in get_signal_orange_names(widget, "outputs")
+            if signal_manager.has_output_value(widget, name)
+        }
 
     def set_input_values(self, inputs: Dict[str, dict]) -> None:
         for name, widget in self.iter_widgets_with_name():

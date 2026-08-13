@@ -134,7 +134,7 @@ def _get_output_values(
             # optimization: skip widget lookup
             continue
         widget = handler.widget_from_id(node_id)
-        task_output_values = widget.get_task_output_values()
+        task_output_values = handler.get_task_output_values(widget)
         graph_io.add_output_values(
             output_values,
             node_id,
