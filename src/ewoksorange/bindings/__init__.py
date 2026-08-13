@@ -75,7 +75,7 @@ def execute_graph(
 
 
 def _execute_graph_headless(
-    graph,
+    graph: Any,
     handler: OrangeCanvasHandler,
     ows_filename: str,
     inputs: Optional[List[dict]] = None,
