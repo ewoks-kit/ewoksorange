@@ -16,10 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `.ows` round-trip (`ows_to_ewoks`/`ewoks_to_ows`) now preserves a native
   Orange widget's settings and real distribution name.
-- Workflow-end ewoks event now carries `error_message` on Orange engine
-  failures.
-- `OrangeCanvasHandler` can be created/destroyed repeatedly in the same
-  process.
+- Workflow-end ewoks event now carries `error_message` on Orange engine failures.
+- `OrangeCanvasHandler` can be created/destroyed repeatedly in the same process.
+- `ewoks_to_ows`/`ows_to_ewoks` preserve the original Ewoks node id's when possible.
 
 ## [6.0.0rc5] - 2026-08-11
 

@@ -157,8 +157,22 @@ class OrangeCanvasHandler:
             if node.title == name:
                 yield self.scheme.widget_for_node(node)
 
-    def widget_from_id(self, id: str):
-        return self.scheme.widget_for_node(self.scheme.nodes[int(id)])
+    def widget_from_id(self, id):
+        """Look up a widget by its ewoks node id (see
+        `OWEwoksBaseWidget.get_ewoks_node_id`). Falls back to the
+        scheme node position when never round-tripped through ewoks
+        (e.g. hand-authored `.ows` files).
+        """
+        for widget in self.iter_widgets():
+            get_ewoks_node_id = getattr(widget, "get_ewoks_node_id", None)
+            node_id = get_ewoks_node_id() if get_ewoks_node_id else None
+            if node_id is not None and str(node_id) == str(id):
+                return widget
+        try:
+            node = self.scheme.nodes[int(id)]
+        except (ValueError, IndexError):
+            raise RuntimeError(f"No Orange widget found for node {id!r}")
+        return self.scheme.widget_for_node(node)
 
     def iter_widgets(self):
         for node in self.iter_nodes():

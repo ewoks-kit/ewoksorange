@@ -894,6 +894,22 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         return self.__post_task_exception
 
+    def get_ewoks_node_id(self) -> Optional[Any]:
+        """
+        The ewoks node id of this widget, as stored by `ewoks_to_ows`.
+
+        Falls back to the Orange node title, then its position in the
+        scheme, for workflows never round-tripped through ewoks (e.g.
+        hand-authored `.ows` files).
+        """
+        if self._ewoks_node_id is not None:
+            return self._ewoks_node_id
+        if self.signalManager is None:
+            return None
+        scheme = self.signalManager.scheme()
+        node = scheme.node_for_widget(self)
+        return node.title or scheme.nodes.index(node)
+
     def _get_task_arguments(self) -> dict:
         """
         Build task constructor arguments.
@@ -905,10 +921,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             node_id = None
         else:
             scheme = self.signalManager.scheme()
-            node = scheme.node_for_widget(self)
-            node_id = node.title
-            if not node_id:
-                node_id = scheme.nodes.index(node)
+            node_id = self.get_ewoks_node_id()
             execinfo = scheme_ewoks_events(scheme, self._ewoks_execinfo)
 
         if self._ewoks_task_options:

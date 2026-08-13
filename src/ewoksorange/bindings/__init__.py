@@ -15,7 +15,6 @@ import networkx
 from ewokscore.graph import TaskGraph
 from ewokscore.graph import graph_io
 from ewokscore.graph.serialize import GraphRepresentation
-from ewokscore.node import get_node_label
 
 from ..gui.canvas.handler import OrangeCanvasHandler
 from ..gui.canvas.main import main as launchcanvas
@@ -108,11 +107,8 @@ def _get_output_values(
     parsed_outputs = graph_io.parse_outputs(graph, outputs)
     output_values: Dict = dict()
     for node_id in networkx.topological_sort(graph):
-        label = get_node_label(node_id, graph.nodes[node_id])
-        widgets = list(handler.widgets_from_name(label))
-        if not widgets:
-            raise RuntimeError(f"No Orange widget found for node {node_id!r}")
-        task_output_values = widgets[0].get_task_output_values()
+        widget = handler.widget_from_id(node_id)
+        task_output_values = widget.get_task_output_values()
         graph_io.add_output_values(
             output_values,
             node_id,
