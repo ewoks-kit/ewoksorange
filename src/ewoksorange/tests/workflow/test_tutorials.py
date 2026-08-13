@@ -70,10 +70,19 @@ def test_mixed_tutorial_without_qt(ewoksorange_qtapp):
     assert_mixed_tutorial_without_qt(filename)
 
 
+def _sumtask_delay_inputs():
+    """Remove the artificial delay of the "SumTaskTest" task for this test."""
+    return [{"task_identifier": "SumTaskTest", "name": "delay", "value": 0}]
+
+
 def assert_sumtask_tutorial_with_qt(filename):
     """Execute workflow using the Qt widgets and signals"""
     results = execute_graph_orange(
-        str(filename), outputs=[{"label": "task6"}], no_gui=True, timeout=10
+        str(filename),
+        inputs=_sumtask_delay_inputs(),
+        outputs=[{"label": "task6"}],
+        no_gui=True,
+        timeout=10,
     )
     assert results == {"result": 16}
 
@@ -81,7 +90,8 @@ def assert_sumtask_tutorial_with_qt(filename):
         # Note: we get the original error, not "RuntimeError: Task 'task1' failed"
         execute_graph_orange(
             str(filename),
-            inputs=[{"label": "task1", "name": "b", "value": "wrongtype"}],
+            inputs=_sumtask_delay_inputs()
+            + [{"label": "task1", "name": "b", "value": "wrongtype"}],
             no_gui=True,
             timeout=10,
         )
@@ -90,27 +100,27 @@ def assert_sumtask_tutorial_with_qt(filename):
 def assert_sumtask_tutorial_without_qt(filename):
     """Execute workflow after converting it to an ewoks workflow"""
     graph = ows_to_ewoks(filename)
-    results = execute_graph(graph, output_tasks=True)
+    results = execute_graph(graph, inputs=_sumtask_delay_inputs(), output_tasks=True)
     assert results["5"].get_output_values() == {"result": 16}
 
 
+def _sumlist_delay_inputs():
+    """Remove the artificial delay of the "SumList*" tasks for this test."""
+    return [
+        {"task_identifier": s, "name": "delay", "value": 0}
+        for s in ("SumList", "SumList2", "SumList3")
+    ]
+
+
 def assert_sumlist_tutorial_with_qt(handler, filename):
-    """Execute workflow using the Qt widgets and signals.
-
-    Uses the `OrangeCanvasHandler` directly (rather than
-    `execute_graph(..., no_gui=True)`) since it inspects the resolved *input*
-    values of "Print list sum" widgets, which have no Ewoks task output to
-    check against.
-    """
-    handler.load_ows(str(filename))
-
-    # Remove artificial delay for this test
-    for widget in handler.iter_widgets():
-        if "delay" in widget.get_default_input_names():
-            widget.update_default_inputs(delay=0)
-
-    handler.start_workflow()
-    handler.wait_widgets(timeout=10)
+    """Execute workflow directly."""
+    execute_graph_orange(
+        str(filename),
+        inputs=_sumlist_delay_inputs(),
+        no_gui=True,
+        timeout=10,
+        orange_canvas_handler=handler,
+    )
 
     listsum = sum(handler.widget_from_id("0").get_task_output_values()["list"])
     for i in [4, 5, 6]:
@@ -120,16 +130,9 @@ def assert_sumlist_tutorial_with_qt(handler, filename):
 
 
 def assert_sumlist_tutorial_without_qt(filename):
-    """Execute workflow after converting it to an ewoks workflow"""
+    """Execute workflow after converting it to an ewoks workflow."""
     graph = ows_to_ewoks(filename)
-
-    # Remove artificial delay for this test
-    for attrs in graph.graph.nodes.values():
-        for adict in attrs.get("default_inputs", list()):
-            if adict["name"] == "delay":
-                adict["value"] = 0
-
-    results = execute_graph(graph, output_tasks=True)
+    results = execute_graph(graph, inputs=_sumlist_delay_inputs(), output_tasks=True)
     listsum = sum(results["0"].get_output_values()["list"])
     for i in [4, 5, 6]:
         assert results[str(i)].get_input_values() == {"sum": listsum}
