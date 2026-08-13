@@ -200,6 +200,7 @@ def _prepare_OWEwoksWidgetclass(namespace: dict, ewokstaskclass: Any) -> None:
     namespace["_ewoks_varinfo"] = Setting(dict(), schema_only=schema_only)
     namespace["_ewoks_execinfo"] = Setting(dict(), schema_only=schema_only)
     namespace["_ewoks_task_options"] = Setting(dict(), schema_only=schema_only)
+    namespace["_ewoks_node_id"] = Setting(None, schema_only=schema_only)
 
     # Hide Ewoks task variables from Orange: do not create Orange signals
     hidden_inputs = namespace.setdefault("_ewoks_inputs_to_hide_from_orange", tuple())

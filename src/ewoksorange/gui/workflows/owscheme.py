@@ -152,12 +152,16 @@ def task_to_widget(
     raise RuntimeError("More than one widget for task " + task_qualname, all_widgets)
 
 
+def node_data_to_properties(data) -> dict:
+    if data is None:
+        return dict()
+    return readwrite.loads(data.data, data.format)
+
+
 def node_data_to_default_inputs(
     data, widget_class: Type[OWBaseWidget], ewokstaskclass: Optional[Type[Task]]
 ) -> List[dict]:
-    if data is None:
-        return list()
-    node_properties = readwrite.loads(data.data, data.format)
+    node_properties = node_data_to_properties(data)
     if is_ewoks_widget_class(widget_class):
         default_inputs = node_properties.get("_ewoks_default_inputs", dict())
     elif "_ewoks_default_inputs" in node_properties:
@@ -219,11 +223,17 @@ def ows_to_ewoks(
     nodes = list()
     widget_classes = dict()
     if title_as_node_id:
-        id_to_title = {ows_node.id: ows_node.title for ows_node in ows.nodes}
-        if len(set(id_to_title.values())) != len(id_to_title):
-            id_to_title = dict()
+        id_to_node_id = {ows_node.id: ows_node.title for ows_node in ows.nodes}
     else:
-        id_to_title = dict()
+        # Recover the original ewoks node id stored by `ewoks_to_ows`, since
+        # Orange's own node id (`ows_node.id`) is just a positional index.
+        id_to_node_id = dict()
+        for ows_node in ows.nodes:
+            ewoks_node_id = node_data_to_properties(ows_node.data).get("_ewoks_node_id")
+            if ewoks_node_id is not None:
+                id_to_node_id[ows_node.id] = ewoks_node_id
+    if len(set(id_to_node_id.values())) != len(id_to_node_id):
+        id_to_node_id = dict()
 
     for ows_node in ows.nodes:
         widget_class, node_attrs, ewokstaskclass = widget_to_task(
@@ -235,7 +245,7 @@ def ows_to_ewoks(
             "position": str(ows_node.position),
             "version": ows_node.version,  # widget version
         }
-        node_attrs["id"] = id_to_title.get(ows_node.id, ows_node.id)
+        node_attrs["id"] = id_to_node_id.get(ows_node.id, ows_node.id)
         node_attrs["label"] = ows_node.title
         if preserve_ows_info:
             node_attrs["ows"] = owsinfo
@@ -266,8 +276,10 @@ def ows_to_ewoks(
             )
 
         link = {
-            "source": id_to_title.get(ows_link.source_node_id, ows_link.source_node_id),
-            "target": id_to_title.get(ows_link.sink_node_id, ows_link.sink_node_id),
+            "source": id_to_node_id.get(
+                ows_link.source_node_id, ows_link.source_node_id
+            ),
+            "target": id_to_node_id.get(ows_link.sink_node_id, ows_link.sink_node_id),
             "data_mapping": [{"source_output": source_name, "target_input": sink_name}],
         }
         links.append(link)
@@ -384,6 +396,7 @@ class OwsNodeWrapper:
                 "_ewoks_varinfo": node_attrs.get("varinfo", dict()),
                 "_ewoks_execinfo": node_attrs.get("execinfo", dict()),
                 "_ewoks_task_options": node_attrs.get("task_options", dict()),
+                "_ewoks_node_id": node_id,
             }
         )
 

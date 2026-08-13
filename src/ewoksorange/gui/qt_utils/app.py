@@ -5,7 +5,7 @@ import sys
 import time
 from contextlib import contextmanager
 from typing import Callable
-from typing import Iterator
+from typing import Generator
 from typing import Optional
 
 from AnyQt import QtCore
@@ -86,7 +86,7 @@ def close_qtapp() -> None:
 
 
 @contextmanager
-def qtapp_context() -> Iterator[Optional[QApplication]]:
+def qtapp_context() -> Generator[Optional[QApplication], None, None]:
     """Yields None when the Qt application already exists"""
     qtapp = ensure_qtapp()
     try:

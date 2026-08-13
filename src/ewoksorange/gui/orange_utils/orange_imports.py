@@ -24,7 +24,7 @@ else:
     from orangewidget.widget import Output as _Output  # noqa F401
 
 # OWBaseWidget: lowest level Orange widget base class
-# OWWidget: highest level Orangewidget base class.
+# OWWidget: highest level Orange widget base class.
 if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
     from oasys.widgets.widget import OWWidget  # noqa F401
 

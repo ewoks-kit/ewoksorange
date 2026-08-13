@@ -1,5 +1,6 @@
 import pathlib
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Union
@@ -29,10 +30,12 @@ class OrangeWorkflowEngine(WorkflowEngineWithSerialization):
         # Engine specific:
         error_on_duplicates: bool = True,
         tmpdir: Optional[str] = None,
-    ) -> None:
+        no_gui: bool = False,
+        timeout: Optional[float] = None,
+    ) -> Optional[Dict]:
         from .bindings import execute_graph
 
-        execute_graph(
+        return execute_graph(
             graph,
             inputs=inputs,
             load_options=load_options,
@@ -43,6 +46,8 @@ class OrangeWorkflowEngine(WorkflowEngineWithSerialization):
             merge_outputs=merge_outputs,
             error_on_duplicates=error_on_duplicates,
             tmpdir=tmpdir,
+            no_gui=no_gui,
+            timeout=timeout,
         )
 
     def deserialize_graph(
