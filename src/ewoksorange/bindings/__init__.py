@@ -106,11 +106,8 @@ def _get_output_values(
     merge_outputs: Optional[bool] = True,
 ) -> Dict:
     parsed_outputs = graph_io.parse_outputs(graph, outputs)
-    node_ids = {item["id"] for item in parsed_outputs}
     output_values: Dict = dict()
     for node_id in networkx.topological_sort(graph):
-        if node_id not in node_ids:
-            continue
         label = get_node_label(node_id, graph.nodes[node_id])
         widgets = list(handler.widgets_from_name(label))
         if not widgets:
