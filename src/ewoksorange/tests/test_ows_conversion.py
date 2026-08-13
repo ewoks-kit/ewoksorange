@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 try:
     from importlib.resources import files as resource_files
 except ImportError:
@@ -8,10 +10,77 @@ from ewokscore import load_graph
 from ewokscore.tests.examples.graphs import get_graph
 from ewokscore.tests.examples.graphs import graph_names
 
+from ..gui.workflows import owscheme
+from ..gui.workflows.owscheme import _native_widget_project_name
 from ..gui.workflows.owscheme import _read_ewoks_graph_attrs
 from ..gui.workflows.owscheme import ewoks_to_ows
 from ..gui.workflows.owscheme import graph_is_supported
 from ..gui.workflows.owscheme import ows_to_ewoks
+
+_FakeEntryPoint = namedtuple("_FakeEntryPoint", ["target", "dist"])
+
+
+def _make_widget_class(module_name, category="Unknown", name="OWFake"):
+    widget_class = type(name, (), {"category": category})
+    widget_class.__module__ = module_name
+    return widget_class
+
+
+@pytest.fixture
+def patch_pkg_meta(monkeypatch):
+    """Patch the entry-point lookup used by `_native_widget_project_name`.
+
+    `entry_points` is set up so `get_entry_point_module_name`/`get_distribution_name`
+    just return the fake entry point's fields directly, decoupling the test
+    from the real importlib.metadata/pkg_resources objects.
+    """
+
+    def _patch(entry_points):
+        monkeypatch.setattr(
+            owscheme.pkg_meta, "entry_points", lambda group: entry_points
+        )
+        monkeypatch.setattr(
+            owscheme.pkg_meta, "get_entry_point_module_name", lambda ep: ep.target
+        )
+        monkeypatch.setattr(
+            owscheme.pkg_meta, "get_distribution_name", lambda dist: dist
+        )
+
+    return _patch
+
+
+def test_native_widget_project_name_exact_module_match(patch_pkg_meta):
+    """test '_native_widget_project_name' with a widget module that exactly matches a registered entry point"""
+    patch_pkg_meta([_FakeEntryPoint("orangecontrib.ewoksdemo", "ewoksorange")])
+    widget_class = _make_widget_class("orangecontrib.ewoksdemo")
+
+    assert _native_widget_project_name(widget_class) == "ewoksorange"
+
+
+def test_native_widget_project_name_longest_match_wins(patch_pkg_meta):
+    """When several registered entry points are prefixes of the widget's module,
+    the most specific (longest) one is the actual owning distribution."""
+    entry_points = [
+        _FakeEntryPoint("orangecontrib.foo", "distro_a"),
+        _FakeEntryPoint("orangecontrib.foo.bar", "distro_b"),
+    ]
+    widget_class = _make_widget_class("orangecontrib.foo.bar.owwidget")
+
+    patch_pkg_meta(entry_points)
+    assert _native_widget_project_name(widget_class) == "distro_b"
+
+
+def test_native_widget_project_name_falls_back_to_dynamic_registration(
+    patch_pkg_meta, monkeypatch
+):
+    """test '_native_widget_project_name'  and dynamic project names"""
+    patch_pkg_meta([])
+    monkeypatch.setattr(
+        owscheme, "get_dynamic_widget_project_name", lambda qualname: "dynamic_distro"
+    )
+    widget_class = _make_widget_class("some.random.module")
+
+    assert _native_widget_project_name(widget_class) == "dynamic_distro"
 
 
 def test_ows_to_ewoks_sumtask_tutorial(tmp_path, qtapp):
