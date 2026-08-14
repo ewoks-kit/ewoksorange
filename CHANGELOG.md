@@ -7,21 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- `execute_graph(..., no_gui=True, orange_canvas_handler=None)`: execute
-  with the Orange workflow engine but without a GUI.
-- `ewoksorange_pytest_plugin`: Qt/Orange related fixtures.
-
-### Fixed
-
-- `.ows` round-trip (`ows_to_ewoks`/`ewoks_to_ows`) now preserves a native
-  Orange widget's settings and real distribution name.
-- Workflow-end ewoks event now carries `error_message` on Orange engine failures.
-- `OrangeCanvasHandler` can be created/destroyed repeatedly in the same process.
-- `ewoks_to_ows`/`ows_to_ewoks` preserve the original Ewoks node id's when possible.
-
-## [6.0.0rc5] - 2026-08-11
+## [6.0.0rc7] - 2026-08-14
 
 ### Fixed
 
@@ -29,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store all graph attributes in OWS format.
 - `OrangeCanvasHandler.wait_widgets`: check the running state instead of `widget_is_executed`
   since it might be executed again.
+- `.ows` round-trip (`ows_to_ewoks`/`ewoks_to_ows`) now preserves a native
+  Orange widget's settings and real distribution name.
+- Workflow-end ewoks event now carries `error_message` on Orange engine failures.
+- `OrangeCanvasHandler` can be created/destroyed repeatedly in the same process.
+- `ewoks_to_ows`/`ows_to_ewoks` preserve the original Ewoks node id's when possible.
 
 ### Added
 
@@ -40,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `OWEwoksWidgetNoThread`, `OWEwoksWidgetOneThread`, `OWEwoksWidgetOneThreadPerRun`
   and `OWEwoksWidgetWithTaskStack` set the class arguments and nothing else.
 - Orange widgets can execute their Ewoks task in a process pool.
+- `execute_graph(..., no_gui=True, orange_canvas_handler=None)`: execute
+  with the Orange workflow engine but without a GUI.
+- `ewoksorange_pytest_plugin`: Qt/Orange related fixtures.
 
 ### Changed
 
@@ -394,8 +388,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc5...HEAD
-[6.0.0rc5]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc5
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc6...HEAD
+[6.0.0rc6]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc6
 [5.0.1]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0
