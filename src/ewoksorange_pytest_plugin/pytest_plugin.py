@@ -41,13 +41,21 @@ def _safe_session_fixture(fixture):
 
 @_safe_session_fixture
 def ewoksorange_qtapp(request):
-    """Session-scoped Qt application for testing Orange-based Ewoks workflows."""
-    from ewoksorange.gui.qt_utils.app import qtapp_context
+    """Session-scoped Qt application for testing Orange-based Ewoks workflows.
+
+    Adopts a `QApplication` created earlier by e.g. `execute_graph(..., no_gui=True)`.
+    """
+
+    from ewoksorange.gui.qt_utils.app import close_qtapp
+    from ewoksorange.gui.qt_utils.app import ensure_qtapp
+    from ewoksorange.gui.qt_utils.app import get_qtapp
 
     request.config.hook.pytest_ewoksorange_qtapp_setup()
-    with qtapp_context() as app:
-        assert app is not None
-        yield app
+    ensure_qtapp()
+    app = get_qtapp()
+    assert app is not None
+    yield app
+    close_qtapp()
     ewoksorange_qtapp_teardown(app)
     request.config.hook.pytest_ewoksorange_qtapp_teardown(app=app)
 
