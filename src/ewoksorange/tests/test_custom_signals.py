@@ -17,7 +17,7 @@ class CustomSignalsWidget(OWEwoksWidgetNoThread, ewokstaskclass=SumTask):
         e = Output("A + B", object, ewoksname="result")
 
 
-def test_execute_custom_signals_widget(qtapp):
+def test_execute_custom_signals_widget(ewoksorange_qtapp):
     result = execute_task(CustomSignalsWidget, inputs={"a": 5, "b": 6})
     expected = {"result": 11}
     assert result == expected, result

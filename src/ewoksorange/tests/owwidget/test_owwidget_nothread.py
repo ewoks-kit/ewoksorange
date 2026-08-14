@@ -22,7 +22,7 @@ class OWSequential(OWEwoksWidgetNoThread, **ow_build_opts, ewokstaskclass=Sequen
     name = "test_OW"
 
 
-def test_owwidget_nothread(qtapp):
+def test_owwidget_nothread(ewoksorange_qtapp):
     """Test sequential execution in the calling thread."""
     widget = OWSequential()
 

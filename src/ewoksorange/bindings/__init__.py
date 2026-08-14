@@ -127,10 +127,14 @@ def _get_output_values(
     merge_outputs: Optional[bool] = True,
 ) -> Dict:
     parsed_outputs = graph_io.parse_outputs(graph, outputs)
+    output_node_ids = {item["id"] for item in parsed_outputs}
     output_values: Dict = dict()
     for node_id in networkx.topological_sort(graph):
+        if node_id not in output_node_ids:
+            # optimization: skip widget lookup
+            continue
         widget = handler.widget_from_id(node_id)
-        task_output_values = widget.get_task_output_values()
+        task_output_values = handler.get_task_output_values(widget)
         graph_io.add_output_values(
             output_values,
             node_id,

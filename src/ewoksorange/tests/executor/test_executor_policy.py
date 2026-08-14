@@ -4,7 +4,7 @@ from ...gui.concurrency.executor import SubmitPolicy
 from .tasks import AddTask
 
 
-def test_drop_if_busy(qtapp, executor_context_factory):
+def test_drop_if_busy(ewoksorange_qtapp, executor_context_factory):
     with executor_context_factory(SubmitPolicy.DROP_IF_BUSY, workers=1) as (
         kind,
         executor,
@@ -38,7 +38,7 @@ def test_drop_if_busy(qtapp, executor_context_factory):
             thread.join(timeout=10)
 
 
-def test_always_queue(qtapp, executor_context_factory):
+def test_always_queue(ewoksorange_qtapp, executor_context_factory):
 
     with executor_context_factory(SubmitPolicy.ALWAYS, workers=1) as (
         _,

@@ -12,7 +12,7 @@ _WIDGETS = [
 
 
 @pytest.mark.parametrize("widget_qualname", _WIDGETS)
-def test_sumtask(widget_qualname, qtapp):
+def test_sumtask(widget_qualname, ewoksorange_qtapp):
     widget = import_qualname(widget_qualname)
     result = execute_task(widget, inputs={"a": 1, "b": 2})
     assert result == {"result": 3}
@@ -21,7 +21,7 @@ def test_sumtask(widget_qualname, qtapp):
 
 
 @pytest.mark.parametrize("widget_qualname", _WIDGETS)
-def test_sumtask_task_generator(widget_qualname, qtapp):
+def test_sumtask_task_generator(widget_qualname, ewoksorange_qtapp):
     node_attrs = {
         "task_type": "generated",
         "task_identifier": widget_qualname,
@@ -33,7 +33,7 @@ def test_sumtask_task_generator(widget_qualname, qtapp):
 
 
 @pytest.mark.parametrize("widget_qualname", _WIDGETS)
-def test_sumtask_missing_inputs(widget_qualname, qtapp):
+def test_sumtask_missing_inputs(widget_qualname, ewoksorange_qtapp):
     node_attrs = {
         "task_type": "generated",
         "task_identifier": widget_qualname,

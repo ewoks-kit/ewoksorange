@@ -4,7 +4,7 @@ from ...gui.qt_utils.app import QtEvent
 from .tasks import AddTask
 
 
-def test_running_and_done(qtapp, executor_context_factory):
+def test_running_and_done(ewoksorange_qtapp, executor_context_factory):
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"a": 1, "delay": 1}
         thread = None
@@ -32,7 +32,7 @@ def test_running_and_done(qtapp, executor_context_factory):
             thread.join(timeout=10)
 
 
-def test_cancelled(qtapp, executor_context_factory):
+def test_cancelled(ewoksorange_qtapp, executor_context_factory):
     """`cancelled()` reflects whether `cancel()` actually succeeded."""
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"a": 1}
@@ -57,7 +57,7 @@ def test_cancelled(qtapp, executor_context_factory):
             assert future.cancelled() == future.cancel()
 
 
-def test_add_done_callback(qtapp, executor_context_factory):
+def test_add_done_callback(ewoksorange_qtapp, executor_context_factory):
     with executor_context_factory() as (_, executor, recorder):
         done = QtEvent()
         received = {}

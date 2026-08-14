@@ -6,6 +6,8 @@ from typing import Any
 from typing import Dict
 
 from AnyQt import QtWidgets
+from AnyQt.QtCore import QCoreApplication
+from AnyQt.QtCore import QEvent
 from AnyQt.QtCore import Qt
 
 from ...orange_version import ORANGE_VERSION
@@ -42,6 +44,7 @@ else:
 
         from . import config as orangeconfig
 
+from ..orange_utils._signals import get_signal_orange_names
 from ..orange_utils.orange_imports import OWBaseWidget
 from ..orange_utils.signal_manager import SignalManagerWithScheme
 from ..owwidgets.base import OWEwoksBaseWidget
@@ -108,16 +111,27 @@ class OrangeCanvasHandler:
     def close(self, force=False):
         if self.canvas is None or (not self.__is_owner and not force):
             return
+
         canvas, self.canvas = self.canvas, None
         self.process_events()
-        # do not prompt for saving modification:
+
+        # Do not prompt for saving modification:
         canvas.current_document().setModified(False)
+
+        # `canvas.close()` only *schedules* deletion, as `QEvent.DeferredDelete`:
+        # `WA_DeleteOnClose` queues the canvas itself, and its `closeEvent`
+        # `deleteLater`s the outgoing scheme.
         canvas.close()
         self.process_events()
-        # `canvas.close()` schedules its child widgets (menu QActions, ...)
-        # for deletion via `deleteLater`, which Qt only performs once its
-        # event loop is idle. A single `processEvents()` call is not always
-        # enough to fully drain that.
+
+        # This test/no-GUI harness never runs a real `app.exec()`, so plain
+        # `processEvents()` never flushes `QEvent.DeferredDelete`.
+        # Force the flush explicitly.
+        QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
+        self.process_events()
+
+        # Remove last reference to the canvas and garbage-collect
+        # while processing events.
         del canvas
         while gc.collect():
             self.process_events()
@@ -185,10 +199,26 @@ class OrangeCanvasHandler:
 
     def iter_output_values(self):
         for name, widget in self.iter_widgets_with_name():
-            yield name, widget.get_task_output_values()
+            yield name, self.get_task_output_values(widget)
 
     def get_output_values(self) -> Dict[str, dict]:
         return dict(self.iter_output_values())
+
+    def get_task_output_values(self, widget) -> dict:
+        """Output values of `widget`, keyed by Orange signal name.
+
+        Ewoks widgets return their task's outputs directly. Native Orange
+        widgets have no task, so their last-sent signal values (tracked by
+        the signal manager) are returned instead.
+        """
+        if isinstance(widget, OWEwoksBaseWidget):
+            return widget.get_task_output_values()
+        signal_manager = self.signal_manager
+        return {
+            name: signal_manager.get_output_value(widget, name)
+            for name in get_signal_orange_names(widget, "outputs")
+            if signal_manager.has_output_value(widget, name)
+        }
 
     def set_input_values(self, inputs: Dict[str, dict]) -> None:
         for name, widget in self.iter_widgets_with_name():

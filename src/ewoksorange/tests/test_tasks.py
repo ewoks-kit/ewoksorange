@@ -8,11 +8,11 @@ def test_sumtask_task():
     assert result == {"result": 3}
 
 
-def test_sumtask_widget(qtapp):
+def test_sumtask_widget(ewoksorange_qtapp):
     result = execute_task(OWSumTask, inputs={"a": 1, "b": 2})
     assert result == {"result": 3}
 
 
-def test_orange_only_input(qtapp):
+def test_orange_only_input(ewoksorange_qtapp):
     widget = OWSumTask()
     assert widget.Inputs.c

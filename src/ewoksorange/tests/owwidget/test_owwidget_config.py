@@ -177,7 +177,7 @@ def test_metaclass_only_sets_options_that_are_provided():
     assert OWGrandchild._MP_CONTEXT is OWParent._MP_CONTEXT
 
 
-def test_configure_sync(qtapp):
+def test_configure_sync(ewoksorange_qtapp):
     """`concurrency="sync"` executes in the calling thread."""
     widget = OWSync()
     try:
@@ -197,7 +197,7 @@ def test_configure_sync(qtapp):
         widget.onDeleteWidget()
 
 
-def test_configure_pool(qtapp):
+def test_configure_pool(ewoksorange_qtapp):
     """`max_workers>1` executes tasks concurrently in background threads."""
     widget = OWPool()
     try:
@@ -221,7 +221,7 @@ def test_configure_pool(qtapp):
         widget.onDeleteWidget()
 
 
-def test_configure_drop_if_busy(qtapp):
+def test_configure_drop_if_busy(ewoksorange_qtapp):
     """`submit_policy="drop_if_busy"` refuses submissions while a task runs."""
     widget = OWDropIfBusy()
     release = threading.Event()
@@ -263,7 +263,7 @@ def test_configure_mp_context():
 
 
 @pytest.mark.parametrize("widget_class", [OWProcess, OWProcessPlatformContext])
-def test_configure_process(qtapp, widget_class):
+def test_configure_process(ewoksorange_qtapp, widget_class):
     """`concurrency="process"` executes in another process."""
     widget = widget_class()
     try:
@@ -282,7 +282,7 @@ def test_configure_process(qtapp, widget_class):
         widget.onDeleteWidget()
 
 
-def test_configure_process_progress(qtapp):
+def test_configure_process_progress(ewoksorange_qtapp):
     """Task progress is relayed from the worker process to the progress bar."""
     percentages = [10, 40, 100]
 
@@ -308,7 +308,7 @@ def test_configure_process_progress(qtapp):
         widget.onDeleteWidget()
 
 
-def test_configure_propagation(qtapp):
+def test_configure_propagation(ewoksorange_qtapp):
     """Propagation is per submission, also when executing synchronously."""
     propagated = []
 

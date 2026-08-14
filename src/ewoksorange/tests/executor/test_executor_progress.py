@@ -8,7 +8,7 @@ from .tasks import PidTask
 from .tasks import ProgressTask
 
 
-def test_progress(qtapp, executor_context_factory):
+def test_progress(ewoksorange_qtapp, executor_context_factory):
     """The caller's progress object receives every value the task reports.
 
     `QProgress` is a `QObject` and therefore not picklable, which the process
@@ -40,7 +40,9 @@ def test_progress(qtapp, executor_context_factory):
             assert result["pid"].value == os.getpid()
 
 
-def test_progress_for_task_without_progress_support(qtapp, executor_context_factory):
+def test_progress_for_task_without_progress_support(
+    ewoksorange_qtapp, executor_context_factory
+):
     """A `progress` argument for a plain `Task` is dropped, not forwarded.
 
     For the process backend it must be dropped before pickling, otherwise

@@ -2,7 +2,9 @@ import pytest
 from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
 
+from ...bindings import execute_graph
 from ...gui.orange_utils.signals import Input
+from ...gui.orange_utils.signals import Output
 from ...gui.owwidgets.base import OWWidget
 from ...gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ...gui.owwidgets.registration import register_owwidget
@@ -21,16 +23,15 @@ if ORANGE_VERSION != ORANGE_VERSION.oasys_fork:
     class NativeWidget(OWWidget):
         name = "native widget"
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self._data = None
-
         class Inputs:
             data = Input("data", type=Mother)
 
+        class Outputs:
+            data = Output("data", type=Mother)
+
         @Inputs.data
         def data_received(self, data):
-            self._data = data
+            self.Outputs.data.send(data)
 
 
 class EwoksTask(
@@ -49,7 +50,7 @@ class EwoksOrangeWidget(OWEwoksWidgetNoThread, ewokstaskclass=EwoksTask):
 @pytest.mark.skipif(
     ORANGE_VERSION == ORANGE_VERSION.oasys_fork, reason="hanging with oasys binding."
 )
-def test_dynamic_link(tmp_path, ewoks_orange_canvas):
+def test_dynamic_link(tmp_path, orange_canvas_handler):
     """Test that a dynamic link in orange will be processed as expected."""
     # Create an Orange workflows
     workflow = {
@@ -79,8 +80,6 @@ def test_dynamic_link(tmp_path, ewoks_orange_canvas):
             },
         ],
     }
-    destination = str(tmp_path / "ewoksgraph.ows")
-    ewoks_to_ows(workflow, destination)
 
     for widget in (NativeWidget, EwoksOrangeWidget):
         register_owwidget(
@@ -90,10 +89,14 @@ def test_dynamic_link(tmp_path, ewoks_orange_canvas):
             project_name="ewoksorange",
         )
 
-    # Load and execute the orange workflow
-    ewoks_orange_canvas.load_ows(destination)
-    ewoks_orange_canvas.start_workflow()
+    destination = str(tmp_path / "ewoksgraph.ows")
+    ewoks_to_ows(workflow, destination)
 
-    ewoks_orange_canvas.wait_widgets(timeout=10)
-    native_widget = next(ewoks_orange_canvas.widgets_from_name("1"))
-    assert native_widget._data == 2
+    results = execute_graph(
+        destination,
+        outputs=[{"id": "1"}],
+        no_gui=True,
+        timeout=10,
+        orange_canvas_handler=orange_canvas_handler,
+    )
+    assert results == {"data": 2}

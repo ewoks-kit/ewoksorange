@@ -24,7 +24,7 @@ class OWSequential(
     name = "test_OW"
 
 
-def test_owwidget_fifo(qtapp):
+def test_owwidget_fifo(ewoksorange_qtapp):
     """Test FIFO execution in a single worker thread."""
     widget = OWSequential()
 

@@ -5,7 +5,7 @@ from typing import Tuple
 from .tasks import TimedTask
 
 
-def test_parallel_execution(qtapp, executor_context_factory) -> None:
+def test_parallel_execution(ewoksorange_qtapp, executor_context_factory) -> None:
     workers: int = 2
     with executor_context_factory(workers=workers) as (_, executor, recorder):
         inputs_list = [{"value": i, "delay": 1} for i in range(4)]
