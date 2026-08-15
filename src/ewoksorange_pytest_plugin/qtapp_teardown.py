@@ -2,7 +2,7 @@ import gc
 import logging
 import warnings
 
-from ewoksorange.gui.qt_utils.app import get_all_qtwidgets
+# WARNING: defer importing Qt!
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,8 @@ def _collect_garbage(app) -> None:
 
 
 def _warn_qtwidgets_alive() -> None:
+    from ewoksorange.gui.qt_utils.app import get_all_qtwidgets
+
     widgets = get_all_qtwidgets()
     if widgets:
         logger.warning("%d remaining widgets after tests", len(widgets))
