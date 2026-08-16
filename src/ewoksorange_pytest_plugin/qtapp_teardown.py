@@ -49,6 +49,7 @@ def ewoksorange_qtapp_teardown(app) -> None:
     session's Qt application is done, to release process-wide state before
     the `pytest_ewoksorange_qtapp_teardown` hook fires.
     """
+    # Called in reverse order, last one first.
     with ExitStack() as stack:
         stack.callback(_warn_qtwidgets_alive)
         stack.callback(_collect_garbage, app)
