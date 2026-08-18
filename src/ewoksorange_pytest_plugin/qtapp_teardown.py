@@ -1,6 +1,7 @@
 import gc
 import logging
 import warnings
+from contextlib import ExitStack
 
 from ewoksorange.gui.qt_utils.app import get_all_qtwidgets
 
@@ -48,9 +49,11 @@ def ewoksorange_qtapp_teardown(app) -> None:
     session's Qt application is done, to release process-wide state before
     the `pytest_ewoksorange_qtapp_teardown` hook fires.
     """
-    _collect_garbage(app)
-    _global_cleanup_ewoksnowidget()
-    _global_cleanup_orange()
-    _global_cleanup_pytest()
-    _collect_garbage(app)
-    _warn_qtwidgets_alive()
+    # Called in reverse order, last one first.
+    with ExitStack() as stack:
+        stack.callback(_warn_qtwidgets_alive)
+        stack.callback(_collect_garbage, app)
+        stack.callback(_global_cleanup_pytest)
+        stack.callback(_global_cleanup_orange)
+        stack.callback(_global_cleanup_ewoksnowidget)
+        stack.callback(_collect_garbage, app)
