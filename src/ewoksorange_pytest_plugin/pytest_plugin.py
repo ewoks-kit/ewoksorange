@@ -53,7 +53,7 @@ def ewoksorange_qtapp(request):
     request.config.hook.pytest_ewoksorange_qtapp_setup()
     ensure_qtapp()
     app = get_qtapp()
-    assert app is not None
+    assert app is not None, "Unable to ensure a QApplication"
     yield app
     close_qtapp()
     ewoksorange_qtapp_teardown(app)
