@@ -545,7 +545,8 @@ class ParameterForm(QtWidgets.QWidget):
     def set_parameter_checked(self, name: str, value: bool) -> None:
         w = self._get_check_widget(name)
         if w is not None:
-            w.setChecked(value)
+            with block_signals(w):
+                w.setChecked(value)
 
     def get_parameter_names(self) -> Set[str]:
         return set(self._fields)

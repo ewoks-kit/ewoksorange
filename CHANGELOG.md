@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `ParameterForm.set_parameter_checked` now blocks signals while setting the
+  checkbox state, avoiding redundant reentrant widget refreshes (and related
+  test timeouts) triggered by programmatic updates.
+
 ## [6.0.0rc6] - 2026-08-14
 
 ### Fixed
