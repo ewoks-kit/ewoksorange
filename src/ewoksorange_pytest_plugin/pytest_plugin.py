@@ -1,5 +1,7 @@
 import functools
 import logging
+import warnings
+from contextlib import ExitStack
 
 import pytest
 
@@ -41,15 +43,35 @@ def _safe_session_fixture(fixture):
 
 @_safe_session_fixture
 def ewoksorange_qtapp(request):
-    """Session-scoped Qt application for testing Orange-based Ewoks workflows."""
-    from ewoksorange.gui.qt_utils.app import qtapp_context
+    """Session-scoped Qt application for testing Orange-based Ewoks workflows.
+
+    When a `QApplication` already exists, e.g. another test with `execute_graph(..., no_gui=True)`,
+    it is adopted but a warning is emitting to use `ewoksorange_qtapp` in that test.
+    """
+
+    from ewoksorange.gui.qt_utils.app import close_qtapp
+    from ewoksorange.gui.qt_utils.app import ensure_qtapp
+    from ewoksorange.gui.qt_utils.app import get_qtapp
 
     request.config.hook.pytest_ewoksorange_qtapp_setup()
-    with qtapp_context() as app:
-        assert app is not None
-        yield app
-    ewoksorange_qtapp_teardown(app)
-    request.config.hook.pytest_ewoksorange_qtapp_teardown(app=app)
+
+    app = ensure_qtapp()
+    if app is None:
+        warnings.warn(
+            "Another test not using the `ewoksorange_qtapp` fixture "
+            "instantiated QApplication(). Make sure it uses this fixture.",
+            stacklevel=2,
+        )
+        app = get_qtapp()
+        assert app is not None, "Unable to ensure a QApplication()"
+
+    yield app
+
+    # Called in reverse order, last one first.
+    with ExitStack() as stack:
+        stack.callback(request.config.hook.pytest_ewoksorange_qtapp_teardown, app=app)
+        stack.callback(ewoksorange_qtapp_teardown, app)
+        stack.callback(close_qtapp)
 
 
 @pytest.fixture()
