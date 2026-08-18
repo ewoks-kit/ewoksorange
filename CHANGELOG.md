@@ -7,17 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- `ParameterForm.set_parameter_checked` now blocks signals while setting the
-  checkbox state, avoiding redundant reentrant widget refreshes (and related
-  test timeouts) triggered by programmatic updates.
-
-## [6.0.0rc6] - 2026-08-14
+## [6.0.0rc7] - 2026-08-18
 
 ### Fixed
 
 - Fix `ParameterForm` file system selection in QT6 (Replace `QDialog.exec_` with `QDialog.exec`).
+- `ParameterForm.set_parameter_checked` now blocks signals while setting the
+  checkbox state, avoiding redundant reentrant widget refreshes (and related
+  test timeouts) triggered by programmatic updates.
 - Store all graph attributes in OWS format.
 - `OrangeCanvasHandler.wait_widgets`: check the running state instead of `widget_is_executed`
   since it might be executed again.
@@ -395,7 +392,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add-on setup tools.
 
 [unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc6...HEAD
-[6.0.0rc6]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc6
+[6.0.0rc7]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc6
 [5.0.1]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0
