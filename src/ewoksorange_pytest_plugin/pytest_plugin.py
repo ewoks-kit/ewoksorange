@@ -3,11 +3,10 @@ import logging
 
 import pytest
 
-from ewoksorange.gui.canvas.handler import OrangeCanvasHandler
-from ewoksorange.gui.qt_utils.app import qtapp_context
-
 from . import hookspecs
 from .qtapp_teardown import ewoksorange_qtapp_teardown
+
+# WARNING: defer importing Qt!
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +42,8 @@ def _safe_session_fixture(fixture):
 @_safe_session_fixture
 def ewoksorange_qtapp(request):
     """Session-scoped Qt application for testing Orange-based Ewoks workflows."""
+    from ewoksorange.gui.qt_utils.app import qtapp_context
+
     request.config.hook.pytest_ewoksorange_qtapp_setup()
     with qtapp_context() as app:
         assert app is not None
@@ -64,5 +65,7 @@ def orange_canvas_handler(ewoksorange_qtapp):
             widget = orange_canvas_handler.widget_from_id("2")
             ...
     """
+    from ewoksorange.gui.canvas.handler import OrangeCanvasHandler
+
     with OrangeCanvasHandler() as handler:
         yield handler
