@@ -1,5 +1,6 @@
 import functools
 import logging
+from contextlib import ExitStack
 
 import pytest
 
@@ -55,9 +56,12 @@ def ewoksorange_qtapp(request):
     app = get_qtapp()
     assert app is not None, "Unable to ensure a QApplication"
     yield app
-    close_qtapp()
-    ewoksorange_qtapp_teardown(app)
-    request.config.hook.pytest_ewoksorange_qtapp_teardown(app=app)
+
+    # Called in reverse order, last one first.
+    with ExitStack() as stack:
+        stack.callback(request.config.hook.pytest_ewoksorange_qtapp_teardown, app=app)
+        stack.callback(ewoksorange_qtapp_teardown, app)
+        stack.callback(close_qtapp)
 
 
 @pytest.fixture()
