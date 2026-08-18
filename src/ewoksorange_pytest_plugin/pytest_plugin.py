@@ -1,5 +1,6 @@
 import functools
 import logging
+import warnings
 from contextlib import ExitStack
 
 import pytest
@@ -44,7 +45,8 @@ def _safe_session_fixture(fixture):
 def ewoksorange_qtapp(request):
     """Session-scoped Qt application for testing Orange-based Ewoks workflows.
 
-    Adopts a `QApplication` created earlier by e.g. `execute_graph(..., no_gui=True)`.
+    When a `QApplication` already exists, e.g. another test with `execute_graph(..., no_gui=True)`,
+    it is adopted but a warning is emitting to use `ewoksorange_qtapp` in that test.
     """
 
     from ewoksorange.gui.qt_utils.app import close_qtapp
@@ -52,9 +54,17 @@ def ewoksorange_qtapp(request):
     from ewoksorange.gui.qt_utils.app import get_qtapp
 
     request.config.hook.pytest_ewoksorange_qtapp_setup()
-    ensure_qtapp()
-    app = get_qtapp()
-    assert app is not None, "Unable to ensure a QApplication"
+
+    app = ensure_qtapp()
+    if app is None:
+        warnings.warn(
+            "Another test not using the `ewoksorange_qtapp` fixture "
+            "instantiated QApplication(). Make sure it uses this fixture.",
+            stacklevel=2,
+        )
+        app = get_qtapp()
+        assert app is not None, "Unable to ensure a QApplication()"
+
     yield app
 
     # Called in reverse order, last one first.
