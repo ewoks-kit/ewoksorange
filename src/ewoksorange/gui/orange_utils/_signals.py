@@ -287,15 +287,24 @@ def validate_signals(
             )
             orangename = ewoksname
 
-            if is_input or ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-                signal = signal_class(name=orangename, type=data_type, doc=doc)
-            else:
+            is_output = not is_input
+            use_pydantic_model = ewoks_model is not None
+
+            if (
+                is_output
+                and ORANGE_VERSION != ORANGE_VERSION.oasys_fork
+                and use_pydantic_model
+            ):
                 # For Output and Input type to be considered compatible by Orange:
                 # dynamic=False: Output type may be the same as or a subclass of the Input type.
                 # dynamic=True: Output type may be the same as, a subclass of, or a superclass of the Input type.
                 signal = signal_class(
                     name=orangename, type=data_type, doc=doc, dynamic=False
                 )
+
+            else:
+                signal = signal_class(name=orangename, type=data_type, doc=doc)
+
             new_signals_class = True
 
         if is_input:
