@@ -60,6 +60,9 @@ orange = [
     "Orange3",
     "chardet<7",  # for Orange3<=3.40.0
 ]
+oasys2 = [
+    "oasys2 >=0.0.55",
+]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -105,14 +108,18 @@ ewoks-canvas = "ewoksorange.gui.canvas.main:main"
 [project.entry-points."orange.canvas.help"]
 "html-index" = "orangecontrib.ewoksdemo:WIDGET_HELP_PATH"
 
-[project.entry-points."oasys.addon"]
+[project.entry-points."oasys2.addons"]
 "ewoksdemo" = "orangecontrib.ewoksdemo"
 "ewoksnowidget" = "orangecontrib.ewoksnowidget"
 
-[project.entry-points."oasys.widgets"]
+[project.entry-points."oasys2.widgets"]
 "Ewoks Demo" = "orangecontrib.ewoksdemo"
 "Ewoks Without Widgets" = "orangecontrib.ewoksnowidget"
 "Ewoks Test" = "orangecontrib.ewokstest"
+
+[project.entry-points."oasys2.tutorials"]
+"Ewoks Demo" = "orangecontrib.ewoksdemo.tutorials"
+"Ewoks Test" = "orangecontrib.ewokstest.tutorials"
 
 [project.entry-points."ewoks.engines"]
 "orange" = "ewoksorange.engine:OrangeWorkflowEngine"

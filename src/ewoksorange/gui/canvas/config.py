@@ -5,21 +5,35 @@ from typing import Tuple
 from ... import pkg_meta
 from ...orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.canvas.conf import WIDGETS_ENTRY  # "oasys.widgets"
-    from oasys.canvas.conf import oasysconf as _Config
+if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
+    from oasys2.canvas.config import WIDGETS_ENTRY  # "oasys2.widgets"
+    from oasys2.canvas.config import OasysConfig as _Config
+
+    # Unlike Orange, OASYS2 defines a group for example workflows.
+    EXAMPLE_WORKFLOWS_ENTRY = "oasys2.tutorials"
 elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.canvas.config import WIDGETS_ENTRY  # "orange.widgets"
     from Orange.canvas.config import Config as _Config
+
+    EXAMPLE_WORKFLOWS_ENTRY = WIDGETS_ENTRY + ".tutorials"
 else:
     from orangewidget.workflow.config import WIDGETS_ENTRY  # "orange.widgets"
     from orangewidget.workflow.config import Config as _Config
 
-
-EXAMPLE_WORKFLOWS_ENTRY = WIDGETS_ENTRY + ".tutorials"
+    EXAMPLE_WORKFLOWS_ENTRY = WIDGETS_ENTRY + ".tutorials"
 
 
 class Config(_Config):
+    if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
+        # OASYS2 inherits the module-globals based discovery of
+        # orange-canvas-core, which cannot describe Ewoks widgets.
+        @staticmethod
+        def widget_discovery(*args, **kwargs):
+            """Return a class-based Orange widget discovery object."""
+            from orangewidget.workflow.discovery import WidgetDiscovery
+
+            return WidgetDiscovery(*args, **kwargs)
+
     @staticmethod
     def widgets_entry_points() -> Tuple[pkg_meta.EntryPoint]:
         """Return all WIDGETS_ENTRY entry points."""

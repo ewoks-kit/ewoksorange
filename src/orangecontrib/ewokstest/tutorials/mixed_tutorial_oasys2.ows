@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<scheme version="2.0" title="Mixed Ewoks/Native example" description="simple mixed graph" working_directory="./">
+	<nodes>
+		<node id="0" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" version="" title="Before" position="(190.0, 271.0)" />
+		<node id="1" name="Python Script" qualified_name="oasys2.widgets.tools.ow_python_script.OWPythonScript" project_name="oasys2" version="" title="Python Script" position="(390.0, 268.0)" />
+		<node id="2" name="SumTaskTest" qualified_name="orangecontrib.ewokstest.sumtask.OWSumTaskTest" project_name="ewoksorange" version="" title="After" position="(571.0, 265.0)" />
+	</nodes>
+	<links>
+		<link id="0" source_node_id="0" sink_node_id="1" source_channel="A + B" sink_channel="In Object #1" enabled="true" source_channel_id="result" />
+		<link id="1" source_node_id="1" sink_node_id="2" source_channel="Out Object" sink_channel="A" enabled="true" sink_channel_id="a" />
+	</links>
+	<annotations />
+	<thumbnail />
+	<node_properties>
+		<properties node_id="0" format="literal">{'_ewoks_default_inputs': {'a': 1, 'b': 0}, '_ewoks_execinfo': {}, '_ewoks_node_id': '0', '_ewoks_task_options': {}, '_ewoks_varinfo': {}, 'controlAreaVisible': True, 'default_inputs': {}, '__version__': 1}</properties>
+		<properties node_id="1" format="pickle">gASVMgEAAAAAAAB9lCiMDGF1dG9fZXhlY3V0ZZSIjBJjdXJyZW50U2NyaXB0SW5kZXiUSwCMCWZv
+bnRfc2l6ZZRLBIwRbGlicmFyeUxpc3RTb3VyY2WUXZSMJW9hc3lzMi53aWRnZXRzLnRvb2xzLm93
+X3B5dGhvbl9zY3JpcHSUjAZTY3JpcHSUk5QpgZR9lCiMBG5hbWWUjAR0ZXN0lIwGc2NyaXB0lIxl
+cHJpbnQoIlNjcmlwdCBpbnB1dDoiLCBpbl9vYmplY3RfMSkKb3V0X29iamVjdCA9IGluX29iamVj
+dF8xICsgMQpwcmludCgiU2NyaXB0IG91dHB1dDoiLCBvdXRfb2JqZWN0KQqUjAVmbGFnc5RLAIwI
+ZmlsZW5hbWWUTnViYYwNc3BsaXR0ZXJTdGF0ZZROdS4=
+</properties>
+		<properties node_id="2" format="literal">{'_ewoks_default_inputs': {'b': 1}, '_ewoks_execinfo': {}, '_ewoks_node_id': '2', '_ewoks_task_options': {}, '_ewoks_varinfo': {}, 'controlAreaVisible': True, 'default_inputs': {}, '__version__': 1}</properties>
+	</node_properties>
+	<session_state>
+		<window_groups />
+	</session_state>
+</scheme>

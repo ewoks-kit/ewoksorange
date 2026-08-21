@@ -9,75 +9,23 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
+from orangecanvas.registry import WidgetDescription
+from orangecanvas.registry import global_registry
+from orangecanvas.registry.base import WidgetRegistry
+from orangecanvas.registry.utils import category_from_package_globals
+
+# Not `orangecanvas.registry.WidgetDiscovery`: that one describes widgets from
+# module globals, while Ewoks widgets are only described by their class.
+from orangewidget.workflow.discovery import WidgetDiscovery
+
 from ... import pkg_meta
 from ...orange_version import ORANGE_VERSION
+from ..canvas.config import WIDGETS_ENTRY  # "orange.widgets" or "oasys2.widgets"
 from ..canvas.utils import get_orange_canvas
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    # from orangecanvas.registry import WidgetDiscovery  # use orangewidget to be sure
-    from oasys.canvas.conf import WIDGETS_ENTRY  # "oasys.widgets"
-    from orangecanvas.registry import global_registry
-    from orangecanvas.registry.base import WidgetRegistry
-    from orangecanvas.registry.description import InputSignal
-    from orangecanvas.registry.description import OutputSignal
-    from orangecanvas.registry.description import WidgetDescription
-    from orangecanvas.registry.utils import category_from_package_globals
-    from orangewidget.canvas.discovery import WidgetDiscovery
-
-    def _get_widget_description(widget_class) -> WidgetDescription:
-        widget_cls_name = widget_class.__name__
-
-        qualified_name = "%s.%s" % (widget_class.__module__, widget_cls_name)
-
-        inputs = [
-            InputSignal(s.name, s.type, s.handler, s.flags, s.id, s.doc)
-            for s in widget_class.inputs
-        ]
-        outputs = [
-            OutputSignal(s.name, s.type, s.flags, s.id, s.doc)
-            for s in widget_class.outputs
-        ]
-        # Convert all signal types into qualified names.
-        # This is to prevent any possible import problems when cached
-        # descriptions are unpickled (the relevant code using this lists
-        # should be able to handle missing types better).
-        for s in inputs + outputs:
-            if isinstance(s.type, type):
-                s.type = "%s.%s" % (s.type.__module__, s.type.__name__)
-
-        return WidgetDescription(
-            name=widget_class.name,
-            id=widget_class.id,
-            version=widget_class.version,
-            description=widget_class.description,
-            long_description=widget_class.long_description,
-            qualified_name=qualified_name,
-            inputs=inputs,
-            outputs=outputs,
-            author=widget_class.author,
-            author_email=widget_class.author_email,
-            maintainer=widget_class.maintainer,
-            maintainer_email=widget_class.maintainer_email,
-            help=widget_class.help,
-            help_ref=widget_class.help_ref,
-            url=widget_class.url,
-            keywords=widget_class.keywords,
-            priority=widget_class.priority,
-            icon=widget_class.icon,
-            background=widget_class.background,
-            replaces=widget_class.replaces,
-        )
-
-    NATIVE_WIDGETS_PROJECT = "oasys1"
+if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
+    NATIVE_WIDGETS_PROJECT = "oasys2"
 else:
-    # from orangecanvas.registry import WidgetDiscovery  # use orangewidget to be sure
-    from orangecanvas.registry import WidgetDescription
-    from orangecanvas.registry import global_registry
-    from orangecanvas.registry.base import WidgetRegistry
-    from orangecanvas.registry.utils import category_from_package_globals
-    from orangewidget.workflow.config import WIDGETS_ENTRY  # "orange.widgets"
-    from orangewidget.workflow.discovery import WidgetDiscovery
-
     NATIVE_WIDGETS_PROJECT = "orange3"
 
 NAMESPACE_PACKAGE = "orangecontrib"
@@ -167,7 +115,7 @@ def _global_registry_objects() -> List[WidgetRegistry]:
         reg = canvas.widget_registry
         if reg is not None:
             registry_objects.append(reg)
-    if ORANGE_VERSION != ORANGE_VERSION.oasys_fork and scene is not None:
+    if scene is not None:
         reg = scene.registry()
         if reg is not None:
             registry_objects.append(reg)
@@ -181,11 +129,8 @@ def _global_registry_objects() -> List[WidgetRegistry]:
 def _get_owwidget_description(
     widget_class, package_name: str, category_name: str, project_name: str
 ):
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        description = _get_widget_description(widget_class)
-    else:
-        kwargs = widget_class.get_widget_description()
-        description = WidgetDescription(**kwargs)
+    kwargs = widget_class.get_widget_description()
+    description = WidgetDescription(**kwargs)
     description.package = _orangecontrib_qualname(package_name)
     description.category = widget_class.category or category_name
     description.project_name = project_name

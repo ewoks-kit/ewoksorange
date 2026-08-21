@@ -10,11 +10,6 @@ Ewoks-Orange behavior:
 
 - `Input` and `Output` attributes have three names: orange name, ewoks name and Inputs/Outputs container attribute name.
 
-Oasys behavior:
-
-- Does not use `Inputs` or `Outputs` class, it uses lists for tuples or dicts. We create the
-  `Inputs` and `Outputs` classes for ewoksorange but Oasys does not use them.
-
 Nomenclature:
 
 - Instances of `Input` and `Output` are referred to as "signals".
@@ -31,7 +26,6 @@ Implementation:
     orange_widget: Union[OWBaseWidget, Type[OWBaseWidget]]
 """
 
-import inspect
 import sys
 from collections.abc import Sequence
 from typing import Callable
@@ -51,30 +45,14 @@ if sys.version_info >= (3, 10):
     has_UnionType = True
 else:
     has_UnionType = False
+from orangewidget.utils.signals import getsignals as _native_getsignals
 from pydantic import BaseModel
 
-from ...orange_version import ORANGE_VERSION
 from .orange_imports import OWBaseWidget
 from .signals import Input
 from .signals import Output
 from .signals import _InputSignal
 from .signals import _OutputSignal
-
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-
-    def _native_getsignals(
-        signal_container_class: type,
-    ) -> Union[List[Tuple[str, Input]], List[Tuple[str, Output]]]:
-        # Copied from the latest orange-widget-base
-        return [
-            (k, v)
-            for cls in reversed(inspect.getmro(signal_container_class))
-            for k, v in cls.__dict__.items()
-            if isinstance(v, (Input, Output))
-        ]
-
-else:
-    from orangewidget.utils.signals import getsignals as _native_getsignals
 
 
 def _get_signals(
@@ -105,13 +83,12 @@ def _get_signal_list_from_container(
     counter = 0
     for attrname, signal in _get_signals(signal_container):
         if not getattr(signal, "ewoksname", ""):
-            # Most likely a native Orange/Oasys widget
+            # Most likely a native Orange widget
             signal.ewoksname = attrname
 
-        if getattr(signal, "_seq_id"):
+        if getattr(signal, "_seq_id", 0):
             signal_list.append((signal._seq_id, signal))
         else:
-            # Most likely a native Oasys widget
             counter += 1
             signal_list.append((counter, signal))
 
@@ -146,7 +123,7 @@ def _get_signal_container(
         if not hasattr(orange_widget, attr_name) or not _get_signals(
             getattr(orange_widget, attr_name)
         ):
-            # Most likely a native Orange/Oasys widget.
+            # Most likely a native Orange widget.
             # Old-style inputs/outputs as a list of tuples or dicts
             # instead of the new-style Inputs/Outputs classes.
             # Old-style is deprecated in Orange.
@@ -238,7 +215,6 @@ def validate_signals(
 
     - Ensure that for each Ewoks Task input and output there is an Orange widget signal.
     - Ensure that the `Inputs`/`Outputs` namespace key exist.
-    - Oasys: ensure that the `inputs`/`outputs` namespace key exist.
     """
     ewoks_task = namespace["ewokstaskclass"]
     if direction == "inputs":
@@ -309,13 +285,9 @@ def validate_signals(
 
     # Replace signal class when needed
     if new_signals_class:
-        signal_container_class = type(signal_container_name, (), dict(signals_attrs))
-        namespace[signal_container_name] = signal_container_class
-
-    # Oasys needs old-style signal definitions
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        if len(namespace.get(direction, [])) != len(ewoks_names):
-            namespace[direction] = _oldstyle_signal_list(signal_container_class)
+        namespace[signal_container_name] = type(
+            signal_container_name, (), dict(signals_attrs)
+        )
 
 
 def _pydantic_model_field_type(
@@ -337,10 +309,8 @@ def _pydantic_model_field_type(
         return field_info.annotation
     elif origin in (list, tuple):
         return origin
-    elif ORANGE_VERSION != ORANGE_VERSION.oasys_fork and origin in valid_union_types:
+    elif origin in valid_union_types:
         # Handle Union types (including Optional)
-        # This feature is only accessible for "recent" orange version and not for OASYS where type must be a scalar
-
         args = get_args(field_info.annotation)
         non_none_args = [arg for arg in args if arg is not type(None)]
         return tuple([_from_annotation_to_builtin_type(arg) for arg in non_none_args])
@@ -404,25 +374,6 @@ def _oldstyle_signal_container(
     values = [_oldstyle_instantiate_signal(signal_class, signal) for signal in signals]
     attrs = dict(zip(names, values))
     return type(direction.title(), (), attrs)
-
-
-def _oldstyle_signal_list(input_container_class) -> List[str]:
-    """Convert
-
-    .. code-block:: python
-
-        class Inputs:
-            a = Input("A", object)
-            b = Input("B", object)
-
-    to
-
-    .. code-block:: python
-
-        inputs = [("A", object, "")]
-    """
-    signals = _get_signal_list_from_container(input_container_class)
-    return [signal.as_tuple() for signal in signals]
 
 
 def _oldstyle_instantiate_signal(

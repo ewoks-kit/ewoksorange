@@ -21,19 +21,16 @@ Install requirements
 
         pip install PyQt6
 
-.. admonition:: Oasys use case
+.. admonition:: OASYS2 use case
     :class: dropdown
 
-    When using Oasys instead of Orange3, install the requirements like this instead
+    When using OASYS2 instead of Orange3, install the requirements like this instead
 
-    .. code-block::
+    .. code-block:: bash
 
-        pip install oasys1
-        pip install AnyQt
-        pip install importlib_resources  # python_version < "3.9"
-        pip install ewokscore
-        pip install pytest
-        pip install --no-deps ewoksorange
+        pip install ewoksorange[oasys2]
+
+    OASYS2 already depends on `PyQt6` so no Qt binding needs to be installed.
 
 Launch the graphical interface
 

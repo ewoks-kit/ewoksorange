@@ -66,15 +66,13 @@ jobs:
               pip install Orange3 --prefer-binary
             post-install: |
               pip install "orange-canvas-core<0.2a"
-          - name: "py3.8-oasys"
+          - name: "py3.12-oasys2"
             os: ubuntu-latest
-            python-version: "3.8"
-            qt-api: "PyQt5"
+            python-version: "3.12"
+            qt-api: "PyQt6"
             enable-coverage: "false"
+            install-extras: "test,oasys2"
             strict-warnings: "false"
-            post-install: |
-              pip uninstall -y orange-canvas-core orange-widget-base
-              pip install oasys1 AnyQt
     uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}

@@ -3,32 +3,23 @@
 import warnings
 
 from orangewidget.settings import Setting  # noqa F401
+from orangewidget.widget import Input as _Input  # noqa F401
+from orangewidget.widget import Output as _Output  # noqa F401
 
 from ...orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.widgets import gui  # noqa F401
+if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
+    from oasys2.widget import gui  # noqa F401
 elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.widgets import gui  # noqa F401
 else:
     from orangewidget import gui  # noqa F401
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    _Input = None
-    _Output = None
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from orangewidget.widget import Input as _Input  # noqa F401
-    from orangewidget.widget import Output as _Output  # noqa F401
-else:
-    from orangewidget.widget import Input as _Input  # noqa F401
-    from orangewidget.widget import Output as _Output  # noqa F401
-
 # OWBaseWidget: lowest level Orange widget base class
 # OWWidget: highest level Orange widget base class.
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.widgets.widget import OWWidget  # noqa F401
-
-    OWBaseWidget = OWWidget
+if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
+    from oasys2.widget.widget import OWWidget  # noqa F401
+    from orangewidget.widget import OWBaseWidget  # noqa F401
 elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.widgets.widget import OWWidget  # noqa F401
     from orangewidget.widget import OWBaseWidget  # noqa F401

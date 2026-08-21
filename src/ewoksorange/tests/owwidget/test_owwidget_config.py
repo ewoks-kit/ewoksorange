@@ -290,7 +290,7 @@ def test_configure_process_progress(ewoksorange_qtapp):
     received: List[int] = []
     # The public Orange method the widget's progress handler calls.
     # `progressBarInit()` passes a second `processEvents` argument on some
-    # Orange forks (e.g. oasys), so accept and ignore extra arguments.
+    # Orange forks, so accept and ignore extra arguments.
     widget.progressBarSet = lambda value, *args, **kwargs: received.append(value)
     try:
         widget.set_dynamic_input("percentages", percentages)

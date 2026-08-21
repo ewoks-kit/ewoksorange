@@ -2,12 +2,12 @@ from typing import Optional
 
 from ...orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.canvas.mainwindow import OASYSMainWindow as OWCanvasMainWindow
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
 else:
     # from orangewidget.workflow.mainwindow import OWCanvasMainWindow # ewoks-canvas CLI does not use this
+    # Note: the base class, not OASYS2's `OASYSMainWindow`, because it must also
+    # match the plain `CanvasMainWindow` created by `OrangeCanvasHandler`.
     from orangecanvas.application.canvasmain import (
         CanvasMainWindow as OWCanvasMainWindow,
     )

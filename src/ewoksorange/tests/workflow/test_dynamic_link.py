@@ -1,4 +1,3 @@
-import pytest
 from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
 
@@ -9,7 +8,6 @@ from ...gui.owwidgets.base import OWWidget
 from ...gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ...gui.owwidgets.registration import register_owwidget
 from ...gui.workflows.owscheme import ewoks_to_ows
-from ...orange_version import ORANGE_VERSION
 
 
 class Mother(int): ...
@@ -18,20 +16,18 @@ class Mother(int): ...
 class SubClass(Mother): ...
 
 
-if ORANGE_VERSION != ORANGE_VERSION.oasys_fork:
-    # else with oasys we need to provide the 'handler' mechanism
-    class NativeWidget(OWWidget):
-        name = "native widget"
+class NativeWidget(OWWidget):
+    name = "native widget"
 
-        class Inputs:
-            data = Input("data", type=Mother)
+    class Inputs:
+        data = Input("data", type=Mother)
 
-        class Outputs:
-            data = Output("data", type=Mother)
+    class Outputs:
+        data = Output("data", type=Mother)
 
-        @Inputs.data
-        def data_received(self, data):
-            self.Outputs.data.send(data)
+    @Inputs.data
+    def data_received(self, data):
+        self.Outputs.data.send(data)
 
 
 class EwoksTask(
@@ -47,9 +43,6 @@ class EwoksOrangeWidget(OWEwoksWidgetNoThread, ewokstaskclass=EwoksTask):
     name = "ewoks widget"
 
 
-@pytest.mark.skipif(
-    ORANGE_VERSION == ORANGE_VERSION.oasys_fork, reason="hanging with oasys binding."
-)
 def test_dynamic_link(tmp_path, orange_canvas_handler):
     """Test that a dynamic link in orange will be processed as expected."""
     # Create an Orange workflows

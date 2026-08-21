@@ -9,11 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def _global_cleanup_orange() -> None:
-    try:
-        from orangecanvas.document.suggestions import Suggestions
-    except ModuleNotFoundError:
-        # Not present in the oasys-canvas-core fork of orange-canvas-core.
-        return
+    from orangecanvas.document.suggestions import Suggestions
 
     Suggestions.instance = None
 
