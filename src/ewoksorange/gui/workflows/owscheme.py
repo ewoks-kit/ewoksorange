@@ -5,6 +5,7 @@ import sys
 from collections import namedtuple
 from pathlib import Path
 from typing import IO
+from typing import Callable
 from typing import Iterator
 from typing import List
 from typing import NamedTuple
@@ -48,6 +49,17 @@ else:
 ReadSchemeType = readwrite._scheme
 _original_parse_ows_stream = readwrite.parse_ows_stream
 logger = logging.getLogger(__name__)
+
+#: Modules that expose the `orangecanvas.scheme.readwrite` API to be patched.
+_READWRITE_MODULES = [readwrite]
+
+if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
+    # OASYS2 re-implements `scheme_load` (to migrate OASYS1 workflows) with its
+    # own reference to `parse_ows_stream`. Its canvas calls that implementation
+    # instead of the `orangecanvas` one.
+    from oasys2.canvas.scheme import readwrite as oasys_readwrite
+
+    _READWRITE_MODULES.append(oasys_readwrite)
 
 
 def widget_to_task(
@@ -388,8 +400,8 @@ class OwsNodeWrapper:
             self.properties = default_inputs
         else:
             self.properties = {"_ewoks_default_inputs": default_inputs}
-        # Note: OWEwoksBaseWidget must have these settings in the Oasys fork
-        #       otherwise `WidgetsScheme.sync_node_properties` will remove the
+        # Note: OWEwoksBaseWidget must have these settings, otherwise
+        #       `WidgetsScheme.sync_node_properties` will remove the
         #       unknown properties
         self.properties.update(
             {
@@ -630,8 +642,6 @@ def _deserialize_annotation(annotation: dict) -> annotations.BaseSchemeAnnotatio
     params = dict(annotation["params"])
     if annotation["type"] == "text":
         params["rect"] = tuple(params.pop("geometry"))
-        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            params.pop("content_type", None)
         return annotations.SchemeTextAnnotation(**params)
     if annotation["type"] == "arrow":
         start, end = params.pop("geometry")
@@ -659,22 +669,27 @@ def _patched_parse_ows_stream(*args, **kwargs) -> ReadSchemeType:
 
 
 def patch_parse_ows_stream():
-    readwrite.parse_ows_stream = _patched_parse_ows_stream
+    for module in _READWRITE_MODULES:
+        module.parse_ows_stream = _patched_parse_ows_stream
 
 
-_original_scheme_load = readwrite.scheme_load
 _original_scheme_to_etree = readwrite.scheme_to_etree
+_original_scheme_load = {module: module.scheme_load for module in _READWRITE_MODULES}
 
 
-def _patched_scheme_load(scheme, stream, *args, **kwargs):
-    """Preserve `_EWOKS_GRAPH_ATTRS_TAG` across a live canvas edit/save
-    round-trip.
+def _make_patched_scheme_load(original_scheme_load: Callable) -> Callable:
+    """Wrap a `scheme_load` implementation so that `_EWOKS_GRAPH_ATTRS_TAG` is
+    preserved across a live canvas edit/save round-trip.
     """
-    ewoks_attrs = _read_ewoks_graph_attrs(stream)
-    scheme = _original_scheme_load(scheme, stream, *args, **kwargs)
-    if ewoks_attrs is not None:
-        scheme.set_runtime_env(_EWOKS_GRAPH_ATTRS_TAG, ewoks_attrs)
-    return scheme
+
+    def _patched_scheme_load(scheme, stream, *args, **kwargs):
+        ewoks_attrs = _read_ewoks_graph_attrs(stream)
+        scheme = original_scheme_load(scheme, stream, *args, **kwargs)
+        if ewoks_attrs is not None:
+            scheme.set_runtime_env(_EWOKS_GRAPH_ATTRS_TAG, ewoks_attrs)
+        return scheme
+
+    return _patched_scheme_load
 
 
 def _patched_scheme_to_etree(scheme, *args, **kwargs):
@@ -690,12 +705,9 @@ def _patched_scheme_to_etree(scheme, *args, **kwargs):
 
 
 def patch_scheme_to_etree():
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        return
     readwrite.scheme_to_etree = _patched_scheme_to_etree
 
 
 def patch_scheme_load():
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        return
-    readwrite.scheme_load = _patched_scheme_load
+    for module, original in _original_scheme_load.items():
+        module.scheme_load = _make_patched_scheme_load(original)

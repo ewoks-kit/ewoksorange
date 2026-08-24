@@ -1,35 +1,27 @@
 import weakref
 from typing import Any
 
-from ...orange_version import ORANGE_VERSION
-
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    import AnyQt.QtCore  # noqa: F401 isort: skip  Needed for "import sip"
-    import oasys.canvas.widgetsscheme as widgetsscheme_module
-    from oasys.canvas.widgetsscheme import (
-        OASYSSignalManager as _SignalManagerWithSchemeOrg,
-    )
-
-    class _SignalManagerWithScheme(_SignalManagerWithSchemeOrg):
-        def has_pending(self):
-            return bool(self._input_queue)
-
-    notify_input_helper = None
-else:
-    import orangewidget.workflow.widgetsscheme as widgetsscheme_module
-    from orangewidget.utils.signals import notify_input_helper
-    from orangewidget.workflow.widgetsscheme import (
-        WidgetsSignalManager as _SignalManagerWithScheme,
-    )
-
 from ewokscore.variable import Variable
 from ewokscore.variable import value_from_transfer
 from orangecanvas.scheme import signalmanager
+from orangewidget.utils.signals import notify_input_helper
 
+from ...orange_version import ORANGE_VERSION
 from ..owwidgets.types import is_native_widget
 from ..qt_utils.app import QtEvent
 from ..utils import invalid_data
 from ._signals import get_signal_orange_names
+
+if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
+    import oasys2.widget.workflow.widgetsscheme as widgetsscheme_module
+    from oasys2.widget.workflow.widgetsscheme import (
+        OASYSSignalManager as _SignalManagerWithScheme,
+    )
+else:
+    import orangewidget.workflow.widgetsscheme as widgetsscheme_module
+    from orangewidget.workflow.widgetsscheme import (
+        WidgetsSignalManager as _SignalManagerWithScheme,
+    )
 
 # monkey patch of 'can_enable_dynamic' See https://github.com/ewoks-kit/ewoksorange/issues/58
 
@@ -237,11 +229,7 @@ class SignalManagerWithScheme(
 
     def process_signals_for_widget(self, node, owwidget, signals) -> None:
         for signal in signals:
-            if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-                signal_name = signal.link.sink_channel
-            else:
-                signal_name = signal.channel.name
-            self.set_input_value(owwidget, signal_name, signal.value)
+            self.set_input_value(owwidget, signal.channel.name, signal.value)
         if is_native_widget(owwidget):
             modified_signals = list()
             for signal in signals:
@@ -267,30 +255,15 @@ class SignalManagerWithScheme(
             return False  # The widget might be executed again
         return super().widget_is_executed(owwidget)
 
-    def is_active(self, node) -> bool:
-        """Is the node considered active (executing a task)."""
-        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            # The oasys fork's vendored signal manager has no `is_active`,
-            # but its native `is_blocking` already tracks per-node
-            # processing state (driven by progressBarInit/Finished, which
-            # our threaded widgets call), unlike the widget's own
-            # `isBlocking()` which our widgets never set.
-            return self.is_blocking(node)
-        return super().is_active(node)
-
 
 def set_input_value(owwidget, signal, value, index) -> None:
     value = invalid_data.as_invalidation(value)
     key = id(owwidget), signal.name, signal.id
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        handler = getattr(owwidget, signal.handler)
-        handler(value)
-    else:
-        notify_input_helper(signal, owwidget, value, key=key, index=index)
+    notify_input_helper(signal, owwidget, value, key=key, index=index)
 
 
 def patch_signal_manager():
-    if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
+    if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
         widgetsscheme_module.OASYSSignalManager = SignalManagerWithScheme
     else:
         widgetsscheme_module.WidgetsSignalManager = SignalManagerWithScheme

@@ -9,20 +9,15 @@ from typing import Any
 from typing import Optional
 from typing import Union
 
+from orangewidget.settings import Setting
+
 from ...orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from orangewidget.settings import Setting
-    from orangewidget.widget import WidgetMetaClass
+if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+    from Orange.widgets.widget import WidgetMetaClass
 else:
-    from orangewidget.settings import Setting
-
-    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-        from Orange.widgets.widget import WidgetMetaClass
-    else:
-        from orangewidget.widget import OWBaseWidget
-
-        WidgetMetaClass = type(OWBaseWidget)
+    # Note: also for OASYS2, which does not subclass `WidgetMetaClass`.
+    from orangewidget.widget import WidgetMetaClass
 
 from ..concurrency.executor import Concurrency
 from ..concurrency.executor import SubmitPolicy

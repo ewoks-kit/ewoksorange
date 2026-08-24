@@ -18,8 +18,6 @@ from ewoksorange.gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ewoksorange.gui.owwidgets.registration import _temporary_widget_discovery_object
 from ewoksorange.gui.owwidgets.registration import register_owwidget
 
-from ..orange_version import ORANGE_VERSION
-
 
 class Data:
     pass
@@ -104,10 +102,7 @@ def test_link_value_data_type(tmp_path, ewoksorange_qtapp):
         return outputs[0].type
 
     def expected_output_type(dtype):
-        if ORANGE_VERSION != ORANGE_VERSION.oasys_fork:
-            return (dtype,)
-        else:
-            return dtype
+        return (dtype,)
 
     assert len(widget_registry.registry.widgets()) == 2
 
@@ -129,7 +124,7 @@ def test_link_value_data_type(tmp_path, ewoksorange_qtapp):
         qualified_name(object)
     )
     assert get_input_data_type(descWidgetA, "e") == expected_output_type(
-        qualified_name(str if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
+        qualified_name(str)
     )
     assert get_input_data_type(descWidgetA, "f") == expected_output_type(
         qualified_name(object)
@@ -143,33 +138,23 @@ def test_link_value_data_type(tmp_path, ewoksorange_qtapp):
         qualified_name(Data)
     )
     assert get_output_data_type(descWidgetA, "c") == expected_output_type(
-        qualified_name(str if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
+        qualified_name(str)
     )
     assert get_output_data_type(descWidgetA, "d") == expected_output_type(
-        qualified_name(int if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
+        qualified_name(int)
     )
     assert get_output_data_type(descWidgetA, "e") == expected_output_type(
-        qualified_name(dict if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object)
+        qualified_name(dict)
     )
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
     assert len(descWidgetB.inputs) == 5
     assert get_input_data_type(descWidgetB, "a") == (
-        tuple(
-            [
-                qualified_name(float),
-            ]
-            + [
-                qualified_name(int),
-            ]
-        )
-        if ORANGE_VERSION != ORANGE_VERSION.oasys_fork
-        else expected_output_type(qualified_name(object))
+        qualified_name(float),
+        qualified_name(int),
     )
     assert get_input_data_type(descWidgetB, "b") == expected_output_type(
-        qualified_name(
-            numpy.float32 if ORANGE_VERSION != ORANGE_VERSION.oasys_fork else object
-        )
+        qualified_name(numpy.float32)
     )
     assert get_input_data_type(descWidgetB, "c") == expected_output_type(
         qualified_name(numpy.int32)

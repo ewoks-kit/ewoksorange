@@ -1,11 +1,12 @@
 import importlib.metadata
 from enum import Enum
 
-_OrangeVersion = Enum("OrangeVersion", "latest_orange oasys_fork latest_orange_base")
+_OrangeVersion = Enum("OrangeVersion", "latest_orange latest_oasys latest_orange_base")
 
+# Order matters: distributions that depend on other distributions in this
+# mapping must come first (e.g. OASYS2 depends on orange-canvas-core).
 _DISTRIBUTION_TO_VERSION = {
-    "oasys1": _OrangeVersion.oasys_fork,
-    "oasys-canvas-core": _OrangeVersion.oasys_fork,
+    "oasys2": _OrangeVersion.latest_oasys,
     "orange3": _OrangeVersion.latest_orange,
     "orange-canvas-core": _OrangeVersion.latest_orange_base,
 }

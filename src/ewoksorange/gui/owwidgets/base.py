@@ -23,35 +23,19 @@ from ewokscore.variable import Variable
 from ewokscore.variable import VariableContainer
 from ewokscore.variable import value_from_transfer
 
-from ...orange_version import ORANGE_VERSION
-from ..utils.invalid_data import is_invalid_data
-
-# OWBaseWidget: lowest level Orange widget base class
-# OWWidget: highest level Orangewidget base class.
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.widgets.widget import OWWidget
-
-    OWBaseWidget = OWWidget
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from Orange.widgets.widget import OWWidget
-    from orangewidget.widget import OWBaseWidget
-else:
-    from orangewidget.widget import OWBaseWidget
-
-    OWWidget = OWBaseWidget
-
 from ..concurrency.executor import Concurrency
 from ..concurrency.executor import EwoksExecutor
 from ..concurrency.executor import SubmitPolicy
 from ..concurrency.executor import TaskFuture
 from ..concurrency.executor import create_pool_executor
 from ..orange_utils._signals import get_signal
-from ..orange_utils.orange_imports import OWBaseWidget
+from ..orange_utils.orange_imports import OWBaseWidget  # noqa: F401
 from ..orange_utils.orange_imports import OWWidget
 from ..orange_utils.signals import Output
 from ..qt_utils.progress import QProgress
 from ..utils import invalid_data
 from ..utils.events import scheme_ewoks_events
+from ..utils.invalid_data import is_invalid_data
 from ..utils.model import get_model_default_values
 from .meta import OWEwoksWidgetMetaClass
 from .meta import ow_build_opts
@@ -689,22 +673,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         Outputs set to invalidation data are sent as INVALIDATION_DATA.
         """
         _logger.debug("%s: trigger downstream", self)
-        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for ewoksname, var in self.get_task_outputs(exclude_hidden=True).items():
-                output = self._get_output_signal(ewoksname)
-                if invalid_data.is_invalid_data(var.value):
-                    self.send(output.name, invalid_data.INVALIDATION_DATA)
-                    # Note: perhaps `self.invalidate(output.name)` is equivalent
-                else:
-                    self.send(output.name, var)
-        else:
-            for ewoksname, var in self.get_task_outputs(exclude_hidden=True).items():
-                output = self._get_output_signal(ewoksname)
-                if invalid_data.is_invalid_data(var.value):
-                    output.send(invalid_data.INVALIDATION_DATA)
-                    # Note: perhaps `output.invalidate()` is equivalent
-                else:
-                    output.send(var)
+        for ewoksname, var in self.get_task_outputs(exclude_hidden=True).items():
+            output = self._get_output_signal(ewoksname)
+            if invalid_data.is_invalid_data(var.value):
+                output.send(invalid_data.INVALIDATION_DATA)
+                # Note: perhaps `output.invalidate()` is equivalent
+            else:
+                output.send(var)
 
     def clear_downstream(self) -> None:
         """
@@ -716,16 +691,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         # Use the task class's declared output names rather than the current
         # (possibly empty, e.g. after a failed execution) task outputs, so
         # downstream nodes are always invalidated regardless of the outcome.
-        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            for ewoksname in self.get_output_names(exclude_hidden=True):
-                output = self._get_output_signal(ewoksname)
-                self.send(output.name, invalid_data.INVALIDATION_DATA)
-                # Note: perhaps `self.invalidate(output.name)` is equivalent
-        else:
-            for ewoksname in self.get_output_names(exclude_hidden=True):
-                output = self._get_output_signal(ewoksname)
-                output.send(invalid_data.INVALIDATION_DATA)
-                # Note: perhaps `output.invalidate` is equivalent
+        for ewoksname in self.get_output_names(exclude_hidden=True):
+            output = self._get_output_signal(ewoksname)
+            output.send(invalid_data.INVALIDATION_DATA)
+            # Note: perhaps `output.invalidate` is equivalent
 
     def _get_output_signal(self, ewoksname: str) -> Output:
         """

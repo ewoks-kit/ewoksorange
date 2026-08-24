@@ -1,48 +1,30 @@
 import gc
 import logging
-import os
 import time
 from typing import Any
 from typing import Dict
 
-from AnyQt import QtWidgets
 from AnyQt.QtCore import QCoreApplication
 from AnyQt.QtCore import QEvent
 from AnyQt.QtCore import Qt
+from orangecanvas import config as canvasconfig
+from orangecanvas.registry import set_global_registry
+from orangecanvas.registry.qt import QtWidgetRegistry
 
 from ...orange_version import ORANGE_VERSION
 
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from oasys.canvas import conf as orangeconfig
-    from oasys.canvas.mainwindow import OASYSMainWindow as _OWCanvasMainWindow
-    from orangecanvas import config as canvasconfig
-    from orangecanvas.registry import set_global_registry
-    from orangecanvas.registry.qt import QtWidgetRegistry
-
-    class OWCanvasMainWindow(_OWCanvasMainWindow):
-        def show_scheme_properties_for(self, scheme, window_title=None):
-            return QtWidgets.QDialog.Accepted
-
-    try:
-        from oasys.canvas.mainwindow import _MainWindowRegistry
-    except ImportError:
-        _MainWindowRegistry = None
-
+if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+    from Orange.canvas import config as orangeconfig
+    from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
 else:
-    from orangecanvas import config as canvasconfig
-    from orangecanvas.registry import set_global_registry
-    from orangecanvas.registry.qt import QtWidgetRegistry
+    # from orangewidget.workflow.mainwindow import OWCanvasMainWindow  # ewoks-canvas CLI does not use this
+    # Note: OASYS2's `OASYSMainWindow` is deliberately not used either. Its
+    # constructor queries PyPI for add-on and internal-library updates.
+    from orangecanvas.application.canvasmain import (
+        CanvasMainWindow as OWCanvasMainWindow,
+    )
 
-    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-        from Orange.canvas import config as orangeconfig
-        from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
-    else:
-        # from orangewidget.workflow.mainwindow import OWCanvasMainWindow  # ewoks-canvas CLI does not use this
-        from orangecanvas.application.canvasmain import (
-            CanvasMainWindow as OWCanvasMainWindow,
-        )
-
-        from . import config as orangeconfig
+    from . import config as orangeconfig
 
 from ..orange_utils._signals import get_signal_orange_names
 from ..orange_utils.orange_imports import OWBaseWidget
@@ -80,30 +62,15 @@ class OrangeCanvasHandler:
         widget_registry = QtWidgetRegistry()
         set_global_registry(widget_registry)
 
-        if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-            config = orangeconfig.oasysconf()
-            config.init()
-            canvasconfig.set_default(config)
-            widget_discovery = config.widget_discovery(widget_registry)
-            widget_discovery.run(config.widgets_entry_points())
-        else:
-            config = orangeconfig.Config()
-            config.init()
-            canvasconfig.set_default(config)
-            widget_discovery = config.widget_discovery(widget_registry)
-            widget_discovery.run(orangeconfig.widgets_entry_points())
+        config = orangeconfig.Config()
+        config.init()
+        canvasconfig.set_default(config)
+        widget_discovery = config.widget_discovery(widget_registry)
+        widget_discovery.run(orangeconfig.widgets_entry_points())
 
         canvas = OWCanvasMainWindow()
         canvas.setAttribute(Qt.WA_DeleteOnClose)
         canvas.set_widget_registry(widget_registry)  # makes a copy of the registry
-
-        if (
-            ORANGE_VERSION == ORANGE_VERSION.oasys_fork
-            and _MainWindowRegistry is not None
-        ):
-            _MainWindowRegistry.Instance().register_instance(
-                instance=canvas, application_name=str(os.getpid())
-            )  # need it for finding the canvas from the widgets
 
         self.canvas = canvas
         self.process_events()

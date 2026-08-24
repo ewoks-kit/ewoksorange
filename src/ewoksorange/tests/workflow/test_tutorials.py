@@ -47,10 +47,10 @@ def test_mixed_tutorial_with_qt(ewoksorange_qtapp):
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
         workflow = "mixed_tutorial.ows"
-    elif ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        workflow = "mixed_tutorial_oasys.ows"
+    elif ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
+        workflow = "mixed_tutorial_oasys2.ows"
     else:
-        pytest.skip("Requires the Orange3 or Oasys1 python script widget")
+        pytest.skip("Requires the Orange3 or OASYS2 python script widget")
 
     filename = resource_files(tutorials).joinpath(workflow)
     assert_mixed_tutorial_with_qt(filename)
@@ -61,10 +61,10 @@ def test_mixed_tutorial_without_qt(ewoksorange_qtapp):
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
         workflow = "mixed_tutorial.ows"
-    elif ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-        workflow = "mixed_tutorial_oasys.ows"
+    elif ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
+        workflow = "mixed_tutorial_oasys2.ows"
     else:
-        pytest.skip("Requires the Orange3 or Oasys1 python script widget")
+        pytest.skip("Requires the Orange3 or OASYS2 python script widget")
 
     filename = resource_files(tutorials).joinpath(workflow)
     assert_mixed_tutorial_without_qt(filename)

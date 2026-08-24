@@ -1,11 +1,6 @@
 import inspect
 
-from ...orange_version import ORANGE_VERSION
-
-if ORANGE_VERSION == ORANGE_VERSION.oasys_fork:
-    from orangewidget.settings import Setting
-else:
-    from orangewidget.settings import Setting
+from orangewidget.settings import Setting
 
 
 def is_setting(obj):
