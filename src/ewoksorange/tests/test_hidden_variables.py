@@ -84,7 +84,9 @@ def test_hidden_outputs(ewoksorange_qtapp, exclude_hidden, expected):
 
     actual = widget.get_output_names(exclude_hidden=exclude_hidden)
     assert set(actual) == set(expected)
-    actual = widget.get_task_outputs(exclude_hidden=exclude_hidden)
+    with pytest.warns(DeprecationWarning):
+        actual = widget.get_task_outputs(exclude_hidden=exclude_hidden)
     assert actual == expected
-    actual = widget.get_task_output_values(exclude_hidden=exclude_hidden)
+    with pytest.warns(DeprecationWarning):
+        actual = widget.get_task_output_values(exclude_hidden=exclude_hidden)
     assert actual == expected

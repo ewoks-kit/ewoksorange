@@ -578,6 +578,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         Return task output variables.
 
+        .. deprecated:: 6.0
+            Use the `TaskFuture` returned by `execute_ewoks_task`/
+            `execute_ewoks_task_without_propagation` instead (`future.result()`),
+            or the `task_executor` ``succeeded`` signal.
+
         :param exclude_hidden: Leave out the outputs hidden from Orange.
         :return: The task's :class:`~ewokscore.variable.VariableContainer`, or a
                  plain mapping when there are no outputs or when outputs were
@@ -585,6 +590,20 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
                  `VariableContainer`: a new container would be a different
                  hashable with its own `uhash`, while these are still the
                  variables of the original one.
+        """
+        warnings.warn(
+            "'get_task_outputs' is deprecated since 6.0. Use the `TaskFuture` returned by "
+            "`execute_ewoks_task` (`future.result()`) or the `task_executor` ``succeeded`` "
+            "signal instead.",
+            DeprecationWarning,
+        )
+        return self._get_output_variables(exclude_hidden=exclude_hidden)
+
+    def _get_output_variables(
+        self, exclude_hidden: bool = False
+    ) -> Mapping[str, Variable]:
+        """
+        Non-deprecated equivalent of `get_task_outputs`, for internal use.
         """
         outputs = self._get_task_outputs()
         if outputs is None:
@@ -612,11 +631,30 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         Return all task output values extracted from Variables.
 
+        .. deprecated:: 6.0
+            Use the `TaskFuture` returned by `execute_ewoks_task`/
+            `execute_ewoks_task_without_propagation` instead (`future.result()`),
+            or the `task_executor` ``succeeded`` signal.
+
         :return: Dict of output name -> plain value (missing replaced).
+        """
+        warnings.warn(
+            "'get_task_output_values' is deprecated since 6.0. Use the `TaskFuture` "
+            "returned by `execute_ewoks_task` (`future.result()`) or the `task_executor` "
+            "``succeeded`` signal instead.",
+            DeprecationWarning,
+        )
+        return self._get_task_output_values(exclude_hidden=exclude_hidden)
+
+    def _get_task_output_values(self, exclude_hidden: bool = False) -> dict:
+        """
+        Non-deprecated equivalent of `get_task_output_values`, for internal use.
         """
         return {
             k: self._extract_value(v)
-            for k, v in self.get_task_outputs(exclude_hidden=exclude_hidden).items()
+            for k, v in self._get_output_variables(
+                exclude_hidden=exclude_hidden
+            ).items()
         }
 
     def get_task_output_value(
@@ -625,11 +663,22 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         Retrieve a single task output value by name, returning default if missing.
 
+        .. deprecated:: 6.0
+            Use the `TaskFuture` returned by `execute_ewoks_task`/
+            `execute_ewoks_task_without_propagation` instead (`future.result()`),
+            or the `task_executor` ``succeeded`` signal.
+
         :param name: Output name.
         :param default: Fallback when missing.
         :return: The extracted output value or default.
         """
-        adict = self.get_task_outputs()
+        warnings.warn(
+            "'get_task_output_value' is deprecated since 6.0. Use the `TaskFuture` "
+            "returned by `execute_ewoks_task` (`future.result()`) or the `task_executor` "
+            "``succeeded`` signal instead.",
+            DeprecationWarning,
+        )
+        adict = self._get_output_variables()
         try:
             value = adict[name]
         except KeyError:
@@ -673,7 +722,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         Outputs set to invalidation data are sent as INVALIDATION_DATA.
         """
         _logger.debug("%s: trigger downstream", self)
-        for ewoksname, var in self.get_task_outputs(exclude_hidden=True).items():
+        for ewoksname, var in self._get_output_variables(exclude_hidden=True).items():
             output = self._get_output_signal(ewoksname)
             if invalid_data.is_invalid_data(var.value):
                 output.send(invalid_data.INVALIDATION_DATA)
@@ -711,7 +760,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
     @property
     def task_output_changed_callbacks(self) -> list:
         """
-        Access the list of callbacks executed after task output change.
+        **Deprecated** - Access the list of callbacks executed after task output change.
 
         :return: List of callables.
         """
@@ -719,7 +768,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
     def task_output_changed(self) -> None:
         """
-        Default callback invoked when task output changed.
+        **Deprecated**: Default callback invoked when task output changed.
 
         Subclasses may override to react to this event.
         """
@@ -767,15 +816,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         Whether the most recent task execution succeeded.
 
         .. deprecated:: 6.0
-            Use the `TaskFuture` returned by `execute_ewoks_task`/
-            `execute_ewoks_task_without_propagation` instead
-            (`future.done() and future.exception() is None`).
+            'task_succeeded' is deprecated since 6.0. Use the `task_executor` ``succeeded`` signal instead (and propagated Future).
 
         :return: True if succeeded, False if failed, or None if never run.
         """
         warnings.warn(
-            "'task_succeeded' is deprecated since 6.0. Use the `TaskFuture` returned"
-            " by `execute_ewoks_task`/`execute_ewoks_task_without_propagation` instead.",
+            "'task_succeeded' is deprecated since 6.0. Use the `task_executor` ``succeeded`` signal instead (and propagated Future).",
             DeprecationWarning,
         )
         return self.__last_task_succeeded
@@ -786,14 +832,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         Whether the most recent task execution finished (success or failure).
 
         .. deprecated:: 6.0
-            Use the `TaskFuture` returned by `execute_ewoks_task`/
-            `execute_ewoks_task_without_propagation` instead (`future.done()`).
+            'task_done' is deprecated since 6.0. Use the `task_executor` ``finished`` signal instead (and propagated Future).
 
         :return: True/False or None if never run.
         """
         warnings.warn(
-            "'task_done' is deprecated since 6.0. Use the `TaskFuture` returned by"
-            " `execute_ewoks_task`/`execute_ewoks_task_without_propagation` instead.",
+            "'task_done' is deprecated since 6.0. Use the `task_executor` ``finished`` signal instead (and propagated Future).",
             DeprecationWarning,
         )
         return self.__last_task_done
@@ -804,14 +848,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         Exception raised during the most recent task execution, if any.
 
         .. deprecated:: 6.0
-            Use the `TaskFuture` returned by `execute_ewoks_task`/
-            `execute_ewoks_task_without_propagation` instead (`future.exception()`).
+            'task_done' is deprecated since 6.0. Use the `task_executor` ``failed`` signal instead (and propagated Future).
 
         :return: Exception instance or None.
         """
         warnings.warn(
-            "'task_exception' is deprecated since 6.0. Use the `TaskFuture` returned"
-            " by `execute_ewoks_task`/`execute_ewoks_task_without_propagation` instead.",
+            "'task_done' is deprecated since 6.0. Use the `task_executor` ``failed`` signal instead (and propagated Future).",
             DeprecationWarning,
         )
         return self._last_task_exception_cause()

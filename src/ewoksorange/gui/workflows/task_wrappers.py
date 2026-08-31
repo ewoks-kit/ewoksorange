@@ -162,7 +162,7 @@ def execute_ewoks_owwidget(
                 exception = (
                     widget._last_task_exception_cause() or widget.post_task_exception
                 )
-                result.update(widget.get_task_output_values())
+                result.update(widget._get_task_output_values())
             finally:
                 outputsReceived.set()
 

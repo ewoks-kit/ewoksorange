@@ -179,7 +179,7 @@ class OrangeCanvasHandler:
         the signal manager) are returned instead.
         """
         if isinstance(widget, OWEwoksBaseWidget):
-            return widget.get_task_output_values()
+            return widget._get_task_output_values()
         signal_manager = self.signal_manager
         return {
             name: signal_manager.get_output_value(widget, name)

@@ -57,7 +57,7 @@ class SimpleTypesWidgetMixin:
         super().handleNewSignals()
 
     def task_output_changed(self):
-        for name, value in self.get_task_output_values().items():
+        for name, value in self._get_task_output_values().items():
             self._output_form.set_parameter_value(name, value)
         super().task_output_changed()
 

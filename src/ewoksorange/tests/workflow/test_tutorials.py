@@ -122,7 +122,9 @@ def assert_sumlist_tutorial_with_qt(handler, filename):
         orange_canvas_handler=handler,
     )
 
-    listsum = sum(handler.widget_from_id("0").get_task_output_values()["list"])
+    with pytest.warns(DeprecationWarning):
+        output_values = handler.widget_from_id("0").get_task_output_values()
+    listsum = sum(output_values["list"])
     for i in [4, 5, 6]:
         assert handler.widget_from_id(str(i)).get_task_input_values() == {
             "sum": listsum
