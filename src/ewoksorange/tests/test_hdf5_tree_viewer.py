@@ -73,11 +73,11 @@ def test_toolbar_hidden_by_default(ewoksorange_qtapp):
 def test_default_mode_and_locking(ewoksorange_qtapp, h5file):
     """Verify Hdf5TreeViewer has append mode and locking enabled by default."""
     with _tree_viewer() as viewer:
-        assert viewer._mode == "a"
-        assert viewer._locking is None
+        assert viewer.mode == "a"
+        assert viewer.locking is None
 
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -101,7 +101,7 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
     # #########################
     with _tree_viewer(mode="r", locking=False) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -117,7 +117,7 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
 
     with _tree_viewer(mode="r", locking=True) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -133,7 +133,7 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
 
     with _tree_viewer(mode="r") as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -152,7 +152,7 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
     # #########################
     with _tree_viewer(mode="a", locking=False) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -168,7 +168,7 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
 
     with _tree_viewer(mode="a", locking=True) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -184,7 +184,7 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
 
     with _tree_viewer(mode="a") as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -203,11 +203,11 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
 def test_default_mode_and_locking_windows(ewoksorange_qtapp, h5file):
     """Verify Hdf5TreeViewer has append mode and locking enabled by default."""
     with _tree_viewer() as viewer:
-        assert viewer._mode == "a"
-        assert viewer._locking is None
+        assert viewer.mode == "a"
+        assert viewer.locking is None
 
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -231,7 +231,7 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
     # #########################
     with _tree_viewer(mode="r", locking=False) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -247,7 +247,7 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
 
     with _tree_viewer(mode="r", locking=True) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -263,7 +263,7 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
 
     with _tree_viewer(mode="r") as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -282,7 +282,7 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
     # #########################
     with _tree_viewer(mode="a", locking=False) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -298,7 +298,7 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
 
     with _tree_viewer(mode="a", locking=True) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -314,7 +314,7 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
 
     with _tree_viewer(mode="a") as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 

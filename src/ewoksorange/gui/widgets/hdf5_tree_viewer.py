@@ -98,6 +98,21 @@ class Hdf5TreeViewer(qt.QWidget):
         """The underlying silx tree view."""
         return self.__treeView
 
+    @property
+    def mode(self) -> str:
+        """The mode used to open files."""
+        return self._mode
+
+    @property
+    def locking(self) -> Optional[bool]:
+        """The file-locking option used to open files."""
+        return self._locking
+
+    @property
+    def h5Files(self) -> Tuple[h5py.File, ...]:
+        """The currently opened HDF5 files."""
+        return tuple(self._h5files)
+
     def toolBar(self) -> qt.QToolBar:
         """Return the toolbar of the tree, hidden by default.
 
