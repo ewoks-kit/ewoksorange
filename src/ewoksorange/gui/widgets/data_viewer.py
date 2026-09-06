@@ -36,8 +36,9 @@ class DataViewer(qt.QWidget):
 
         viewer.closeAll()
 
-    Other tree operations are reached through the `treeViewer` property,
-    for example `viewer.treeViewer.setContentSorted(False)`.
+    The composed tree viewer is available through the `treeViewer` property
+    for tree-specific operations. Existing convenience methods such as
+    `setContentSorted` remain available directly on `DataViewer`.
     """
 
     def __init__(self, parent, *, mode: str = "a", locking: Optional[bool] = None):
