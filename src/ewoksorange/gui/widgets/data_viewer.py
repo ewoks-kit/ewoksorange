@@ -116,6 +116,14 @@ class DataViewer(qt.QWidget):
     def updateFile(self, filename):
         self.__treeViewer.updateFile(filename)
 
+    def setContentSorted(self, sort):
+        """Set whether file content should be sorted."""
+        self.__treeViewer.setContentSorted(sort)
+
+    def isContentSorted(self):
+        """Return whether file content is sorted."""
+        return self.__treeViewer.isContentSorted()
+
     def displaySelectedData(self):
         """Called to update the dataviewer with the selected data."""
         selected = list(self.__treeViewer.selectedH5Nodes(ignoreBrokenLinks=False))

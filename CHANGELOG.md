@@ -20,8 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ewoksorange.orange_version.ORANGE_VERSION` enum member `oasys_fork` is
   renamed to `latest_oasys`.
 - `DataViewer` now composes `Hdf5TreeViewer`, available as
-  `DataViewer.treeViewer`. `DataViewer.setContentSorted` and
-  `DataViewer.isContentSorted` moved to `DataViewer.treeViewer`.
+  `DataViewer.treeViewer` for direct access to tree-specific operations.
 
 ### Removed
 
