@@ -164,11 +164,9 @@ class DataViewer(qt.QWidget):
 def main(argv=None) -> int:
     """Show a data viewer for the files given on the command line.
 
-    Args:
-        argv: Command line arguments. Defaults to `sys.argv[1:]`.
-
-    Returns:
-        The exit code of the Qt application.
+    :param argv: Command line arguments. Defaults to `sys.argv[1:]`.
+    :return: The exit code of the Qt application.
+    :rtype: int
     """
     if argv is None:
         argv = sys.argv[1:]
