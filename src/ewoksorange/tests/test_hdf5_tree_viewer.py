@@ -7,7 +7,7 @@ import h5py
 import pytest
 from silx.gui import qt
 
-from ..gui.widgets.data_viewer import DataViewer
+from ..gui.widgets.hdf5_tree_viewer import Hdf5TreeViewer
 
 _EXTERNAL_OPEN = """
 import sys
@@ -41,9 +41,9 @@ def _open_from_other_process(filename, mode: str) -> ExternalOpenResults:
 
 
 @contextmanager
-def _data_viewer(**kwargs):
-    """Create a `DataViewer` and guarantee its files are closed afterwards."""
-    viewer = DataViewer(None, **kwargs)
+def _tree_viewer(**kwargs):
+    """Create a `Hdf5TreeViewer` and guarantee its files are closed afterwards."""
+    viewer = Hdf5TreeViewer(None, **kwargs)
     try:
         yield viewer
     finally:
@@ -61,15 +61,45 @@ def h5file(tmp_path):
     return filename
 
 
+def test_toolbar_hidden_by_default(ewoksorange_qtapp):
+    """Verify the toolbar is hidden unless requested."""
+    with _tree_viewer() as viewer:
+        assert viewer.toolBar().isHidden()
+    with _tree_viewer(toolbar=True) as viewer:
+        assert not viewer.toolBar().isHidden()
+
+
+def test_refresh_preserves_mode_and_locking(ewoksorange_qtapp, h5file):
+    """Verify refresh uses the configured mode and locking option."""
+    with _tree_viewer(mode="a", locking=False) as viewer:
+        viewer.updateFile(h5file)
+        (old_h5,) = viewer.h5Files
+
+        root_index = viewer.treeView.model().index(0, 0)
+        viewer.treeView.selectionModel().select(
+            root_index, qt.QItemSelectionModel.ClearAndSelect
+        )
+        viewer.updateFile(h5file)
+
+        (h5,) = viewer.h5Files
+        assert h5 is not old_h5
+        assert h5.mode == "r+"
+
+        external_append = _open_from_other_process(h5file, mode="a")
+        assert external_append.locking == "OPENED"
+        assert external_append.not_locking == "OPENED"
+        assert external_append.default == "OPENED"
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX-only")
 def test_default_mode_and_locking(ewoksorange_qtapp, h5file):
-    """Verify DataViewer has append mode and locking enabled by default."""
-    with _data_viewer() as viewer:
-        assert viewer._mode == "a"
-        assert viewer._locking is None
+    """Verify Hdf5TreeViewer has append mode and locking enabled by default."""
+    with _tree_viewer() as viewer:
+        assert viewer.mode == "a"
+        assert viewer.locking is None
 
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -91,9 +121,9 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
     # #########################
     # Read-Only Mode
     # #########################
-    with _data_viewer(mode="r", locking=False) as viewer:
+    with _tree_viewer(mode="r", locking=False) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -107,9 +137,9 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
         assert external_append.not_locking == "OPENED"
         assert external_append.default == "OPENED"
 
-    with _data_viewer(mode="r", locking=True) as viewer:
+    with _tree_viewer(mode="r", locking=True) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -123,9 +153,9 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
         assert external_append.not_locking == "OPENED"
         assert external_append.default == "OSError:LOCKED"
 
-    with _data_viewer(mode="r") as viewer:
+    with _tree_viewer(mode="r") as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -142,9 +172,9 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
     # #########################
     # Append Mode
     # #########################
-    with _data_viewer(mode="a", locking=False) as viewer:
+    with _tree_viewer(mode="a", locking=False) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -158,9 +188,9 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
         assert external_append.not_locking == "OPENED"
         assert external_append.default == "OPENED"
 
-    with _data_viewer(mode="a", locking=True) as viewer:
+    with _tree_viewer(mode="a", locking=True) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -174,9 +204,9 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
         assert external_append.not_locking == "OPENED"
         assert external_append.default == "OSError:LOCKED"
 
-    with _data_viewer(mode="a") as viewer:
+    with _tree_viewer(mode="a") as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -193,13 +223,13 @@ def test_configurable_mode_and_locking(ewoksorange_qtapp, h5file):
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
 def test_default_mode_and_locking_windows(ewoksorange_qtapp, h5file):
-    """Verify DataViewer has append mode and locking enabled by default."""
-    with _data_viewer() as viewer:
-        assert viewer._mode == "a"
-        assert viewer._locking is None
+    """Verify Hdf5TreeViewer has append mode and locking enabled by default."""
+    with _tree_viewer() as viewer:
+        assert viewer.mode == "a"
+        assert viewer.locking is None
 
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -221,9 +251,9 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
     # #########################
     # Read-Only Mode
     # #########################
-    with _data_viewer(mode="r", locking=False) as viewer:
+    with _tree_viewer(mode="r", locking=False) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -237,9 +267,9 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
         assert external_append.not_locking == "OPENED"
         assert external_append.default == "OPENED"
 
-    with _data_viewer(mode="r", locking=True) as viewer:
+    with _tree_viewer(mode="r", locking=True) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -253,9 +283,9 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
         assert external_append.not_locking == "OSError:LOCKED"
         assert external_append.default == "OSError:LOCKED"
 
-    with _data_viewer(mode="r") as viewer:
+    with _tree_viewer(mode="r") as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r"
         assert h5["existing"][()] == 42
 
@@ -272,9 +302,9 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
     # #########################
     # Append Mode
     # #########################
-    with _data_viewer(mode="a", locking=False) as viewer:
+    with _tree_viewer(mode="a", locking=False) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -288,9 +318,9 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
         assert external_append.not_locking == "OPENED"
         assert external_append.default == "OPENED"
 
-    with _data_viewer(mode="a", locking=True) as viewer:
+    with _tree_viewer(mode="a", locking=True) as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 
@@ -304,9 +334,9 @@ def test_configurable_mode_and_locking_windows(ewoksorange_qtapp, h5file):
         assert external_append.not_locking == "OSError:LOCKED"
         assert external_append.default == "OSError:LOCKED"
 
-    with _data_viewer(mode="a") as viewer:
+    with _tree_viewer(mode="a") as viewer:
         viewer.updateFile(h5file)
-        (h5,) = viewer._h5files
+        (h5,) = viewer.h5Files
         assert h5.mode == "r+"
         assert h5["existing"][()] == 42
 

@@ -11,11 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support OASYS2 (`pip install ewoksorange[oasys2]`) next to the standard
   `orange-canvas-core` + `orange-widget-base` and the optional Orange3.
+- Add `Hdf5TreeViewer` widget to browse the structure of files supported by
+  silx without a data panel. Its toolbar is hidden by default and is enabled
+  with `Hdf5TreeViewer(parent, toolbar=True)`.
 
 ### Changed
 
 - `ewoksorange.orange_version.ORANGE_VERSION` enum member `oasys_fork` is
   renamed to `latest_oasys`.
+- `DataViewer` now composes `Hdf5TreeViewer`, available as
+  `DataViewer.treeViewer` for direct access to tree-specific operations.
 
 ### Removed
 
