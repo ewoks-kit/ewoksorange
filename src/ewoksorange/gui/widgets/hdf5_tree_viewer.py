@@ -266,22 +266,21 @@ class Hdf5TreeViewer(qt.QWidget):
         model = self.__treeView.model()
         selection = self.__treeView.selectionModel()
         selectedItems = []
-        h5files = []
+        h5files = set()
         with self.__waitCursor():
             for _, index, _ in self.__iterModelIndices():
                 rootIndex = self.__getRootIndex(index)
                 relativePath = self.__getRelativePath(model, rootIndex, index)
                 selectedItems.append((rootIndex.row(), relativePath))
 
-                h5 = model.data(rootIndex, role=Hdf5TreeModel.H5PY_OBJECT_ROLE)
-                item = model.data(rootIndex, role=Hdf5TreeModel.H5PY_ITEM_ROLE)
-                h5files.append((h5, item._openedPath))
+                h5file = model.data(rootIndex, role=Hdf5TreeModel.H5PY_OBJECT_ROLE)
+                h5files.add(h5file)
 
             if not h5files:
                 return
 
-            for h5, filename in h5files:
-                self.__synchronizeH5pyObject(h5, filename)
+            for h5file in h5files:
+                self.__synchronizeH5pyObject(h5file)
 
             itemSelection = qt.QItemSelection()
             for rootRow, relativePath in selectedItems:
@@ -295,20 +294,17 @@ class Hdf5TreeViewer(qt.QWidget):
                 itemSelection.select(index, indexEnd)
             selection.select(itemSelection, qt.QItemSelectionModel.ClearAndSelect)
 
-    def __synchronizeH5pyObject(self, h5, filename: Optional[str] = None):
+    def __synchronizeH5pyObject(self, h5file):
+        if not silx.io.is_file(h5file):
+            raise TypeError("Only HDF5 files can be synchronized")
         model = self.__treeView.findHdf5TreeModel()
-        # This is buggy right now while h5py do not allow to close a file
-        # while references are still used.
-        # FIXME: The architecture have to be reworked to support this feature.
-        # model.synchronizeH5pyObject(h5)
-
-        if filename is None:
-            filename = f"{h5.file.filename}::{h5.name}"
-        row = model.h5pyObjectRow(h5)
+        # model.insertFile does not preserve the configured mode and locking.
+        filename = h5file.filename
+        row = model.h5pyObjectRow(h5file)
         index = self.__treeView.model().index(row, 0, qt.QModelIndex())
         paths = self.__getPathFromExpandedNodes(self.__treeView, index)
-        model.removeH5pyObject(h5)
-        model.insertFile(filename, row)
+        model.removeH5pyObject(h5file)
+        self.__insertFile(filename, row)
         index = self.__treeView.model().index(row, 0, qt.QModelIndex())
         self.__expandNodesFromPaths(self.__treeView, index, paths)
 
@@ -439,6 +435,20 @@ class Hdf5TreeViewer(qt.QWidget):
         model = self.__treeView.findHdf5TreeModel()
         model.removeH5pyObject(h5file)
 
+    def __insertFile(self, filename, row=-1):
+        h5file = h5py.File(filename, mode=self._mode, locking=self._locking)
+        model = self.__treeView.findHdf5TreeModel()
+        try:
+            model.sigH5pyObjectLoaded.emit(h5file, filename)
+        except TypeError:
+            # Support silx<2.0.0
+            model.sigH5pyObjectLoaded.emit(h5file)
+        try:
+            model.insertH5pyObject(h5file, row=row, filename=filename)
+        except TypeError:
+            # Support silx<2.0.0
+            model.insertH5pyObject(h5file, row=row)
+
     def updateFile(self, filename):
         if not os.path.exists(filename):
             return
@@ -447,18 +457,7 @@ class Hdf5TreeViewer(qt.QWidget):
             self.__refreshAction.trigger()
             return
         self.closeFile(filename)
-        model = self.__treeView.findHdf5TreeModel()
-        h5file = h5py.File(filename, mode=self._mode, locking=self._locking)
-        try:
-            model.sigH5pyObjectLoaded.emit(h5file, filename)
-        except TypeError:
-            # Support silx<2.0.0
-            model.sigH5pyObjectLoaded.emit(h5file)
-        try:
-            model.insertH5pyObject(h5file, filename=filename)
-        except TypeError:
-            # Support silx<2.0.0
-            model.insertH5pyObject(h5file)
+        self.__insertFile(filename)
 
     def setContentSorted(self, sort):
         """Set whether file content should be sorted or not.

@@ -69,6 +69,28 @@ def test_toolbar_hidden_by_default(ewoksorange_qtapp):
         assert not viewer.toolBar().isHidden()
 
 
+def test_refresh_preserves_mode_and_locking(ewoksorange_qtapp, h5file):
+    """Verify refresh uses the configured mode and locking option."""
+    with _tree_viewer(mode="a", locking=False) as viewer:
+        viewer.updateFile(h5file)
+        (old_h5,) = viewer.h5Files
+
+        root_index = viewer.treeView.model().index(0, 0)
+        viewer.treeView.selectionModel().select(
+            root_index, qt.QItemSelectionModel.ClearAndSelect
+        )
+        viewer.updateFile(h5file)
+
+        (h5,) = viewer.h5Files
+        assert h5 is not old_h5
+        assert h5.mode == "r+"
+
+        external_append = _open_from_other_process(h5file, mode="a")
+        assert external_append.locking == "OPENED"
+        assert external_append.not_locking == "OPENED"
+        assert external_append.default == "OPENED"
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX-only")
 def test_default_mode_and_locking(ewoksorange_qtapp, h5file):
     """Verify Hdf5TreeViewer has append mode and locking enabled by default."""
