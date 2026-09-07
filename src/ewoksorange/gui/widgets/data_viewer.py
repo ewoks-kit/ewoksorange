@@ -144,9 +144,6 @@ class DataViewer(qt.QWidget):
         selectedObjects = event.source().selectedH5Nodes(ignoreBrokenLinks=False)
         menu = event.menu()
 
-        if not menu.isEmpty():
-            menu.addSeparator()
-
         for obj in selectedObjects:
             h5 = obj.h5py_object
 
