@@ -495,6 +495,9 @@ class Hdf5TreeViewer(qt.QWidget):
         """
         return self.__treeView.model() is self.__treeModelSorted
 
+    def __removeH5pyObject(self, h5) -> None:
+        self.__treeView.findHdf5TreeModel().removeH5pyObject(h5)
+
     def __treeContextMenu(self, event: Hdf5ContextMenuEvent):
         """Called to populate the context menu"""
         selectedObjects = event.source().selectedH5Nodes(ignoreBrokenLinks=False)
@@ -509,11 +512,13 @@ class Hdf5TreeViewer(qt.QWidget):
             if silx.io.is_file(h5):
                 action = qt.QAction("Close %s" % obj.local_filename, event.source())
                 action.triggered.connect(
-                    lambda: self.__treeView.findHdf5TreeModel().removeH5pyObject(h5)
+                    lambda checked=False, h5=h5: self.__removeH5pyObject(h5)
                 )
                 menu.addAction(action)
                 action = qt.QAction(
                     "Synchronize %s" % obj.local_filename, event.source()
                 )
-                action.triggered.connect(lambda: self.__synchronizeH5pyObject(h5))
+                action.triggered.connect(
+                    lambda checked=False, h5=h5: self.__synchronizeH5pyObject(h5)
+                )
                 menu.addAction(action)

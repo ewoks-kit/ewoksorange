@@ -157,7 +157,7 @@ class DataViewer(qt.QWidget):
                 name = "the root"
 
             action = qt.QAction("Show %s" % name, event.source())
-            action.triggered.connect(lambda: self.displayData(h5))
+            action.triggered.connect(lambda checked=False, h5=h5: self.displayData(h5))
             menu.addAction(action)
 
 
