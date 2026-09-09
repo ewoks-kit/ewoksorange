@@ -11,11 +11,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support OASYS2 (`pip install ewoksorange[oasys2]`) next to the standard
   `orange-canvas-core` + `orange-widget-base` and the optional Orange3.
+- `ewoksorange.gui.widgets.hdf5` with the `Hdf5Viewer` widget to browse files
+  next to a data panel, replacing `DataViewer`.
+- `Hdf5TreeViewer` widget to browse file structure without a data panel.
+- `Hdf5TreeModel` to control which files `Hdf5Viewer` and `Hdf5TreeViewer`
+  browse and which class opens them.
+- `ewoksorange.io.hdf5` to read HDF5 files whichever process is writing them:
+  `StaticFile` for a file nobody writes, `LiveFile` for a file another process
+  writes and `OwnedFile` for a file this process writes.
+- `python -m ewoksorange.gui.widgets.hdf5` to browse files from the command line.
+- `Hdf5TreeModel` argument `backgroundLoading` to read files without blocking
+  the GUI.
+- `Hdf5Viewer` argument `displayOnLoad` to show a file as soon as it is opened.
+- `ewoksorange.io.hdf5.utils` with the HDF5 types and predicates.
+- `Hdf5TreeViewer.sigFileFailed` reporting a file which cannot be read, which
+  stays in the tree as a broken item saying why.
+- A group is read when it is first looked at instead of the whole file up front.
+- `LiveFile` argument `retry_timeout` to retry a read landing midway through
+  a write.
+- `LiveFile` and `read_access` argument `retry_period` to wait between retries.
 
 ### Changed
 
 - `ewoksorange.orange_version.ORANGE_VERSION` enum member `oasys_fork` is
   renamed to `latest_oasys`.
+
+### Deprecated
+
+- `DataViewer`. Use `Hdf5Viewer` instead.
 
 ### Removed
 

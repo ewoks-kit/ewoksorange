@@ -6,3 +6,4 @@ How-to Guides
 
     howtoguides/installation
     howtoguides/canvas
+    howtoguides/hdf5_viewer
