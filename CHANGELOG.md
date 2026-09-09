@@ -11,11 +11,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support OASYS2 (`pip install ewoksorange[oasys2]`) next to the standard
   `orange-canvas-core` + `orange-widget-base` and the optional Orange3.
+- `ewoksorange.gui.widgets.hdf5` with the `Hdf5Viewer` widget to browse files
+  next to a data panel, replacing `DataViewer`.
+- `Hdf5TreeViewer` widget to browse file structure without a data panel.
+- `Hdf5TreeModel` to control which files `Hdf5Viewer` and `Hdf5TreeViewer` browse.
+- `StaticFileTreeModel` to browse a file nobody writes.
+- `LiveFileTreeModel` to browse a file another process writes.
+- `OwnedFileTreeModel` and `OwnedFileLinksTreeModel` to browse a file this
+  process writes.
+- `LinkAwareTreeModel` to browse a file whose external links need their own
+  open options.
+- `ewoksorange.io.hdf5` to read HDF5 files whichever process is writing them.
+- `python -m ewoksorange.gui.widgets.hdf5` to browse files from the command line.
+- `Hdf5TreeModel.BACKGROUND_LOADING` to read files without blocking the GUI.
+- `Hdf5Viewer` argument `displayOnLoad` to show a file as soon as it is opened.
+- `ewoksorange.io.hdf5.utils` with the HDF5 types and predicates.
 
 ### Changed
 
 - `ewoksorange.orange_version.ORANGE_VERSION` enum member `oasys_fork` is
   renamed to `latest_oasys`.
+
+### Deprecated
+
+- `DataViewer`. Use `Hdf5Viewer` instead.
 
 ### Removed
 
