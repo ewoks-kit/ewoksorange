@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 from contextlib import contextmanager
 from typing import Iterator
 from typing import Optional
@@ -21,6 +22,9 @@ _logger = logging.getLogger(__name__)
 
 class DataViewer(qt.QWidget):
     """Browse data from files supported by silx.
+
+    .. deprecated::
+        Use :class:`ewoksorange.gui.widgets.hdf5.viewer.Hdf5Viewer` instead.
 
     To create the widget
 
@@ -46,6 +50,11 @@ class DataViewer(qt.QWidget):
     """
 
     def __init__(self, parent, *, mode: str = "a", locking: Optional[bool] = None):
+        warnings.warn(
+            "DataViewer is deprecated, use Hdf5Viewer instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         super().__init__(parent)
 
         self._h5files = list()

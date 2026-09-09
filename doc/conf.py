@@ -15,6 +15,7 @@ docstitle = f"{project} {version}"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "sphinxarg.ext",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
@@ -30,6 +31,12 @@ source_suffix = [".rst", ".md"]
 exclude_patterns = ["build", "**.ipynb_checkpoints"]
 
 always_document_param_types = True
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "h5py": ("https://docs.h5py.org/en/stable", None),
+    "silx": ("https://silx.readthedocs.io/en/stable", None),
+}
 
 autosummary_generate = True
 autodoc_default_flags = [
