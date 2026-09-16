@@ -179,7 +179,10 @@ class OrangeCanvasHandler:
         the signal manager) are returned instead.
         """
         if isinstance(widget, OWEwoksBaseWidget):
-            return widget._get_task_output_values()
+            task_future = widget._last_task_future
+            if task_future is None or not task_future.succeeded():
+                return dict()
+            return task_future.output_values()
         signal_manager = self.signal_manager
         return {
             name: signal_manager.get_output_value(widget, name)
@@ -226,10 +229,13 @@ class OrangeCanvasHandler:
                 for widget in widgets:
                     if not isinstance(widget, OWEwoksBaseWidget):
                         continue
-                    exception = (
-                        widget._last_task_exception_cause()
-                        or widget.post_task_exception
-                    )
+                    task_future = widget._last_task_future
+                    if task_future is None:
+                        exception = widget.post_task_exception
+                    else:
+                        exception = (
+                            task_future.task_exception() or widget.post_task_exception
+                        )
                     if exception is not None:
                         exceptions[widget] = exception
 

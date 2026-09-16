@@ -80,13 +80,10 @@ def test_hidden_outputs(ewoksorange_qtapp, exclude_hidden, expected):
     widget.set_dynamic_input("visible_input", "visible")
     widget.set_dynamic_input("hidden_input", "hidden")
 
-    widget.handleNewSignals()
+    task_future = widget.execute_ewoks_task()
 
     actual = widget.get_output_names(exclude_hidden=exclude_hidden)
     assert set(actual) == set(expected)
-    with pytest.warns(DeprecationWarning):
-        actual = widget.get_task_outputs(exclude_hidden=exclude_hidden)
-    assert actual == expected
-    with pytest.warns(DeprecationWarning):
-        actual = widget.get_task_output_values(exclude_hidden=exclude_hidden)
-    assert actual == expected
+    # Outputs hidden from Orange are still produced by the Ewoks task itself.
+    actual = task_future.output_values()
+    assert actual == {"visible_output": "visible", "hidden_output": "hidden"}

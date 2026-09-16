@@ -3,6 +3,8 @@ from __future__ import annotations
 from concurrent.futures import Future
 from typing import Any
 from typing import Callable
+from typing import Collection
+from typing import Dict
 from typing import Optional
 
 from ewokscore.variable import VariableContainer
@@ -63,8 +65,61 @@ class TaskFuture:
         """
         return self._future.result(timeout=timeout)
 
+    def output_values(
+        self, timeout: Optional[float] = None, exclude: Collection[str] = ()
+    ) -> Dict[str, Any]:
+        """The output values of the ewoks task.
+
+        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :param exclude: Output names to leave out.
+        :raises TimeoutError: The task did not finish in time.
+        :raises CancelledError: The task was cancelled before it started.
+        :raises Exception: Whatever the task raised.
+        :return: A mapping of output name to value, `MISSING_DATA` for outputs
+                 the task did not set.
+        """
+        return {
+            name: var.value
+            for name, var in self.result(timeout=timeout).items()
+            if name not in exclude
+        }
+
+    def succeeded(self, timeout: Optional[float] = None) -> bool:
+        """Whether the ewoks task execution finished without raising.
+
+        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :raises TimeoutError: The task did not finish in time.
+        :raises CancelledError: The task was cancelled before it started.
+        """
+        return self._future.exception(timeout=timeout) is None
+
     def exception(self, timeout: Optional[float] = None) -> Optional[BaseException]:
+        """The exception raised by the ewoks task execution.
+
+        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :raises TimeoutError: The task did not finish in time.
+        :raises CancelledError: The task was cancelled before it started.
+        :return: The exception or `None` when the task succeeded.
+        """
         return self._future.exception(timeout=timeout)
+
+    def task_exception(
+        self, timeout: Optional[float] = None
+    ) -> Optional[BaseException]:
+        """The original exception causing the ewoks task execution exception.
+
+        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :raises TimeoutError: The task did not finish in time.
+        :raises CancelledError: The task was cancelled before it started.
+        :return: The exception or `None` when the task succeeded.
+        """
+        exc = self._future.exception(timeout=timeout)
+        if exc is None:
+            return None
+        # task.execute() wraps run() exceptions as TaskExecutionError(...) from
+        # the original. Task construction failures (TaskInputError) have
+        # no __cause__ and are returned as-is.
+        return exc.__cause__ or exc
 
     def add_done_callback(self, fn: Callable[[Future[VariableContainer]], Any]) -> None:
         """

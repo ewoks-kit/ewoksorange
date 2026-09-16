@@ -25,8 +25,7 @@ We also need to reimplement the `handleNewSignals` function that will call by de
         ...
         def _percentileChanged(self):
             self.set_dynamic_input("percentiles", self._myWidget.getPercentiles())
-            data = self.get_task_output_value("data")
-            if not is_missing_data(data):
+            if self._data is not None:
                 self.execute_ewoks_task_without_propagation()
         
         def handleNewSignals(self):
