@@ -848,7 +848,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         Exception raised during the most recent task execution, if any.
 
         .. deprecated:: 6.0
-            'task_done' is deprecated since 6.0. Use the `task_executor` ``failed`` signal instead (and propagated Future).
+            'task_exception' is deprecated since 6.0. Use the `task_executor` ``failed`` signal instead (and propagated Future).
 
         :return: Exception instance or None.
         """
