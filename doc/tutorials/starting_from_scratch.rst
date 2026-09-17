@@ -181,6 +181,7 @@ Example:
 .. code-block:: python
 
     from AnyQt import QtWidgets
+    from ewoksorange.gui.concurrency.future import TaskFuture
     from ewoksorange.gui.owwidgets.threaded import OWEwoksWidgetOneThread
     from ewoks_orange_example_addon.tasks.exampletask import ExampleTask
 
@@ -200,6 +201,7 @@ Example:
 
         def __init__(self) -> None:
             super().__init__()
+            self.task_executor.finished.connect(self._task_finished)
             self._init_control_area()
             self._init_main_area()
 
@@ -247,12 +249,11 @@ Example:
                 self._widgetNumber_value.setReadOnly(False)
             super().handleNewSignals()
 
-        def task_output_changed(self) -> None:
+        def _task_finished(self, task_future: TaskFuture) -> None:
             """Display Ewoks task outputs."""
-            result = self.get_task_output_value("result", None)
-            if result is not None:
+            if task_future.succeeded():
+                result = task_future.output_values()["result"]
                 self._widgetResult_value.setText(str(result))
-            super().task_output_changed()
 
 .. note::
 

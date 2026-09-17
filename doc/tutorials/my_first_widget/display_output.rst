@@ -67,6 +67,8 @@ Adding a plot to the OrangeWidget
         def __init__(self, parent=None):
             super().__init__(parent)
 
+            self._data = None
+
             self._plot = Plot1D(self)
             self.mainArea.layout().addWidget(self._plot)
             self._myWidget = MyWidget(self)
@@ -77,34 +79,42 @@ Adding a plot to the OrangeWidget
             self._percentileChanged()
 
             # connect signal / slot
+            self.task_executor.finished.connect(self._task_finished)
             self._myWidget._minPercentiles.valueChanged.connect(self._percentileChanged)
             self._myWidget._maxPercentiles.valueChanged.connect(self._percentileChanged)
 
         def _percentileChanged(self):
             self.set_dynamic_input("percentiles", self._myWidget.getPercentiles())
-            data = self.get_task_output_value("data")
-            if not is_missing_data(data):
+            if self._data is not None:
                 self.execute_ewoks_task()
-        
-        def task_output_changed(self):
-            data = self.get_task_output_value("data")
-            if is_missing_data(data):
+
+        def _task_finished(self, task_future: TaskFuture):
+            # The future is only handed to us here, so keep what the rest of the
+            # widget needs later on.
+            self._data = None
+            if task_future.succeeded():
+                data = task_future.output_values()["data"]
+                if not is_missing_data(data):
+                    self._data = data
+
+            if self._data is None:
                 self._plot.clear()
             else:
                 # compute histogram
-                histogram, _ = numpy.histogram(data, bins=100, range=(0.0, 1.0))
+                histogram, _ = numpy.histogram(self._data, bins=100, range=(0.0, 1.0))
                 self._plot.addCurve(x=numpy.linspace(0.0, 1.0, num=100), y=histogram, legend="histogram")
-            return super().task_output_changed()
 
 .. hint::
 
-    * l16-17\: add a silx Plot1D widget and add it to the control area
-    * l23\: make sure the 'percentiles' is defined at start
-    * l31-33\: `percentiles` input will now be defined before `data` input (l23). So let's make sure `data` is defined before processing the ewoks task.
-    * l35-43\: `task_output_changed` is called once the ewoks task has been processing:
+    * l18-19\: add a silx Plot1D widget and add it to the control area
+    * l24\: make sure the 'percentiles' is defined at start
+    * l32-35\: `percentiles` input will now be defined before `data` input (l24). So let's make sure `data` is defined before processing the ewoks task.
+    * l37-51\: the `task_executor` ``finished`` signal is emitted once the ewoks task has been processing. It carries the :class:`~ewoksorange.gui.concurrency.future.TaskFuture` of that execution:
 
-        * If the task failed we clear the plot (l37-38)
+        * If the task failed or produced no data we clear the plot (l46-47)
         * Else we compute the histogram and display it.
+
+    The future is only handed to you when the task finishes, so keep the output values the rest of the widget needs (l16, l40-44).
 
 Now your processing should looks like:
 

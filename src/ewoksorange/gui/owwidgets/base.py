@@ -20,7 +20,6 @@ from AnyQt import QtWidgets
 from ewokscore import TaskWithProgress
 from ewokscore import missing_data
 from ewokscore.variable import Variable
-from ewokscore.variable import VariableContainer
 from ewokscore.variable import value_from_transfer
 
 from ..concurrency.executor import Concurrency
@@ -114,6 +113,21 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
     `mp_context=None` for the platform default instead, which is `"fork"` on Linux.
     """
 
+    def __init_subclass__(cls, **kwargs) -> None:
+        """
+        Warn about subclasses that still override deprecated hooks.
+
+        The warning belongs here rather than in the hook itself: the hook is
+        called after every execution, also for widgets that do not override it.
+        """
+        super().__init_subclass__(**kwargs)
+        if cls.task_output_changed is not OWEwoksBaseWidget.task_output_changed:
+            warnings.warn(
+                f"{cls.__name__} overrides 'task_output_changed' which is deprecated "
+                "since 6.0. Use the `task_executor` ``finished`` signal instead.",
+                DeprecationWarning,
+            )
+
     def __init__(self, *args, **kwargs):
         """
         Initialize base widget internals.
@@ -141,10 +155,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         self.__propagate_by_future: Dict[TaskFuture, bool] = {}
         self.__propagate_next: bool = False
 
-        self.__last_output_variables: Optional[VariableContainer] = None
-        self.__last_task_succeeded: Optional[bool] = None
-        self.__last_task_done: Optional[bool] = None
-        self.__last_task_exception: Optional[Exception] = None
+        # The future of the last task that succeeded or failed. Always done, so
+        # `result()` and `exception()` on it never block.
+        self._last_task_future: Optional[TaskFuture] = None
 
         # Note: this might be removed in the future. Please avoid using it.
         self.__current_task_future: Optional[TaskFuture] = None
@@ -597,17 +610,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "signal instead.",
             DeprecationWarning,
         )
-        return self._get_output_variables(exclude_hidden=exclude_hidden)
-
-    def _get_output_variables(
-        self, exclude_hidden: bool = False
-    ) -> Mapping[str, Variable]:
-        """
-        Non-deprecated equivalent of `get_task_outputs`, for internal use.
-        """
-        outputs = self._get_task_outputs()
-        if outputs is None:
+        task_future = self._last_task_future
+        if task_future is None or not task_future.succeeded():
             return dict()
+        outputs = task_future.result()
         if exclude_hidden:
             outputs = {
                 k: v
@@ -615,17 +621,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
                 if k not in self._ewoks_outputs_to_hide_from_orange
             }
         return outputs
-
-    def _get_task_outputs(self) -> Optional[VariableContainer]:
-        """
-        Return the output variables produced by the last executed task.
-
-        :return: The task's :class:`~ewokscore.variable.VariableContainer`, or
-                 `None` when the last task failed or no task ran yet. An empty
-                 container cannot express that: it holds `MISSING_DATA` instead
-                 of a mapping, so `[]` and `in` raise `TypeError` on it.
-        """
-        return self.__last_output_variables
 
     def get_task_output_values(self, exclude_hidden: bool = False) -> dict:
         """
@@ -644,18 +639,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "``succeeded`` signal instead.",
             DeprecationWarning,
         )
-        return self._get_task_output_values(exclude_hidden=exclude_hidden)
-
-    def _get_task_output_values(self, exclude_hidden: bool = False) -> dict:
-        """
-        Non-deprecated equivalent of `get_task_output_values`, for internal use.
-        """
-        return {
-            k: self._extract_value(v)
-            for k, v in self._get_output_variables(
-                exclude_hidden=exclude_hidden
-            ).items()
-        }
+        task_future = self._last_task_future
+        if task_future is None or not task_future.succeeded():
+            return dict()
+        if exclude_hidden:
+            exclude = self._ewoks_outputs_to_hide_from_orange
+        else:
+            exclude = ()
+        return task_future.output_values(exclude=exclude)
 
     def get_task_output_value(
         self, name, default: Any = missing_data.MISSING_DATA
@@ -678,12 +669,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "``succeeded`` signal instead.",
             DeprecationWarning,
         )
-        adict = self._get_output_variables()
+        task_future = self._last_task_future
+        if task_future is None or not task_future.succeeded():
+            return default
         try:
-            value = adict[name]
+            value = task_future.output_values()[name]
         except KeyError:
             return default
-        value = self._extract_value(value)
         if missing_data.is_missing_data(value):
             return default
         return value
@@ -709,7 +701,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
                 "'succeeded' should be always provided from version 7.0.",
                 DeprecationWarning,
             )
-            succeeded = self.__last_task_succeeded
+            succeeded = (
+                self._last_task_future is not None
+                and self._last_task_future.succeeded()
+            )
         if succeeded:
             self.__post_task_execute([self.trigger_downstream])
         else:
@@ -722,7 +717,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         Outputs set to invalidation data are sent as INVALIDATION_DATA.
         """
         _logger.debug("%s: trigger downstream", self)
-        for ewoksname, var in self._get_output_variables(exclude_hidden=True).items():
+        task_future = self._last_task_future
+        if task_future is None or not task_future.succeeded():
+            return
+        outputs = task_future.result()
+        for ewoksname, var in outputs.items():
+            if ewoksname in self._ewoks_outputs_to_hide_from_orange:
+                continue
             output = self._get_output_signal(ewoksname)
             if invalid_data.is_invalid_data(var.value):
                 output.send(invalid_data.INVALIDATION_DATA)
@@ -760,15 +761,27 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
     @property
     def task_output_changed_callbacks(self) -> list:
         """
-        **Deprecated** - Access the list of callbacks executed after task output change.
+        Access the list of callbacks executed after task output change.
+
+        .. deprecated:: 6.0
+            Use the `task_executor` ``finished`` signal instead.
 
         :return: List of callables.
         """
+        warnings.warn(
+            "'task_output_changed_callbacks' is deprecated since 6.0. Use the "
+            "`task_executor` ``finished`` signal instead.",
+            DeprecationWarning,
+        )
         return self.__task_output_changed_callbacks
 
     def task_output_changed(self) -> None:
         """
-        **Deprecated**: Default callback invoked when task output changed.
+        Default callback invoked when task output changed.
+
+        .. deprecated:: 6.0
+            Use the `task_executor` ``finished`` signal instead. Overriding this
+            method raises a `DeprecationWarning` when the subclass is created.
 
         Subclasses may override to react to this event.
         """
@@ -824,7 +837,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "'task_succeeded' is deprecated since 6.0. Use the `task_executor` ``succeeded`` signal instead (and propagated Future).",
             DeprecationWarning,
         )
-        return self.__last_task_succeeded
+        if self._last_task_future is None:
+            return None
+        return self._last_task_future.succeeded()
 
     @property
     def task_done(self) -> Optional[bool]:
@@ -840,7 +855,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "'task_done' is deprecated since 6.0. Use the `task_executor` ``finished`` signal instead (and propagated Future).",
             DeprecationWarning,
         )
-        return self.__last_task_done
+        if self._last_task_future is None:
+            return None
+        return True
 
     @property
     def task_exception(self) -> Optional[Exception]:
@@ -856,23 +873,9 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "'task_exception' is deprecated since 6.0. Use the `task_executor` ``failed`` signal instead (and propagated Future).",
             DeprecationWarning,
         )
-        return self._last_task_exception_cause()
-
-    def _last_task_exception_cause(self) -> Optional[Exception]:
-        """
-        Exception raised during the most recent task execution, if any, with
-        `task.execute()`'s `TaskExecutionError` wrapping unwound.
-
-        Non-deprecated equivalent of `task_exception`, for internal use.
-        """
-        exc = self.__last_task_exception
-        if exc is None:
+        if self._last_task_future is None:
             return None
-        # task.execute() wraps run() exceptions as TaskExecutionError(...) from
-        # the original; follow __cause__ to surface the exception the task
-        # actually raised. Task construction failures (TaskInputError) have
-        # no __cause__ and are returned as-is.
-        return exc.__cause__ or exc
+        return self._last_task_future.task_exception()
 
     def has_pending_task(self) -> bool:
         """
@@ -1021,10 +1024,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         :param task_future: The future of the successful task.
         """
         propagate = self.__propagate_by_future.get(task_future, False)
-        self.__last_output_variables = task_future.result()
-        self.__last_task_succeeded = True
-        self.__last_task_done = True
-        self.__last_task_exception = None
+        self._last_task_future = task_future
         # `propagate_downstream` must run before `progressBarFinished`: the
         # latter flips `signal_manager.is_active(node)` to False, which is
         # what `wait_widgets`-style polling relies on to know this widget is
@@ -1047,10 +1047,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         :param task_future: The future of the failed task.
         """
         propagate = self.__propagate_by_future.get(task_future, False)
-        self.__last_output_variables = None
-        self.__last_task_succeeded = False
-        self.__last_task_done = True
-        self.__last_task_exception = task_future.exception()
+        self._last_task_future = task_future
         # See ordering note in `__on_succeeded`.
         try:
             if propagate:
