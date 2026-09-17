@@ -56,7 +56,7 @@ class TaskFuture:
     def result(self, timeout: Optional[float] = None) -> VariableContainer:
         """The output variables of the ewoks task.
 
-        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :param timeout: Maximum number of seconds to wait for the future to complete, `None` to wait forever.
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
         :raises Exception: Whatever the task raised.
@@ -70,7 +70,7 @@ class TaskFuture:
     ) -> Dict[str, Any]:
         """The output values of the ewoks task.
 
-        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :param timeout: Maximum number of seconds to wait for the future to complete, `None` to wait forever.
         :param exclude: Output names to leave out.
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
@@ -87,7 +87,7 @@ class TaskFuture:
     def succeeded(self, timeout: Optional[float] = None) -> bool:
         """Whether the ewoks task execution finished without raising.
 
-        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :param timeout: Maximum number of seconds to wait for the future to complete, `None` to wait forever.
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
         """
@@ -96,7 +96,7 @@ class TaskFuture:
     def exception(self, timeout: Optional[float] = None) -> Optional[BaseException]:
         """The exception raised by the ewoks task execution.
 
-        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :param timeout: Maximum number of seconds to wait for the future to complete, `None` to wait forever.
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
         :return: The exception or `None` when the task succeeded.
@@ -108,7 +108,7 @@ class TaskFuture:
     ) -> Optional[BaseException]:
         """The original exception causing the ewoks task execution exception.
 
-        :param timeout: Maximum number of seconds to wait, `None` to wait forever.
+        :param timeout: Maximum number of seconds to wait for the future to complete, `None` to wait forever.
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
         :return: The exception or `None` when the task succeeded.
