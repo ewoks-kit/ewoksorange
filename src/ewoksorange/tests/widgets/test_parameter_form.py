@@ -4,8 +4,8 @@ from functools import partial
 from AnyQt import QtCore
 from ewokscore import missing_data
 
-from ..gui.widgets.parameter_form import ParameterForm
-from ..gui.widgets.parameter_form import SelectMode
+from ...gui.widgets.parameter_form import ParameterForm
+from ...gui.widgets.parameter_form import SelectMode
 
 
 def test_parameterform(ewoksorange_qtapp, tmp_path):

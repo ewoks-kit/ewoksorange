@@ -7,7 +7,7 @@ import h5py
 import pytest
 from silx.gui import qt
 
-from ..gui.widgets.data_viewer import DataViewer
+from ...gui.widgets.data_viewer import DataViewer
 
 _EXTERNAL_OPEN = """
 import sys
@@ -43,7 +43,8 @@ def _open_from_other_process(filename, mode: str) -> ExternalOpenResults:
 @contextmanager
 def _data_viewer(**kwargs):
     """Create a `DataViewer` and guarantee its files are closed afterwards."""
-    viewer = DataViewer(None, **kwargs)
+    with pytest.deprecated_call():
+        viewer = DataViewer(None, **kwargs)
     try:
         yield viewer
     finally:
