@@ -853,7 +853,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         :return: Exception instance or None.
         """
         warnings.warn(
-            "'task_done' is deprecated since 6.0. Use the `task_executor` ``failed`` signal instead (and propagated Future).",
+            "'task_exception' is deprecated since 6.0. Use the `task_executor` ``failed`` signal instead (and propagated Future).",
             DeprecationWarning,
         )
         return self._last_task_exception_cause()
