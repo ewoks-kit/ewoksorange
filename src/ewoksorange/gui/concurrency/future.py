@@ -91,7 +91,7 @@ class TaskFuture:
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
         """
-        return self._future.exception(timeout=timeout) is None
+        return self.exception(timeout=timeout) is None
 
     def exception(self, timeout: Optional[float] = None) -> Optional[BaseException]:
         """The exception raised by the ewoks task execution.
@@ -113,7 +113,7 @@ class TaskFuture:
         :raises CancelledError: The task was cancelled before it started.
         :return: The exception or `None` when the task succeeded.
         """
-        exc = self._future.exception(timeout=timeout)
+        exc = self.exception(timeout=timeout)
         if exc is None:
             return None
         # task.execute() wraps run() exceptions as TaskExecutionError(...) from
