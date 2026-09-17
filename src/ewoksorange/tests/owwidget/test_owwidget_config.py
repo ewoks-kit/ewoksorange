@@ -191,8 +191,9 @@ def test_configure_sync(ewoksorange_qtapp):
         assert future.done()
         assert not widget.has_pending_task()
         assert future.exception() is None
-        assert widget.get_task_output_values()["value"] == 1
-        assert widget.get_task_output_values()["thread_id"] == threading.get_ident()
+        outputs = future.result()
+        assert outputs["value"].value == 1
+        assert outputs["thread_id"].value == threading.get_ident()
     finally:
         widget.onDeleteWidget()
 
@@ -275,9 +276,9 @@ def test_configure_process(ewoksorange_qtapp, widget_class):
         assert wait_until(lambda: not widget.has_pending_task(), timeout=120)
         assert future.exception() is None
 
-        outputs = widget.get_task_output_values()
-        assert outputs["value"] == 3
-        assert outputs["pid"] != os.getpid()
+        outputs = future.result()
+        assert outputs["value"].value == 3
+        assert outputs["pid"].value != os.getpid()
     finally:
         widget.onDeleteWidget()
 
@@ -301,7 +302,7 @@ def test_configure_process_progress(ewoksorange_qtapp):
         assert wait_until(lambda: not widget.has_pending_task(), timeout=120)
         assert future.exception() is None
 
-        assert widget.get_task_output_values()["pid"] != os.getpid()
+        assert future.result()["pid"].value != os.getpid()
         # `progressBarInit` reports 0 before the task starts.
         assert received == [0] + percentages
     finally:

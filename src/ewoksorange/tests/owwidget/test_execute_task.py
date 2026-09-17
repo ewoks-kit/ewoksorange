@@ -5,6 +5,7 @@ import pytest
 from ewokscore.task import Task
 from ewokscore.task import TaskInputError
 
+from ...gui.concurrency.future import TaskFuture
 from ...gui.owwidgets.meta import ow_build_opts
 from ...gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ...gui.owwidgets.threaded import OWEwoksWidgetOneThread
@@ -35,13 +36,11 @@ class PatchCalls:
         self.__recorded_calls = recorded_calls
         self.__failures = failures
         super().__init__(*args, **kw)
+        self.task_executor.finished.connect(self.__task_finished)
 
-    def task_output_changed(self) -> None:
-        self.__recorded_calls.append("task_output_changed")
-        super().task_output_changed()
-        exception = self.__failures.get("task_output_changed")
-        if exception:
-            raise exception
+    def __task_finished(self, task_future: TaskFuture) -> None:
+        # Emitted after `trigger_downstream`/`clear_downstream` ran.
+        self.__recorded_calls.append("task_finished")
 
     def trigger_downstream(self) -> None:
         self.__recorded_calls.append("trigger_downstream")
@@ -117,7 +116,7 @@ def test_task_success(task_cls):
     if issubclass(task_cls, Task):
         assert recorded_calls == ["run"]
     else:
-        assert recorded_calls == ["run", "trigger_downstream", "task_output_changed"]
+        assert recorded_calls == ["run", "trigger_downstream", "task_finished"]
 
 
 @pytest.mark.parametrize("task_cls", _TASK_CLASSES + _WIDGET_CLASSES)
@@ -129,7 +128,7 @@ def test_task_init_failure(task_cls):
     if issubclass(task_cls, Task):
         assert recorded_calls == []
     else:
-        assert recorded_calls == ["clear_downstream", "task_output_changed"]
+        assert recorded_calls == ["clear_downstream", "task_finished"]
 
 
 @pytest.mark.parametrize("task_cls", _TASK_CLASSES + _WIDGET_CLASSES)
@@ -147,32 +146,7 @@ def test_task_run_failure(task_cls):
     else:
         with pytest.raises(_TestException, match="error in task") as exc_info:
             _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
-        assert recorded_calls == ["run", "clear_downstream", "task_output_changed"]
-
-
-@pytest.mark.parametrize("task_cls", _WIDGET_CLASSES)
-def test_success_with_output_changed_failure(task_cls):
-    recorded_calls = list()
-    failures = {
-        "task_output_changed": _TestException("error in widget: output callback")
-    }
-
-    with pytest.raises(_TestException, match="error in widget: output callback"):
-        _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
-    assert recorded_calls == ["run", "trigger_downstream", "task_output_changed"]
-
-
-@pytest.mark.parametrize("task_cls", _WIDGET_CLASSES)
-def test_failure_with_output_changed_failure(task_cls):
-    recorded_calls = list()
-    failures = {
-        "run": _TestException("error in task"),
-        "task_output_changed": _TestException("error in widget: output callback"),
-    }
-
-    with pytest.raises(_TestException, match="error in task"):
-        _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
-    assert recorded_calls == ["run", "clear_downstream", "task_output_changed"]
+        assert recorded_calls == ["run", "clear_downstream", "task_finished"]
 
 
 @pytest.mark.parametrize("task_cls", _WIDGET_CLASSES)
@@ -184,7 +158,7 @@ def test_success_with_propagation_failure(task_cls):
 
     with pytest.raises(_TestException, match="error in widget: success propagation"):
         _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
-    assert recorded_calls == ["run", "trigger_downstream", "task_output_changed"]
+    assert recorded_calls == ["run", "trigger_downstream", "task_finished"]
 
 
 @pytest.mark.parametrize("task_cls", _WIDGET_CLASSES)
@@ -197,34 +171,46 @@ def test_failure_with_propagation_failure(task_cls):
 
     with pytest.raises(_TestException, match="error in task"):
         _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
-    assert recorded_calls == ["run", "clear_downstream", "task_output_changed"]
+    assert recorded_calls == ["run", "clear_downstream", "task_finished"]
 
 
-@pytest.mark.parametrize("task_cls", _WIDGET_CLASSES)
-def test_success_with_propagation_and_output_changed_failure(task_cls):
+def test_deprecated_task_output_changed():
+    """The deprecated hook still runs, and its exception still surfaces."""
     recorded_calls = list()
     failures = {
-        "trigger_downstream": _TestException("error in widget: success propagation"),
-        "task_output_changed": _TestException("error in widget: output callback"),
+        "task_output_changed": _TestException("error in widget: output callback")
     }
+
+    with pytest.warns(DeprecationWarning, match="task_output_changed"):
+
+        class DeprecatedHookWidget(
+            OWEwoksWidgetNoThread,
+            **ow_build_opts,
+            ewokstaskclass=TaskForTesting,
+        ):
+            name = "TaskForTesting"
+
+            def __init__(
+                self,
+                *args,
+                recorded_calls: List[str],
+                failures: Dict[str, Exception],
+                **kw,
+            ) -> None:
+                self.__recorded_calls = recorded_calls
+                self.__failures = failures
+                super().__init__(*args, **kw)
+
+            def task_output_changed(self) -> None:
+                self.__recorded_calls.append("task_output_changed")
+                super().task_output_changed()
+                exception = self.__failures.get("task_output_changed")
+                if exception:
+                    raise exception
 
     with pytest.raises(_TestException, match="error in widget: output callback"):
-        _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
-    assert recorded_calls == ["run", "trigger_downstream", "task_output_changed"]
-
-
-@pytest.mark.parametrize("task_cls", _WIDGET_CLASSES)
-def test_failure_with_propagation_and_output_changed_failure(task_cls):
-    recorded_calls = list()
-    failures = {
-        "run": _TestException("error in task"),
-        "clear_downstream": _TestException("error in widget: success propagation"),
-        "task_output_changed": _TestException("error in widget: output callback"),
-    }
-
-    with pytest.raises(_TestException, match="error in task"):
-        _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
-    assert recorded_calls == ["run", "clear_downstream", "task_output_changed"]
+        _execute_task(DeprecatedHookWidget, recorded_calls, failures, a=1, b=2)
+    assert recorded_calls == ["run", "task_output_changed"]
 
 
 def _execute_task(

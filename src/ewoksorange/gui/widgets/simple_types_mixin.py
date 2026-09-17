@@ -1,3 +1,4 @@
+from ..concurrency.executor import TaskFuture
 from ..orange_utils.orange_imports import gui
 from .parameter_form import ParameterForm
 
@@ -7,6 +8,7 @@ class SimpleTypesWidgetMixin:
         super().__init__()
         self._init_control_area()
         self._init_main_area()
+        self.task_executor.succeeded.connect(self._update_output_form)
 
     def _init_control_area(self):
         super()._init_control_area()
@@ -56,10 +58,9 @@ class SimpleTypesWidgetMixin:
             self._default_inputs_form.set_parameter_enabled(name, True)
         super().handleNewSignals()
 
-    def task_output_changed(self):
-        for name, value in self.get_task_output_values().items():
+    def _update_output_form(self, task_future: TaskFuture) -> None:
+        for name, value in task_future.output_values().items():
             self._output_form.set_parameter_value(name, value)
-        super().task_output_changed()
 
 
 class IntegerAdderMixin(SimpleTypesWidgetMixin):

@@ -10,6 +10,7 @@ from ewokscore.variable import value_from_transfer
 from ewoksutils.import_utils import import_qualname
 from ewoksutils.import_utils import qualname
 
+from ..concurrency.executor import TaskFuture
 from ..orange_utils import _signals
 from ..orange_utils import settings
 from ..orange_utils.signal_manager import SignalManagerWithoutScheme
@@ -155,18 +156,17 @@ def execute_ewoks_owwidget(
         # Receive and store results
         outputsReceived = QtEvent()
 
-        def _output_cb():
+        def _output_cb(task_future: TaskFuture) -> None:
             nonlocal exception
 
             try:
-                exception = (
-                    widget._last_task_exception_cause() or widget.post_task_exception
-                )
-                result.update(widget.get_task_output_values())
+                exception = task_future.task_exception() or widget.post_task_exception
+                if exception is None:
+                    result.update(task_future.output_values())
             finally:
                 outputsReceived.set()
 
-        widget.task_output_changed_callbacks.append(_output_cb)
+        widget.task_executor.finished.connect(_output_cb)
 
         # Call the input setters
         if inputs:
