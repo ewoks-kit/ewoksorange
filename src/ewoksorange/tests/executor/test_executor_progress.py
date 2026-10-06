@@ -2,6 +2,7 @@
 
 import os
 from typing import List
+from typing import Union
 
 from ...gui.qt_utils.progress import QProgress
 from .tasks import PidTask
@@ -9,7 +10,8 @@ from .tasks import ProgressTask
 
 
 def test_progress(ewoksorange_qtapp, executor_context_factory):
-    """The caller's progress object receives every value the task reports.
+    """The caller's progress object receives every value the task reports,
+    after `aboutToStart` and `started`.
 
     `QProgress` is a `QObject` and therefore not picklable, which the process
     backend has to work around without the caller noticing.
@@ -18,8 +20,10 @@ def test_progress(ewoksorange_qtapp, executor_context_factory):
 
     with executor_context_factory() as (kind, executor, recorder):
         progress = QProgress()
-        received: List[int] = []
-        progress.sigProgressChanged.connect(received.append)
+        events: List[Union[str, int]] = []
+        executor.aboutToStart.connect(lambda _: events.append("aboutToStart"))
+        executor.started.connect(lambda _: events.append("started"))
+        progress.sigProgressChanged.connect(events.append)
 
         future = executor.submit_task(
             ProgressTask, inputs={"percentages": percentages}, progress=progress
@@ -28,10 +32,10 @@ def test_progress(ewoksorange_qtapp, executor_context_factory):
         result = future.result(timeout=30)
 
         # `finished` is only emitted once all progress values were relayed, so
-        # no polling on `received` is needed here.
+        # no polling on `events` is needed here.
         recorder.wait_for("finished", 1)
 
-        assert received == percentages
+        assert events == ["aboutToStart", "started"] + percentages
         assert progress.progress == 100
 
         if kind == "process":
