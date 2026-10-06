@@ -53,6 +53,7 @@ def test_cancel_queued_task(ewoksorange_qtapp, executor_context_factory):
         recorder.wait_for("finished", n_ran)
         recorder.assert_counts(
             submitted=1 + len(fillers) + 1,
+            aboutToStart=1 + len(fillers) + 1,
             started=n_ran,
             succeeded=n_ran,
             finished=n_ran,
