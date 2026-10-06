@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import os
@@ -626,6 +627,33 @@ def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):
     if isinstance(destination, str) and os.path.dirname(destination):
         os.makedirs(os.path.dirname(destination), exist_ok=True)
     tree.write(destination, encoding="utf-8", xml_declaration=True)
+
+
+def scheme_to_ows_bytes(scheme, filename: Optional[str] = None) -> bytes:
+    """Serialize an Orange scheme, with the current settings of its widgets, as
+    Orange does when saving a workflow (see `CanvasMainWindow.save_scheme_to`).
+
+    Must be called from the Qt GUI thread.
+
+    :param scheme: Orange `WidgetsScheme` of a canvas.
+    :param filename: The destination file, used to resolve relative paths in the
+                     widget settings.
+    :return: The content of the `.ows` file.
+    """
+    buffer = io.BytesIO()
+    if not filename:
+        scheme.save_to(buffer, pretty=True, pickle_fallback=True)
+        return buffer.getvalue()
+
+    # The scheme stays associated with its own file: restore its base directory.
+    basedir = scheme.get_runtime_env("basedir")
+    scheme.set_runtime_env("basedir", os.path.dirname(os.path.abspath(filename)))
+    try:
+        # Syncs the widget settings with the node properties before writing.
+        scheme.save_to(buffer, pretty=True, pickle_fallback=True)
+    finally:
+        scheme.set_runtime_env("basedir", basedir)
+    return buffer.getvalue()
 
 
 def _serialize_annotation(annotation: readwrite._annotation) -> dict:

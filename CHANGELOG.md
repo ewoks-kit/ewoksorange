@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support OASYS2 (`pip install ewoksorange[oasys2]`) next to the standard
   `orange-canvas-core` + `orange-widget-base` and the optional Orange3.
 - `TaskFuture.output_values`, `TaskFuture.succeeded` and `TaskFuture.task_exception`.
+- `ewoksorange.tasks.SaveWorkflow` task and its "Save workflow" widget (new
+  "Ewoks Tools" widget category) to save the current workflow, with the current
+  widget settings, to an `.ows` file.
+- `scheme_from_job_id` to retrieve the Orange scheme from which a task is executed
+  (by `Task.job_id`), `scheme_to_ows_bytes` to serialize a scheme with its current
+  widget settings and `call_in_gui_thread` to execute code in the Qt GUI thread.
 
 ### Changed
 
