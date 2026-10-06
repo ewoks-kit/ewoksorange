@@ -88,6 +88,9 @@ class EwoksExecutor(QObject):
     submitted = Signal(TaskFuture)
     """Emitted when a task is submitted."""
 
+    aboutToStart = Signal(TaskFuture)
+    """Emitted when a task is about to start."""
+
     started = Signal(TaskFuture)
     """Emitted when a task starts executing."""
 
@@ -278,6 +281,7 @@ class EwoksExecutor(QObject):
         holder[0] = task_future
 
         self.submitted.emit(task_future)
+        self.aboutToStart.emit(task_future)
 
         after_submitted()
 

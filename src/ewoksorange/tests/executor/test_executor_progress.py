@@ -58,7 +58,9 @@ def test_progress_for_task_without_progress_support(
         result = future.result(timeout=30)
 
         recorder.wait_for("finished", 1)
-        recorder.assert_counts(submitted=1, started=1, succeeded=1, finished=1)
+        recorder.assert_counts(
+            submitted=1, aboutToStart=1, started=1, succeeded=1, finished=1
+        )
 
         assert result["value"].value == 3
         assert received == []

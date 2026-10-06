@@ -32,7 +32,12 @@ def test_drop_if_busy(ewoksorange_qtapp, executor_context_factory):
 
         recorder.wait_for("finished", 1)
         recorder.assert_counts(
-            submitted=1, ignored=len(extra), started=1, succeeded=1, finished=1
+            submitted=1,
+            aboutToStart=1,
+            ignored=len(extra),
+            started=1,
+            succeeded=1,
+            finished=1,
         )
         if thread is not None:
             thread.join(timeout=10)
@@ -54,4 +59,6 @@ def test_always_queue(ewoksorange_qtapp, executor_context_factory):
             future.result(timeout=10)
 
         recorder.wait_for("finished", 3)
-        recorder.assert_counts(submitted=3, started=3, succeeded=3, finished=3)
+        recorder.assert_counts(
+            submitted=3, aboutToStart=3, started=3, succeeded=3, finished=3
+        )

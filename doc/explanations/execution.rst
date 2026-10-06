@@ -27,7 +27,8 @@ Key players
   (:meth:`submit_task() <ewoksorange.gui.concurrency.executor.EwoksExecutor.submit_task>`)
   and runs them synchronously or on a background thread/process, re-entering
   the GUI thread through Qt signals
-  (:attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.started`,
+  (:attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.aboutToStart`,
+  :attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.started`,
   :attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.succeeded`,
   :attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.failed`).
 
@@ -46,9 +47,10 @@ One execution cycle
         SM->>W: handleNewSignals()
         W->>EX: submit_task()
         Note right of W: has_pending_task() -> True (synchronous)
-        EX->>BG: run Task.execute()
+        EX->>W: aboutToStart (direct, before the task may run)
         W->>W: progressBarInit()
         Note right of SM: is_active(node) -> True
+        EX->>BG: run Task.execute()
 
         BG-->>BG: task runs
         Note right of BG: has_pending_task() -> still True<br/>(succeeded/failed not delivered yet)
@@ -128,6 +130,7 @@ comes from the initial trigger or from an upstream node's propagation:
             has_pending_task() == False
             is_active(node) == False
         end note
+
 
 The ``Submitted`` and ``Finishing`` states are exactly where a naive
 single-flag check would be fooled: the task's real state and what one
