@@ -28,7 +28,7 @@ class ThreadedTaskExecutor(QThread, TaskExecutor):
     def cancel_running_task(self):
         """
         cancel current processing.
-        The targetted EwoksTask must have implemented the 'cancel' function
+        The targetted EwoksTask must have implemented the 'abort' function
         """
         if self.current_task is not None:
-            self.current_task.cancel()
+            self.current_task.abort()
