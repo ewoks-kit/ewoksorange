@@ -285,6 +285,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         Merge default and dynamic inputs producing the inputs mapping used by tasks.
 
+        :warning: 
+        This returns a dict of Variable wrappers or raw values. 
+        You may prefere to use `get_task_input_values` to get a plain values list.
+
         :return: Mapping of input name -> Variable or value (may include missing markers).
         """
         inputs = self.get_default_input_values()
