@@ -89,7 +89,8 @@ class EwoksExecutor(QObject):
     """Emitted when a task is submitted."""
 
     aboutToStart = Signal(TaskFuture)
-    """Emitted when a task is about to start."""
+    """Emitted when a worker picks the task up, right before it is created and
+    executed. Not emitted for a task cancelled while queued."""
 
     started = Signal(TaskFuture)
     """Emitted when a task starts executing."""
@@ -165,6 +166,7 @@ class EwoksExecutor(QObject):
             task_class,
             task_kwargs,
             controller,
+            on_about_to_start=lambda: _emit_about_to_start(self_ref, holder),
             on_started=lambda: _emit_started(self_ref, holder),
         )
 
@@ -191,6 +193,7 @@ class EwoksExecutor(QObject):
             task_kwargs,
             controller,
             ready_event,
+            on_about_to_start=lambda: _emit_about_to_start(self_ref, holder),
             on_started=lambda: _emit_started(self_ref, holder),
         )
 
@@ -230,7 +233,10 @@ class EwoksExecutor(QObject):
 
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
-        controller.watch_started(lambda: _emit_started(self_ref, holder))
+        controller.watch_started(
+            on_about_to_start=lambda: _emit_about_to_start(self_ref, holder),
+            on_started=lambda: _emit_started(self_ref, holder),
+        )
 
         raw_future = self._executor.submit(runner)
 
@@ -281,7 +287,6 @@ class EwoksExecutor(QObject):
         holder[0] = task_future
 
         self.submitted.emit(task_future)
-        self.aboutToStart.emit(task_future)
 
         after_submitted()
 
@@ -362,6 +367,15 @@ def _done_callback(
     executor = executor_ref()
     if executor is not None:
         executor._handle_done(raw_future, task_future, controller)
+
+
+def _emit_about_to_start(
+    executor_ref: weakref.ReferenceType[EwoksExecutor],
+    holder: List[Optional[TaskFuture]],
+) -> None:
+    executor = executor_ref()
+    if executor is not None and holder and holder[0] is not None:
+        executor.aboutToStart.emit(holder[0])
 
 
 def _emit_started(

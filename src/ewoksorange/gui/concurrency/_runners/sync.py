@@ -17,11 +17,16 @@ class SyncTaskRunner(TaskRunner):
         task_class: Type[Task],
         task_kwargs: Dict[str, Any],
         controller: SyncTaskController,
+        on_about_to_start: Callable[[], None],
         on_started: Callable[[], None],
     ):
         super().__init__(task_class, task_kwargs, controller.abort_event)
         self._controller = controller
+        self._on_about_to_start = on_about_to_start
         self._on_started = on_started
+
+    def _announce_about_to_start(self) -> None:
+        self._on_about_to_start()
 
     def _announce_started(self, task: Task) -> None:
         self._controller.set_task(task)
