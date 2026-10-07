@@ -78,7 +78,7 @@ class ProcessTaskController(TaskController):
                 if self._on_started_thread is not None:
                     # Set in all cases by the "started" relay (or its timeout) - from 'watch_started'.
                     if not self._started_handled.wait(timeout=300):
-                        continue
+                        return
                 try:
                     on_progress(value)
                 except Exception:
