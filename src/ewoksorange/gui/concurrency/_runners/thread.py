@@ -19,15 +19,20 @@ class ThreadTaskRunner(TaskRunner):
         task_kwargs: Dict[str, Any],
         controller: ThreadTaskController,
         ready_event: threading.Event,
+        on_about_to_start: Callable[[], None],
         on_started: Callable[[], None],
     ):
         super().__init__(task_class, task_kwargs, controller.abort_event)
         self._controller = controller
         self._ready_event = ready_event
+        self._on_about_to_start = on_about_to_start
         self._on_started = on_started
 
     def _wait_ready(self) -> None:
         self._ready_event.wait()
+
+    def _announce_about_to_start(self) -> None:
+        self._on_about_to_start()
 
     def _announce_started(self, task: Task) -> None:
         self._controller.set_task(task)

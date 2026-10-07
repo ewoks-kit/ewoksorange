@@ -33,13 +33,22 @@ class ProcessTaskController(TaskController):
         self._progress_queue = progress_queue
         self._on_progress_thread: Optional[threading.Thread] = None
 
-    def watch_started(self, on_started: Callable[[], None]) -> None:
-        """Call `on_started` once the child process reports it has started."""
+    def watch_started(
+        self, on_about_to_start: Callable[[], None], on_started: Callable[[], None]
+    ) -> None:
+        """Call `on_about_to_start` and `on_started` once the child process
+        reports the task is about to start and has started."""
 
         def _relay():
             try:
-                if self._started_queue.get(timeout=300) == "started":
-                    on_started()
+                while True:
+                    message = self._started_queue.get(timeout=300)
+                    if message == "about_to_start":
+                        on_about_to_start()
+                        continue
+                    if message == "started":
+                        on_started()
+                    return
             except Exception:
                 _logger.debug("started relay failed", exc_info=True)
             finally:

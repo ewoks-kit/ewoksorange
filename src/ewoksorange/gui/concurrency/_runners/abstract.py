@@ -27,6 +27,7 @@ class TaskRunner(ABC):
 
     def __call__(self) -> VariableContainer:
         self._wait_ready()
+        self._announce_about_to_start()
         task = self._create_task()
         # Announce (only) once the task exists, so an abort() reacting to
         # that signal always finds a task to abort.
@@ -38,6 +39,11 @@ class TaskRunner(ABC):
 
     def _wait_ready(self) -> None:
         """Block until the task may be created and executed."""
+
+    @abstractmethod
+    def _announce_about_to_start(self) -> None:
+        """Announce the task is about to be created and executed."""
+        raise NotImplementedError
 
     @abstractmethod
     def _announce_started(self, task: Task) -> None:

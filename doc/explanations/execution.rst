@@ -47,10 +47,12 @@ One execution cycle
         SM->>W: handleNewSignals()
         W->>EX: submit_task()
         Note right of W: has_pending_task() -> True (synchronous)
-        EX->>W: aboutToStart (direct, before the task may run)
+        EX->>BG: queue the task
+        Note over BG: a worker picks the task up
+        BG--)W: aboutToStart (queued across threads)
         W->>W: progressBarInit()
         Note right of SM: is_active(node) -> True
-        EX->>BG: run Task.execute()
+        BG--)W: started (queued across threads)
 
         BG-->>BG: task runs
         Note right of BG: has_pending_task() -> still True<br/>(succeeded/failed not delivered yet)

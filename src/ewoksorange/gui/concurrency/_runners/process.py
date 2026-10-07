@@ -32,6 +32,9 @@ class ProcessTaskRunner(TaskRunner):
     def _wait_ready(self) -> None:
         self._ready_event.wait()
 
+    def _announce_about_to_start(self) -> None:
+        self._started_queue.put("about_to_start")
+
     def _announce_started(self, task: Task) -> None:
         self._started_queue.put("started")
 
