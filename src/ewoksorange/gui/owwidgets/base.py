@@ -284,9 +284,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             names -= set(cls._ewoks_inputs_to_hide_from_orange)
         return names
 
-    def get_task_inputs(self, exclude_hidden: bool = False) -> dict:
+    def get_task_inputs(self, exclude_hidden: bool = False) -> Mapping[str, Variable]:
         """
         Merge default and dynamic inputs producing the inputs mapping used by tasks.
+
+        :warning: 
+        This returns a dict of Variable wrappers or raw values. 
+        You may prefere to use `get_task_input_values` to get a plain values list.
 
         :return: Mapping of input name -> Variable or value (may include missing markers).
         """
@@ -593,6 +597,10 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
     def get_task_outputs(self, exclude_hidden: bool = False) -> Mapping[str, Variable]:
         """
         Return task output variables.
+
+        :warning: 
+        This returns a dict of Variable wrappers or raw values. 
+        You may prefere to use `get_task_output_values` to get a plain values list.
 
         :param exclude_hidden: Leave out the outputs hidden from Orange.
         :return: The task's :class:`~ewokscore.variable.VariableContainer`, or a
