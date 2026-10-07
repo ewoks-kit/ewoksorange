@@ -140,18 +140,7 @@ def get_all_qtwidgets() -> list:
     app = get_qtapp()
     if app is None:
         return list()
-
-    sapp = str(type(app))
-    if "PyQt6" in sapp:
-        from PyQt6.sip import ispycreated as createdByPython  # noqa
-    elif "PyQt5" in sapp or "PyQt6" in sapp:
-        from PyQt5.sip import ispycreated as createdByPython  # noqa
-    elif "PySide2" in sapp:
-        from PySide2.shiboken2 import createdByPython  # noqa
-    else:
-        raise RuntimeError(f"'{sapp}' not supported")
-
-    return [widget for widget in app.allWidgets() if createdByPython(widget)]
+    return [widget for widget in app.allWidgets() if QtCore.ispycreated(widget)]
 
 
 def qt_message_handler(level, context, message) -> None:
