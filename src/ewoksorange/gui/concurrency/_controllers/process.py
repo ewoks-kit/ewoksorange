@@ -68,6 +68,10 @@ class ProcessTaskController(TaskController):
 
         def _relay():
             while True:
+                if self._on_started_thread is not None:
+                    # Set in all cases by the "started" relay (or its timeout) - from 'watch_started'.
+                    if not self._started_handled.wait(timeout=300):
+                        return
                 try:
                     value = self._progress_queue.get(timeout=300)
                 except Exception:
@@ -75,10 +79,6 @@ class ProcessTaskController(TaskController):
                     return
                 if value == PROGRESS_STOP:
                     return
-                if self._on_started_thread is not None:
-                    # Set in all cases by the "started" relay (or its timeout) - from 'watch_started'.
-                    if not self._started_handled.wait(timeout=300):
-                        return
                 try:
                     on_progress(value)
                 except Exception:
