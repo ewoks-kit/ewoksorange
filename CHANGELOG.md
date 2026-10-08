@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New property `auto_propagate` in `ewoksorange.gui.owwidgets.OWEwoksBaseWidget`. Allow to propagate outputs downstream without triggering execution. 
 - Support OASYS2 (`pip install ewoksorange[oasys2]`) next to the standard
   `orange-canvas-core` + `orange-widget-base` and the optional Orange3.
 - `TaskFuture.output_values`, `TaskFuture.succeeded` and `TaskFuture.task_exception`.
