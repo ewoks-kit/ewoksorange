@@ -21,6 +21,7 @@ class SignalRecorder:
         self._order: List[str] = []
         self._default_counts = {
             "submitted": 0,
+            "aboutToStart": 0,
             "started": 0,
             "succeeded": 0,
             "failed": 0,
@@ -31,6 +32,7 @@ class SignalRecorder:
 
     def connect(self, executor: EwoksExecutor) -> None:
         executor.submitted.connect(self._store_future("submitted"))
+        executor.aboutToStart.connect(self._store_future("aboutToStart"))
         executor.started.connect(self._store_future("started"))
         executor.succeeded.connect(self._store_future("succeeded"))
         executor.failed.connect(self._store_future("failed"))

@@ -38,7 +38,9 @@ def test_parallel_execution(ewoksorange_qtapp, executor_context_factory) -> None
         assert overlapping_pairs >= workers
 
         recorder.wait_for("finished", 4)
-        recorder.assert_counts(submitted=4, started=4, succeeded=4, finished=4)
+        recorder.assert_counts(
+            submitted=4, aboutToStart=4, started=4, succeeded=4, finished=4
+        )
 
 
 def _overlaps(interval_a: Tuple[float, float], interval_b: Tuple[float, float]) -> bool:

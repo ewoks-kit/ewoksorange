@@ -167,6 +167,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             self.__taskProgress.sigProgressChanged.connect(self._onProgressChanged)
 
         self.__executor.submitted.connect(self.__on_submitted)
+        self.__executor.aboutToStart.connect(self.__on_about_to_start)
         self.__executor.started.connect(self.__on_started)
         self.__executor.succeeded.connect(self.__on_succeeded)
         self.__executor.failed.connect(self.__on_failed)
@@ -1012,14 +1013,21 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         """
         self.__propagate_by_future[task_future] = self.__propagate_next
 
+    def __on_about_to_start(self, task_future: TaskFuture) -> None:
+        """
+        Start the Orange progress bar before the task starts executing.
+
+        :param task_future: The future of the task about to start.
+        """
+        self.progressBarInit()
+
     def __on_started(self, task_future: TaskFuture) -> None:
         """
-        Start the Orange progress bar when the task starts executing.
+        Store the task currently executing.
 
         :param task_future: The future of the started task.
         """
         self.__current_task_future = task_future
-        self.progressBarInit()
 
     def __on_succeeded(self, task_future: TaskFuture) -> None:
         """

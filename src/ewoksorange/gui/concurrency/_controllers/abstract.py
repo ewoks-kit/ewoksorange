@@ -23,8 +23,11 @@ class TaskController(ABC):
         """Return True if the task was actually aborted."""
         raise NotImplementedError
 
-    def watch_started(self, on_started: Callable[[], None]) -> None:
-        """Register `on_started` to be called once the task has started.
+    def watch_started(
+        self, on_about_to_start: Callable[[], None], on_started: Callable[[], None]
+    ) -> None:
+        """Register `on_about_to_start` and `on_started` to be called once the
+        task is about to start and once it has started.
 
         Optional: only meaningful for controllers where "started" is reported
         through a channel separate from task completion.

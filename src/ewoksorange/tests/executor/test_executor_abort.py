@@ -36,7 +36,9 @@ def test_abort(ewoksorange_qtapp, executor_context_factory):
         assert future.aborted()
 
         recorder.wait_for("finished", 1)
-        recorder.assert_counts(submitted=1, started=1, aborted=1, failed=1, finished=1)
+        recorder.assert_counts(
+            submitted=1, aboutToStart=1, started=1, aborted=1, failed=1, finished=1
+        )
         recorder.assert_failed(future, TaskExecutionError, match=match)
         if thread is not None:
             thread.join(timeout=10)
@@ -75,7 +77,7 @@ def test_abort_leaves_outputs_undefined(
 
         recorder.wait_for("finished", 1)
         recorder.assert_counts(
-            submitted=1, started=1, succeeded=1, finished=1, aborted=1
+            submitted=1, aboutToStart=1, started=1, succeeded=1, finished=1, aborted=1
         )
         if thread is not None:
             thread.join(timeout=10)
@@ -109,7 +111,7 @@ def test_abort_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factor
 
         recorder.wait_for("finished", 1)
         recorder.assert_counts(
-            submitted=1, started=1, succeeded=1, finished=1, aborted=1
+            submitted=1, aboutToStart=1, started=1, succeeded=1, finished=1, aborted=1
         )
         if thread is not None:
             thread.join(timeout=10)
@@ -147,7 +149,7 @@ def test_abort_does_not_guarantee_cancellation(
 
         recorder.wait_for("finished", 1)
         recorder.assert_counts(
-            submitted=1, started=1, succeeded=1, finished=1, aborted=1
+            submitted=1, aboutToStart=1, started=1, succeeded=1, finished=1, aborted=1
         )
         if thread is not None:
             thread.join(timeout=10)

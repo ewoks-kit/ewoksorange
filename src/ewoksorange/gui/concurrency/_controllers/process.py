@@ -28,18 +28,31 @@ class ProcessTaskController(TaskController):
         self._abort_event = abort_event
         self._aborted_event = aborted_event
         self._started_queue = started_queue
+        # Set once the "started" relay is done: both "about_to_start" and
+        # "started" are handled sequentially by the same thread, so this also
+        # covers `on_about_to_start`. Also set if the relay ends early (timeout,
+        # stop request or callback error), in which case `on_started` never ran.
         self._started_handled = threading.Event()
         self._on_started_thread: Optional[threading.Thread] = None
         self._progress_queue = progress_queue
         self._on_progress_thread: Optional[threading.Thread] = None
 
-    def watch_started(self, on_started: Callable[[], None]) -> None:
-        """Call `on_started` once the child process reports it has started."""
+    def watch_started(
+        self, on_about_to_start: Callable[[], None], on_started: Callable[[], None]
+    ) -> None:
+        """Call `on_about_to_start` and `on_started` once the child process
+        reports the task is about to start and has started."""
 
         def _relay():
             try:
-                if self._started_queue.get(timeout=300) == "started":
-                    on_started()
+                while True:
+                    message = self._started_queue.get(timeout=300)
+                    if message == "about_to_start":
+                        on_about_to_start()
+                        continue
+                    if message == "started":
+                        on_started()
+                    return
             except Exception:
                 _logger.debug("started relay failed", exc_info=True)
             finally:
@@ -68,6 +81,11 @@ class ProcessTaskController(TaskController):
 
         def _relay():
             while True:
+                if self._on_started_thread is not None:
+                    # Set in all cases by the "started" relay (or its timeout) - from 'watch_started'.
+                    # Make sure a progress value could not be emitted before 'aboutToStart'.
+                    if not self._started_handled.wait(timeout=300):
+                        return
                 try:
                     value = self._progress_queue.get(timeout=300)
                 except Exception:

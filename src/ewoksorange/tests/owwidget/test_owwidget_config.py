@@ -285,7 +285,7 @@ def test_configure_process(ewoksorange_qtapp, widget_class):
 
 def test_configure_process_progress(ewoksorange_qtapp):
     """Task progress is relayed from the worker process to the progress bar."""
-    percentages = [10, 40, 100]
+    percentages = [10.0, 40.0, 100.0]
 
     widget = OWProcessProgress()
     received: List[int] = []
@@ -304,7 +304,7 @@ def test_configure_process_progress(ewoksorange_qtapp):
 
         assert future.result()["pid"].value != os.getpid()
         # `progressBarInit` reports 0 before the task starts.
-        assert received == [0] + percentages
+        assert received == [0.0] + percentages
     finally:
         widget.onDeleteWidget()
 
