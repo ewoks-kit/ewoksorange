@@ -43,7 +43,7 @@ Between Ewoks-Orange widgets, outputs are sent as
 - an **EwoksOrange widget**'s output **value** is ``None`` or ``MISSING_DATA``:
   :meth:`~ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget.trigger_downstream`
   checks the variable's value and sends ``None`` instead of the variable;
-- an **Ewoks-Orange widget**'s task fails:
+- an **EwoksOrange widget**'s task fails:
   :meth:`~ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget.clear_downstream`
   sends ``None`` on all its outputs.
 
