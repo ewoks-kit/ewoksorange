@@ -12,10 +12,10 @@
     link as a dashed line, and the receiving widget is expected to drop what it
     received earlier on that input.
 
-    **Ewoks-Orange** widgets follow the Orange convention: a ``None`` received
-    on a link is considered invalid by
-    :func:`~ewoksorange.gui.utils.invalid_data.is_invalid_data` and removes the
-    input instead of passing ``None`` to the task.
+**Ewoks-Orange** widgets follow the Orange convention: a ``None`` received
+on a link is considered invalid by
+:func:`~ewoksorange.gui.utils.invalid_data.is_invalid_data` and removes the
+input instead of passing ``None`` to the task.
 
 Technical details
 -----------------
