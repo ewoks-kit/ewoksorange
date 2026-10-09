@@ -62,5 +62,6 @@ inputs itself from the source code, typically from its GUI:
   saved in the ``.ows`` file.
 
 These inputs do not go through a link so link appearances are untouched.
-They still follow the same rule though: setting a bare ``None`` with either
-method removes the input rather than passing ``None`` to the task.
+Any None value set with either method is passed to the task as-is, and is not
+considered invalid. At the time being this is the only way to pass a None value
+to a task input when using Ewoks-Orange widgets.
