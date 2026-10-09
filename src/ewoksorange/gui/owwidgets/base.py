@@ -1019,7 +1019,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
     def __on_started(self, task_future: TaskFuture) -> None:
         """
-        Remember the task currently executing.
+        Store the task currently executing.
 
         :param task_future: The future of the started task.
         """
