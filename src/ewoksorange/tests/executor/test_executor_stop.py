@@ -10,7 +10,7 @@ from .tasks import InterruptStopTask
 from .tasks import PartialStopTask
 
 
-def test_request_stop(ewoksorange_qtapp, executor_context_factory):
+def test_request_stop(qtbot, executor_context_factory):
     """Stop request observed by run(): it raises, so the task fails."""
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"a": 1, "b": 2, "delay": 5}
@@ -50,9 +50,7 @@ def test_request_stop(ewoksorange_qtapp, executor_context_factory):
 
 
 @pytest.mark.parametrize("task_class", [EarlyStopTask, InterruptStopTask])
-def test_stop_leaves_outputs_undefined(
-    ewoksorange_qtapp, executor_context_factory, task_class
-):
+def test_stop_leaves_outputs_undefined(qtbot, executor_context_factory, task_class):
     """Stop request observed by run(): it returns early, so no output is set.
 
     Covers polling `Task.stop_requested` (EarlyStopTask) and reacting
@@ -93,7 +91,7 @@ def test_stop_leaves_outputs_undefined(
             thread.join(timeout=10)
 
 
-def test_stop_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factory):
+def test_stop_leaves_partial_outputs(qtbot, executor_context_factory):
     """Stop request observed by run(): it returns after only some outputs
     were set, leaving the rest undefined."""
     with executor_context_factory() as (kind, executor, recorder):
@@ -132,9 +130,7 @@ def test_stop_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factory
             thread.join(timeout=10)
 
 
-def test_request_stop_does_not_guarantee_stop(
-    ewoksorange_qtapp, executor_context_factory
-):
+def test_request_stop_does_not_guarantee_stop(qtbot, executor_context_factory):
     """A task that never checks `self.stop_requested` always completes normally.
 
     `stop_requested()` still reports True: it reflects that the stop request reached the task,

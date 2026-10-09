@@ -39,6 +39,7 @@ full = ["PyQt6"]
 test = [
     "ewoksorange[full]",
     "pytest >=7",
+    "pytest-qt",
     "pytest-timeout",
 ]
 dev = [
