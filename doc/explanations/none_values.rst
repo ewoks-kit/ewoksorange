@@ -1,8 +1,7 @@
 ``None`` on Orange links
 ========================
 
-In **Ewoks**, ``None`` is an ordinary value. In **Orange**, a ``None`` sent through a
-link means **"no data"**: the canvas draws the link as a dashed line, and the
+In **Ewoks**, ``None`` is a valid value while in **Orange** it means **"no data"**. If ``None`` is sent though a link, the canvas draws it as a dashed line, and the
 receiving widget is expected to drop what it received earlier on that input.
 
 **Ewoks-Orange** widgets follow the Orange convention for what goes through links.
