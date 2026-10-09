@@ -61,6 +61,6 @@ inputs itself from the source code, typically from its GUI:
   sets an input that is also stored in the widget settings, and therefore
   saved in the ``.ows`` file.
 
-These inputs do not go through a link, so the link display is not involved.
+These inputs do not go through a link so link appearances are untouched.
 They still follow the same rule though: setting a bare ``None`` with either
 method removes the input rather than passing ``None`` to the task.
