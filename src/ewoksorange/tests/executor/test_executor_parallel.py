@@ -7,7 +7,7 @@ from .tasks import TimedTask
 
 def test_parallel_execution(qtbot, executor_context_factory) -> None:
     workers: int = 2
-    with executor_context_factory(workers=workers) as (_, executor, recorder):
+    with executor_context_factory(workers=workers) as (_, executor):
         inputs_list = [{"value": i, "delay": 1} for i in range(4)]
         futures = [None] * len(inputs_list)
 
@@ -18,12 +18,22 @@ def test_parallel_execution(qtbot, executor_context_factory) -> None:
             threading.Thread(target=_submit, args=(index, inputs))
             for index, inputs in enumerate(inputs_list)
         ]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join(timeout=10)
+        with qtbot.wait_signals(
+            [
+                executor.submitted,
+                executor.started,
+                executor.succeeded,
+                executor.finished,
+            ]
+            * len(threads),
+            timeout=15_000 * len(threads),
+        ):
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=10)
 
-        results = [future.result(timeout=10) for future in futures]
+            results = [future.result(timeout=10) for future in futures]
 
         # Concurrency must not corrupt individual results.
         assert [r["value"].value for r in results] == list(range(4))
@@ -36,9 +46,6 @@ def test_parallel_execution(qtbot, executor_context_factory) -> None:
         # minimum expected from genuine parallelism is checked.
         overlapping_pairs = sum(_overlaps(a, b) for a, b in combinations(intervals, 2))
         assert overlapping_pairs >= workers
-
-        recorder.wait_for("finished", 4)
-        recorder.assert_counts(submitted=4, started=4, succeeded=4, finished=4)
 
 
 def _overlaps(interval_a: Tuple[float, float], interval_b: Tuple[float, float]) -> bool:
