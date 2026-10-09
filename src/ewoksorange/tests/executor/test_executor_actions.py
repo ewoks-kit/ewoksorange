@@ -9,6 +9,7 @@ from ...gui.concurrency.future import TaskFuture
 from ...gui.concurrency.future import TaskKilledError
 from ...gui.concurrency.future import TaskStoppedError
 from .tasks import AddTask
+from .utils import assert_none_emitted
 
 _ACTIONS = ("cancel", "request_stop", "abort", "kill")
 
@@ -21,146 +22,188 @@ _ERRORS = {
     "kill": (TaskKilledError, "killed before it started"),
 }
 
+# The signals emitted for a queued task, besides `submitted`.
 _SIGNALS = {
-    "cancel": {"cancelled": 1, "finished": 1},
-    "request_stop": {"stopRequested": 1, "failed": 1, "finished": 1},
-    "abort": {"aborted": 1, "failed": 1, "finished": 1},
-    "kill": {"killed": 1, "failed": 1, "finished": 1},
+    "cancel": ("cancelled", "finished"),
+    "request_stop": ("stopRequested", "failed", "finished"),
+    "abort": ("aborted", "failed", "finished"),
+    "kill": ("killed", "failed", "finished"),
 }
+
+_OUTCOME_SIGNALS = (
+    "succeeded",
+    "failed",
+    "cancelled",
+    "stopRequested",
+    "aborted",
+    "killed",
+)
 
 
 @pytest.mark.parametrize("action", _ACTIONS)
-def test_queued_task_never_starts(ewoksorange_qtapp, executor_context_factory, action):
+def test_queued_task_never_starts(qtbot, executor_context_factory, action):
     """Each action prevents a queued task from starting, with its own outcome."""
-    with executor_context_factory(workers=1) as (kind, executor, recorder):
+    with executor_context_factory(workers=1) as (kind, executor):
         if kind == "sync":
             pytest.skip("sync execution has no queue")
 
-        blocker = executor.submit_task(AddTask, inputs={"a": 1, "delay": 1})
-        recorder.wait_for("started")
-        queued = executor.submit_task(AddTask, inputs={"a": 2})
+        with qtbot.wait_signal(executor.started, timeout=10_000) as signal_blocker:
+            blocker = executor.submit_task(AddTask, inputs={"a": 1, "delay": 1})
+        assert signal_blocker.args[0] is blocker
 
         supported = kind == "process" or action not in _SUBPROCESS_ONLY
-        assert getattr(queued, action)() is supported
-
-        assert blocker.result(timeout=10)["result"].value == 1
 
         if not supported:
-            assert queued.result(timeout=10)["result"].value == 2
+            expected = ["submitted", "aboutToStart", "started"] + [
+                "succeeded",
+                "finished",
+            ] * 2
+            not_emitted = [name for name in _OUTCOME_SIGNALS if name != "succeeded"]
+        else:
+            # `aboutToStart` and `started` of the blocker were already received:
+            # the queued task must never start.
+            expected = ["submitted", "succeeded", "finished", *_SIGNALS[action]]
+            not_emitted = ["aboutToStart", "started"] + [
+                name
+                for name in _OUTCOME_SIGNALS
+                if name != "succeeded" and name not in _SIGNALS[action]
+            ]
+
+        with assert_none_emitted(
+            qtbot, *(getattr(executor, name) for name in not_emitted)
+        ), qtbot.wait_signals(
+            [getattr(executor, name) for name in expected], timeout=20_000
+        ):
+            queued = executor.submit_task(AddTask, inputs={"a": 2})
+            assert getattr(queued, action)() is supported
+
+            assert blocker.result(timeout=10)["result"].value == 1
+
+            if supported:
+                exc_type, match = _ERRORS[action]
+                with pytest.raises(exc_type, match=match):
+                    queued.result(timeout=10)
+            else:
+                assert queued.result(timeout=10)["result"].value == 2
+
+        if supported:
+            assert _flags(queued) == {name: name == action for name in _ACTIONS}
+        else:
             assert _flags(queued) == dict.fromkeys(_ACTIONS, False)
-            recorder.wait_for("finished", 2)
-            recorder.assert_counts(
-                submitted=2, aboutToStart=2, started=2, succeeded=2, finished=2
-            )
-            return
-
-        exc_type, match = _ERRORS[action]
-        with pytest.raises(exc_type, match=match):
-            queued.result(timeout=10)
-        assert _flags(queued) == {name: name == action for name in _ACTIONS}
-
-        expected = {
-            "submitted": 2,
-            "aboutToStart": 1,
-            "started": 1,
-            "succeeded": 1,
-            "finished": 1,
-        }
-        for name, count in _SIGNALS[action].items():
-            expected[name] = expected.get(name, 0) + count
-        recorder.wait_for("finished", expected["finished"])
-        recorder.assert_counts(**expected)
-        recorder.assert_started(blocker)
-        assert queued not in recorder.futures("aboutToStart")
-        assert queued not in recorder.futures("started")
 
 
 @pytest.mark.parametrize("first", _ACTIONS)
-def test_queued_task_first_action_wins(
-    ewoksorange_qtapp, executor_context_factory, first
-):
+def test_queued_task_first_action_wins(qtbot, executor_context_factory, first):
     """Only the first action that reaches a queued task has an effect."""
-    with executor_context_factory(workers=1) as (kind, executor, recorder):
+    with executor_context_factory(workers=1) as (kind, executor):
         if kind != "process":
             pytest.skip("abort and kill are only supported in a subprocess")
 
-        blocker = executor.submit_task(AddTask, inputs={"a": 1, "delay": 1})
-        recorder.wait_for("started")
-        queued = executor.submit_task(AddTask, inputs={"a": 2})
+        with qtbot.wait_signal(executor.started, timeout=10_000):
+            blocker = executor.submit_task(AddTask, inputs={"a": 1, "delay": 1})
 
-        assert getattr(queued, first)()
-        for action in _ACTIONS:
-            assert not getattr(queued, action)(), action
+        with qtbot.wait_signals([executor.finished] * 2, timeout=20_000):
+            queued = executor.submit_task(AddTask, inputs={"a": 2})
 
-        blocker.result(timeout=10)
-        exc_type, match = _ERRORS[first]
-        with pytest.raises(exc_type, match=match):
-            queued.result(timeout=10)
+            assert getattr(queued, first)()
+            for action in _ACTIONS:
+                assert not getattr(queued, action)(), action
+
+            blocker.result(timeout=10)
+            exc_type, match = _ERRORS[first]
+            with pytest.raises(exc_type, match=match):
+                queued.result(timeout=10)
+
         assert _flags(queued) == {name: name == first for name in _ACTIONS}
 
 
-def test_killed_queued_task_completes(ewoksorange_qtapp, executor_context_factory):
+def test_killed_queued_task_completes(qtbot, executor_context_factory):
     """Kill completes the future of a queued task right away."""
-    with executor_context_factory(workers=1) as (kind, executor, recorder):
+    with executor_context_factory(workers=1) as (kind, executor):
         if kind != "process":
             pytest.skip("kill is only supported in a subprocess")
 
-        blocker = executor.submit_task(AddTask, inputs={"a": 1, "delay": 2})
-        recorder.wait_for("started")
-        queued = executor.submit_task(AddTask, inputs={"a": 2})
+        with qtbot.wait_signal(executor.started, timeout=10_000):
+            blocker = executor.submit_task(AddTask, inputs={"a": 1, "delay": 2})
 
-        assert queued.kill()
-        assert queued.done()
-        assert not blocker.done()
-        with pytest.raises(TaskKilledError, match="killed before it started"):
-            queued.result(timeout=0)
+        with qtbot.wait_signal(executor.finished, timeout=10_000) as signal_blocker:
+            queued = executor.submit_task(AddTask, inputs={"a": 2})
 
-        recorder.wait_for("finished", 1)
-        assert recorder.future("finished") is queued
-        assert blocker.result(timeout=10)["result"].value == 1
+            assert queued.kill()
+            assert queued.done()
+            assert not blocker.done()
+            with pytest.raises(TaskKilledError, match="killed before it started"):
+                queued.result(timeout=0)
+
+        assert signal_blocker.args[0] is queued
+
+        with qtbot.wait_signal(executor.finished, timeout=10_000):
+            assert blocker.result(timeout=10)["result"].value == 1
 
 
-def test_failed_watch_ends_execution(
-    ewoksorange_qtapp, executor_context_factory, monkeypatch
-):
+def test_failed_watch_ends_execution(qtbot, executor_context_factory, monkeypatch):
     """When the relay fails to start, the submission raises, the execution ends
     with `cancelled` and `finished`, and the executor stays usable."""
-    with executor_context_factory(workers=1) as (kind, executor, recorder):
+    with executor_context_factory(workers=1) as (kind, executor):
         if kind != "process":
             pytest.skip("only the process backend watches the task")
 
         def _failing_watch(*args, **kwargs) -> None:
             raise RuntimeError("cannot start the relay")
 
-        # Last resort: starting a thread cannot be made to fail otherwise.
-        with monkeypatch.context() as patch:
-            patch.setattr(ProcessTaskController, "watch", _failing_watch)
-            with pytest.raises(RuntimeError, match="cannot start the relay"):
-                executor.submit_task(AddTask, inputs={"a": 1})
+        with assert_none_emitted(
+            qtbot,
+            executor.aboutToStart,
+            executor.started,
+            executor.succeeded,
+            executor.failed,
+        ), qtbot.wait_signals(
+            [executor.submitted, executor.cancelled, executor.finished],
+            timeout=10_000,
+            order="strict",
+        ) as signals_blocker:
+            # Last resort: starting a thread cannot be made to fail otherwise.
+            with monkeypatch.context() as patch:
+                patch.setattr(ProcessTaskController, "watch", _failing_watch)
+                with pytest.raises(RuntimeError, match="cannot start the relay"):
+                    executor.submit_task(AddTask, inputs={"a": 1})
 
-        recorder.assert_counts(submitted=1, cancelled=1, finished=1)
-        assert recorder.future("finished").cancelled()
+        assert signals_blocker.all_signals_and_args[-1].args[0].cancelled()
 
-        future = executor.submit_task(AddTask, inputs={"a": 2})
-        assert future.result(timeout=30)["result"].value == 2
+        with qtbot.wait_signal(executor.finished, timeout=35_000):
+            future = executor.submit_task(AddTask, inputs={"a": 2})
+            assert future.result(timeout=30)["result"].value == 2
 
 
-def test_finished_task(ewoksorange_qtapp, executor_context_factory):
+def test_finished_task(qtbot, executor_context_factory):
     """No action has an effect on a finished task."""
-    with executor_context_factory() as (kind, executor, recorder):
-        future = executor.submit_task(AddTask, inputs={"a": 1})
-        assert future.result(timeout=10)["result"].value == 1
+    with executor_context_factory() as (_, executor):
+        with assert_none_emitted(
+            qtbot,
+            *(
+                getattr(executor, name)
+                for name in _OUTCOME_SIGNALS
+                if name != "succeeded"
+            ),
+        ), qtbot.wait_signals(
+            [
+                executor.submitted,
+                executor.aboutToStart,
+                executor.started,
+                executor.succeeded,
+                executor.finished,
+            ],
+            timeout=10_000,
+            order="strict",
+        ):
+            future = executor.submit_task(AddTask, inputs={"a": 1})
+            assert future.result(timeout=10)["result"].value == 1
 
-        for action in _ACTIONS:
-            assert not getattr(future, action)(), action
+            for action in _ACTIONS:
+                assert not getattr(future, action)(), action
 
         assert future.result()["result"].value == 1
         assert _flags(future) == dict.fromkeys(_ACTIONS, False)
-
-        recorder.wait_for("finished", 1)
-        recorder.assert_counts(
-            submitted=1, aboutToStart=1, started=1, succeeded=1, finished=1
-        )
 
 
 def _flags(future: TaskFuture) -> Dict[str, bool]:

@@ -108,7 +108,7 @@ class _TestException(Exception):
 
 
 @pytest.mark.parametrize("task_cls", _TASK_CLASSES + _WIDGET_CLASSES)
-def test_task_success(task_cls):
+def test_task_success(qtbot, task_cls):
     recorded_calls = list()
     failures = dict()
     result = _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
@@ -120,7 +120,7 @@ def test_task_success(task_cls):
 
 
 @pytest.mark.parametrize("task_cls", _TASK_CLASSES + _WIDGET_CLASSES)
-def test_task_init_failure(task_cls):
+def test_task_init_failure(qtbot, task_cls):
     recorded_calls = list()
     failures = dict()
     with pytest.raises(TaskInputError):
@@ -132,7 +132,7 @@ def test_task_init_failure(task_cls):
 
 
 @pytest.mark.parametrize("task_cls", _TASK_CLASSES + _WIDGET_CLASSES)
-def test_task_run_failure(task_cls):
+def test_task_run_failure(qtbot, task_cls):
     recorded_calls = list()
     failures = {"run": _TestException("error in task")}
 
@@ -150,31 +150,35 @@ def test_task_run_failure(task_cls):
 
 
 @pytest.mark.parametrize("task_cls", _WIDGET_CLASSES)
-def test_success_with_propagation_failure(task_cls):
+def test_success_with_propagation_failure(qtbot, task_cls):
     recorded_calls = list()
     failures = {
         "trigger_downstream": _TestException("error in widget: success propagation")
     }
 
-    with pytest.raises(_TestException, match="error in widget: success propagation"):
+    with qtbot.capture_exceptions(), pytest.raises(
+        _TestException, match="error in widget: success propagation"
+    ):
         _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
     assert recorded_calls == ["run", "trigger_downstream", "task_finished"]
 
 
 @pytest.mark.parametrize("task_cls", _WIDGET_CLASSES)
-def test_failure_with_propagation_failure(task_cls):
+def test_failure_with_propagation_failure(qtbot, task_cls):
     recorded_calls = list()
     failures = {
         "run": _TestException("error in task"),
         "clear_downstream": _TestException("error in widget: failure propagation"),
     }
 
-    with pytest.raises(_TestException, match="error in task"):
+    with qtbot.capture_exceptions(), pytest.raises(
+        _TestException, match="error in task"
+    ):
         _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
     assert recorded_calls == ["run", "clear_downstream", "task_finished"]
 
 
-def test_deprecated_task_output_changed():
+def test_deprecated_task_output_changed(qtbot):
     """The deprecated hook still runs, and its exception still surfaces."""
     recorded_calls = list()
     failures = {
@@ -208,7 +212,9 @@ def test_deprecated_task_output_changed():
                 if exception:
                     raise exception
 
-    with pytest.raises(_TestException, match="error in widget: output callback"):
+    with qtbot.capture_exceptions(), pytest.raises(
+        _TestException, match="error in widget: output callback"
+    ):
         _execute_task(DeprecatedHookWidget, recorded_calls, failures, a=1, b=2)
     assert recorded_calls == ["run", "task_output_changed"]
 

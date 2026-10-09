@@ -6,7 +6,6 @@ from ewokscore.task import Task
 
 from ...gui.owwidgets.meta import ow_build_opts
 from ...gui.owwidgets.threaded import OWEwoksWidgetOneThread
-from ...gui.qt_utils.app import wait_until
 
 
 class Sequential(
@@ -23,7 +22,7 @@ class OWSequential(OWEwoksWidgetOneThread, **ow_build_opts, ewokstaskclass=Seque
     name = "test_OW"
 
 
-def test_owwidget_drop(ewoksorange_qtapp):
+def test_owwidget_drop(qtbot):
     """Test sequential task execution in one worker thread with drop-when-busy."""
     widget = OWSequential()
 
@@ -38,7 +37,7 @@ def test_owwidget_drop(ewoksorange_qtapp):
     submit(0)
     submit(1)  # busy with 0
     futures[0].result(timeout=10)
-    assert wait_until(lambda: not widget.has_pending_task(), timeout=10)
+    qtbot.wait_until(lambda: not widget.has_pending_task(), timeout=10_000)
     submit(2)
     submit(3)  # busy with 2
     futures[2].result(timeout=10)

@@ -9,7 +9,7 @@ class Dummy(Task, input_names=["a"], output_names=["b"]):
         self.outputs.b = self.inputs.a + 1
 
 
-def test_default_widgets(ewoksorange_qtapp):
+def test_default_widgets(qtbot):
     nodes = [
         {
             "id": "task1",

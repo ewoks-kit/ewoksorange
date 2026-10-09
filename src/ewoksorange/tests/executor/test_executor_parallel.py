@@ -7,10 +7,11 @@ from .tasks import PidTask
 from .tasks import TimedTask
 
 
-def test_parallel_execution(ewoksorange_qtapp, executor_context_factory) -> None:
+def test_parallel_execution(qtbot, executor_context_factory) -> None:
     workers: int = 2
-    with executor_context_factory(workers=workers) as (kind, executor, recorder):
-        nwarmup = _warmup_workers(executor, workers) if kind == "process" else 0
+    with executor_context_factory(workers=workers) as (kind, executor):
+        if kind == "process":
+            _warmup_workers(executor, workers)
 
         inputs_list = [{"value": i, "delay": 1} for i in range(4)]
         futures = [None] * len(inputs_list)
@@ -22,12 +23,25 @@ def test_parallel_execution(ewoksorange_qtapp, executor_context_factory) -> None
             threading.Thread(target=_submit, args=(index, inputs))
             for index, inputs in enumerate(inputs_list)
         ]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join(timeout=10)
+        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
+            executor.stopRequested
+        ), qtbot.wait_signals(
+            [
+                executor.submitted,
+                executor.aboutToStart,
+                executor.started,
+                executor.succeeded,
+                executor.finished,
+            ]
+            * len(threads),
+            timeout=15_000 * len(threads),
+        ):
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=10)
 
-        results = [future.result(timeout=10) for future in futures]
+            results = [future.result(timeout=10) for future in futures]
 
         # Concurrency must not corrupt individual results.
         assert [r["value"].value for r in results] == list(range(4))
@@ -40,12 +54,6 @@ def test_parallel_execution(ewoksorange_qtapp, executor_context_factory) -> None
         # minimum expected from genuine parallelism is checked.
         overlapping_pairs = sum(_overlaps(a, b) for a, b in combinations(intervals, 2))
         assert overlapping_pairs >= workers
-
-        n = 4 + nwarmup
-        recorder.wait_for("finished", n)
-        recorder.assert_counts(
-            submitted=n, aboutToStart=n, started=n, succeeded=n, finished=n
-        )
 
 
 def _warmup_workers(executor, workers: int, timeout: float = 60) -> int:

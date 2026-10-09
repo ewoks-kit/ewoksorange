@@ -52,7 +52,7 @@ class EwoksOrangeMutableDefaults(
     name = "ewoks widget with mutable defaults"
 
 
-def test_default_values(ewoksorange_qtapp):
+def test_default_values(qtbot):
     """
     Test that task with an ewoks InputModel are taking into account field default values.
 
