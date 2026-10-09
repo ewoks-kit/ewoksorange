@@ -73,7 +73,7 @@ jobs:
             enable-coverage: "false"
             install-extras: "test,oasys2"
             strict-warnings: "false"
-    uses: ewoks-kit/.github/.github/workflows/python-tests.yml@main
+    uses: ewoks-kit/.github/.github/workflows/python-tests.yml@pytest-qt
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
     with:
