@@ -4,7 +4,7 @@ from ...gui.qt_utils.app import QtEvent
 from .tasks import AddTask
 
 
-def test_running_and_done(ewoksorange_qtapp, executor_context_factory):
+def test_running_and_done(qtbot, executor_context_factory):
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"a": 1, "delay": 1}
         thread = None
@@ -32,7 +32,7 @@ def test_running_and_done(ewoksorange_qtapp, executor_context_factory):
             thread.join(timeout=10)
 
 
-def test_cancelled(ewoksorange_qtapp, executor_context_factory):
+def test_cancelled(qtbot, executor_context_factory):
     """`cancelled()` reflects whether `cancel()` actually succeeded."""
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"a": 1}
@@ -57,17 +57,16 @@ def test_cancelled(ewoksorange_qtapp, executor_context_factory):
             assert future.cancelled() == future.cancel()
 
 
-def test_add_done_callback(ewoksorange_qtapp, executor_context_factory):
+def test_add_done_callback(qtbot, executor_context_factory):
     with executor_context_factory() as (_, executor, recorder):
-        done = QtEvent()
         received = {}
 
         future = executor.submit_task(AddTask, inputs={"a": 1, "b": 2})
         # add_done_callback() forwards to the wrapped concurrent.futures.Future,
         # so the callback receives that raw future, not the TaskFuture itself.
         future.add_done_callback(
-            lambda raw_future: (received.update(raw_future=raw_future), done.set())
+            lambda raw_future: received.update(raw_future=raw_future)
         )
+        qtbot.wait_until(lambda: "raw_future" in received, timeout=10_000)
 
-        assert done.wait(timeout=10)
         assert received["raw_future"].result()["result"].value == 3

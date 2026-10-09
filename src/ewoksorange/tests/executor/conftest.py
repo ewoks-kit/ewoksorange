@@ -12,7 +12,7 @@ from .signals import SignalRecorder
 
 
 @pytest.fixture(params=list(Concurrency), ids=lambda c: c.name.lower())
-def executor_context_factory(request):
+def executor_context_factory(qtbot, request):
 
     concurrency = request.param
     kind = concurrency.name.lower()
@@ -25,7 +25,7 @@ def executor_context_factory(request):
         pool = create_pool_executor(concurrency, max_workers=workers)
         executor = EwoksExecutor(pool, policy)
 
-        recorder = SignalRecorder()
+        recorder = SignalRecorder(qtbot)
         recorder.connect(executor)
 
         try:

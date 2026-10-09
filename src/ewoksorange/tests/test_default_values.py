@@ -32,7 +32,7 @@ class EwoksOrangeTaskA(OWEwoksWidgetNoThread, ewokstaskclass=TaskA):
     name = "ewoks widget A"
 
 
-def test_default_values(ewoksorange_qtapp):
+def test_default_values(qtbot):
     """
     Test that task with an ewoks InputModel are taking into account field default values and default factory.
 

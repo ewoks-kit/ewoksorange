@@ -1,16 +1,13 @@
 import json
 from functools import partial
 
-from AnyQt import QtCore
 from ewokscore import missing_data
 
 from ..gui.widgets.parameter_form import ParameterForm
 from ..gui.widgets.parameter_form import SelectMode
 
 
-def test_parameterform(ewoksorange_qtapp, tmp_path):
-    ewoksorange_qtapp.processEvents(QtCore.QEventLoop.AllEvents)
-
+def test_parameterform(qtbot, tmp_path):
     nchanged = dict()
 
     def cb(name):
@@ -18,6 +15,7 @@ def test_parameterform(ewoksorange_qtapp, tmp_path):
         nchanged[name] += 1
 
     form = ParameterForm()
+    qtbot.addWidget(form)
 
     form.addParameter("string", value_change_callback=partial(cb, "string"))
     form.addParameter(
@@ -121,10 +119,7 @@ def test_parameterform(ewoksorange_qtapp, tmp_path):
     form.set_parameter_value("directory", missing_data.MISSING_DATA)
     assert form.get_parameter_value("directory") == missing_data.MISSING_DATA
 
-    ewoksorange_qtapp.processEvents(QtCore.QEventLoop.AllEvents)
-
-    # form.show()
-    # ewoksorange_qtapp.exec()
+    qtbot.waitExposed(form, timeout=10_000)
 
     expected = {
         "string": missing_data.MISSING_DATA,
