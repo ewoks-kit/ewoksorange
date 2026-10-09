@@ -4,7 +4,7 @@ from ewoksutils.exceptions import TaskExecutionError
 from .tasks import AddTask
 
 
-def test_success(ewoksorange_qtapp, executor_context_factory):
+def test_success(qtbot, executor_context_factory):
     with executor_context_factory() as (_, executor, recorder):
         future = executor.submit_task(AddTask, inputs={"a": 10, "b": 5})
 
@@ -20,8 +20,7 @@ def test_success(ewoksorange_qtapp, executor_context_factory):
         recorder.assert_finished(future)
         recorder.assert_succeeded(future, result)
 
-
-def test_failure(ewoksorange_qtapp, executor_context_factory):
+def test_failure(qtbot, executor_context_factory):
 
     with executor_context_factory() as (_, executor, recorder):
         future = executor.submit_task(AddTask, inputs={"a": 1, "fail": True})

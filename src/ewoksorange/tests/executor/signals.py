@@ -10,13 +10,12 @@ from ewokscore.variable import VariableContainer
 
 from ...gui.concurrency.executor import EwoksExecutor
 from ...gui.concurrency.executor import TaskFuture
-from ...gui.qt_utils.app import wait_until
 
 EventsType = Dict[str, List[Optional[TaskFuture]]]
 
 
 class SignalRecorder:
-    def __init__(self):
+    def __init__(self, qtbot) -> None:
         self._events: EventsType = defaultdict(list)
         self._order: List[str] = []
         self._default_counts = {
@@ -28,6 +27,7 @@ class SignalRecorder:
             "finished": 0,
             "ignored": 0,
         }
+        self._qtbot = qtbot
 
     def connect(self, executor: EwoksExecutor) -> None:
         executor.submitted.connect(self._store_future("submitted"))
@@ -103,7 +103,9 @@ class SignalRecorder:
         assert future in self._events["started"]
 
     def wait_for(self, name: str, count: int = 1, timeout: float = 5.0) -> None:
-        assert wait_until(lambda: len(self._events[name]) >= count, timeout=timeout)
+        self._qtbot.wait_until(
+            lambda: len(self._events[name]) >= count, timeout=timeout * 1000
+        )
 
     def wait_future(
         self, name: str, index: int = 0, timeout: float = 5.0

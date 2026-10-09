@@ -7,7 +7,8 @@ from orangecontrib.ewokstest import enable_ewokstest_category
 pytest.register_assert_rewrite("ewoksorange.tests.executor.signals")
 
 
-def pytest_ewoksorange_qtapp_setup() -> None:
+@pytest.fixture(scope="session", autouse=True)
+def ewokstest_category():
     enable_ewokstest_category()
 
 
