@@ -28,6 +28,10 @@ class ProcessTaskController(TaskController):
         self._abort_event = abort_event
         self._aborted_event = aborted_event
         self._started_queue = started_queue
+        # Set once the "started" relay is done: both "about_to_start" and
+        # "started" are handled sequentially by the same thread, so this also
+        # covers `on_about_to_start`. Also set if the relay ends early (timeout,
+        # stop request or callback error), in which case `on_started` never ran.
         self._started_handled = threading.Event()
         self._on_started_thread: Optional[threading.Thread] = None
         self._progress_queue = progress_queue
@@ -79,6 +83,7 @@ class ProcessTaskController(TaskController):
             while True:
                 if self._on_started_thread is not None:
                     # Set in all cases by the "started" relay (or its timeout) - from 'watch_started'.
+                    # Make sure a progress value could not be emitted before 'aboutToStart'.
                     if not self._started_handled.wait(timeout=300):
                         return
                 try:
