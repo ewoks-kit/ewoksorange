@@ -11,7 +11,7 @@ from ..gui.workflows.owscheme import graph_is_supported
 
 
 @pytest.mark.parametrize("graph_name", graph_names())
-def test_execute_graph(graph_name, tmp_path, ewoksorange_qtapp):
+def test_execute_graph(graph_name, tmp_path, qtbot):
     """Test graph execution like the Orange canvas would do it"""
     graph, expected = get_graph(graph_name)
     ewoksgraph = load_graph(graph)

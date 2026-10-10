@@ -5,6 +5,7 @@ from ewokscore.bindings import execute_graph
 from ewoksutils.exceptions import TaskInputWarning
 
 from ...bindings import execute_graph as execute_graph_orange
+from ...gui.canvas.handler import OrangeCanvasHandler
 from ...gui.workflows.owscheme import ows_to_ewoks
 from ...orange_version import ORANGE_VERSION
 
@@ -14,35 +15,36 @@ except ImportError:
     from importlib_resources import files as resource_files
 
 
-def test_sumtask_tutorial_with_qt(ewoksorange_qtapp):
+def test_sumtask_tutorial_with_qt(qtbot):
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumtask_tutorial.ows")
     assert_sumtask_tutorial_with_qt(filename)
 
 
-def test_sumtask_tutorial_without_qt(ewoksorange_qtapp):
+def test_sumtask_tutorial_without_qt(qtbot):
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumtask_tutorial.ows")
     assert_sumtask_tutorial_without_qt(filename)
 
 
-def test_list_operations_with_qt(orange_canvas_handler):
+def test_list_operations_with_qt(qtbot):
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumlist_tutorial.ows")
-    assert_sumlist_tutorial_with_qt(orange_canvas_handler, filename)
+    with OrangeCanvasHandler() as orange_canvas_handler:
+        assert_sumlist_tutorial_with_qt(orange_canvas_handler, filename)
 
 
-def test_list_operations_without_qt(ewoksorange_qtapp):
+def test_list_operations_without_qt(qtbot):
     from orangecontrib.ewokstest import tutorials
 
     filename = resource_files(tutorials).joinpath("sumlist_tutorial.ows")
     assert_sumlist_tutorial_without_qt(filename)
 
 
-def test_mixed_tutorial_with_qt(ewoksorange_qtapp):
+def test_mixed_tutorial_with_qt(qtbot):
     from orangecontrib.ewokstest import tutorials
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
@@ -56,7 +58,7 @@ def test_mixed_tutorial_with_qt(ewoksorange_qtapp):
     assert_mixed_tutorial_with_qt(filename)
 
 
-def test_mixed_tutorial_without_qt(ewoksorange_qtapp):
+def test_mixed_tutorial_without_qt(qtbot):
     from orangecontrib.ewokstest import tutorials
 
     if ORANGE_VERSION == ORANGE_VERSION.latest_orange:

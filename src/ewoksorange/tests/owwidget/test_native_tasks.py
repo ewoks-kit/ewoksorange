@@ -53,7 +53,7 @@ class NativeOldStyleWidget(OWWidget):
 
 
 @pytest.mark.parametrize("widget_class", [NativeOldStyleWidget, NativeNewStyleWidget])
-def test_execute_native_widget(ewoksorange_qtapp, widget_class):
+def test_execute_native_widget(qtbot, widget_class):
     if widget_class is NativeOldStyleWidget:
         inputs = {"A": 5, "B": 6}
         expected = {"A + B": 11}
@@ -64,7 +64,7 @@ def test_execute_native_widget(ewoksorange_qtapp, widget_class):
     assert result == expected, result
 
 
-def test_execute_python_script(ewoksorange_qtapp):
+def test_execute_python_script(qtbot):
     if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
         from oasys2.widgets.tools.ow_python_script import OWPythonScript
         from oasys2.widgets.tools.ow_python_script import Script
