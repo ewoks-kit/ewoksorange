@@ -113,6 +113,13 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
     `mp_context=None` for the platform default instead, which is `"fork"` on Linux.
     """
 
+    _DEFAULT_AUTO_PROPAGATE = True
+    """
+    Default propagation behaviour.
+
+    See :meth:`~OWEwoksBaseWidget.auto_propagate`.
+    """
+
     def __init_subclass__(cls, **kwargs) -> None:
         """
         Warn about subclasses that still override deprecated hooks.
@@ -154,6 +161,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
         self.__propagate_by_future: Dict[TaskFuture, bool] = {}
         self.__propagate_next: bool = False
+        self.__auto_propagate = self._DEFAULT_AUTO_PROPAGATE
 
         # The future of the last task that succeeded or failed. Always done, so
         # `result()` and `exception()` on it never block.
@@ -267,6 +275,27 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             self.mainArea.setLayout(layout)
         return layout
 
+    # -- Propagation config ---------------------------------------------------------------
+
+    @property
+    def auto_propagate(self) -> bool:
+        """
+        `auto_propagate = True` -> When a new input signal is triggered, the widget's task is executed with propagation.
+        i.e. Execute recusively all downstream nodes with `auto_propagate=True`
+
+        `auto_propagate = False` -> When a new input signal is triggered, the widget's task is not executed.
+        i.e. The auto propagation is stopped at this task.
+
+        Default is `OWEwoksBaseWidget._DEFAULT_AUTO_PROPAGATE`.
+        """
+        return self.__auto_propagate
+
+    def set_auto_propagate(self, auto_propagate: bool) -> None:
+        """
+        set `auto_propagate` property. See :meth:`~auto_propagate`.
+        """
+        self.__auto_propagate = auto_propagate
+
     # --- Ewoks task inputs --------------------------------------------------------------
 
     @classmethod
@@ -281,7 +310,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             names -= set(cls._ewoks_inputs_to_hide_from_orange)
         return names
 
-    def get_task_inputs(self, exclude_hidden: bool = False) -> dict:
+    def get_task_inputs(self, exclude_hidden: bool = False) -> Mapping[str, Variable]:
         """
         Merge default and dynamic inputs producing the inputs mapping used by tasks.
 
@@ -692,7 +721,8 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
 
         Default implementation triggers task execution (with propagation).
         """
-        self.execute_ewoks_task(log_missing_inputs=False)
+        if self.auto_propagate:
+            self.execute_ewoks_task(log_missing_inputs=False)
 
     def propagate_downstream(self, succeeded: Optional[bool] = None) -> None:
         """
