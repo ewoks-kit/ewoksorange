@@ -1,8 +1,6 @@
 import warnings
 
-from ..gui.orange_utils.signal_manager import (  # noqa F401
-    SignalManagerWithOutputTracking,
-)
+from ..gui.orange_utils.signal_manager import SignalManagerWithOutputTracking  # noqa F401
 from ..gui.orange_utils.signal_manager import SignalManagerWithoutScheme  # noqa F401
 from ..gui.orange_utils.signal_manager import SignalManagerWithScheme  # noqa F401
 from ..gui.orange_utils.signal_manager import patch_signal_manager  # noqa F401
