@@ -58,9 +58,9 @@ def test_cancelled(qtbot, executor_context_factory):
             assert not future.cancelled()
             thread.join(timeout=10)
         else:
-            with qtbot.wait_signal(executor.finished):
-                future = executor.submit_task(AddTask, inputs=inputs)
-                future.cancel()
+            future = executor.submit_task(AddTask, inputs=inputs)
+            future.cancel()
+            qtbot.wait_until(future.done, timeout=10_000)
             # Whether cancel() wins the race with the worker picking up the
             # task is not guaranteed; cancelled() must simply agree with it.
             assert future.cancelled() == future.cancel()

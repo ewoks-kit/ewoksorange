@@ -119,7 +119,8 @@ def test_parameterform(qtbot, tmp_path):
     form.set_parameter_value("directory", missing_data.MISSING_DATA)
     assert form.get_parameter_value("directory") == missing_data.MISSING_DATA
 
-    qtbot.waitExposed(form, timeout=10_000)
+    with qtbot.waitExposed(form, timeout=10_000):
+        form.show()
 
     expected = {
         "string": missing_data.MISSING_DATA,
