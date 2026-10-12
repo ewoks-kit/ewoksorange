@@ -56,7 +56,7 @@ class OWParallel(
     name = "test_OW"
 
 
-def test_owwidget_parallel(ewoksorange_qtapp):
+def test_owwidget_parallel(qtbot):
     """Test parallel task execution."""
     widget = OWParallel()
 

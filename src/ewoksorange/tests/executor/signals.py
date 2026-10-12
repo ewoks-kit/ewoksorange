@@ -16,7 +16,7 @@ EventsType = Dict[str, List[Optional[TaskFuture]]]
 
 
 class SignalRecorder:
-    def __init__(self):
+    def __init__(self) -> None:
         self._events: EventsType = defaultdict(list)
         self._order: List[str] = []
         self._default_counts = {

@@ -8,7 +8,7 @@ from .tasks import PidTask
 from .tasks import ProgressTask
 
 
-def test_progress(ewoksorange_qtapp, executor_context_factory):
+def test_progress(qtbot, executor_context_factory):
     """The caller's progress object receives every value the task reports.
 
     `QProgress` is a `QObject` and therefore not picklable, which the process
@@ -16,20 +16,19 @@ def test_progress(ewoksorange_qtapp, executor_context_factory):
     """
     percentages = [10, 40, 100]
 
-    with executor_context_factory() as (kind, executor, recorder):
+    with executor_context_factory() as (kind, executor):
         progress = QProgress()
         received: List[int] = []
         progress.sigProgressChanged.connect(received.append)
 
-        future = executor.submit_task(
-            ProgressTask, inputs={"percentages": percentages}, progress=progress
-        )
-
-        result = future.result(timeout=30)
-
         # `finished` is only emitted once all progress values were relayed, so
         # no polling on `received` is needed here.
-        recorder.wait_for("finished", 1)
+        with qtbot.wait_signal(executor.finished, timeout=35_000):
+            future = executor.submit_task(
+                ProgressTask, inputs={"percentages": percentages}, progress=progress
+            )
+
+            result = future.result(timeout=30)
 
         assert received == percentages
         assert progress.progress == 100
@@ -40,25 +39,32 @@ def test_progress(ewoksorange_qtapp, executor_context_factory):
             assert result["pid"].value == os.getpid()
 
 
-def test_progress_for_task_without_progress_support(
-    ewoksorange_qtapp, executor_context_factory
-):
+def test_progress_for_task_without_progress_support(qtbot, executor_context_factory):
     """A `progress` argument for a plain `Task` is dropped, not forwarded.
 
     For the process backend it must be dropped before pickling, otherwise
     submitting any `Task` with a Qt bound progress object fails.
     """
-    with executor_context_factory() as (kind, executor, recorder):
+    with executor_context_factory() as (kind, executor):
         progress = QProgress()
         received: List[int] = []
         progress.sigProgressChanged.connect(received.append)
 
-        future = executor.submit_task(PidTask, inputs={"value": 3}, progress=progress)
+        with qtbot.wait_signals(
+            [
+                executor.submitted,
+                executor.started,
+                executor.succeeded,
+                executor.finished,
+            ],
+            timeout=35_000,
+            order="strict",
+        ):
+            future = executor.submit_task(
+                PidTask, inputs={"value": 3}, progress=progress
+            )
 
-        result = future.result(timeout=30)
-
-        recorder.wait_for("finished", 1)
-        recorder.assert_counts(submitted=1, started=1, succeeded=1, finished=1)
+            result = future.result(timeout=30)
 
         assert result["value"].value == 3
         assert received == []

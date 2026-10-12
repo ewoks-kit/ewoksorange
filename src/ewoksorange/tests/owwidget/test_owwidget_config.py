@@ -22,7 +22,6 @@ from ...gui.owwidgets.nothread import OWEwoksWidgetNoThread
 from ...gui.owwidgets.threaded import OWEwoksWidgetOneThread
 from ...gui.owwidgets.threaded import OWEwoksWidgetOneThreadPerRun
 from ...gui.owwidgets.threaded import OWEwoksWidgetWithTaskStack
-from ...gui.qt_utils.app import wait_until
 
 # The process backend pickles the task class by reference, so the child process
 # imports its module. These are Qt-free, unlike this test module.
@@ -177,9 +176,10 @@ def test_metaclass_only_sets_options_that_are_provided():
     assert OWGrandchild._MP_CONTEXT is OWParent._MP_CONTEXT
 
 
-def test_configure_sync(ewoksorange_qtapp):
+def test_configure_sync(qtbot):
     """`concurrency="sync"` executes in the calling thread."""
     widget = OWSync()
+    qtbot.addWidget(widget)
     try:
         widget.set_dynamic_input("value", 1)
         widget.set_dynamic_input("sleep", 0)
@@ -198,9 +198,10 @@ def test_configure_sync(ewoksorange_qtapp):
         widget.onDeleteWidget()
 
 
-def test_configure_pool(ewoksorange_qtapp):
+def test_configure_pool(qtbot):
     """`max_workers>1` executes tasks concurrently in background threads."""
     widget = OWPool()
+    qtbot.addWidget(widget)
     try:
         sleep_seconds = 0.5
         futures = []
@@ -222,9 +223,10 @@ def test_configure_pool(ewoksorange_qtapp):
         widget.onDeleteWidget()
 
 
-def test_configure_drop_if_busy(ewoksorange_qtapp):
+def test_configure_drop_if_busy(qtbot):
     """`submit_policy="drop_if_busy"` refuses submissions while a task runs."""
     widget = OWDropIfBusy()
+    qtbot.addWidget(widget)
     release = threading.Event()
     try:
         widget.set_dynamic_input("release", release)
@@ -264,16 +266,17 @@ def test_configure_mp_context():
 
 
 @pytest.mark.parametrize("widget_class", [OWProcess, OWProcessPlatformContext])
-def test_configure_process(ewoksorange_qtapp, widget_class):
+def test_configure_process(qtbot, widget_class):
     """`concurrency="process"` executes in another process."""
     widget = widget_class()
+    qtbot.addWidget(widget)
     try:
         widget.set_dynamic_input("value", 3)
 
         future = widget.execute_ewoks_task()
         assert future is not None
 
-        assert wait_until(lambda: not widget.has_pending_task(), timeout=120)
+        qtbot.wait_until(lambda: not widget.has_pending_task(), timeout=120_000)
         assert future.exception() is None
 
         outputs = future.result()
@@ -283,11 +286,13 @@ def test_configure_process(ewoksorange_qtapp, widget_class):
         widget.onDeleteWidget()
 
 
-def test_configure_process_progress(ewoksorange_qtapp):
+def test_configure_process_progress(qtbot):
     """Task progress is relayed from the worker process to the progress bar."""
     percentages = [10, 40, 100]
 
     widget = OWProcessProgress()
+    qtbot.addWidget(widget)
+
     received: List[int] = []
     # The public Orange method the widget's progress handler calls.
     # `progressBarInit()` passes a second `processEvents` argument on some
@@ -299,7 +304,7 @@ def test_configure_process_progress(ewoksorange_qtapp):
         future = widget.execute_ewoks_task()
         assert future is not None
 
-        assert wait_until(lambda: not widget.has_pending_task(), timeout=120)
+        qtbot.wait_until(lambda: not widget.has_pending_task(), timeout=120_000)
         assert future.exception() is None
 
         assert future.result()["pid"].value != os.getpid()
@@ -309,7 +314,7 @@ def test_configure_process_progress(ewoksorange_qtapp):
         widget.onDeleteWidget()
 
 
-def test_configure_propagation(ewoksorange_qtapp):
+def test_configure_propagation(qtbot):
     """Propagation is per submission, also when executing synchronously."""
     propagated = []
 
@@ -328,6 +333,7 @@ def test_configure_propagation(ewoksorange_qtapp):
             propagated.append("clear_downstream")
 
     widget = OWPropagate()
+    qtbot.addWidget(widget)
     try:
         widget.set_dynamic_input("value", 1)
         widget.set_dynamic_input("sleep", 0)
