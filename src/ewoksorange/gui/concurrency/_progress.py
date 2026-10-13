@@ -1,17 +1,29 @@
 """
-Ewoks task progress across a process boundary.
+Ewoks task events (about to start, started, progress) across a process boundary.
+
+They all travel through a single queue, so the parent receives them in the
+order the child process emitted them.
 """
 
 import queue
 
 from ewokscore.progress import BasePercentageProgress
 
-PROGRESS_STOP = "__stop__"
+ABOUT_TO_START = "__about_to_start__"
+"""Put on the queue by the child process right before creating the task."""
+
+STARTED = "__started__"
+"""Put on the queue by the child process once the task is created."""
+
+STOP = "__stop__"
 """Sentinel put on the queue by the parent process to stop the relay."""
 
 
 class QueueProgress(BasePercentageProgress):
-    """Picklable progress that forwards updates to the parent process."""
+    """Picklable progress that forwards updates to the parent process.
+
+    Shares its queue with the other task events (see :data:`STARTED`).
+    """
 
     _TRANSIENT_ERRORS = (EOFError, BrokenPipeError, ConnectionError)
     # The manager providing the queue shut down.
