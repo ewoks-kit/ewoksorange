@@ -77,8 +77,11 @@ thread. The other backends only change who runs the task:
     ``handleNewSignals()`` only returns once the outputs have been propagated.
 ``concurrency="process"``
     A worker process runs the task. Its lifecycle events and progress travel
-    back over ``multiprocessing`` proxies, relayed onto the Qt main thread by
+    back, in order, through a single ``multiprocessing`` manager queue, relayed
+    onto the Qt main thread by
     :class:`~ewoksorange.gui.concurrency._controllers.process.ProcessTaskController`.
+
+See :doc:`concurrency` for how each backend keeps the signals in order.
 
 Node "settledness"
 -------------------
@@ -107,7 +110,7 @@ comes from the initial trigger or from an upstream node's propagation:
 
         Idle --> Queued: Output.send() schedules<br/>a signal for this node
         Queued --> Submitted: 100ms timer fires,<br/>process_node() calls<br/>handleNewSignals()
-        Submitted --> Running: queued 'started' signal delivered,<br/>progressBarInit() runs
+        Submitted --> Running: queued 'aboutToStart' signal delivered,<br/>progressBarInit() runs
         Running --> Finishing: task completes<br/>on the background thread
         Finishing --> Idle: queued 'succeeded'/'failed' delivered,<br/>propagate_downstream() sends outputs,<br/>then progressBarFinished() runs
 
