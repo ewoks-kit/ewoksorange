@@ -4,8 +4,8 @@ import pytest
 from ewoksutils.exceptions import TaskExecutionError
 
 from .tasks import AddTask
-from .tasks import HookCancelTask
 from .tasks import IgnoreCancelTask
+from .tasks import InterruptCancelTask
 from .tasks import PartialCancelTask
 from .tasks import RequestCancelTask
 
@@ -42,14 +42,14 @@ def test_abort(ewoksorange_qtapp, executor_context_factory):
             thread.join(timeout=10)
 
 
-@pytest.mark.parametrize("task_class", [RequestCancelTask, HookCancelTask])
+@pytest.mark.parametrize("task_class", [RequestCancelTask, InterruptCancelTask])
 def test_abort_leaves_outputs_undefined(
     ewoksorange_qtapp, executor_context_factory, task_class
 ):
     """Cancellation observed by run(): it returns early, so no output is set.
 
     Covers both ways of reacting to a stop request (RequestCancelTask:
-    polls `Task.stop_requested`, HookCancelTask: `Task._on_stop_requested`).
+    polls `Task.stop_requested`, InterruptCancelTask: `Task._on_stop_requested`).
     """
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"duration": 2}

@@ -106,7 +106,7 @@ class IgnoreCancelTask(
         pass
 
 
-class HookCancelTask(
+class InterruptCancelTask(
     Task,
     input_names=["duration"],
     output_names=["result"],
