@@ -37,7 +37,7 @@ class ProcessTaskRunner(TaskRunner):
 
     def _finalize(self, task: Task) -> None:
         try:
-            if task.cancelled:
+            if task.stop_requested:
                 self._aborted_event.set()
         except self._TRANSIENT_ABORT_ERRORS:
             pass

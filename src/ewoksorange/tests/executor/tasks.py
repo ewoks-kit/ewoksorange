@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 
 from ewokscore import TaskWithProgress
@@ -24,7 +25,7 @@ class AddTask(
             period = self.inputs.delay / 40
             for i in range(40):
                 time.sleep(period)
-                if self.cancelled:
+                if self.stop_requested:
                     raise CustomCancelled(f"cancelled after {(i + 1) * period} seconds")
 
         if self.inputs.fail:
@@ -37,9 +38,9 @@ class AddTask(
 
         self.outputs.result = result
 
-    def abort(self):
-        """Interpretation #2: self.cancelled is the request not the state."""
-        self.cancelled = True
+    def _on_stop_requested(self):
+        """Nothing to do: `run()` polls `self.stop_requested`."""
+        pass
 
 
 class RequestCancelTask(
@@ -53,15 +54,15 @@ class RequestCancelTask(
         step = 0.05
         elapsed = 0.0
         while elapsed < self.inputs.duration:
-            if self.cancelled:
+            if self.stop_requested:
                 return
             time.sleep(step)
             elapsed += step
         self.outputs.result = f"slept {elapsed:.2f}s"
 
-    def abort(self):
-        """Interpretation #2: self.cancelled is the request not the state."""
-        self.cancelled = True
+    def _on_stop_requested(self):
+        """Nothing to do: `run()` polls `self.stop_requested`."""
+        pass
 
 
 class PartialCancelTask(
@@ -77,16 +78,16 @@ class PartialCancelTask(
         step = 0.05
         elapsed = 0.0
         while elapsed < self.inputs.duration:
-            if self.cancelled:
+            if self.stop_requested:
                 return
             time.sleep(step)
             elapsed += step
 
         self.outputs.second = "second done"
 
-    def abort(self):
-        """Interpretation #2: self.cancelled is the request not the state."""
-        self.cancelled = True
+    def _on_stop_requested(self):
+        """Nothing to do: `run()` polls `self.stop_requested`."""
+        pass
 
 
 class IgnoreCancelTask(
@@ -94,43 +95,36 @@ class IgnoreCancelTask(
     input_names=["duration"],
     output_names=["result"],
 ):
-    """Never checks `self.cancelled`; always completes fully despite abort()."""
+    """Never checks `self.stop_requested`; always completes fully despite request_stop()."""
 
     def run(self):
         time.sleep(self.inputs.duration)
         self.outputs.result = "completed despite abort"
 
-    def abort(self):
-        """Interpretation #2: self.cancelled is the request not the state."""
-        self.cancelled = True
+    def _on_stop_requested(self):
+        """Nothing to do: `run()` polls `self.stop_requested`."""
+        pass
 
 
-class StateCancelTask(
+class HookCancelTask(
     Task,
     input_names=["duration"],
     output_names=["result"],
 ):
-    """abort() only records a request; run() itself sets `self.cancelled`
-    once stopped."""
+    """Never polls `self.stop_requested`; `_on_stop_requested()` interrupts
+    the blocking wait of run() instead."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.__cancel_requested = False
+        self.__stop_event = threading.Event()
 
     def run(self):
-        step = 0.05
-        elapsed = 0.0
-        while elapsed < self.inputs.duration:
-            if self.__cancel_requested:
-                self.cancelled = True
-                return
-            time.sleep(step)
-            elapsed += step
-        self.outputs.result = f"slept {elapsed:.2f}s"
+        if self.__stop_event.wait(timeout=self.inputs.duration):
+            return
+        self.outputs.result = f"slept {self.inputs.duration:.2f}s"
 
-    def abort(self):
-        """Interpretation #1: self.cancelled is the state not the request."""
-        self.__cancel_requested = True
+    def _on_stop_requested(self):
+        self.__stop_event.set()
 
 
 class TimedTask(

@@ -32,4 +32,4 @@ class _InProcessTaskController(TaskController):
         with self._lock:
             task = self._task
 
-        return task is not None and task.cancelled
+        return task is not None and task.stop_requested
