@@ -37,7 +37,7 @@ class AddTask(
 
         self.outputs.result = result
 
-    def cancel(self):
+    def abort(self):
         """Interpretation #2: self.cancelled is the request not the state."""
         self.cancelled = True
 
@@ -59,7 +59,7 @@ class RequestCancelTask(
             elapsed += step
         self.outputs.result = f"slept {elapsed:.2f}s"
 
-    def cancel(self):
+    def abort(self):
         """Interpretation #2: self.cancelled is the request not the state."""
         self.cancelled = True
 
@@ -84,7 +84,7 @@ class PartialCancelTask(
 
         self.outputs.second = "second done"
 
-    def cancel(self):
+    def abort(self):
         """Interpretation #2: self.cancelled is the request not the state."""
         self.cancelled = True
 
@@ -94,13 +94,13 @@ class IgnoreCancelTask(
     input_names=["duration"],
     output_names=["result"],
 ):
-    """Never checks `self.cancelled`; always completes fully despite cancel()."""
+    """Never checks `self.cancelled`; always completes fully despite abort()."""
 
     def run(self):
         time.sleep(self.inputs.duration)
         self.outputs.result = "completed despite abort"
 
-    def cancel(self):
+    def abort(self):
         """Interpretation #2: self.cancelled is the request not the state."""
         self.cancelled = True
 
@@ -110,7 +110,7 @@ class StateCancelTask(
     input_names=["duration"],
     output_names=["result"],
 ):
-    """cancel() only records a request; run() itself sets `self.cancelled`
+    """abort() only records a request; run() itself sets `self.cancelled`
     once stopped."""
 
     def __init__(self, **kwargs):
@@ -128,7 +128,7 @@ class StateCancelTask(
             elapsed += step
         self.outputs.result = f"slept {elapsed:.2f}s"
 
-    def cancel(self):
+    def abort(self):
         """Interpretation #1: self.cancelled is the state not the request."""
         self.__cancel_requested = True
 

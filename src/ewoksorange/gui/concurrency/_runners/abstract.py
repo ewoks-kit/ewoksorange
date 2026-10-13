@@ -52,24 +52,24 @@ class TaskRunner(ABC):
         return self._task_class(**self._task_kwargs)
 
     def _execute(self, task: Task) -> VariableContainer:
-        """Execute `task`, cancelling it for as long as `abort_event` is set."""
+        """Execute `task`, aborting it for as long as `abort_event` is set."""
         done = threading.Event()
 
         def _watch_abort():
             """
-            Currently `task.cancel()` and `task.cancelled` are ill-defined.
+            Currently `task.abort()` and `task.cancelled` are ill-defined.
 
             The flag `task.cancelled` could be the request or the state.
 
             `task.execute()` resets the task's `cancelled` flag, which
-            can silently undo a `cancel()` racing with the start
+            can silently undo an `abort()` racing with the start
             of execution.
 
-            For this reason this watcher thread keeps re-applying `task.cancel()`
+            For this reason this watcher thread keeps re-applying `task.abort()`
             until execution finishes, so a task's `run()` reliably observes it
             regardless of the timing.
 
-            The output of a cancelled task is undefined. It could be an
+            The output of an aborted task is undefined. It could be an
             exception, undefined outputs, pertially defined outputs or
             fully defined outputs.
             """
@@ -80,7 +80,7 @@ class TaskRunner(ABC):
                     # finished without ever being aborted.
                     return
                 while not done.is_set():
-                    task.cancel()
+                    task.abort()
                     done.wait(timeout=0.01)
             except self._TRANSIENT_ABORT_ERRORS:
                 pass

@@ -45,7 +45,7 @@ class Parallel(
         self.outputs.time = tm
         self.outputs.value = self.inputs.value
 
-    def cancel(self):
+    def abort(self):
         # Interpretation #1: self.cancelled is the state not the request
         self.__cancel_requested = True
 
