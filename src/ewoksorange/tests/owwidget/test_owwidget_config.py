@@ -288,7 +288,7 @@ def test_configure_process_progress(ewoksorange_qtapp):
     percentages = [10.0, 40.0, 100.0]
 
     widget = OWProcessProgress()
-    received: List[int] = []
+    received: List[float] = []
     # The public Orange method the widget's progress handler calls.
     # `progressBarInit()` passes a second `processEvents` argument on some
     # Orange forks, so accept and ignore extra arguments.
