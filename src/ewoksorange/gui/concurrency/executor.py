@@ -237,13 +237,15 @@ class EwoksExecutor(QObject):
 
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
+
+        raw_future = self._executor.submit(runner)
+
+        # Watch after the submission in case 'submit' fails (make sure 'STOP' will always be sent after this point).
         controller.watch(
             on_about_to_start=lambda: _emit_about_to_start(self_ref, holder),
             on_started=lambda: _emit_started(self_ref, holder),
             on_progress=on_progress,
         )
-
-        raw_future = self._executor.submit(runner)
 
         return self._finalize_submission(
             raw_future, controller, holder, self_ref, after_submitted=ready_event.set
