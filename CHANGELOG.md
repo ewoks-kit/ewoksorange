@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support for OASYS1. Use OASYS2 instead.
 
+### Fixed
+
+- Random crash on Windows at the end of a test session that uses the `ewoksorange_qtapp` fixture.
+
 ## [6.0.0rc7] - 2026-08-18
 
 ### Fixed
