@@ -6,6 +6,7 @@ from typing import Type
 
 from ewokscore.task import Task
 
+from .. import _progress
 from .abstract import TaskRunner
 
 
@@ -20,20 +21,23 @@ class ProcessTaskRunner(TaskRunner):
         task_class: Type[Task],
         task_kwargs: Dict[str, Any],
         ready_event: threading.Event,
-        started_queue: queue.Queue,
+        events_queue: queue.Queue,
         abort_event: threading.Event,
         aborted_event: threading.Event,
     ):
         super().__init__(task_class, task_kwargs, abort_event)
         self._ready_event = ready_event
-        self._started_queue = started_queue
+        self._events_queue = events_queue
         self._aborted_event = aborted_event
 
     def _wait_ready(self) -> None:
         self._ready_event.wait()
 
+    def _announce_about_to_start(self) -> None:
+        self._events_queue.put(_progress.ABOUT_TO_START)
+
     def _announce_started(self, task: Task) -> None:
-        self._started_queue.put("started")
+        self._events_queue.put(_progress.STARTED)
 
     def _finalize(self, task: Task) -> None:
         try:

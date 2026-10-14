@@ -23,34 +23,24 @@ class TaskController(ABC):
         """Return True if the task was actually aborted."""
         raise NotImplementedError
 
-    def watch_started(self, on_started: Callable[[], None]) -> None:
-        """Register `on_started` to be called once the task has started.
+    def watch(
+        self,
+        on_about_to_start: Callable[[], None],
+        on_started: Callable[[], None],
+        on_progress: Optional[Callable[[float], None]] = None,
+    ) -> None:
+        """Register `on_about_to_start` and `on_started` to be called once the
+        task is about to start and once it has started, and `on_progress` (if
+        any) for every progress value the task reports.
 
-        Optional: only meaningful for controllers where "started" is reported
-        through a channel separate from task completion.
+        Optional: only meaningful for controllers where these events are
+        reported through a channel separate from task completion.
         """
-        raise NotImplementedError(f"{type(self).__name__} has no started watcher")
+        raise NotImplementedError(f"{type(self).__name__} has no events watcher")
 
-    def wait_started(self, timeout: Optional[float] = None) -> None:
-        """Block until a pending `on_started` call (registered via
-        `watch_started`) has been handled.
+    def stop_watching(self) -> None:
+        """Stop watching, after delivering every event received so far.
 
-        No-op by default, since most controllers report "started" and
-        completion through the same channel, in order.
-        """
-
-    def watch_progress(self, on_progress: Callable[[int], None]) -> None:
-        """Register `on_progress` to be called for every progress value the
-        task reports.
-
-        Optional: only meaningful for controllers where the task cannot update
-        the caller's progress object directly.
-        """
-        raise NotImplementedError(f"{type(self).__name__} has no progress watcher")
-
-    def stop_progress(self) -> None:
-        """Stop watching progress, after delivering everything received so far.
-
-        No-op by default, since most controllers let the task update the
-        caller's progress object directly.
+        No-op by default, since most controllers let the task report its
+        events directly.
         """

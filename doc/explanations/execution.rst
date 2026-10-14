@@ -27,7 +27,8 @@ Key players
   (:meth:`submit_task() <ewoksorange.gui.concurrency.executor.EwoksExecutor.submit_task>`)
   and runs them synchronously or on a background thread/process, re-entering
   the GUI thread through Qt signals
-  (:attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.started`,
+  (:attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.aboutToStart`,
+  :attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.started`,
   :attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.succeeded`,
   :attr:`~ewoksorange.gui.concurrency.executor.EwoksExecutor.failed`).
 
@@ -46,9 +47,12 @@ One execution cycle
         SM->>W: handleNewSignals()
         W->>EX: submit_task()
         Note right of W: has_pending_task() -> True (synchronous)
-        EX->>BG: run Task.execute()
+        EX->>BG: queue the task
+        Note over BG: a worker picks the task up
+        BG--)W: aboutToStart (queued across threads)
         W->>W: progressBarInit()
         Note right of SM: is_active(node) -> True
+        BG--)W: started (queued across threads)
 
         BG-->>BG: task runs
         Note right of BG: has_pending_task() -> still True<br/>(succeeded/failed not delivered yet)
@@ -73,8 +77,11 @@ thread. The other backends only change who runs the task:
     ``handleNewSignals()`` only returns once the outputs have been propagated.
 ``concurrency="process"``
     A worker process runs the task. Its lifecycle events and progress travel
-    back over ``multiprocessing`` proxies, relayed onto the Qt main thread by
+    back, in order, through a single ``multiprocessing`` manager queue, relayed
+    onto the Qt main thread by
     :class:`~ewoksorange.gui.concurrency._controllers.process.ProcessTaskController`.
+
+See :doc:`concurrency` for how each backend keeps the signals in order.
 
 Node "settledness"
 -------------------
@@ -103,7 +110,7 @@ comes from the initial trigger or from an upstream node's propagation:
 
         Idle --> Queued: Output.send() schedules<br/>a signal for this node
         Queued --> Submitted: 100ms timer fires,<br/>process_node() calls<br/>handleNewSignals()
-        Submitted --> Running: queued 'started' signal delivered,<br/>progressBarInit() runs
+        Submitted --> Running: queued 'aboutToStart' signal delivered,<br/>progressBarInit() runs
         Running --> Finishing: task completes<br/>on the background thread
         Finishing --> Idle: queued 'succeeded'/'failed' delivered,<br/>propagate_downstream() sends outputs,<br/>then progressBarFinished() runs
 
@@ -128,6 +135,7 @@ comes from the initial trigger or from an upstream node's propagation:
             has_pending_task() == False
             is_active(node) == False
         end note
+
 
 The ``Submitted`` and ``Finishing`` states are exactly where a naive
 single-flag check would be fooled: the task's real state and what one

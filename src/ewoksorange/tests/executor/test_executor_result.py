@@ -14,8 +14,12 @@ def test_success(ewoksorange_qtapp, executor_context_factory):
 
         recorder.wait_for("finished", 1)
 
-        recorder.assert_counts(submitted=1, started=1, succeeded=1, finished=1)
-        recorder.assert_order("submitted", "started", "succeeded", "finished")
+        recorder.assert_counts(
+            submitted=1, aboutToStart=1, started=1, succeeded=1, finished=1
+        )
+        recorder.assert_order(
+            "submitted", "aboutToStart", "started", "succeeded", "finished"
+        )
         recorder.assert_started(future)
         recorder.assert_finished(future)
         recorder.assert_succeeded(future, result)
@@ -31,6 +35,10 @@ def test_failure(ewoksorange_qtapp, executor_context_factory):
             _ = future.result(timeout=10)
 
         recorder.wait_for("finished", 1)
-        recorder.assert_counts(submitted=1, started=1, failed=1, finished=1)
-        recorder.assert_order("submitted", "started", "failed", "finished")
+        recorder.assert_counts(
+            submitted=1, aboutToStart=1, started=1, failed=1, finished=1
+        )
+        recorder.assert_order(
+            "submitted", "aboutToStart", "started", "failed", "finished"
+        )
         recorder.assert_failed(future, TaskExecutionError, match=match)
