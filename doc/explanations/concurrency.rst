@@ -7,7 +7,10 @@ in the calling thread, in a thread pool or in a process pool. Whatever the
 backend, receivers observe the same order of signals for a task:
 
 ``submitted`` → ``aboutToStart`` → ``started`` → progress values →
-``aborted`` (if any) → ``succeeded`` / ``failed`` → ``finished``
+``succeeded`` / ``failed`` → ``finished``
+
+``stop_requested`` is emitted when the stop is requested, so anywhere after
+``submitted``.
 
 This page explains how each backend preserves that order. In the diagrams
 below, ``progress?`` stands for the optional ``progress`` task argument: it is
@@ -126,7 +129,7 @@ reads the queue and calls the matching callback: it emits ``aboutToStart`` or
         end
 
         W->>E: submit_task(task, progress?)
-        E->>M: create events_queue, ready/abort/aborted events
+        E->>M: create events_queue, ready/stop/stop_requested events
         E->>E: progress replaced by QueueProgress(events_queue), or dropped
         E->>RL: watch(on_about_to_start, on_started, on_progress)
         RL->>M: get() (blocks)

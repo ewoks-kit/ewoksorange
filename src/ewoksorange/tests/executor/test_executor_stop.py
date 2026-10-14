@@ -4,20 +4,20 @@ import pytest
 from ewoksutils.exceptions import TaskExecutionError
 
 from .tasks import AddTask
-from .tasks import IgnoreCancelTask
-from .tasks import InterruptCancelTask
-from .tasks import PartialCancelTask
-from .tasks import RequestCancelTask
+from .tasks import EarlyStopTask
+from .tasks import IgnoreStopTask
+from .tasks import InterruptStopTask
+from .tasks import PartialStopTask
 
 
-def test_abort(ewoksorange_qtapp, executor_context_factory):
-    """Cancellation observed by run(): it raises, so the task fails."""
+def test_request_stop(ewoksorange_qtapp, executor_context_factory):
+    """Stop request observed by run(): it raises, so the task fails."""
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"a": 1, "b": 2, "delay": 5}
         thread = None
         if kind == "sync":
             # submit_task() blocks until the task finishes, so it must run
-            # on its own thread for abort() to have anything to interrupt.
+            # on its own thread for request_stop() to have anything to interrupt.
             thread = threading.Thread(
                 target=executor.submit_task, args=(AddTask,), kwargs={"inputs": inputs}
             )
@@ -27,31 +27,36 @@ def test_abort(ewoksorange_qtapp, executor_context_factory):
 
         future = recorder.wait_future("started")
 
-        assert future.abort()
+        assert future.request_stop()
 
-        match = r"cancelled after [\.0-9]+ seconds"
+        match = r"stopped after [\.0-9]+ seconds"
         with pytest.raises(TaskExecutionError, match=match):
             future.result(timeout=10)
 
-        assert future.aborted()
+        assert future.stop_requested()
 
         recorder.wait_for("finished", 1)
         recorder.assert_counts(
-            submitted=1, aboutToStart=1, started=1, aborted=1, failed=1, finished=1
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            stop_requested=1,
+            failed=1,
+            finished=1,
         )
         recorder.assert_failed(future, TaskExecutionError, match=match)
         if thread is not None:
             thread.join(timeout=10)
 
 
-@pytest.mark.parametrize("task_class", [RequestCancelTask, InterruptCancelTask])
-def test_abort_leaves_outputs_undefined(
+@pytest.mark.parametrize("task_class", [EarlyStopTask, InterruptStopTask])
+def test_stop_leaves_outputs_undefined(
     ewoksorange_qtapp, executor_context_factory, task_class
 ):
-    """Cancellation observed by run(): it returns early, so no output is set.
+    """Stop request observed by run(): it returns early, so no output is set.
 
-    Covers both ways of reacting to a stop request (RequestCancelTask:
-    polls `Task.stop_requested`, InterruptCancelTask: `Task._on_stop_requested`).
+    Covers polling `Task.stop_requested` (EarlyStopTask) and reacting
+    in `Task._on_stop_requested` (InterruptStopTask).
     """
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"duration": 2}
@@ -68,23 +73,28 @@ def test_abort_leaves_outputs_undefined(
 
         future = recorder.wait_future("started")
 
-        assert future.abort()
+        assert future.request_stop()
 
         result = future.result(timeout=10)
         assert not result["result"].has_value
 
-        assert future.aborted()
+        assert future.stop_requested()
 
         recorder.wait_for("finished", 1)
         recorder.assert_counts(
-            submitted=1, aboutToStart=1, started=1, succeeded=1, finished=1, aborted=1
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
+            stop_requested=1,
         )
         if thread is not None:
             thread.join(timeout=10)
 
 
-def test_abort_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factory):
-    """Cancellation observed by run(): it returns after only some outputs
+def test_stop_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factory):
+    """Stop request observed by run(): it returns after only some outputs
     were set, leaving the rest undefined."""
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"duration": 2}
@@ -92,37 +102,42 @@ def test_abort_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factor
         if kind == "sync":
             thread = threading.Thread(
                 target=executor.submit_task,
-                args=(PartialCancelTask,),
+                args=(PartialStopTask,),
                 kwargs={"inputs": inputs},
             )
             thread.start()
         else:
-            executor.submit_task(PartialCancelTask, inputs=inputs)
+            executor.submit_task(PartialStopTask, inputs=inputs)
 
         future = recorder.wait_future("started")
 
-        assert future.abort()
+        assert future.request_stop()
 
         result = future.result(timeout=10)
         assert result["first"].value == "first done"
         assert not result["second"].has_value
 
-        assert future.aborted()
+        assert future.stop_requested()
 
         recorder.wait_for("finished", 1)
         recorder.assert_counts(
-            submitted=1, aboutToStart=1, started=1, succeeded=1, finished=1, aborted=1
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
+            stop_requested=1,
         )
         if thread is not None:
             thread.join(timeout=10)
 
 
-def test_abort_does_not_guarantee_cancellation(
+def test_request_stop_does_not_guarantee_stop(
     ewoksorange_qtapp, executor_context_factory
 ):
     """A task that never checks `self.stop_requested` always completes normally.
 
-    `aborted()` still reports True: it reflects that abort reached the task,
+    `stop_requested()` still reports True: it reflects that the stop request reached the task,
     not what the task chose to do about it.
     """
     with executor_context_factory() as (kind, executor, recorder):
@@ -131,25 +146,30 @@ def test_abort_does_not_guarantee_cancellation(
         if kind == "sync":
             thread = threading.Thread(
                 target=executor.submit_task,
-                args=(IgnoreCancelTask,),
+                args=(IgnoreStopTask,),
                 kwargs={"inputs": inputs},
             )
             thread.start()
         else:
-            executor.submit_task(IgnoreCancelTask, inputs=inputs)
+            executor.submit_task(IgnoreStopTask, inputs=inputs)
 
         future = recorder.wait_future("started")
 
-        assert future.abort()
+        assert future.request_stop()
 
         result = future.result(timeout=10)
-        assert result["result"].value == "completed despite abort"
+        assert result["result"].value == "completed despite stop request"
 
-        assert future.aborted()
+        assert future.stop_requested()
 
         recorder.wait_for("finished", 1)
         recorder.assert_counts(
-            submitted=1, aboutToStart=1, started=1, succeeded=1, finished=1, aborted=1
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
+            stop_requested=1,
         )
         if thread is not None:
             thread.join(timeout=10)

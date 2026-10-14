@@ -13,15 +13,17 @@ from . import _controllers
 
 
 class TaskFuture:
-    """Wraps a concurrent.futures.Future with ewoks-specific abort support."""
+    """Wraps a concurrent.futures.Future with ewoks-specific stop request support."""
 
     def __init__(
         self,
         raw_future: Future[VariableContainer],
         controller: _controllers.TaskController,
+        on_stop_requested: Optional[Callable[[], None]] = None,
     ):
         self._future = raw_future
         self._controller = controller
+        self._on_stop_requested = on_stop_requested
 
     def cancel(self) -> bool:
         """Prevent execution if the task has not started.
@@ -31,18 +33,22 @@ class TaskFuture:
         """
         return self._future.cancel()
 
-    def abort(self) -> bool:
-        """Abort a running ewoks task.
+    def request_stop(self) -> bool:
+        """Request a running ewoks task to stop.
 
         This delegates to the execution controller. Depending on the execution
         backend, this may communicate with another thread, process, or do
         nothing for already-completed tasks.
         """
-        return self._controller.abort()
+        requested = self._controller.request_stop()
+        if requested and not self.done() and self._on_stop_requested is not None:
+            on_stop_requested, self._on_stop_requested = self._on_stop_requested, None
+            on_stop_requested()
+        return requested
 
-    def aborted(self) -> bool:
-        """Return True if the ewoks task was aborted."""
-        return self._controller.aborted()
+    def stop_requested(self) -> bool:
+        """Return True if the ewoks task was requested to stop."""
+        return self._controller.stop_requested()
 
     def cancelled(self) -> bool:
         return self._future.cancelled()

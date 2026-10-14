@@ -130,7 +130,7 @@ class Window(QWidget):
             executor.ignored.connect(partial(self._on_ignored, name))
             executor.succeeded.connect(partial(self._on_succeeded, name))
             executor.failed.connect(partial(self._on_failed, name))
-            executor.aborted.connect(partial(self._on_aborted, name))
+            executor.stop_requested.connect(partial(self._on_stop_requested, name))
             executor.finished.connect(partial(self._on_finished, name))
 
         layout = QVBoxLayout(self)
@@ -205,8 +205,8 @@ class Window(QWidget):
         exc = future.exception()
         self._append_log(f"[{name}] ❌ {id(future)} -> {exc}")
 
-    def _on_aborted(self, name: str, future: Any) -> None:
-        self._append_log(f"[{name}] ⏹ Aborted -> {id(future)}")
+    def _on_stop_requested(self, name: str, future: Any) -> None:
+        self._append_log(f"[{name}] ⏹ Stop requested -> {id(future)}")
 
     def _on_finished(self, name: str, future: Any) -> None:
         self._total_tasks_handled += 1
