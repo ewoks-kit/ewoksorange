@@ -5,9 +5,9 @@ from ewoksutils.exceptions import TaskExecutionError
 
 from .tasks import AddTask
 from .tasks import IgnoreCancelTask
+from .tasks import InterruptCancelTask
 from .tasks import PartialCancelTask
 from .tasks import RequestCancelTask
-from .tasks import StateCancelTask
 
 
 def test_abort(ewoksorange_qtapp, executor_context_factory):
@@ -42,14 +42,14 @@ def test_abort(ewoksorange_qtapp, executor_context_factory):
             thread.join(timeout=10)
 
 
-@pytest.mark.parametrize("task_class", [RequestCancelTask, StateCancelTask])
+@pytest.mark.parametrize("task_class", [RequestCancelTask, InterruptCancelTask])
 def test_abort_leaves_outputs_undefined(
     ewoksorange_qtapp, executor_context_factory, task_class
 ):
     """Cancellation observed by run(): it returns early, so no output is set.
 
-    Covers both interpretations of `Task.cancelled` (RequestCancelTask:
-    request, StateCancelTask: state).
+    Covers both ways of reacting to a stop request (RequestCancelTask:
+    polls `Task.stop_requested`, InterruptCancelTask: `Task._on_stop_requested`).
     """
     with executor_context_factory() as (kind, executor, recorder):
         inputs = {"duration": 2}
@@ -118,7 +118,7 @@ def test_abort_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factor
 def test_abort_does_not_guarantee_cancellation(
     ewoksorange_qtapp, executor_context_factory
 ):
-    """A task that never checks `self.cancelled` always completes normally.
+    """A task that never checks `self.stop_requested` always completes normally.
 
     `aborted()` still reports True: it reflects that abort reached the task,
     not what the task chose to do about it.
