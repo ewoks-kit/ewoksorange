@@ -7,16 +7,28 @@ in the calling thread, in a thread pool or in a process pool. Whatever the
 backend, receivers observe the same order of signals for a task:
 
 ``submitted`` → ``aboutToStart`` → ``started`` → progress values →
-``succeeded`` / ``failed`` → ``finished``
+``aborted`` / ``killed`` (if any) → ``succeeded`` / ``failed`` → ``finished``
 
 ``stop_requested`` is emitted when the stop is requested, so anywhere after
-``submitted``.
+``submitted``. A task that is stopped, aborted or killed before it starts
+skips ``aboutToStart``, ``started`` and progress. A task cancelled before it
+starts emits nothing after ``submitted``.
 
-This page explains how each backend preserves that order. In the diagrams
-below, ``progress?`` stands for the optional ``progress`` task argument: it is
-only forwarded when the task class is a ``TaskWithProgress``, and dropped
-otherwise. Progress steps marked ``[0..n]`` happen once per progress value the
-task reports, so never without progress.
+This page explains how each backend preserves that order. In the diagrams below:
+
+- A solid line with a filled arrowhead is a call or an action.
+- A dotted line is a return value, or a message read from a queue.
+- A line with an open arrowhead is a Qt signal:
+
+  - ⚡ emitted in the GUI thread: the connected slots run right away.
+  - 📨 emitted in another thread: Qt posts it to the event queue of the GUI
+    thread (a queued connection) and the connected slots run later, when the
+    GUI thread processes its events.
+
+- ``progress?`` is the optional ``progress`` task argument: it is only forwarded
+  when the task class is a ``TaskWithProgress``, and dropped otherwise.
+- ``[0..n]`` marks a step that happens once per progress value the task
+  reports, so never without progress.
 
 Sync
 ----
@@ -37,19 +49,20 @@ done.
 
         W->>E: submit_task(task, progress?)
         E->>E: _handle_progess_arg: keep or drop progress
-        E-->>W: submitted
+        E-)W: ⚡ submitted
         E->>R: _sync_submit(runner)
-        R-->>W: aboutToStart (direct)
+        R-)W: ⚡ aboutToStart
         R->>T: create task
-        R-->>W: started (direct)
+        R-)W: ⚡ started
         R->>T: execute
-        T->>T: [0..n] progress = v, QProgress emits sigProgressChanged(v) (direct)
+        T->>T: [0..n] progress = v
+        T-)W: [0..n] ⚡ sigProgressChanged(v)
         T-->>R: result / exception
         R->>E: raw_future.set_result / set_exception
         E->>E: add_done_callback runs right away (future already done)
         E->>E: _done_callback: stop_watching() (no-op), then _handle_done
-        E-->>W: succeeded / failed
-        E-->>W: finished
+        E-)W: ⚡ succeeded / failed
+        E-)W: ⚡ finished
         E-->>W: return TaskFuture (already done)
 
 Thread
@@ -76,18 +89,19 @@ synchronization.
         E->>E: _handle_progess_arg: keep or drop progress
         E->>R: pool.submit(runner)
         R->>R: _wait_ready()
-        E-->>W: submitted
+        E-)W: ⚡ submitted
         E->>R: ready_event.set()
-        R-)W: aboutToStart (queued)
+        R-)W: 📨 aboutToStart
         R->>T: create task
-        R-)W: started (queued)
+        R-)W: 📨 started
         R->>T: execute
-        T->>T: [0..n] progress = v, QProgress emits sigProgressChanged(v) (queued)
+        T->>T: [0..n] progress = v
+        T-)W: [0..n] 📨 sigProgressChanged(v)
         T-->>R: result / exception
         R->>R: raw_future.set_result, done callback (worker thread)
         R->>R: _done_callback: stop_watching() (no-op), then _handle_done
-        R-)W: succeeded / failed (queued)
-        R-)W: finished (queued)
+        R-)W: 📨 succeeded / failed
+        R-)W: 📨 finished
 
 The ``ready_event`` keeps the worker from starting the task before
 ``submitted`` has been emitted.
@@ -97,18 +111,30 @@ Process
 
 The task runs in a worker process, which cannot emit Qt signals in the parent
 nor update the caller's progress object (usually a ``QObject``, which is not
-picklable). Instead, the child reports its events through a single
-``multiprocessing`` manager queue:
+picklable). Instead, parent and child communicate through two
+``multiprocessing`` manager queues:
 
-- the runner puts ``ABOUT_TO_START`` and ``STARTED``,
-- the caller's progress object is replaced by a
-  :class:`~ewoksorange.gui.concurrency._progress.QueueProgress`, which puts
-  each progress value on that same queue.
+- the queue to the parent:
+
+  - the runner puts ``ToParent.ABOUT_TO_START`` and ``ToParent.STARTED``,
+  - the caller's progress object is replaced by a
+    :class:`~ewoksorange.gui.concurrency._progress.QueueProgress`, which puts
+    each progress value on that same queue.
+
+- the queue to the child: first the decision whether the task may start
+  (``ToChild.START`` or a ``StartDenial``), then ``ToChild.REQUEST_STOP`` and
+  ``ToChild.ABORT``, read by a thread in the child while the task executes.
 
 In the parent, a single relay thread started by
 :meth:`ProcessTaskController.watch() <ewoksorange.gui.concurrency._controllers.process.ProcessTaskController.watch>`
-reads the queue and calls the matching callback: it emits ``aboutToStart`` or
-``started``, or sets the value on the caller's progress object.
+reads the queue and calls the matching callback: it emits ``started``, or sets
+the value on the caller's progress object. On ``ToParent.ABOUT_TO_START`` it decides
+whether the task may start (it may not once it was cancelled, stopped, aborted
+or killed), replies to the child and emits ``aboutToStart`` when allowed. The
+relay only starts once ``submitted`` has been emitted, so the child cannot start
+the task before that. The decision is always the first message to the child:
+stop and abort requests are only put on the queue to the child once the start
+was allowed.
 
 .. mermaid::
 
@@ -117,46 +143,47 @@ reads the queue and calls the matching callback: it emits ``aboutToStart`` or
         participant W as Widget
         participant E as EwoksExecutor
         end
-        participant M as Manager (events_queue)
+        participant M as Manager (to_parent_queue, to_child_queue)
         box Parent: relay thread
         participant RL as Relay
         end
         box Parent: pool management thread
-        participant PM as ProcessPool mgmt
+        participant PM as pebble.ProcessPool mgmt
         end
         box Child process
         participant C as ProcessTaskRunner + Task
         end
 
         W->>E: submit_task(task, progress?)
-        E->>M: create events_queue, ready/stop/stop_requested events
-        E->>E: progress replaced by QueueProgress(events_queue), or dropped
+        E->>M: create to_parent_queue and to_child_queue
+        E->>E: progress replaced by QueueProgress(to_parent_queue), or dropped
+        E->>PM: pool.submit(runner) (pickled)
+        E-)W: ⚡ submitted
         E->>RL: watch(on_about_to_start, on_started, on_progress)
         RL->>M: get() (blocks)
-        E->>PM: pool.submit(runner) (pickled)
-        E-->>W: submitted
-        E->>M: ready_event.set()
         PM->>C: run runner
-        C->>M: _wait_ready()
-        C->>M: put(ABOUT_TO_START)
-        M-->>RL: ABOUT_TO_START
-        RL-)W: aboutToStart (queued)
+        C->>M: put(ToParent.ABOUT_TO_START), then wait on to_child_queue
+        M-->>RL: ToParent.ABOUT_TO_START
+        RL->>M: put the decision on to_child_queue
+        RL-)W: 📨 aboutToStart, only when allowed
+        M-->>C: decision (raise or return when denied)
         C->>C: create task
-        C->>M: put(STARTED)
-        M-->>RL: STARTED
-        RL-)W: started (queued)
+        C->>M: put(ToParent.STARTED)
+        M-->>RL: ToParent.STARTED
+        RL-)W: 📨 started
         C->>C: execute
-        C->>C: [0..n] progress = v, QueueProgress puts v on events_queue
-        RL->>RL: [0..n] get v, on_progress(v): QProgress emits sigProgressChanged(v) (queued)
+        C->>C: [0..n] progress = v, QueueProgress puts v on to_parent_queue
+        RL->>RL: [0..n] get v, on_progress(v): progress = v
+        RL-)W: [0..n] 📨 sigProgressChanged(v)
         C-->>PM: result / exception
         PM->>PM: raw_future.set_result, then _done_callback
-        PM->>M: stop_watching(): put(STOP)
-        M-->>RL: STOP (after all events above)
+        PM->>M: stop_watching(): put(ToParent.END)
+        M-->>RL: ToParent.END (after all events above)
         RL->>RL: exit
         PM->>RL: join(timeout=5s)
         PM->>PM: _handle_done
-        PM-)W: succeeded / failed (queued)
-        PM-)W: finished (queued)
+        PM-)W: 📨 succeeded / failed
+        PM-)W: 📨 finished
 
 The diagram shows the relay reading each event right after it is put; in
 practice both run concurrently. What matters is the ordering:
@@ -165,24 +192,28 @@ practice both run concurrently. What matters is the ordering:
   first-in first-out queue and are relayed by a single thread, so callbacks
   run in the order the child emitted them.
 - **Everything is delivered before completion.** The child puts all its
-  events before returning its result, while ``STOP`` is only put by the parent
+  events before returning its result, while ``ToParent.END`` is only put by the parent
   once the result is in (in ``_done_callback``). Manager proxy calls are
-  synchronous, so every child event is already queued ahead of ``STOP``.
-  Waiting for the relay to reach ``STOP`` therefore delivers all of them before
+  synchronous, so every child event is already queued ahead of ``ToParent.END``.
+  Waiting for the relay to reach ``ToParent.END`` therefore delivers all of them before
   ``succeeded`` / ``failed`` are emitted.
 
 The relay's lifetime is tied to the task's future, not to a timeout:
 
-- **Cancelled while queued.** The child never runs, so the queue only holds
-  ``STOP`` and the relay exits immediately. Nothing else is emitted.
-- **Child crash.** The pool sets ``BrokenProcessPool`` on the future, so the
-  done callback still runs and puts ``STOP``.
+- **Prevented from starting.** The child only puts ``ToParent.ABOUT_TO_START``, is
+  denied and finishes, so the done callback puts ``ToParent.END``.
+- **Crashed child.** The pool sets a ``pebble.ProcessExpired`` error on the
+  future and replaces the worker, so the done callback still runs and puts
+  ``ToParent.END``.
+- **Killed child.** ``TaskFuture.kill()`` cancels the pebble future, which runs
+  the done callback right away, in the thread calling ``kill()``, so it puts
+  ``ToParent.END``. The pool then terminates the worker and replaces it.
 - **Manager shut down.** Reading the queue raises and the relay exits.
 - **Long-running task.** The relay keeps waiting, since progress may still
   come. There is deliberately no timeout on reading the queue: a timeout would
   end the relay early and silently drop the events that follow.
 
-``stop_watching()`` itself is bounded: putting ``STOP`` is a single call to the
+``stop_watching()`` itself is bounded: putting ``ToParent.END`` is a single call to the
 manager, and the relay thread is joined with a 5 s timeout. That wait only
 matters if a receiver connected with ``Qt.DirectConnection`` is slow, since
 such a slot runs in the relay thread. With the default (queued) connections,

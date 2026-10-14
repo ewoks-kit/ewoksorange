@@ -56,7 +56,9 @@ def test_owwidget_parallel(ewoksorange_qtapp):
     sleep_seconds = 0.5
     values = [0, 1, 2, 3]
     stops = [False, True, False, False]
-    synchronize_run = Barrier(len(values))
+    # The test joins the barrier to request the stop once all tasks run:
+    # a task that is requested to stop before it starts never starts.
+    synchronize_run = Barrier(len(values) + 1)
 
     # all jobs start when the last run method is called
     futures = []
@@ -65,6 +67,8 @@ def test_owwidget_parallel(ewoksorange_qtapp):
         widget.set_dynamic_input("sleep", sleep_seconds)
         widget.set_dynamic_input("synchronize_run", synchronize_run)
         futures.append(widget.execute_ewoks_task())
+
+    synchronize_run.wait(timeout=10)
 
     # request some jobs to stop
     for future, stop in zip(futures, stops):

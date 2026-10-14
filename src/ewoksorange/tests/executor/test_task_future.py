@@ -1,6 +1,7 @@
 import threading
 
 from ...gui.qt_utils.app import QtEvent
+from ...gui.qt_utils.app import wait_until
 from .tasks import AddTask
 
 
@@ -50,11 +51,13 @@ def test_cancelled(ewoksorange_qtapp, executor_context_factory):
             thread.join(timeout=10)
         else:
             future = executor.submit_task(AddTask, inputs=inputs)
-            future.cancel()
-            recorder.wait_for("finished", 1)
+            cancelled = future.cancel()
+            assert wait_until(future.done, timeout=10)
             # Whether cancel() wins the race with the worker picking up the
             # task is not guaranteed; cancelled() must simply agree with it.
-            assert future.cancelled() == future.cancel()
+            assert future.cancelled() == cancelled
+            if not cancelled:
+                recorder.wait_for("finished", 1)
 
 
 def test_add_done_callback(ewoksorange_qtapp, executor_context_factory):

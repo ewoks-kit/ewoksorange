@@ -106,6 +106,24 @@ class IgnoreStopTask(
         pass
 
 
+class CleanupTask(
+    Task,
+    input_names=["duration", "marker"],
+    output_names=["result"],
+):
+    """Never checks `self.stop_requested` and creates the file `marker` however it exits."""
+
+    def run(self):
+        try:
+            end = time.monotonic() + self.inputs.duration
+            while time.monotonic() < end:
+                time.sleep(0.01)
+            self.outputs.result = "completed"
+        finally:
+            with open(self.inputs.marker, "w"):
+                pass
+
+
 class InterruptStopTask(
     Task,
     input_names=["duration"],

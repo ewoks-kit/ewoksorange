@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support OASYS2 (`pip install ewoksorange[oasys2]`) next to the standard
   `orange-canvas-core` + `orange-widget-base` and the optional Orange3.
 - `TaskFuture.output_values`, `TaskFuture.succeeded` and `TaskFuture.task_exception`.
+- `TaskFuture.abort` and `TaskFuture.kill` to interrupt or kill a task running in a subprocess.
 
 ### Changed
 
