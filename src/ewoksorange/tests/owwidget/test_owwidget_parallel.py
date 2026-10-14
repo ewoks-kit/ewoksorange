@@ -10,7 +10,7 @@ from ...gui.owwidgets.meta import ow_build_opts
 from ...gui.owwidgets.threaded import OWEwoksWidgetOneThreadPerRun
 
 
-class Cancelled(Exception):
+class Stopped(Exception):
     def __init__(self, value, tm) -> None:
         self.value = value
         self.time = tm
@@ -26,14 +26,14 @@ class Parallel(
         # Wait for all parallel task to start
         self.inputs.synchronize_run.wait(timeout=10)
 
-        # Provide enough time to cancel the task
+        # Provide enough time to request the task to stop
         time.sleep(self.inputs.sleep)
 
         tm = time.perf_counter()
 
         # Return value as output or exception
         if self.stop_requested:
-            raise Cancelled(self.inputs.value, tm)
+            raise Stopped(self.inputs.value, tm)
 
         self.outputs.time = tm
         self.outputs.value = self.inputs.value
@@ -55,39 +55,39 @@ def test_owwidget_parallel(ewoksorange_qtapp):
 
     sleep_seconds = 0.5
     values = [0, 1, 2, 3]
-    cancels = [False, True, False, False]
+    stops = [False, True, False, False]
     synchronize_run = Barrier(len(values))
 
     # all jobs start when the last run method is called
     futures = []
-    for value, cancel in zip(values, cancels):
+    for value, stop in zip(values, stops):
         widget.set_dynamic_input("value", value)
         widget.set_dynamic_input("sleep", sleep_seconds)
         widget.set_dynamic_input("synchronize_run", synchronize_run)
         futures.append(widget.execute_ewoks_task())
 
-    # cancel some jobs
-    for future, cancel in zip(futures, cancels):
-        if cancel:
-            _ = future.abort()
+    # request some jobs to stop
+    for future, stop in zip(futures, stops):
+        if stop:
+            _ = future.request_stop()
 
     # check results
     times = []
-    for future, value, cancel in zip(futures, values, cancels):
-        if cancel:
+    for future, value, stop in zip(futures, values, stops):
+        if stop:
             with pytest.raises(TaskExecutionError) as exc_info:
                 _ = future.result(timeout=10)
 
-            assert future.aborted()
+            assert future.stop_requested()
 
-            assert isinstance(exc_info.value.__cause__, Cancelled)
+            assert isinstance(exc_info.value.__cause__, Stopped)
             assert exc_info.value.__cause__.value == value
 
             times.append(exc_info.value.__cause__.time)
         else:
             outputs = future.result(timeout=10)
 
-            assert not future.aborted()
+            assert not future.stop_requested()
 
             assert outputs["value"].value == value
             times.append(outputs["time"].value)

@@ -11,16 +11,16 @@ class TaskController(ABC):
     """
 
     @abstractmethod
-    def abort(self) -> bool:
-        """Request task abortion.
+    def request_stop(self) -> bool:
+        """Request the task to stop.
 
-        Returns True if the abort request reached the task.
+        Returns True if the stop request reached the task.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def aborted(self) -> bool:
-        """Return True if the task was actually aborted."""
+    def stop_requested(self) -> bool:
+        """Return True if the task was requested to stop."""
         raise NotImplementedError
 
     def watch(

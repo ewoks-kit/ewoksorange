@@ -926,14 +926,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         return bool(self.__propagate_by_future)
 
     def cancel_running_task(self) -> None:
-        """Abort the currently running task."""
+        """Request the currently running task to stop."""
         warnings.warn(
-            "'cancel_running_task' is deprecated since 6.0. Please cancel the task by calling the "
-            " `cancel` method of the future provided during task submission.",
+            "'cancel_running_task' is deprecated since 6.0. Please stop the task by calling the "
+            " `request_stop` method of the future provided during task submission.",
             DeprecationWarning,
         )
         if self.__current_task_future is not None:
-            self.__current_task_future.abort()
+            self.__current_task_future.request_stop()
 
     @property
     def post_task_exception(self) -> Optional[Exception]:

@@ -12,7 +12,7 @@ class _InProcessTaskController(TaskController):
 
     def __init__(self):
         self._task = None
-        self._abort_event = threading.Event()
+        self._stop_event = threading.Event()
         self._lock = Lock()
 
     def set_task(self, task: Task) -> None:
@@ -20,15 +20,15 @@ class _InProcessTaskController(TaskController):
             self._task = task
 
     @property
-    def abort_event(self) -> threading.Event:
-        return self._abort_event
+    def stop_event(self) -> threading.Event:
+        return self._stop_event
 
-    def abort(self) -> bool:
-        self._abort_event.set()
+    def request_stop(self) -> bool:
+        self._stop_event.set()
         with self._lock:
             return self._task is not None
 
-    def aborted(self) -> bool:
+    def stop_requested(self) -> bool:
         with self._lock:
             task = self._task
 

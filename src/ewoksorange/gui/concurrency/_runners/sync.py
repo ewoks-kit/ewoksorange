@@ -20,7 +20,7 @@ class SyncTaskRunner(TaskRunner):
         on_about_to_start: Callable[[], None],
         on_started: Callable[[], None],
     ):
-        super().__init__(task_class, task_kwargs, controller.abort_event)
+        super().__init__(task_class, task_kwargs, controller.stop_event)
         self._controller = controller
         self._on_about_to_start = on_about_to_start
         self._on_started = on_started

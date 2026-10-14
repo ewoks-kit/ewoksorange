@@ -13,7 +13,7 @@ from .abstract import TaskRunner
 class ProcessTaskRunner(TaskRunner):
     """Picklable callable executed inside the subprocess."""
 
-    _TRANSIENT_ABORT_ERRORS = (EOFError, BrokenPipeError, ConnectionError)
+    _TRANSIENT_STOP_ERRORS = (EOFError, BrokenPipeError, ConnectionError)
     # The manager providing the IPC objects shut down.
 
     def __init__(
@@ -22,13 +22,13 @@ class ProcessTaskRunner(TaskRunner):
         task_kwargs: Dict[str, Any],
         ready_event: threading.Event,
         events_queue: queue.Queue,
-        abort_event: threading.Event,
-        aborted_event: threading.Event,
+        stop_event: threading.Event,
+        stop_requested_event: threading.Event,
     ):
-        super().__init__(task_class, task_kwargs, abort_event)
+        super().__init__(task_class, task_kwargs, stop_event)
         self._ready_event = ready_event
         self._events_queue = events_queue
-        self._aborted_event = aborted_event
+        self._stop_requested_event = stop_requested_event
 
     def _wait_ready(self) -> None:
         self._ready_event.wait()
@@ -42,6 +42,6 @@ class ProcessTaskRunner(TaskRunner):
     def _finalize(self, task: Task) -> None:
         try:
             if task.stop_requested:
-                self._aborted_event.set()
-        except self._TRANSIENT_ABORT_ERRORS:
+                self._stop_requested_event.set()
+        except self._TRANSIENT_STOP_ERRORS:
             pass
