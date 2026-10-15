@@ -186,7 +186,7 @@ class Window(QWidget):
         layout.addLayout(grid)
 
         actions = QHBoxLayout()
-        actions.addWidget(QLabel("All unfinished tasks:"))
+        actions.addWidget(QLabel("Apply to all queued and running tasks:"))
         for text in _ACTIONS:
             button = QPushButton(text)
             button.clicked.connect(partial(self._on_action_clicked, text))
@@ -202,7 +202,7 @@ class Window(QWidget):
         body.addLayout(log_box, 2)
 
         pending_box = QVBoxLayout()
-        pending_box.addWidget(QLabel("Pending tasks"))
+        pending_box.addWidget(QLabel("Queued and running tasks"))
         pending_box.addWidget(self._pending)
         body.addLayout(pending_box, 1)
 
