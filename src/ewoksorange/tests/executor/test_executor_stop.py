@@ -40,7 +40,7 @@ def test_request_stop(ewoksorange_qtapp, executor_context_factory):
             submitted=1,
             aboutToStart=1,
             started=1,
-            stop_requested=1,
+            stopRequested=1,
             failed=1,
             finished=1,
         )
@@ -87,7 +87,7 @@ def test_stop_leaves_outputs_undefined(
             started=1,
             succeeded=1,
             finished=1,
-            stop_requested=1,
+            stopRequested=1,
         )
         if thread is not None:
             thread.join(timeout=10)
@@ -126,7 +126,7 @@ def test_stop_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factory
             started=1,
             succeeded=1,
             finished=1,
-            stop_requested=1,
+            stopRequested=1,
         )
         if thread is not None:
             thread.join(timeout=10)
@@ -169,7 +169,7 @@ def test_request_stop_does_not_guarantee_stop(
             started=1,
             succeeded=1,
             finished=1,
-            stop_requested=1,
+            stopRequested=1,
         )
         if thread is not None:
             thread.join(timeout=10)

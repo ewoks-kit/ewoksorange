@@ -66,6 +66,7 @@ class SumTask(
 
 
 _ACTIONS: Dict[str, Callable[[TaskFuture], bool]] = {
+    "Cancel (queued only)": TaskFuture.cancel,
     "Request stop": TaskFuture.request_stop,
     "Abort (process only)": TaskFuture.abort,
     "Kill (process only)": TaskFuture.kill,
@@ -149,7 +150,8 @@ class Window(QWidget):
             executor.ignored.connect(partial(self._on_ignored, name))
             executor.succeeded.connect(partial(self._on_succeeded, name))
             executor.failed.connect(partial(self._on_failed, name))
-            executor.stop_requested.connect(partial(self._on_stop_requested, name))
+            executor.cancelled.connect(partial(self._on_cancelled, name))
+            executor.stopRequested.connect(partial(self._on_stop_requested, name))
             executor.aborted.connect(partial(self._on_aborted, name))
             executor.killed.connect(partial(self._on_killed, name))
             executor.finished.connect(partial(self._on_finished, name))
@@ -235,6 +237,9 @@ class Window(QWidget):
     def _on_failed(self, name: str, future: Any) -> None:
         exc = future.exception()
         self._append_log(f"[{name}] ❌ {id(future)} -> {exc}")
+
+    def _on_cancelled(self, name: str, future: Any) -> None:
+        self._append_log(f"[{name}] 🚫 Cancelled -> {id(future)}")
 
     def _on_stop_requested(self, name: str, future: Any) -> None:
         self._append_log(f"[{name}] ⏹ Stop requested -> {id(future)}")

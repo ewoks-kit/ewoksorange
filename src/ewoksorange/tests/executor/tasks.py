@@ -124,6 +124,22 @@ class CleanupTask(
                 pass
 
 
+class StartMarkerTask(
+    Task,
+    input_names=["duration", "marker"],
+    output_names=["result"],
+):
+    """Creates the file `marker` when it starts, then never checks `self.stop_requested`."""
+
+    def run(self):
+        with open(self.inputs.marker, "w"):
+            pass
+        end = time.monotonic() + self.inputs.duration
+        while time.monotonic() < end:
+            time.sleep(0.01)
+        self.outputs.result = "completed"
+
+
 class InterruptStopTask(
     Task,
     input_names=["duration"],
