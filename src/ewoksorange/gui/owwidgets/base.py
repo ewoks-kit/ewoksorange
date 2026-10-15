@@ -15,7 +15,9 @@ from typing import List
 from typing import Mapping
 from typing import Optional
 from typing import Set
+from typing import Union
 
+import pebble
 from AnyQt import QtWidgets
 from ewokscore import TaskWithProgress
 from ewokscore import missing_data
@@ -182,9 +184,12 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         self.__executor.finished.connect(self.__on_finished)
 
     @classmethod
-    def _create_pool_executor(cls) -> Optional[futures.Executor]:
+    def _create_pool_executor(
+        cls,
+    ) -> Optional[Union[futures.Executor, pebble.ProcessPool]]:
         """
-        Create the `concurrent.futures` executor that runs the Ewoks tasks.
+        Create the executor that runs the Ewoks tasks: a `concurrent.futures`
+        executor, or a `pebble.ProcessPool` to execute in subprocesses.
 
         Override to execute tasks in an executor that :class:`Concurrency` does
         not cover.
