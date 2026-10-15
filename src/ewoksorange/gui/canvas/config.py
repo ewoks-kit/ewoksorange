@@ -3,6 +3,8 @@
 from typing import Set
 from typing import Tuple
 
+from AnyQt.QtGui import QGuiApplication
+
 from ... import pkg_meta
 from ...orange_version import ORANGE_VERSION
 
@@ -25,6 +27,15 @@ else:
 
 
 class Config(_Config):
+    DesktopFileName = "eu.esrf.ewoks-canvas"
+    """Name of the freedesktop entry (without the '.desktop' suffix) used by
+    the desktop environment to associate the windows to their icon."""
+    # Note: the desktop file name can be changed by other ewoks application like darfix.
+
+    def init(self):
+        super().init()
+        QGuiApplication.setDesktopFileName(self.DesktopFileName)
+
     if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
         # OASYS2 inherits the module-globals based discovery of
         # orange-canvas-core, which cannot describe Ewoks widgets.
