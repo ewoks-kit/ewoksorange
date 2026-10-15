@@ -5,8 +5,8 @@ from queue import Queue
 from typing import Callable
 from typing import Optional
 
-from .._progress import ToChild
-from .._progress import ToParent
+from .._messages import ToController
+from .._messages import ToRunner
 from .abstract import StartDenial
 from .abstract import TaskController
 
@@ -16,20 +16,20 @@ _logger = logging.getLogger(__name__)
 class ProcessTaskController(TaskController):
     """Controls a task running in another process.
 
-    Communication with the child process happens through two multiprocessing
-    queue proxies, one per direction. The child reports "about to start", "started"
-    and progress through the queue to the parent, relayed by a single thread, so the
-    callbacks are called in the order the child put them. On "about to start", the
-    child waits for the parent to allow the start through the queue to the child,
-    which then carries the stop and abort requests.
+    Communication with the runner in the other process happens through two
+    multiprocessing queue proxies, one per direction. The runner reports "about to
+    start", "started" and progress through the queue to the controller, relayed by a
+    single thread, so the callbacks are called in the order the runner put them. On
+    "about to start", the runner waits for the controller to allow the start through
+    the queue to the runner, which then carries the stop and abort requests.
     """
 
-    def __init__(self, to_parent_queue: Queue, to_child_queue: Queue):
+    def __init__(self, to_controller_queue: Queue, to_runner_queue: Queue):
         super().__init__()
-        self._to_parent_queue = to_parent_queue
-        self._to_child_queue = to_child_queue
-        # The start decision must be the first message to the child.
-        self._to_child_lock = threading.Lock()
+        self._to_controller_queue = to_controller_queue
+        self._to_runner_queue = to_runner_queue
+        # The start decision must be the first message to the runner.
+        self._to_runner_lock = threading.Lock()
         self._abort_sent = False
         self._killed = False
         self._relay_thread: Optional[threading.Thread] = None
@@ -40,9 +40,9 @@ class ProcessTaskController(TaskController):
         on_started: Callable[[], None],
         on_progress: Optional[Callable[[float], None]] = None,
     ) -> None:
-        """Relay the messages of the child process to the callbacks.
+        """Relay the messages of the runner to the callbacks.
 
-        Also decides whether the child process may start the task, so that a
+        Also decides whether the runner may start the task, so that a
         denied task never starts.
         """
 
@@ -50,16 +50,16 @@ class ProcessTaskController(TaskController):
             while True:
                 try:
                     # No timeout: `stop_watching` always ends the relay.
-                    message = self._to_parent_queue.get()
+                    message = self._to_controller_queue.get()
                 except Exception:
                     _logger.debug("events relay failed", exc_info=True)
                     return
-                if message is ToParent.END:
+                if message is ToController.END:
                     return
                 try:
-                    if message is ToParent.ABOUT_TO_START:
+                    if message is ToController.ABOUT_TO_START:
                         self._allow_start(on_about_to_start)
-                    elif message is ToParent.STARTED:
+                    elif message is ToController.STARTED:
                         on_started()
                     elif on_progress is not None:
                         on_progress(message)
@@ -70,12 +70,12 @@ class ProcessTaskController(TaskController):
         self._relay_thread.start()
 
     def _allow_start(self, on_about_to_start: Callable[[], None]) -> None:
-        """Reply to the child process whether it may start the task, and call
+        """Reply to the runner whether it may start the task, and call
         `on_about_to_start` when allowed."""
-        with self._to_child_lock:
+        with self._to_runner_lock:
             denial = self._gate.open()
-            # The child process waits for the reply.
-            self._to_child_queue.put(ToChild.START if denial is None else denial)
+            # The runner waits for the reply.
+            self._to_runner_queue.put(ToRunner.START if denial is None else denial)
         # Still before "started": the relay handles the events in order.
         if denial is None:
             on_about_to_start()
@@ -83,8 +83,8 @@ class ProcessTaskController(TaskController):
     def stop_watching(self) -> None:
         """Wait for all events to be relayed, then stop the relay.
 
-        The child puts every event before returning its result, while the
-        sentinel below is only put once the parent sees the task finished (or
+        The runner puts every event before returning its result, while the
+        sentinel below is only put once the controller sees the task finished (or
         cancelled). Manager queues are FIFO, so draining up to the sentinel
         delivers all of them.
         """
@@ -92,7 +92,7 @@ class ProcessTaskController(TaskController):
             return
 
         try:
-            self._to_parent_queue.put(ToParent.END)
+            self._to_controller_queue.put(ToController.END)
         except Exception:
             _logger.debug("failed to stop the events relay", exc_info=True)
 
@@ -101,8 +101,8 @@ class ProcessTaskController(TaskController):
             _logger.debug("events relay thread did not terminate in time")
 
     def _send_stop_request(self) -> None:
-        with self._to_child_lock:
-            self._to_child_queue.put(ToChild.REQUEST_STOP)
+        with self._to_runner_lock:
+            self._to_runner_queue.put(ToRunner.REQUEST_STOP)
 
     def abort(self) -> bool:
         if self._gate.deny(StartDenial.ABORTED):
@@ -110,8 +110,8 @@ class ProcessTaskController(TaskController):
         if not self._gate.started:
             return False
         self._abort_sent = True
-        with self._to_child_lock:
-            self._to_child_queue.put(ToChild.ABORT)
+        with self._to_runner_lock:
+            self._to_runner_queue.put(ToRunner.ABORT)
         return True
 
     def aborted(self, future: Future) -> bool:

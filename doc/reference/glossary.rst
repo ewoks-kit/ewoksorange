@@ -23,8 +23,8 @@ Glossary
 
     Queued execution
         An :term:`execution` that was submitted but did not start yet: it waits for a free
-        :term:`worker` (and, in the ``"process"`` :term:`backend`, for the parent's
-        permission to start).
+        :term:`worker` (and, in the ``"process"`` :term:`backend`, for the
+        controller's permission to start).
 
     Submit policy
         What the :term:`executor` does with a submission while an :term:`execution` is

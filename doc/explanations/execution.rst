@@ -56,7 +56,7 @@ One execution cycle
 
         BG-->>BG: task runs
         Note right of BG: has_pending_task() -> still True<br/>(succeeded/failed not delivered yet)
-        BG--)EX: completion (queued across threads)
+        BG--)EX: _done (queued across threads)
         EX-)W: succeeded/failed
 
         Note over W: GUI thread now runs __on_succeeded/__on_failed

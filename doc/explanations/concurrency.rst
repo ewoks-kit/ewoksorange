@@ -209,7 +209,7 @@ In the diagrams below:
     :term:`queued connection`) and the connected slots run later, when the GUI thread
     processes its events.
 
-- ``completion`` is an internal signal of the executor, not one of the signals above.
+- ``_done`` is an internal signal of the executor, not one of the signals above.
 - ``progress?`` is the optional ``progress`` task argument. It is kept when the task
   class derives from ``ewokscore.TaskWithProgress``, and dropped otherwise.
 - ``[0..n]`` marks a step that is repeated for each progress value, and skipped without a
@@ -221,7 +221,7 @@ In the ``"thread"`` and ``"process"`` backends, the executor does not emit the c
 signals (``cancelled``, ``stopRequested``, ``aborted``, ``killed``, ``succeeded``,
 ``failed``, ``finished``) from the callback that detects the completion. That callback
 can run in any thread, including the GUI thread (in ``kill()``, for example), so it
-emits the internal ``completion`` signal, which is always queued to the GUI thread. The
+emits the internal ``_done`` signal, which is always queued to the GUI thread. The
 completion signals are then emitted in the GUI thread, after the signals of the
 execution that were posted before.
 
@@ -293,7 +293,7 @@ single thread.
         T-)W: [0..n] 📨 sigProgressChanged(v) of the progress object
         T-->>R: outputs / exception
         R->>R: the pool sets the future result, runs the done callback
-        R-)E: 📨 completion
+        R-)E: 📨 _done
         E-)W: ⚡ succeeded / failed
         E-)W: ⚡ finished
 
@@ -305,24 +305,26 @@ Process
 
 The task runs in a worker process, which cannot emit Qt signals in the GUI thread's
 process nor update the :term:`progress object` (usually a ``QObject``, which is not
-picklable). Parent and child communicate through two queues of a :term:`manager`:
+picklable). The ``ProcessTaskController`` in the GUI process and the
+``ProcessTaskRunner`` in the worker process communicate through two queues of a
+:term:`manager`:
 
-- The queue to the parent carries ``ToParent.ABOUT_TO_START``, ``ToParent.STARTED``
-  and the progress values: the progress object is replaced by a
-  :class:`~ewoksorange.gui.concurrency._progress.QueueProgress` that puts each value on
-  this queue. The parent puts ``ToParent.END`` on it to end the reading.
-- The queue to the child carries the decision whether the task may start
-  (``ToChild.START`` or a ``StartDenial``), then ``ToChild.REQUEST_STOP`` and
-  ``ToChild.ABORT``. While the task executes, a thread of the child reads them, until
-  the child puts ``ToChild.END`` on it.
+- The queue to the controller carries ``ToController.ABOUT_TO_START``,
+  ``ToController.STARTED`` and the progress values: the progress object is replaced by a
+  :class:`~ewoksorange.gui.concurrency._messages.QueueProgress` that puts each value on
+  this queue. The controller puts ``ToController.END`` on it to end the reading.
+- The queue to the runner carries the decision whether the task may start
+  (``ToRunner.START`` or a ``StartDenial``), then ``ToRunner.REQUEST_STOP`` and
+  ``ToRunner.ABORT``. While the task executes, a thread of the runner reads them, until
+  the runner puts ``ToRunner.END`` on it.
 
-In the parent, one :term:`relay` thread per execution reads the queue to the parent and
-emits the matching signals. On ``ToParent.ABOUT_TO_START``, it decides whether the task
-may start (it may not once it was cancelled, stopped, aborted or killed), replies to the
-child, and emits ``aboutToStart`` when allowed. The relay only starts once ``submitted``
-was emitted, so the child cannot start the task before that. The decision is always the
-first message to the child: stop requests and aborts are only put on the queue to the
-child once the start was allowed.
+The controller has one :term:`relay` thread per execution that reads the queue to the
+controller and emits the matching signals. On ``ToController.ABOUT_TO_START``, it decides
+whether the task may start (it may not once it was cancelled, stopped, aborted or killed),
+replies to the runner, and emits ``aboutToStart`` when allowed. The relay only starts once
+``submitted`` was emitted, so the runner cannot start the task before that. The decision
+is always the first message to the runner: stop requests and aborts are only put on the
+queue to the runner once the start was allowed.
 
 .. mermaid::
 
@@ -334,79 +336,80 @@ child once the start was allowed.
         box Manager process
         participant M as Queues
         end
-        box Parent: relay thread
+        box GUI process: relay thread of the controller
         participant RL as Relay
         end
-        box Parent: pebble pool threads
+        box GUI process: pebble pool threads
         participant PP as pebble.ProcessPool
         end
-        box Child process
-        participant C as ProcessTaskRunner + Task
+        box Worker process
+        participant R as ProcessTaskRunner + Task
         end
 
         W->>E: submit_task(task, progress?)
-        E->>M: create the queue to the parent and the queue to the child
+        E->>M: create the queue to the controller and the queue to the runner
         E->>E: replace progress by QueueProgress, or drop it
         E->>PP: pool.submit(runner)
         E-)W: ⚡ submitted
         E->>RL: start the relay
-        Note over E,RL: only now can the child start the task
-        RL->>M: read the queue to the parent (blocks)
-        PP->>C: send the runner to a worker process (pickled)
-        C->>M: put ToParent.ABOUT_TO_START, then wait for the decision
-        M-->>RL: ToParent.ABOUT_TO_START
-        RL->>M: put ToChild.START on the queue to the child
+        Note over E,RL: only now can the runner start the task
+        RL->>M: read the queue to the controller (blocks)
+        PP->>R: send the runner to a worker process (pickled)
+        R->>M: put ToController.ABOUT_TO_START, then wait for the decision
+        M-->>RL: ToController.ABOUT_TO_START
+        RL->>M: put ToRunner.START on the queue to the runner
         RL-)W: 📨 aboutToStart
-        M-->>C: ToChild.START
-        C->>C: create task
-        C->>M: put ToParent.STARTED
-        M-->>RL: ToParent.STARTED
+        M-->>R: ToRunner.START
+        R->>R: create task
+        R->>M: put ToController.STARTED
+        M-->>RL: ToController.STARTED
         RL-)W: 📨 started
-        C->>C: execute
-        C->>M: [0..n] put v
+        R->>R: execute
+        R->>M: [0..n] put v
         M-->>RL: [0..n] v
         RL-)W: [0..n] 📨 sigProgressChanged(v) of the progress object
-        C-->>PP: outputs / exception (pickled)
+        R-->>PP: outputs / exception (pickled)
         PP->>PP: set the future result, run the done callback
-        PP->>M: put ToParent.END
-        M-->>RL: ToParent.END
+        PP->>M: put ToController.END
+        M-->>RL: ToController.END
         RL->>RL: exit
         PP->>RL: join (5 s timeout)
-        PP-)E: 📨 completion
+        PP-)E: 📨 _done
         E-)W: ⚡ succeeded / failed
         E-)W: ⚡ finished
 
 The diagram shows the relay reading each message right after it is put; in practice
 both run concurrently. What matters is the ordering:
 
-- **One queue, one reader.** All messages of an execution travel through the same
+- **One queue, one reader.** All messages to the controller travel through the same
   first-in first-out queue and are handled by its relay thread, so the signals are
-  emitted in the order the child put the messages.
-- **All messages before the completion.** The child puts all its messages before it
-  returns its result, and the done callback only puts ``ToParent.END`` once the result is
-  in. A manager queue call returns once the message is in the queue, so all messages of
-  the child are ahead of ``ToParent.END``. The done callback waits for the relay to reach
-  ``ToParent.END`` before it emits ``completion``, so the completion signals are emitted
+  emitted in the order the runner put the messages.
+- **All messages before the completion.** The runner puts all its messages before it
+  returns its result, and the done callback only puts ``ToController.END`` once the
+  result is in. A manager queue
+  call returns once the message is in the queue, so all messages of the runner are ahead
+  of ``ToController.END``. The done callback waits for the relay to reach
+  ``ToController.END`` before it emits ``_done``, so the completion signals are emitted
   after all signals of the relay.
 
 The relay's lifetime is tied to the future of the execution, not to a timeout:
 
-- **Prevented from starting.** The child only puts ``ToParent.ABOUT_TO_START``, is
-  denied and returns or raises, so the done callback runs and puts ``ToParent.END``.
-- **Crashed child.** The pool sets a ``pebble.ProcessExpired`` error on the future and
-  replaces the worker process, so the done callback runs and puts ``ToParent.END``.
-- **Killed child.** ``kill()`` cancels the future of the pool, which runs the done callback
+- **Prevented from starting.** The runner only puts ``ToController.ABOUT_TO_START``, is
+  denied and returns or raises, so the done callback runs and puts ``ToController.END``.
+- **Crashed worker.** The pool sets a ``pebble.ProcessExpired`` error on the future and
+  replaces the worker process, so the done callback runs and puts ``ToController.END``.
+- **Killed worker.** ``kill()`` cancels the future of the pool, which runs the done callback
   right away, in the thread calling ``kill()``, so that thread waits for the relay (at
-  most 5 s). The done callback puts ``ToParent.END``, so the messages the child puts after
+  most 5 s). The done callback puts ``ToController.END``, so the messages the runner puts after
   that are never read. The pool then terminates the worker process and replaces it.
 - **Manager shut down.** Reading the queue raises and the relay exits.
 - **Long-running task.** The relay keeps waiting, since progress may still come. There is
   deliberately no timeout on reading the queue: a timeout would end the relay early and
   silently drop the messages that follow.
 
-The done callback waits at most 5 s for the relay to reach ``ToParent.END``. With the
+The done callback waits at most 5 s for the relay to reach ``ToController.END``. With the
 default connections, the relay only posts signals to the GUI thread, so it reaches
-``ToParent.END`` quickly. A slow slot connected with ``Qt.DirectConnection`` runs in the
-relay thread and delays it. When the relay does not reach ``ToParent.END`` in time, the
+``ToController.END`` quickly. A slow slot connected with ``Qt.DirectConnection`` runs in the
+relay thread and delays it. When the relay does not reach ``ToController.END`` in time, the
 completion signals are emitted anyway, and the remaining signals of the relay follow
 them.

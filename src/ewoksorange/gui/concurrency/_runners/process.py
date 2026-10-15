@@ -12,8 +12,8 @@ from ewokscore.task import Task
 from ewokscore.variable import VariableContainer
 
 from .._controllers.abstract import StartDenial
-from .._progress import ToChild
-from .._progress import ToParent
+from .._messages import ToController
+from .._messages import ToRunner
 from ..future import TaskAbortedError
 from .abstract import TaskRunner
 
@@ -30,50 +30,50 @@ class ProcessTaskRunner(TaskRunner):
         self,
         task_class: Type[Task],
         task_kwargs: Dict[str, Any],
-        to_parent_queue: queue.Queue,
-        to_child_queue: queue.Queue,
+        to_controller_queue: queue.Queue,
+        to_runner_queue: queue.Queue,
     ):
         super().__init__(task_class, task_kwargs)
-        self._to_parent_queue = to_parent_queue
-        self._to_child_queue = to_child_queue
+        self._to_controller_queue = to_controller_queue
+        self._to_runner_queue = to_runner_queue
 
     def _try_start(self) -> Optional[StartDenial]:
-        # The parent decides, so that a denied task never starts.
-        self._to_parent_queue.put(ToParent.ABOUT_TO_START)
-        reply = self._to_child_queue.get()
-        return None if reply is ToChild.START else reply
+        # The controller decides, so that a denied task never starts.
+        self._to_controller_queue.put(ToController.ABOUT_TO_START)
+        reply = self._to_runner_queue.get()
+        return None if reply is ToRunner.START else reply
 
     def _announce_about_to_start(self) -> None:
-        # The parent announces it when allowing the start.
+        # The controller announces it when allowing the start.
         pass
 
     def _announce_started(self, task: Task) -> None:
-        self._to_parent_queue.put(ToParent.STARTED)
+        self._to_controller_queue.put(ToController.STARTED)
 
     def _execute(self, task: Task) -> VariableContainer:
-        """Execute `task`, handling the stop and abort requests of the parent."""
+        """Execute `task`, handling the stop and abort requests of the controller."""
         global _EXECUTING
 
         _install_sigint_handler()
         stop_event = threading.Event()
         abort_sent = threading.Event()
 
-        def _read_to_child_queue():
+        def _read_to_runner_queue():
             try:
                 while True:
-                    message = self._to_child_queue.get()
-                    if message is ToChild.REQUEST_STOP:
+                    message = self._to_runner_queue.get()
+                    if message is ToRunner.REQUEST_STOP:
                         stop_event.set()
-                    elif message is ToChild.ABORT:
+                    elif message is ToRunner.ABORT:
                         if not abort_sent.is_set():
                             abort_sent.set()
                             _interrupt_main_thread()
-                    elif message is ToChild.END:
+                    elif message is ToRunner.END:
                         return
             except self._TRANSIENT_ERRORS:
                 pass
 
-        reader = threading.Thread(target=_read_to_child_queue, daemon=True)
+        reader = threading.Thread(target=_read_to_runner_queue, daemon=True)
         reader.start()
         try:
             return self._execute_with_stop_event(task, stop_event)
@@ -87,7 +87,7 @@ class ProcessTaskRunner(TaskRunner):
             _EXECUTING = False
             try:
                 # Wake the reader.
-                self._to_child_queue.put(ToChild.END)
+                self._to_runner_queue.put(ToRunner.END)
             except self._TRANSIENT_ERRORS:
                 pass
             reader.join()

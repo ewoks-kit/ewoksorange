@@ -28,7 +28,7 @@ from ewokscore.task import Task
 from ewokscore.variable import VariableContainer
 
 from . import _controllers
-from . import _progress
+from . import _messages
 from . import _runners
 from .future import TaskFuture
 
@@ -234,23 +234,25 @@ class EwoksExecutor(QObject):
     ) -> TaskFuture:
         manager = self._get_manager()
 
-        to_parent_queue = manager.Queue()
-        to_child_queue = manager.Queue()
+        to_controller_queue = manager.Queue()
+        to_runner_queue = manager.Queue()
 
-        controller = _controllers.ProcessTaskController(to_parent_queue, to_child_queue)
+        controller = _controllers.ProcessTaskController(
+            to_controller_queue, to_runner_queue
+        )
 
         # The caller's progress object is usually unpicklable (QObject), so
         # it's replaced by a queue-backed stand-in relaying values back to it.
         progress = self._pop_progress_arg(task_class, task_kwargs)
         on_progress: Optional[Callable[[float], None]] = None
         if progress is not None:
-            task_kwargs["progress"] = _progress.QueueProgress(to_parent_queue)
+            task_kwargs["progress"] = _messages.QueueProgress(to_controller_queue)
 
             def on_progress(value: float) -> None:
                 progress.progress = value
 
         runner = _runners.ProcessTaskRunner(
-            task_class, task_kwargs, to_parent_queue, to_child_queue
+            task_class, task_kwargs, to_controller_queue, to_runner_queue
         )
 
         self_ref = weakref.ref(self)
@@ -260,7 +262,7 @@ class EwoksExecutor(QObject):
 
         def watch() -> None:
             # Only after the submission (a failing 'submit' is never watched) and
-            # after "submitted" (the child cannot start before the relay allows it).
+            # after "submitted" (the runner cannot start before the relay allows it).
             controller.watch(
                 on_about_to_start=lambda: _emit_about_to_start(self_ref, holder),
                 on_started=lambda: _emit_started(self_ref, holder),
