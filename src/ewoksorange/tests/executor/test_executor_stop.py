@@ -5,9 +5,9 @@ from ewoksutils.exceptions import TaskExecutionError
 
 from .tasks import AddTask
 from .tasks import EarlyStopTask
-from .tasks import IgnoreStopTask
 from .tasks import InterruptStopTask
 from .tasks import PartialStopTask
+from .tasks import WaitForFileTask
 
 
 def test_request_stop(ewoksorange_qtapp, executor_context_factory):
@@ -133,7 +133,7 @@ def test_stop_leaves_partial_outputs(ewoksorange_qtapp, executor_context_factory
 
 
 def test_request_stop_does_not_guarantee_stop(
-    ewoksorange_qtapp, executor_context_factory
+    ewoksorange_qtapp, executor_context_factory, tmp_path
 ):
     """A task that never checks `self.stop_requested` always completes normally.
 
@@ -141,21 +141,23 @@ def test_request_stop_does_not_guarantee_stop(
     not what the task chose to do about it.
     """
     with executor_context_factory() as (kind, executor, recorder):
-        inputs = {"duration": 0.3}
+        release = tmp_path / "release"
+        inputs = {"path": str(release)}
         thread = None
         if kind == "sync":
             thread = threading.Thread(
                 target=executor.submit_task,
-                args=(IgnoreStopTask,),
+                args=(WaitForFileTask,),
                 kwargs={"inputs": inputs},
             )
             thread.start()
         else:
-            executor.submit_task(IgnoreStopTask, inputs=inputs)
+            executor.submit_task(WaitForFileTask, inputs=inputs)
 
         future = recorder.wait_future("started")
 
         assert future.request_stop()
+        release.touch()
 
         result = future.result(timeout=10)
         assert result["result"].value == "completed despite stop request"

@@ -96,6 +96,11 @@ class ProcessTaskController(TaskController):
         except Exception:
             _logger.debug("failed to stop the events relay", exc_info=True)
 
+        if threading.current_thread() is self._relay_thread:
+            # `kill()` from a slot connected with `Qt.DirectConnection`: the relay
+            # reads the remaining events once that slot returns.
+            return
+
         self._relay_thread.join(timeout=5.0)
         if self._relay_thread.is_alive():
             _logger.debug("events relay thread did not terminate in time")
@@ -128,6 +133,9 @@ class ProcessTaskController(TaskController):
         if future.done():
             return False
         if self._gate.deny(StartDenial.KILLED):
+            # Completes the future of a queued task right away. Cancelling the pebble
+            # future terminates the worker when one already picked up the task.
+            future.cancel()
             return True
         if not self._gate.started:
             return False

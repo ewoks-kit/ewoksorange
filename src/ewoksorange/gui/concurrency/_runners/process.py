@@ -12,12 +12,11 @@ from ewokscore.task import Task
 from ewokscore.variable import VariableContainer
 
 from .._controllers.abstract import StartDenial
+from .._messages import QueueProgress
 from .._messages import ToController
 from .._messages import ToRunner
 from ..future import TaskAbortedError
 from .abstract import TaskRunner
-
-_EXECUTING = False
 
 
 class ProcessTaskRunner(TaskRunner):
@@ -36,12 +35,17 @@ class ProcessTaskRunner(TaskRunner):
         super().__init__(task_class, task_kwargs)
         self._to_controller_queue = to_controller_queue
         self._to_runner_queue = to_runner_queue
+        self._abort_sent: Optional[threading.Event] = None
 
     def _try_start(self) -> Optional[StartDenial]:
         # The controller decides, so that a denied task never starts.
         self._to_controller_queue.put(ToController.ABOUT_TO_START)
         reply = self._to_runner_queue.get()
-        return None if reply is ToRunner.START else reply
+        if reply is ToRunner.START:
+            return None
+        if isinstance(reply, StartDenial):
+            return reply
+        raise RuntimeError(f"Unexpected start decision {reply!r}")
 
     def _announce_about_to_start(self) -> None:
         # The controller announces it when allowing the start.
@@ -52,11 +56,8 @@ class ProcessTaskRunner(TaskRunner):
 
     def _execute(self, task: Task) -> VariableContainer:
         """Execute `task`, handling the stop and abort requests of the controller."""
-        global _EXECUTING
-
-        _install_sigint_handler()
         stop_event = threading.Event()
-        abort_sent = threading.Event()
+        abort_sent = self._abort_sent = threading.Event()
 
         def _read_to_runner_queue():
             try:
@@ -73,18 +74,28 @@ class ProcessTaskRunner(TaskRunner):
             except self._TRANSIENT_ERRORS:
                 pass
 
+        progress = self._task_kwargs.get("progress")
+        if not isinstance(progress, QueueProgress):
+            progress = None
+        if progress is not None:
+            progress.start_sending()
         reader = threading.Thread(target=_read_to_runner_queue, daemon=True)
         reader.start()
+        aborted = False
         try:
             return self._execute_with_stop_event(task, stop_event)
         except KeyboardInterrupt:
             if abort_sent.is_set():
+                aborted = True
                 raise TaskAbortedError(
                     f"Task {type(task).__name__} was aborted"
                 ) from None
             raise
         finally:
-            _EXECUTING = False
+            if progress is not None:
+                # Before returning: the controller expects all progress values first.
+                # Those of an aborted task do not matter.
+                progress.stop_sending(discard=aborted)
             try:
                 # Wake the reader.
                 self._to_runner_queue.put(ToRunner.END)
@@ -93,36 +104,26 @@ class ProcessTaskRunner(TaskRunner):
             reader.join()
 
     def _run_task(self, task: Task) -> None:
-        global _EXECUTING
-
-        # SIGINT only interrupts the task, not the runner.
-        _EXECUTING = True
+        # SIGINT only interrupts the task, not the runner. Outside the task, the
+        # pebble worker ignores SIGINT.
+        previous = signal.signal(signal.SIGINT, _raise_keyboard_interrupt)
         try:
-            super()._run_task(task)
-        finally:
-            _EXECUTING = False
+            try:
+                if self._abort_sent is not None and self._abort_sent.is_set():
+                    # The SIGINT arrived before the handler was installed and was ignored.
+                    raise KeyboardInterrupt
+                super()._run_task(task)
+            finally:
+                signal.signal(signal.SIGINT, previous)
+        except KeyboardInterrupt:
+            # The SIGINT can also interrupt the restore above.
+            signal.signal(signal.SIGINT, previous)
+            raise
 
 
-_SIGINT_HANDLER_INSTALLED = False
-
-
-def _install_sigint_handler() -> None:
-    """Interrupt the task with `KeyboardInterrupt` on `SIGINT`.
-
-    The handler stays installed so that `SIGINT` never kills an idle worker,
-    which would break the process pool.
-    """
-    global _SIGINT_HANDLER_INSTALLED
-
-    if _SIGINT_HANDLER_INSTALLED:
-        return
-    signal.signal(signal.SIGINT, _sigint_handler)
-    _SIGINT_HANDLER_INSTALLED = True
-
-
-def _sigint_handler(signum: int, frame: Any) -> None:
-    if _EXECUTING:
-        raise KeyboardInterrupt
+def _raise_keyboard_interrupt(signum: int, frame: Any) -> None:
+    """Interrupt the task like Ctrl-C."""
+    raise KeyboardInterrupt
 
 
 def _interrupt_main_thread() -> None:

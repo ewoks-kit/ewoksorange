@@ -105,11 +105,12 @@ The :term:`task future` can end an execution, from mild to forceful:
 
 ``CancelledError`` is ``concurrent.futures.CancelledError``.
 
-Each method returns ``True`` when it had an effect. On a queued task, the first call
-decides: the task never starts, and later calls return ``False``. On a running task, the
+Each method returns ``True`` when it prevented the start or reached the running task. On
+a queued task, the first call decides: the task never starts, and later calls return
+``False``. On a running task, ``request_stop()`` and ``abort()`` can be repeated, and the
 calls can escalate, for example ``request_stop()``, then ``abort()``, then ``kill()``.
-None of them has an effect on a finished task. ``abort()`` and ``kill()`` have no effect
-in the ``"sync"`` and ``"thread"`` backends.
+None of them has an effect on a finished task, which includes a task ended by ``kill()``.
+``abort()`` and ``kill()`` have no effect in the ``"sync"`` and ``"thread"`` backends.
 
 A task honours ``request_stop()`` by checking ``self.stop_requested`` or by implementing
 ``_on_stop_requested()`` (see `ewokscore <https://ewokscore.readthedocs.io/>`_).
@@ -183,7 +184,7 @@ What this means for a widget:
 - ``finished`` is the last signal of every submitted execution, so it is the place to
   release what the execution uses.
 - No ``aboutToStart``, ``started`` or progress value arrives after the other signals of the
-  execution.
+  execution, unless the relay of the ``"process"`` backend times out (see below).
 - An execution can finish without ever emitting ``aboutToStart`` or ``started``.
 - ``failed`` is also emitted for an execution that was stopped, aborted or killed. The
   task future tells why with ``stop_requested()``, ``aborted()`` and ``killed()``, and
@@ -311,8 +312,13 @@ picklable). The ``ProcessTaskController`` in the GUI process and the
 
 - The queue to the controller carries ``ToController.ABOUT_TO_START``,
   ``ToController.STARTED`` and the progress values: the progress object is replaced by a
-  :class:`~ewoksorange.gui.concurrency._messages.QueueProgress` that puts each value on
-  this queue. The controller puts ``ToController.END`` on it to end the reading.
+  :class:`~ewoksorange.gui.concurrency._messages.QueueProgress`. While the task executes,
+  a sender thread of the runner puts each value on this queue, so that an abort never
+  interrupts the task thread in the middle of a queue call. The task waits when it
+  reports progress faster than the sender thread puts it. The values an aborted task did
+  not send yet are dropped. The values reported while the task is created are put
+  directly, since an abort cannot interrupt that. The controller puts
+  ``ToController.END`` on the queue to end the reading.
 - The queue to the runner carries the decision whether the task may start
   (``ToRunner.START`` or a ``StartDenial``), then ``ToRunner.REQUEST_STOP`` and
   ``ToRunner.ABORT``. While the task executes, a thread of the runner reads them, until
@@ -384,9 +390,9 @@ both run concurrently. What matters is the ordering:
 - **One queue, one reader.** All messages to the controller travel through the same
   first-in first-out queue and are handled by its relay thread, so the signals are
   emitted in the order the runner put the messages.
-- **All messages before the completion.** The runner puts all its messages before it
-  returns its result, and the done callback only puts ``ToController.END`` once the
-  result is in. A manager queue
+- **All messages before the completion.** The runner puts all its messages, and waits
+  for its sender thread to put the progress values, before it returns its result, and
+  the done callback only puts ``ToController.END`` once the result is in. A manager queue
   call returns once the message is in the queue, so all messages of the runner are ahead
   of ``ToController.END``. The done callback waits for the relay to reach
   ``ToController.END`` before it emits ``_done``, so the completion signals are emitted
@@ -396,12 +402,15 @@ The relay's lifetime is tied to the future of the execution, not to a timeout:
 
 - **Prevented from starting.** The runner only puts ``ToController.ABOUT_TO_START``, is
   denied and returns or raises, so the done callback runs and puts ``ToController.END``.
+  After ``kill()``, the future of the pool is cancelled instead (see below), so the runner
+  may not run at all.
 - **Crashed worker.** The pool sets a ``pebble.ProcessExpired`` error on the future and
   replaces the worker process, so the done callback runs and puts ``ToController.END``.
 - **Killed worker.** ``kill()`` cancels the future of the pool, which runs the done callback
   right away, in the thread calling ``kill()``, so that thread waits for the relay (at
   most 5 s). The done callback puts ``ToController.END``, so the messages the runner puts after
-  that are never read. The pool then terminates the worker process and replaces it.
+  that are never read. When a worker already picked up the task, the pool then
+  terminates that worker process and replaces it.
 - **Manager shut down.** Reading the queue raises and the relay exits.
 - **Long-running task.** The relay keeps waiting, since progress may still come. There is
   deliberately no timeout on reading the queue: a timeout would end the relay early and
@@ -412,4 +421,5 @@ default connections, the relay only posts signals to the GUI thread, so it reach
 ``ToController.END`` quickly. A slow slot connected with ``Qt.DirectConnection`` runs in the
 relay thread and delays it. When the relay does not reach ``ToController.END`` in time, the
 completion signals are emitted anyway, and the remaining signals of the relay follow
-them.
+them. The same happens when such a slot calls ``kill()``: the done callback then runs in
+the relay thread and cannot wait for it.

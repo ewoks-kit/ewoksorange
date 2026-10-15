@@ -81,6 +81,10 @@ class TaskController(ABC):
         """Request the running task to stop."""
         raise NotImplementedError
 
+    def started(self) -> bool:
+        """Return True if the task was allowed to start."""
+        return self._gate.started
+
     def stop_requested(self) -> bool:
         """Return True if the stop request prevented the start or reached the task."""
         return self._gate.denial is StartDenial.STOPPED or self._stop_sent

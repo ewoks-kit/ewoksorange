@@ -26,13 +26,6 @@ def test_cancel_queued_task(ewoksorange_qtapp, executor_context_factory):
 
         blocker = recorder.wait_future("started")
 
-        # A pool can hand queued submissions to its workers ahead of time,
-        # so with a single worker the first couple of queued submissions can
-        # already be uncancellable before they truly start. A few filler
-        # submissions guarantee the last one is still genuinely queued when it
-        # gets cancelled below.
-        fillers = [executor.submit_task(AddTask, inputs={"a": i}) for i in range(4)]
-
         victim = executor.submit_task(AddTask, inputs={"a": 99})
         cancelled = victim.cancel()
 
@@ -42,19 +35,17 @@ def test_cancel_queued_task(ewoksorange_qtapp, executor_context_factory):
             # not merely unstarted.
 
             assert cancelled is False
-            n_ran = 1 + len(fillers) + 1
+            n_ran = 2
         else:
             assert cancelled is True
-            n_ran = 1 + len(fillers)
-        n_cancelled = 1 + len(fillers) + 1 - n_ran
+            n_ran = 1
+        n_cancelled = 2 - n_ran
 
         blocker.result(timeout=10)
-        for filler in fillers:
-            filler.result(timeout=10)
 
         recorder.wait_for("finished", n_ran + n_cancelled)
         recorder.assert_counts(
-            submitted=1 + len(fillers) + 1,
+            submitted=2,
             aboutToStart=n_ran,
             started=n_ran,
             succeeded=n_ran,

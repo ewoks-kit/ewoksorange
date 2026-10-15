@@ -110,4 +110,5 @@ Glossary
     Relay
         A thread of the :term:`GUI thread`'s process that reads the messages of a
         :term:`worker` process from the :term:`manager` queue and turns them into Qt signals.
-        One relay thread runs per execution in the ``"process"`` :term:`backend`.
+        It also replies whether the task may start. One relay thread runs per execution in
+        the ``"process"`` :term:`backend`.

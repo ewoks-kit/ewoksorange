@@ -3,6 +3,7 @@ from typing import Dict
 
 import pytest
 
+from ...gui.concurrency._controllers.process import ProcessTaskController
 from ...gui.concurrency.future import TaskAbortedError
 from ...gui.concurrency.future import TaskFuture
 from ...gui.concurrency.future import TaskStoppedError
@@ -95,6 +96,52 @@ def test_queued_task_first_action_wins(
         with pytest.raises(exc_type, match=match):
             queued.result(timeout=10)
         assert _flags(queued) == {name: name == first for name in _ACTIONS}
+
+
+def test_killed_queued_task_completes(ewoksorange_qtapp, executor_context_factory):
+    """Kill completes the future of a queued task right away."""
+    with executor_context_factory(workers=1) as (kind, executor, recorder):
+        if kind != "process":
+            pytest.skip("kill is only supported in a subprocess")
+
+        blocker = executor.submit_task(AddTask, inputs={"a": 1, "delay": 2})
+        recorder.wait_for("started")
+        queued = executor.submit_task(AddTask, inputs={"a": 2})
+
+        assert queued.kill()
+        assert queued.done()
+        assert not blocker.done()
+        with pytest.raises(TaskAbortedError, match="killed before it started"):
+            queued.result(timeout=0)
+
+        recorder.wait_for("finished", 1)
+        assert recorder.future("finished") is queued
+        assert blocker.result(timeout=10)["result"].value == 1
+
+
+def test_failed_watch_ends_execution(
+    ewoksorange_qtapp, executor_context_factory, monkeypatch
+):
+    """When the relay fails to start, the submission raises, the execution ends
+    with `cancelled` and `finished`, and the executor stays usable."""
+    with executor_context_factory(workers=1) as (kind, executor, recorder):
+        if kind != "process":
+            pytest.skip("only the process backend watches the task")
+
+        def _failing_watch(*args, **kwargs) -> None:
+            raise RuntimeError("cannot start the relay")
+
+        # Last resort: starting a thread cannot be made to fail otherwise.
+        with monkeypatch.context() as patch:
+            patch.setattr(ProcessTaskController, "watch", _failing_watch)
+            with pytest.raises(RuntimeError, match="cannot start the relay"):
+                executor.submit_task(AddTask, inputs={"a": 1})
+
+        recorder.assert_counts(submitted=1, cancelled=1, finished=1)
+        assert recorder.future("finished").cancelled()
+
+        future = executor.submit_task(AddTask, inputs={"a": 2})
+        assert future.result(timeout=30)["result"].value == 2
 
 
 def test_finished_task(ewoksorange_qtapp, executor_context_factory):

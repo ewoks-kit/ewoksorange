@@ -101,7 +101,8 @@ class EwoksExecutor(QObject):
     """Emitted when a task finishes successfully."""
 
     failed = Signal(TaskFuture)
-    """Emitted when a task raises an exception."""
+    """Emitted when a task raises an exception, also when a stop, abort or kill prevented
+    its start or a kill ended it."""
 
     ignored = Signal()
     """Emitted when a task submission is ignored due to the DROP_IF_BUSY policy."""
@@ -312,7 +313,15 @@ class EwoksExecutor(QObject):
 
         self.submitted.emit(task_future)
 
-        after_submitted()
+        try:
+            after_submitted()
+        except BaseException:
+            # Otherwise a process runner waits forever for the start decision.
+            controller.cancel(raw_future)
+            raw_future.cancel()
+            # Without a done callback: `submit_task` releases the executor.
+            self._handle_done(raw_future, task_future, controller)
+            raise
 
         queue_done = self._executor is not None
         raw_future.add_done_callback(

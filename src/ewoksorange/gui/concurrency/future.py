@@ -34,8 +34,9 @@ class TaskFuture:
     4. :meth:`kill` (forced, no cleanup): the subprocess running the task is terminated,
        also when the task does not return to the Python interpreter. Subprocess only.
 
-    Each of them prevents a queued task from starting. Only the first one that reaches
-    a queued task has an effect. None of them has an effect on a finished task.
+    Each of them that is supported prevents a queued task from starting. Only the first
+    one that reaches a queued task has an effect. None of them has an effect on a
+    finished task.
 
     :meth:`cancelled`, :meth:`stop_requested`, :meth:`aborted` and :meth:`killed`
     report which of these happened.
@@ -81,8 +82,8 @@ class TaskFuture:
         Only supported for tasks running in a subprocess. A queued task never starts.
         A running task is interrupted, also when it ignores stop requests. The task can
         clean up and the subprocess survives. It only takes effect when the task returns
-        to the Python interpreter: use :meth:`kill` otherwise. The result raises
-        :class:`TaskAbortedError`.
+        to the Python interpreter: use :meth:`kill` otherwise. When the task is
+        interrupted, the result raises :class:`TaskAbortedError`.
 
         :return: True if this prevented the task from starting or was sent to the running task.
         """
@@ -93,10 +94,10 @@ class TaskFuture:
     def kill(self) -> bool:
         """Terminate the subprocess running the ewoks task (forced, no cleanup).
 
-        Only supported for tasks running in a subprocess. A queued task never starts.
-        Unlike :meth:`abort`, this also works when a running task does not return to the
-        Python interpreter. The task cannot clean up and the pool replaces the subprocess.
-        The result raises :class:`TaskAbortedError`.
+        Only supported for tasks running in a subprocess. A queued task never starts and
+        its future completes right away. Unlike :meth:`abort`, this also works when a
+        running task does not return to the Python interpreter. The task cannot clean up
+        and the pool replaces the subprocess. The result raises :class:`TaskAbortedError`.
 
         :return: True if this prevented the task from starting or killed the running task.
         """
@@ -126,6 +127,8 @@ class TaskFuture:
         :param timeout: Maximum number of seconds to wait for the future to complete, `None` to wait forever.
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
+        :raises TaskStoppedError: A stop request prevented the task from starting.
+        :raises TaskAbortedError: The task was aborted or killed.
         :raises Exception: Whatever the task raised.
         :return: An immutable mapping of output name to
                  :class:`~ewokscore.variable.Variable`.
@@ -134,7 +137,7 @@ class TaskFuture:
             result = self._future.result(timeout=timeout)
         except CancelledError:
             if self._controller.killed():
-                raise _killed_error() from None
+                raise self._killed_error() from None
             raise
         if self.cancelled():
             raise CancelledError()
@@ -180,7 +183,7 @@ class TaskFuture:
             exception = self._future.exception(timeout=timeout)
         except CancelledError:
             if self._controller.killed():
-                return _killed_error()
+                return self._killed_error()
             raise
         if exception is None and self.cancelled():
             raise CancelledError()
@@ -210,6 +213,8 @@ class TaskFuture:
         """
         self._future.add_done_callback(fn)
 
-
-def _killed_error() -> TaskAbortedError:
-    return TaskAbortedError("The task was killed")
+    def _killed_error(self) -> TaskAbortedError:
+        """The error of a killed task."""
+        if self._controller.started():
+            return TaskAbortedError("The task was killed")
+        return TaskAbortedError("The task was killed before it started")
