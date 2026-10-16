@@ -15,7 +15,9 @@ from typing import List
 from typing import Mapping
 from typing import Optional
 from typing import Set
+from typing import Union
 
+import pebble
 from AnyQt import QtWidgets
 from ewokscore import TaskWithProgress
 from ewokscore import missing_data
@@ -179,11 +181,15 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         self.__executor.started.connect(self.__on_started)
         self.__executor.succeeded.connect(self.__on_succeeded)
         self.__executor.failed.connect(self.__on_failed)
+        self.__executor.finished.connect(self.__on_finished)
 
     @classmethod
-    def _create_pool_executor(cls) -> Optional[futures.Executor]:
+    def _create_pool_executor(
+        cls,
+    ) -> Optional[Union[futures.Executor, pebble.ProcessPool]]:
         """
-        Create the `concurrent.futures` executor that runs the Ewoks tasks.
+        Create the executor that runs the Ewoks tasks: a `concurrent.futures`
+        executor, or a `pebble.ProcessPool` to execute in subprocesses.
 
         Override to execute tasks in an executor that :class:`Concurrency` does
         not cover.
@@ -926,14 +932,14 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         return bool(self.__propagate_by_future)
 
     def cancel_running_task(self) -> None:
-        """Abort the currently running task."""
+        """Request the currently running task to stop."""
         warnings.warn(
-            "'cancel_running_task' is deprecated since 6.0. Please cancel the task by calling the "
-            " `cancel` method of the future provided during task submission.",
+            "'cancel_running_task' is deprecated since 6.0. Please stop the task by calling the "
+            " `request_stop` method of the future provided during task submission.",
             DeprecationWarning,
         )
         if self.__current_task_future is not None:
-            self.__current_task_future.abort()
+            self.__current_task_future.request_stop()
 
     @property
     def post_task_exception(self) -> Optional[Exception]:
@@ -1099,3 +1105,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             self.progressBarFinished()
             self.__propagate_by_future.pop(task_future, None)
             self._output_changed()
+
+    def __on_finished(self, task_future: TaskFuture) -> None:
+        """
+        Forget a task that ended without succeeding or failing (cancelled before it started).
+
+        :param task_future: The future of the finished task.
+        """
+        self.__propagate_by_future.pop(task_future, None)

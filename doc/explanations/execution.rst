@@ -56,8 +56,8 @@ One execution cycle
 
         BG-->>BG: task runs
         Note right of BG: has_pending_task() -> still True<br/>(succeeded/failed not delivered yet)
-        BG--)EX: Future done callback
-        EX--)W: succeeded/failed (queued across threads)
+        BG--)EX: _done (queued across threads)
+        EX-)W: succeeded/failed
 
         Note over W: GUI thread now runs __on_succeeded/__on_failed
         W->>W: propagate_downstream()
@@ -76,9 +76,9 @@ thread. The other backends only change who runs the task:
     Every step runs on the Qt main thread, inside the ``submit_task()`` call, so
     ``handleNewSignals()`` only returns once the outputs have been propagated.
 ``concurrency="process"``
-    A worker process runs the task. Its lifecycle events and progress travel
-    back, in order, through a single ``multiprocessing`` manager queue, relayed
-    onto the Qt main thread by
+    A worker process runs the task. Its "about to start" and "started" events
+    and its progress travel back, in order, through a ``multiprocessing``
+    manager queue, relayed onto the Qt main thread by a thread of
     :class:`~ewoksorange.gui.concurrency._controllers.process.ProcessTaskController`.
 
 See :doc:`concurrency` for how each backend keeps the signals in order.

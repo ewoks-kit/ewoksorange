@@ -25,7 +25,10 @@ class SignalRecorder:
             "started": 0,
             "succeeded": 0,
             "failed": 0,
+            "cancelled": 0,
+            "stopRequested": 0,
             "aborted": 0,
+            "killed": 0,
             "finished": 0,
             "ignored": 0,
         }
@@ -36,7 +39,10 @@ class SignalRecorder:
         executor.started.connect(self._store_future("started"))
         executor.succeeded.connect(self._store_future("succeeded"))
         executor.failed.connect(self._store_future("failed"))
+        executor.cancelled.connect(self._store_future("cancelled"))
+        executor.stopRequested.connect(self._store_future("stopRequested"))
         executor.aborted.connect(self._store_future("aborted"))
+        executor.killed.connect(self._store_future("killed"))
         executor.finished.connect(self._store_future("finished"))
         executor.ignored.connect(self._store_noargs("ignored"))
 
@@ -58,6 +64,10 @@ class SignalRecorder:
 
     def count(self, name: str) -> int:
         return len(self._events[name])
+
+    def futures(self, name: str) -> List[Optional[TaskFuture]]:
+        """Return the futures carried by all `name` signals."""
+        return list(self._events[name])
 
     def future(self, name: str, index: int = 0) -> TaskFuture:
         """Return the future carried by the `index`-th `name` signal."""

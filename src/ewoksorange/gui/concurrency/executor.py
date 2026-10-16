@@ -17,15 +17,18 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Type
+from typing import Union
 
+import pebble
 from AnyQt.QtCore import QObject
+from AnyQt.QtCore import Qt
 from AnyQt.QtCore import Signal
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
 from ewokscore.variable import VariableContainer
 
 from . import _controllers
-from . import _progress
+from . import _messages
 from . import _runners
 from .future import TaskFuture
 
@@ -54,8 +57,8 @@ def create_pool_executor(
     concurrency: Concurrency,
     max_workers: Optional[int] = None,
     mp_context: Optional[multiprocessing.context.BaseContext] = None,
-) -> Optional[futures.Executor]:
-    """Create the `concurrent.futures` executor for a given concurrency.
+) -> Optional[Union[futures.Executor, pebble.ProcessPool]]:
+    """Create the pool executor for a given concurrency.
 
     :param concurrency: The execution backend.
     :param max_workers: Maximum number of workers, `None` for the pool default.
@@ -66,9 +69,10 @@ def create_pool_executor(
     if concurrency is Concurrency.SYNC:
         return None
     if concurrency is Concurrency.PROCESS:
-        return futures.ProcessPoolExecutor(
-            max_workers=max_workers, mp_context=mp_context
-        )
+        kwargs = {"context": mp_context or multiprocessing}
+        if max_workers is not None:
+            kwargs["max_workers"] = max_workers
+        return pebble.ProcessPool(**kwargs)
     if concurrency is Concurrency.THREAD:
         return futures.ThreadPoolExecutor(max_workers=max_workers)
     raise ValueError(f"Concurrency policy {concurrency} is not handled")
@@ -77,10 +81,9 @@ def create_pool_executor(
 class EwoksExecutor(QObject):
     """Qt-aware executor for ewoks tasks.
 
-    Wraps a `concurrent.futures.Executor` (thread, process or None) and emits Qt
-    signals on task lifecycle events. Returns TaskFuture objects that support
-    both native future cancellation (cancel()) and ewoks task abort (abort()).
-    Their result is the executed task's
+    Wraps a thread pool (`concurrent.futures.Executor`), a process pool (`pebble.ProcessPool`)
+    or None and emits Qt signals on task lifecycle events. Returns :class:`TaskFuture` objects
+    to cancel, stop, abort or kill the task. Their result is the executed task's
     :class:`~ewokscore.variable.VariableContainer` of output variables.
     """
 
@@ -89,7 +92,7 @@ class EwoksExecutor(QObject):
 
     aboutToStart = Signal(TaskFuture)
     """Emitted when a worker picks the task up, right before it is created and
-    executed. Not emitted for a task cancelled while queued."""
+    executed. Not emitted for a task prevented from starting."""
 
     started = Signal(TaskFuture)
     """Emitted when a task starts executing."""
@@ -98,25 +101,40 @@ class EwoksExecutor(QObject):
     """Emitted when a task finishes successfully."""
 
     failed = Signal(TaskFuture)
-    """Emitted when a task raises an exception."""
+    """Emitted when a task raises an exception, also when a stop, abort or kill prevented
+    its start or a kill ended it."""
 
     ignored = Signal()
     """Emitted when a task submission is ignored due to the DROP_IF_BUSY policy."""
 
+    cancelled = Signal(TaskFuture)
+    """Emitted when :meth:`TaskFuture.cancel` prevented a queued task from starting."""
+
+    stopRequested = Signal(TaskFuture)
+    """Emitted when a task finishes after :meth:`TaskFuture.request_stop` prevented its start or reached it."""
+
     aborted = Signal(TaskFuture)
-    """Emitted when a task was aborted."""
+    """Emitted when a task finishes after :meth:`TaskFuture.abort` prevented its start or interrupted it."""
+
+    killed = Signal(TaskFuture)
+    """Emitted when a task finishes after :meth:`TaskFuture.kill` prevented its start or terminated it."""
 
     finished = Signal(TaskFuture)
-    """Emitted when a task finishes (success, failure, or abort)."""
+    """Emitted last, for every submitted task."""
+
+    _done = Signal(object, object, object)
+    # Carries a done task to the thread of the executor, behind the events
+    # already queued for that thread.
 
     def __init__(
         self,
-        executor: Optional[futures.Executor],
+        executor: Optional[Union[futures.Executor, pebble.ProcessPool]],
         policy: SubmitPolicy = SubmitPolicy.ALWAYS,
         mp_context: Optional[multiprocessing.context.BaseContext] = None,
     ):
         """
         :param executor: Wrapped executor, `None` to execute in the calling thread.
+                         Use `pebble.ProcessPool` to execute in subprocesses.
         :param policy: What to do with submissions while the executor is busy.
         :param mp_context: Multiprocessing context used for the IPC manager. Provide
                            the context of `executor` so the manager process is created
@@ -124,13 +142,18 @@ class EwoksExecutor(QObject):
         """
         super().__init__()
 
+        if isinstance(executor, futures.ProcessPoolExecutor):
+            raise TypeError("Use 'pebble.ProcessPool' to execute in subprocesses")
+
         self._executor = executor
         self._policy = policy
         self._mp_context = mp_context
         self._running = 0
         self._lock = Lock()
 
-        self._as_process = isinstance(executor, futures.ProcessPoolExecutor)
+        self._as_process = isinstance(executor, pebble.ProcessPool)
+
+        self._done.connect(self._handle_done, Qt.ConnectionType.QueuedConnection)
 
         self._manager: Optional[multiprocessing.managers.SyncManager] = None
 
@@ -146,13 +169,18 @@ class EwoksExecutor(QObject):
 
             self._running += 1
 
-        if self._executor is None:
-            return self._submit_sync(task_class, task_kwargs)
+        try:
+            if self._executor is None:
+                return self._submit_sync(task_class, task_kwargs)
 
-        if self._as_process:
-            return self._submit_process(task_class, task_kwargs)
+            if self._as_process:
+                return self._submit_process(task_class, task_kwargs)
 
-        return self._submit_thread(task_class, task_kwargs)
+            return self._submit_thread(task_class, task_kwargs)
+        except BaseException:
+            with self._lock:
+                self._running -= 1
+            raise
 
     def _submit_sync(
         self, task_class: Type[Task], task_kwargs: Dict[str, Any]
@@ -160,7 +188,7 @@ class EwoksExecutor(QObject):
         controller = _controllers.SyncTaskController()
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
-        task_kwargs = self._handle_progess_arg(task_class, task_kwargs)
+        task_kwargs = self._handle_progress_arg(task_class, task_kwargs)
         runner = _runners.SyncTaskRunner(
             task_class,
             task_kwargs,
@@ -186,7 +214,7 @@ class EwoksExecutor(QObject):
         ready_event = Event()
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
-        task_kwargs = self._handle_progess_arg(task_class, task_kwargs)
+        task_kwargs = self._handle_progress_arg(task_class, task_kwargs)
         runner = _runners.ThreadTaskRunner(
             task_class,
             task_kwargs,
@@ -207,13 +235,11 @@ class EwoksExecutor(QObject):
     ) -> TaskFuture:
         manager = self._get_manager()
 
-        ready_event = manager.Event()
-        events_queue = manager.Queue()
-        abort_event = manager.Event()
-        aborted_event = manager.Event()
+        to_controller_queue = manager.Queue()
+        to_runner_queue = manager.Queue()
 
         controller = _controllers.ProcessTaskController(
-            abort_event, aborted_event, events_queue
+            to_controller_queue, to_runner_queue
         )
 
         # The caller's progress object is usually unpicklable (QObject), so
@@ -221,37 +247,34 @@ class EwoksExecutor(QObject):
         progress = self._pop_progress_arg(task_class, task_kwargs)
         on_progress: Optional[Callable[[float], None]] = None
         if progress is not None:
-            task_kwargs["progress"] = _progress.QueueProgress(events_queue)
+            task_kwargs["progress"] = _messages.QueueProgress(to_controller_queue)
 
             def on_progress(value: float) -> None:
                 progress.progress = value
 
         runner = _runners.ProcessTaskRunner(
-            task_class,
-            task_kwargs,
-            ready_event,
-            events_queue,
-            abort_event,
-            aborted_event,
+            task_class, task_kwargs, to_controller_queue, to_runner_queue
         )
 
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
 
-        raw_future = self._executor.submit(runner)
+        raw_future = self._executor.submit(runner, None)
 
-        # Watch after the submission in case 'submit' fails (make sure 'STOP' will always be sent after this point).
-        controller.watch(
-            on_about_to_start=lambda: _emit_about_to_start(self_ref, holder),
-            on_started=lambda: _emit_started(self_ref, holder),
-            on_progress=on_progress,
-        )
+        def watch() -> None:
+            # Only after the submission (a failing 'submit' is never watched) and
+            # after "submitted" (the runner cannot start before the relay allows it).
+            controller.watch(
+                on_about_to_start=lambda: _emit_about_to_start(self_ref, holder),
+                on_started=lambda: _emit_started(self_ref, holder),
+                on_progress=on_progress,
+            )
 
         return self._finalize_submission(
-            raw_future, controller, holder, self_ref, after_submitted=ready_event.set
+            raw_future, controller, holder, self_ref, after_submitted=watch
         )
 
-    def _handle_progess_arg(
+    def _handle_progress_arg(
         self, task_class: Type[Task], task_kwargs: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Prepare the `progress` task argument for `task_class`, for backends
@@ -290,10 +313,19 @@ class EwoksExecutor(QObject):
 
         self.submitted.emit(task_future)
 
-        after_submitted()
+        try:
+            after_submitted()
+        except BaseException:
+            # Otherwise a process runner waits forever for the start decision.
+            controller.cancel(raw_future)
+            raw_future.cancel()
+            # Without a done callback: `submit_task` releases the executor.
+            self._handle_done(raw_future, task_future, controller)
+            raise
 
+        queue_done = self._executor is not None
         raw_future.add_done_callback(
-            lambda f: _done_callback(self_ref, f, task_future, controller)
+            lambda f: _done_callback(self_ref, f, task_future, controller, queue_done)
         )
 
         return task_future
@@ -312,18 +344,21 @@ class EwoksExecutor(QObject):
         task_future: TaskFuture,
         controller: _controllers.TaskController,
     ) -> None:
-        with self._lock:
-            self._running -= 1
-
-        if raw_future.cancelled():
+        if task_future.cancelled():
+            self.cancelled.emit(task_future)
+            self.finished.emit(task_future)
             return
 
+        if task_future.stop_requested():
+            self.stopRequested.emit(task_future)
         if task_future.aborted():
             self.aborted.emit(task_future)
+        if task_future.killed():
+            self.killed.emit(task_future)
 
         try:
-            raw_future.result()
-        except Exception:
+            task_future.result()
+        except BaseException:
             self.failed.emit(task_future)
         else:
             self.succeeded.emit(task_future)
@@ -335,7 +370,10 @@ class EwoksExecutor(QObject):
         manager, self._manager = self._manager, None
 
         def _shutdown() -> None:
-            if executor is not None:
+            if isinstance(executor, pebble.ProcessPool):
+                executor.close()
+                executor.join()
+            elif executor is not None:
                 executor.shutdown(wait=True)
             if manager is not None:
                 manager.shutdown()
@@ -345,8 +383,8 @@ class EwoksExecutor(QObject):
             return
 
         # Wait off-thread rather than `executor.shutdown(wait=False)`: on
-        # Python < 3.9, garbage-collecting a `ProcessPoolExecutor` mid-shutdown
-        # can orphan a worker process, hanging the interpreter at exit.
+        # Python < 3.9, garbage-collecting a pool mid-shutdown can orphan a
+        # worker process, hanging the interpreter at exit.
         Thread(target=_shutdown, name="EwoksExecutorShutdown").start()
 
 
@@ -355,15 +393,27 @@ def _done_callback(
     raw_future: futures.Future[VariableContainer],
     task_future: TaskFuture,
     controller: _controllers.TaskController,
+    queue_done: bool,
 ) -> None:
-    # Before emitting anything: this delivers the events still in flight
-    # (process backend), so receivers of "succeeded"/"failed" cannot observe
-    # "started" or progress arriving after they considered the task finished.
-    # Done even if the executor is gone, so the relay never outlives the task.
+    # Before emitting anything: this queues the events still in flight
+    # (process backend) for the thread of the executor. Done even if the
+    # executor is gone, so the relay never outlives the task.
     controller.stop_watching()
 
     executor = executor_ref()
-    if executor is not None:
+    if executor is None:
+        return
+
+    with executor._lock:
+        executor._running -= 1
+
+    if queue_done:
+        # The other signals of the task are queued for the thread of the
+        # executor, also when this callback runs in that thread (a kill, or a
+        # task that finished before the callback was added). The completion
+        # signals must not overtake them.
+        executor._done.emit(raw_future, task_future, controller)
+    else:
         executor._handle_done(raw_future, task_future, controller)
 
 
@@ -390,7 +440,7 @@ def _sync_submit(
     raw_future: futures.Future[VariableContainer],
 ) -> None:
     """Run `fn` and store its outcome in `raw_future`."""
-    # `ThreadPoolExecutor`/`ProcessPoolExecutor` already do this internally
+    # `ThreadPoolExecutor`/`pebble.ProcessPool` already do this internally
     # (via `set_running_or_notify_cancel()`) before invoking a submitted
     # callable, honoring a `cancel()` that raced with the start of execution
     # instead of silently overwriting it. The sync case has no real

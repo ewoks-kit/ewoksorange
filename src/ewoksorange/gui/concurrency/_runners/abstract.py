@@ -3,42 +3,43 @@ from abc import ABC
 from abc import abstractmethod
 from typing import Any
 from typing import Dict
-from typing import Tuple
+from typing import Optional
 from typing import Type
 
 from ewokscore.task import Task
 from ewokscore.variable import VariableContainer
 
+from .._controllers.abstract import StartDenial
+from ..future import TaskAbortedError
+from ..future import TaskStoppedError
+
 
 class TaskRunner(ABC):
     """Base class for ewoks task execution runners."""
 
-    _TRANSIENT_ABORT_ERRORS: Tuple[Type[Exception], ...] = ()
-
-    def __init__(
-        self,
-        task_class: Type[Task],
-        task_kwargs: Dict[str, Any],
-        abort_event: threading.Event,
-    ):
+    def __init__(self, task_class: Type[Task], task_kwargs: Dict[str, Any]):
         self._task_class = task_class
         self._task_kwargs = task_kwargs
-        self._abort_event = abort_event
 
-    def __call__(self) -> VariableContainer:
+    def __call__(self) -> Optional[VariableContainer]:
         self._wait_ready()
+        denial = self._try_start()
+        if denial is StartDenial.CANCELLED:
+            return None
+        if denial is not None:
+            raise _denial_error(self._task_class, denial)
         self._announce_about_to_start()
         task = self._create_task()
-        # Announce (only) once the task exists, so an abort() reacting to
-        # that signal always finds a task to abort.
         self._announce_started(task)
-        try:
-            return self._execute(task)
-        finally:
-            self._finalize(task)
+        return self._execute(task)
 
     def _wait_ready(self) -> None:
         """Block until the task may be created and executed."""
+
+    @abstractmethod
+    def _try_start(self) -> Optional[StartDenial]:
+        """Return why the task must not be executed, `None` to execute it."""
+        raise NotImplementedError
 
     @abstractmethod
     def _announce_about_to_start(self) -> None:
@@ -47,21 +48,25 @@ class TaskRunner(ABC):
 
     @abstractmethod
     def _announce_started(self, task: Task) -> None:
-        """Register `task` (if applicable) and announce it as started."""
+        """Announce `task` as started."""
         raise NotImplementedError
-
-    def _finalize(self, task: Task) -> None:
-        """Called once execution has finished, however it ended."""
 
     def _create_task(self) -> Task:
         """Instantiate task class."""
         return self._task_class(**self._task_kwargs)
 
+    @abstractmethod
     def _execute(self, task: Task) -> VariableContainer:
-        """Execute `task`, aborting it for as long as `abort_event` is set."""
+        """Execute `task`, requesting it to stop when requested by the caller."""
+        raise NotImplementedError
+
+    def _execute_with_stop_event(
+        self, task: Task, stop_event: threading.Event
+    ) -> VariableContainer:
+        """Execute `task`, requesting it to stop for as long as `stop_event` is set."""
         done = threading.Event()
 
-        def _watch_abort():
+        def _watch_stop_request():
             """
             `task.execute()` resets the task's `stop_requested` flag, which
             can silently undo a `request_stop()` racing with the start
@@ -71,33 +76,42 @@ class TaskRunner(ABC):
             until execution finishes, so a task's `run()` reliably observes it
             regardless of the timing.
 
-            The output of an aborted task is undefined. It could be an
+            The output of a task requested to stop is undefined. It could be an
             exception, undefined outputs, pertially defined outputs or
             fully defined outputs.
             """
-            try:
-                self._abort_event.wait()
-                if done.is_set():
-                    # Woken up only to let this thread exit; the task
-                    # finished without ever being aborted.
-                    return
-                while not done.is_set():
-                    task.request_stop()
-                    done.wait(timeout=0.01)
-            except self._TRANSIENT_ABORT_ERRORS:
-                pass
+            stop_event.wait()
+            if done.is_set():
+                # Woken up only to let this thread exit; the task
+                # finished without ever being requested to stop.
+                return
+            while not done.is_set():
+                task.request_stop()
+                done.wait(timeout=0.01)
 
-        watcher = threading.Thread(target=_watch_abort, daemon=True)
+        watcher = threading.Thread(target=_watch_stop_request, daemon=True)
         watcher.start()
         try:
-            task.execute(raise_on_error=True)
+            self._run_task(task)
         finally:
             done.set()
-            try:
-                # Wake the watcher if the task completed without abort.
-                self._abort_event.set()
-            except self._TRANSIENT_ABORT_ERRORS:
-                pass
+            # Wake the watcher if the task completed without stop request.
+            stop_event.set()
             watcher.join()
 
         return task.output_variables
+
+    def _run_task(self, task: Task) -> None:
+        task.execute(raise_on_error=True)
+
+
+def _denial_error(task_class: Type[Task], denial: StartDenial) -> Exception:
+    """The error of a task that was not allowed to start."""
+    name = task_class.__name__
+    if denial is StartDenial.STOPPED:
+        return TaskStoppedError(f"Task {name} was stopped before it started")
+    if denial is StartDenial.ABORTED:
+        return TaskAbortedError(f"Task {name} was aborted before it started")
+    if denial is StartDenial.KILLED:
+        return TaskAbortedError(f"Task {name} was killed before it started")
+    raise ValueError(f"Start denial {denial} is not handled")
