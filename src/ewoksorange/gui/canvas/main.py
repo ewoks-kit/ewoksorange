@@ -3,7 +3,7 @@ import sys
 from contextlib import contextmanager
 
 from ...orange_version import ORANGE_VERSION
-from .menu import add_ewoks_import_export_actions
+from .menu import add_ewoks_file_filters
 
 if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
     from oasys2.canvas import config as _oasys_config_module
@@ -99,7 +99,7 @@ def _temporary_log_handlers(log_level):
 
 
 def main(argv=None):
-    add_ewoks_import_export_actions()
+    add_ewoks_file_filters()
     parser = arg_parser()
 
     parser.add_argument(

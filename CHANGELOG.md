@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Two new "Import Ewoks workflow..." and "Export Ewoks workflow..." menus in the orange main canvas.
+- Ewoks workflow file filter (`*.json *.yml *.yaml`) in the Open and Save As dialogs of the orange main canvas.
 - New property `auto_execute` in `ewoksorange.gui.owwidgets.OWEwoksBaseWidget`. Allow to propagate outputs downstream without triggering execution. 
 - Support OASYS2 (`pip install ewoksorange[oasys2]`) next to the standard
   `orange-canvas-core` + `orange-widget-base` and the optional Orange3.
