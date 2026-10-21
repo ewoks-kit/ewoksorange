@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -170,23 +171,45 @@ def node_data_to_properties(data) -> dict:
     return readwrite.loads(data.data, data.format)
 
 
+def _split_node_properties(
+    data, widget_class: Type[OWBaseWidget], ewokstaskclass: Optional[Type[Task]]
+) -> Tuple[dict, dict]:
+    """Split the Orange node properties into the ewoks default inputs and the
+    remaining widget properties (settings, geometry, ...).
+    """
+    node_properties = node_data_to_properties(data)
+    if (
+        is_ewoks_widget_class(widget_class)
+        or "_ewoks_default_inputs" in node_properties
+    ):
+        default_inputs = node_properties.pop("_ewoks_default_inputs", dict())
+    elif ewokstaskclass:
+        input_names = ewokstaskclass.input_names()
+        default_inputs = {
+            name: node_properties.pop(name)
+            for name in list(node_properties)
+            if name in input_names
+        }
+    else:
+        default_inputs = node_properties
+        node_properties = dict()
+    # Restored from the ewoks node id
+    node_properties.pop("_ewoks_node_id", None)
+    # Restored by `OwsNodeWrapper` when empty
+    for key in ("_ewoks_varinfo", "_ewoks_execinfo", "_ewoks_task_options"):
+        if node_properties.get(key) == dict():
+            del node_properties[key]
+    return default_inputs, node_properties
+
+
 def node_data_to_default_inputs(
     data, widget_class: Type[OWBaseWidget], ewokstaskclass: Optional[Type[Task]]
 ) -> List[dict]:
-    node_properties = node_data_to_properties(data)
-    if is_ewoks_widget_class(widget_class):
-        default_inputs = node_properties.get("_ewoks_default_inputs", dict())
-    elif "_ewoks_default_inputs" in node_properties:
-        default_inputs = node_properties["_ewoks_default_inputs"]
-    else:
-        if ewokstaskclass:
-            default_inputs = {
-                name: value
-                for name, value in node_properties.items()
-                if name in ewokstaskclass.input_names()
-            }
-        else:
-            default_inputs = node_properties
+    default_inputs, _ = _split_node_properties(data, widget_class, ewokstaskclass)
+    return _default_inputs_to_list(default_inputs)
+
+
+def _default_inputs_to_list(default_inputs: dict) -> List[dict]:
     return [
         {"name": name, "value": value}
         for name, value in default_inputs.items()
@@ -203,8 +226,12 @@ def ows_to_ewoks(
     root_module: Optional[str] = None,
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
-    ows = read_ows(source)
+    # Restores the stream position, unlike `read_ows`
     ewoksinfo = _read_ewoks_graph_attrs(source)
+    ows = read_ows(source)
+
+    # Orange information without ewoks equivalent
+    graph_owsinfo = dict()
 
     description = ows.description
 
@@ -219,6 +246,16 @@ def ows_to_ewoks(
         else:
             ewoksinfo = {}
 
+    # Graph id stored by `ewoks_to_ows` when the Orange title has no value
+    ewoks_id = ewoksinfo.pop("id", None)
+
+    if preserve_ows_info:
+        # Empty values get replaced by defaults below
+        if not description:
+            graph_owsinfo["description"] = description
+        if not ows.title:
+            graph_owsinfo["title"] = ows.title
+
     if not description and isinstance(source, str):
         description = (
             "Ewoks workflow '%s'" % os.path.splitext(os.path.basename(source))[0]
@@ -226,7 +263,7 @@ def ows_to_ewoks(
     if not description:
         description = "Ewoks workflow"
 
-    title = ows.title
+    title = ows.title or ewoks_id
     if not title and isinstance(source, str):
         title = os.path.splitext(os.path.basename(source))[0]
     if not title:
@@ -259,11 +296,16 @@ def ows_to_ewoks(
         }
         node_attrs["id"] = id_to_node_id.get(ows_node.id, ows_node.id)
         node_attrs["label"] = ows_node.title
-        if preserve_ows_info:
-            node_attrs["ows"] = owsinfo
-        default_inputs = node_data_to_default_inputs(
+        default_inputs, properties = _split_node_properties(
             ows_node.data, widget_class, ewokstaskclass
         )
+        if preserve_ows_info:
+            owsinfo["qualified_name"] = ows_node.qualified_name
+            owsinfo["project_name"] = ows_node.project_name
+            if properties:
+                owsinfo["properties"] = _dump_node_properties(properties)
+            node_attrs["ows"] = owsinfo
+        default_inputs = _default_inputs_to_list(default_inputs)
         if default_inputs:
             node_attrs["default_inputs"] = default_inputs
         widget_classes[ows_node.id] = widget_class
@@ -294,20 +336,36 @@ def ows_to_ewoks(
             "target": id_to_node_id.get(ows_link.sink_node_id, ows_link.sink_node_id),
             "data_mapping": [{"source_output": source_name, "target_input": sink_name}],
         }
+        if preserve_ows_info:
+            link_owsinfo = {
+                key: getattr(ows_link, key)
+                for key in ("source_channel_id", "sink_channel_id")
+                if getattr(ows_link, key)
+            }
+            if not ows_link.enabled:
+                link_owsinfo["enabled"] = False
+            if link_owsinfo:
+                link["ows"] = link_owsinfo
         links.append(link)
 
     links += ewoksinfo.get("missing_links", list())
+
+    if ows.annotations:
+        graph_owsinfo["annotations"] = [
+            _serialize_annotation(annotation) for annotation in ows.annotations
+        ]
+    if preserve_ows_info and ows.session_state.groups:
+        graph_owsinfo["window_groups"] = [
+            _serialize_window_group(window_group, id_to_node_id)
+            for window_group in ows.session_state.groups
+        ]
 
     graph_attrs = dict()
     graph_attrs["id"] = title
     graph_attrs["label"] = description
     graph_attrs.update(ewoksinfo)
-    if ows.annotations:
-        graph_attrs["ows"] = {
-            "annotations": [
-                _serialize_annotation(annotation) for annotation in ows.annotations
-            ]
-        }
+    if graph_owsinfo:
+        graph_attrs["ows"] = graph_owsinfo
 
     graph = {
         "graph": graph_attrs,
@@ -396,21 +454,19 @@ class OwsNodeWrapper:
         )
         default_inputs = node_attrs.get("default_inputs", list())
         default_inputs = {item["name"]: item["value"] for item in default_inputs}
+        # Widget properties preserved by `ows_to_ewoks`
+        self.properties = _load_node_properties(ows.get("properties"))
         if native:
-            self.properties = default_inputs
+            self.properties.update(default_inputs)
         else:
-            self.properties = {"_ewoks_default_inputs": default_inputs}
+            self.properties["_ewoks_default_inputs"] = default_inputs
         # Note: OWEwoksBaseWidget must have these settings, otherwise
         #       `WidgetsScheme.sync_node_properties` will remove the
         #       unknown properties
-        self.properties.update(
-            {
-                "_ewoks_varinfo": node_attrs.get("varinfo", dict()),
-                "_ewoks_execinfo": node_attrs.get("execinfo", dict()),
-                "_ewoks_task_options": node_attrs.get("task_options", dict()),
-                "_ewoks_node_id": node_id,
-            }
-        )
+        for key in ("varinfo", "execinfo", "task_options"):
+            if key in node_attrs or f"_ewoks_{key}" not in self.properties:
+                self.properties[f"_ewoks_{key}"] = node_attrs.get(key, dict())
+        self.properties["_ewoks_node_id"] = node_id
 
     def __str__(self):
         return self.title
@@ -429,6 +485,10 @@ class OwsSchemeWrapper:
         "Linkchannel",
         ["name", "id"],
     )
+    _window_group = namedtuple(
+        "WindowGroup",
+        ["name", "default", "state"],
+    )
 
     def __init__(
         self,
@@ -442,19 +502,23 @@ class OwsSchemeWrapper:
             graph = graph.dump()
 
         graph_attrs = graph.get("graph", {})
+        ows = graph_attrs.get("ows", dict())
 
-        self.title = graph_attrs.get("id", "")
-        self._description = graph_attrs.get("label", "")
+        self.title = ows.get("title", graph_attrs.get("id", ""))
+        self._description = ows.get("description", graph_attrs.get("label", ""))
 
         self._ewoks_graph_attrs = {
             k: v for k, v in graph_attrs.items() if k not in ("id", "label", "ows")
         }
+        if "title" in ows and "id" in graph_attrs:
+            # The graph id is not the Orange title
+            self._ewoks_graph_attrs["id"] = graph_attrs["id"]
 
-        ows = graph_attrs.get("ows", dict())
         self._annotations = [
             _deserialize_annotation(annotation)
             for annotation in ows.get("annotations", list())
         ]
+        self._window_groups = ows.get("window_groups", list())
 
         self._nodes = dict()  # the keys of this dictionary never used
         self._widget_classes = dict()
@@ -462,7 +526,9 @@ class OwsSchemeWrapper:
             task_type, task_info = task_executable_info(node_attrs["id"], node_attrs)
             if task_type == "class":
                 # ewoksorange widget
-                widget_class, node_attrs["project_name"] = task_to_widget(
+                widget_class, node_attrs["project_name"] = _preserved_widget(
+                    node_attrs, task_info["task_identifier"]
+                ) or task_to_widget(
                     task_info["task_identifier"],
                     error_on_duplicates=error_on_duplicates,
                 )
@@ -552,6 +618,13 @@ class OwsSchemeWrapper:
                 )
                 self.missing_links.append(link)
                 return
+            link_owsinfo = link.get("ows", dict())
+            enabled = link_owsinfo.get("enabled", True)
+            if len(data_mapping) == 1:
+                source_channel_id = link_owsinfo.get("source_channel_id")
+                sink_channel_id = link_owsinfo.get("sink_channel_id")
+            else:
+                source_channel_id = sink_channel_id = None
             for item in data_mapping:
                 target_name = item["target_input"]
                 source_name = item["source_output"]
@@ -561,14 +634,17 @@ class OwsSchemeWrapper:
                 source_name = signal_ewoks_to_orange_name(
                     source_class, "outputs", source_name
                 )
-                sink_channel = self._link_channel(name=target_name, id=sink_node.id)
-                source_channel = self._link_channel(name=source_name, id=source_node.id)
+                # Without channel id, Orange resolves the channels by name
+                sink_channel = self._link_channel(name=target_name, id=sink_channel_id)
+                source_channel = self._link_channel(
+                    name=source_name, id=source_channel_id
+                )
                 link2 = self._link(
                     source_node=source_node,
                     sink_node=sink_node,
                     source_channel=source_channel,
                     sink_channel=sink_channel,
-                    enabled=True,
+                    enabled=enabled,
                 )
                 self.links.append(link2)
         except Exception as e:
@@ -577,7 +653,68 @@ class OwsSchemeWrapper:
             ) from e
 
     def window_group_presets(self):
-        return list()
+        return [
+            self._window_group(
+                name=window_group["name"],
+                default=window_group["default"],
+                state=[
+                    (self._nodes[state["node_id"]], base64.b64decode(state["data"]))
+                    for state in window_group["state"]
+                    if state["node_id"] in self._nodes
+                ],
+            )
+            for window_group in self._window_groups
+        ]
+
+
+def _preserved_widget(
+    node_attrs: dict, task_identifier: str
+) -> Optional[Tuple[OWBaseWidget, str]]:
+    """The Orange widget recorded by `ows_to_ewoks`, when it still wraps the task."""
+    ows = node_attrs.get("ows", dict())
+    widget_qualname = ows.get("qualified_name")
+    project_name = ows.get("project_name")
+    if not widget_qualname or not project_name:
+        return None
+    try:
+        widget_class = import_qualname(widget_qualname)
+    except (ImportError, AttributeError):
+        return None
+    ewokstaskclass = getattr(widget_class, "ewokstaskclass", None)
+    if ewokstaskclass is None:
+        return None
+    if not ewokstaskclass.class_registry_name().endswith(task_identifier):
+        return None
+    return widget_class, project_name
+
+
+def _dump_node_properties(properties: dict) -> dict:
+    data, data_format = readwrite.dumps(
+        properties, format="literal", pickle_fallback=True
+    )
+    return {"format": data_format, "data": data}
+
+
+def _load_node_properties(properties: Optional[dict]) -> dict:
+    if not properties:
+        return dict()
+    return readwrite.loads(properties["data"], properties["format"])
+
+
+def _serialize_window_group(
+    window_group: readwrite._window_group, id_to_node_id: dict
+) -> dict:
+    return {
+        "name": window_group.name,
+        "default": window_group.default,
+        "state": [
+            {
+                "node_id": id_to_node_id.get(node_id, node_id),
+                "data": base64.b64encode(data).decode("ascii"),
+            }
+            for node_id, data in window_group.state
+        ],
+    }
 
 
 _EWOKS_GRAPH_ATTRS_TAG = "ewoks_graph_attrs"
