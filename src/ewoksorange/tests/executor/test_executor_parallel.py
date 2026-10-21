@@ -1,13 +1,17 @@
 import threading
+import time
 from itertools import combinations
 from typing import Tuple
 
+from .tasks import PidTask
 from .tasks import TimedTask
 
 
 def test_parallel_execution(ewoksorange_qtapp, executor_context_factory) -> None:
     workers: int = 2
-    with executor_context_factory(workers=workers) as (_, executor, recorder):
+    with executor_context_factory(workers=workers) as (kind, executor, recorder):
+        nwarmup = _warmup_workers(executor, workers) if kind == "process" else 0
+
         inputs_list = [{"value": i, "delay": 1} for i in range(4)]
         futures = [None] * len(inputs_list)
 
@@ -37,10 +41,27 @@ def test_parallel_execution(ewoksorange_qtapp, executor_context_factory) -> None
         overlapping_pairs = sum(_overlaps(a, b) for a, b in combinations(intervals, 2))
         assert overlapping_pairs >= workers
 
-        recorder.wait_for("finished", 4)
+        n = 4 + nwarmup
+        recorder.wait_for("finished", n)
         recorder.assert_counts(
-            submitted=4, aboutToStart=4, started=4, succeeded=4, finished=4
+            submitted=n, aboutToStart=n, started=n, succeeded=n, finished=n
         )
+
+
+def _warmup_workers(executor, workers: int, timeout: float = 60) -> int:
+    """Wait until all workers executed a task, since subprocess workers can become
+    ready at very different times. Returns the number of submitted tasks."""
+    pids = set()
+    nsubmitted = 0
+    t0 = time.monotonic()
+    while len(pids) < workers:
+        assert time.monotonic() - t0 < timeout, "not all workers became ready"
+        futures = [
+            executor.submit_task(PidTask, inputs={"value": 0}) for _ in range(workers)
+        ]
+        nsubmitted += workers
+        pids.update(future.result(timeout=timeout)["pid"].value for future in futures)
+    return nsubmitted
 
 
 def _overlaps(interval_a: Tuple[float, float], interval_b: Tuple[float, float]) -> bool:

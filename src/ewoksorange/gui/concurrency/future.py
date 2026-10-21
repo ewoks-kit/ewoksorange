@@ -17,19 +17,29 @@ class TaskStoppedError(RuntimeError):
     """Raised by :meth:`TaskFuture.result` when a stop request prevented the task from starting."""
 
 
+class TaskAbortedError(RuntimeError):
+    """Raised by :meth:`TaskFuture.result` when the task was aborted or killed."""
+
+
 class TaskFuture:
     """Future of an ewoks task submitted to an `EwoksExecutor`.
 
-    Ways to prevent or end the execution:
+    Ways to prevent or end the execution, from mild to forceful:
 
     1. :meth:`cancel` (do not run): has no effect on a running task.
     2. :meth:`request_stop` (cooperative): the running task is asked to stop and decides
        whether and how (see `Task.stop_requested` and `Task._on_stop_requested`).
+    3. :meth:`abort` (forced, with cleanup): the running task is interrupted like Ctrl-C,
+       also when it ignores stop requests. Subprocess only.
+    4. :meth:`kill` (forced, no cleanup): the subprocess running the task is terminated,
+       also when the task does not return to the Python interpreter. Subprocess only.
 
-    Each of them prevents a queued task from starting. Only the first one that reaches
-    a queued task has an effect. None of them has an effect on a finished task.
+    Each of them that is supported prevents a queued task from starting. Only the first
+    one that reaches a queued task has an effect. None of them has an effect on a
+    finished task.
 
-    :meth:`cancelled` and :meth:`stop_requested` report which of these happened.
+    :meth:`cancelled`, :meth:`stop_requested`, :meth:`aborted` and :meth:`killed`
+    report which of these happened.
     """
 
     def __init__(
@@ -66,6 +76,41 @@ class TaskFuture:
         """Return True if :meth:`request_stop` prevented the start or reached the ewoks task."""
         return self._controller.stop_requested()
 
+    def abort(self) -> bool:
+        """Interrupt the ewoks task like Ctrl-C (forced, with cleanup).
+
+        Only supported for tasks running in a subprocess. A queued task never starts.
+        A running task is interrupted, also when it ignores stop requests. The task can
+        clean up and the subprocess survives. It only takes effect when the task returns
+        to the Python interpreter: use :meth:`kill` otherwise. When the task is
+        interrupted, the result raises :class:`TaskAbortedError`.
+
+        :return: True if this prevented the task from starting or was sent to the running task.
+        """
+        if self.done():
+            return False
+        return self._controller.abort()
+
+    def kill(self) -> bool:
+        """Terminate the subprocess running the ewoks task (forced, no cleanup).
+
+        Only supported for tasks running in a subprocess. A queued task never starts and
+        its future completes right away. Unlike :meth:`abort`, this also works when a
+        running task does not return to the Python interpreter. The task cannot clean up
+        and the pool replaces the subprocess. The result raises :class:`TaskAbortedError`.
+
+        :return: True if this prevented the task from starting or killed the running task.
+        """
+        return self._controller.kill(self._future)
+
+    def aborted(self) -> bool:
+        """Return True if :meth:`abort` prevented the start or interrupted the ewoks task."""
+        return self._controller.aborted(self._future)
+
+    def killed(self) -> bool:
+        """Return True if :meth:`kill` prevented the start or terminated the ewoks task."""
+        return self._controller.killed()
+
     def cancelled(self) -> bool:
         """Return True if :meth:`cancel` prevented the execution."""
         return self._controller.cancelled(self._future)
@@ -83,11 +128,17 @@ class TaskFuture:
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
         :raises TaskStoppedError: A stop request prevented the task from starting.
+        :raises TaskAbortedError: The task was aborted or killed.
         :raises Exception: Whatever the task raised.
         :return: An immutable mapping of output name to
                  :class:`~ewokscore.variable.Variable`.
         """
-        result = self._future.result(timeout=timeout)
+        try:
+            result = self._future.result(timeout=timeout)
+        except CancelledError:
+            if self._controller.killed():
+                raise self._killed_error() from None
+            raise
         if self.cancelled():
             raise CancelledError()
         return result
@@ -128,7 +179,12 @@ class TaskFuture:
         :raises CancelledError: The task was cancelled before it started.
         :return: The exception or `None` when the task succeeded.
         """
-        exception = self._future.exception(timeout=timeout)
+        try:
+            exception = self._future.exception(timeout=timeout)
+        except CancelledError:
+            if self._controller.killed():
+                return self._killed_error()
+            raise
         if exception is None and self.cancelled():
             raise CancelledError()
         return exception
@@ -156,3 +212,9 @@ class TaskFuture:
         :param fn: Called with the wrapped future, not with this object.
         """
         self._future.add_done_callback(fn)
+
+    def _killed_error(self) -> TaskAbortedError:
+        """The error of a killed task."""
+        if self._controller.started():
+            return TaskAbortedError("The task was killed")
+        return TaskAbortedError("The task was killed before it started")

@@ -9,6 +9,7 @@ from ...gui.concurrency.executor import SubmitPolicy
 from ...gui.concurrency.executor import create_pool_executor
 from .signals import SignalRecorder
 from .tasks import AddTask
+from .tasks import StartMarkerTask
 
 
 def test_completion_after_start_while_gui_thread_busy(
@@ -30,11 +31,39 @@ def test_completion_after_start_while_gui_thread_busy(
         )
 
 
+def test_kill_completion_after_start(
+    ewoksorange_qtapp, executor_context_factory, tmp_path
+):
+    """The completion signals of a task killed from the GUI thread follow the
+    start signals that are still queued for the GUI thread."""
+    with executor_context_factory(workers=1) as (kind, executor, recorder):
+        if kind != "process":
+            pytest.skip("kill is only supported for tasks running in a subprocess")
+
+        marker = tmp_path / "started"
+        future = executor.submit_task(
+            StartMarkerTask, inputs={"duration": 10, "marker": str(marker)}
+        )
+        _wait_without_events(marker.exists, timeout=60)
+        time.sleep(0.5)  # let the relay queue "aboutToStart" and "started"
+
+        assert future.kill()
+
+        recorder.wait_for("finished", 1)
+        recorder.assert_order(
+            "submitted", "aboutToStart", "started", "killed", "failed", "finished"
+        )
+
+
 @pytest.mark.parametrize("concurrency", [Concurrency.THREAD, Concurrency.PROCESS])
 def test_failed_submission_is_not_running(ewoksorange_qtapp, concurrency):
     """A submission that raises does not keep the executor busy."""
     pool = create_pool_executor(concurrency, max_workers=1)
-    pool.shutdown()
+    if concurrency is Concurrency.PROCESS:
+        pool.close()
+        pool.join()
+    else:
+        pool.shutdown()
     executor = EwoksExecutor(pool, SubmitPolicy.DROP_IF_BUSY)
     recorder = SignalRecorder()
     recorder.connect(executor)

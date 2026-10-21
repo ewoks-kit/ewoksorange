@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `orange-canvas-core` + `orange-widget-base` and the optional Orange3.
 - `TaskFuture.output_values`, `TaskFuture.succeeded` and `TaskFuture.task_exception`.
 - canvas: Add a 'Trigger' action on link in order to trigger a specific link.
+- `TaskFuture.abort` and `TaskFuture.kill` to interrupt or kill a task running in a subprocess.
 
 ### Changed
 
