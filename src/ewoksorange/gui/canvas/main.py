@@ -3,7 +3,6 @@ import sys
 from contextlib import contextmanager
 
 from ...orange_version import ORANGE_VERSION
-from .menu import add_ewoks_import_export_actions
 
 if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
     from oasys2.canvas import config as _oasys_config_module
@@ -15,9 +14,13 @@ if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
     _oasys_config_module.OasysConfig = _Config
 
     def _main(argv):
-        from oasys2.canvas.__main__ import main
+        from oasys2.canvas import __main__ as oasys_main
 
-        return main(argv)
+        from .oasys_mainwindow import EwoksOasysMainWindow
+
+        # OASYS2 creates its main window in `main`, without factory method.
+        oasys_main.OASYSMainWindow = EwoksOasysMainWindow
+        return oasys_main.main(argv)
 
     def arg_parser():
         import argparse
@@ -77,12 +80,29 @@ if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
         )
         return parser
 
-elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
-    from Orange.canvas.__main__ import main as _main
-    from orangecanvas.main import arg_parser
 else:
-    from orangecanvas.main import arg_parser
-    from orangecanvas.main import main as _main
+    if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+        from Orange import canvas as _orange_canvas
+        from Orange.canvas.__main__ import OMain as _Main
+        from orangecanvas.main import arg_parser
+    else:
+        from orangecanvas.main import Main as _Main
+        from orangecanvas.main import arg_parser
+
+    from .mainwindow import EwoksCanvasMainWindow
+
+    class _EwoksMain(_Main):
+        def create_main_window(self) -> EwoksCanvasMainWindow:
+            window = EwoksCanvasMainWindow()
+            if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
+                # As `OMain.create_main_window`
+                window.set_notification_server(
+                    _orange_canvas.notification_server_instance
+                )
+            return window
+
+    def _main(argv):
+        return _EwoksMain().run(argv)
 
 
 @contextmanager
@@ -99,7 +119,6 @@ def _temporary_log_handlers(log_level):
 
 
 def main(argv=None):
-    add_ewoks_import_export_actions()
     parser = arg_parser()
 
     parser.add_argument(

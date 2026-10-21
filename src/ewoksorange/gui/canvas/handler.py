@@ -15,15 +15,7 @@ from ...orange_version import ORANGE_VERSION
 
 if ORANGE_VERSION == ORANGE_VERSION.latest_orange:
     from Orange.canvas import config as orangeconfig
-    from Orange.canvas.mainwindow import MainWindow as OWCanvasMainWindow
 else:
-    # from orangewidget.workflow.mainwindow import OWCanvasMainWindow  # ewoks-canvas CLI does not use this
-    # Note: OASYS2's `OASYSMainWindow` is deliberately not used either. Its
-    # constructor queries PyPI for add-on and internal-library updates.
-    from orangecanvas.application.canvasmain import (
-        CanvasMainWindow as OWCanvasMainWindow,
-    )
-
     from . import config as orangeconfig
 
 from ..orange_utils._signals import get_signal_orange_names
@@ -32,6 +24,10 @@ from ..orange_utils.signal_manager import SignalManagerWithScheme
 from ..owwidgets.base import OWEwoksBaseWidget
 from ..qt_utils import app as qt_app
 from ..workflows.representation import ows_file_context
+
+# Note: with OASYS2, based on `CanvasMainWindow` and not on `OASYSMainWindow`.
+# Its constructor queries PyPI for add-on and internal-library updates.
+from .mainwindow import EwoksCanvasMainWindow
 from .utils import get_orange_canvas
 
 _logger = logging.getLogger(__name__)
@@ -68,7 +64,7 @@ class OrangeCanvasHandler:
         widget_discovery = config.widget_discovery(widget_registry)
         widget_discovery.run(orangeconfig.widgets_entry_points())
 
-        canvas = OWCanvasMainWindow()
+        canvas = EwoksCanvasMainWindow()
         canvas.setAttribute(Qt.WA_DeleteOnClose)
         canvas.set_widget_registry(widget_registry)  # makes a copy of the registry
 
