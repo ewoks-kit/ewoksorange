@@ -19,6 +19,7 @@ from typing import Optional
 from typing import Type
 
 from AnyQt.QtCore import QObject
+from AnyQt.QtCore import Qt
 from AnyQt.QtCore import Signal
 from ewokscore import TaskWithProgress
 from ewokscore.task import Task
@@ -97,16 +98,23 @@ class EwoksExecutor(QObject):
     """Emitted when a task finishes successfully."""
 
     failed = Signal(TaskFuture)
-    """Emitted when a task raises an exception."""
+    """Emitted when a task raises an exception, also when a stop prevented its start."""
 
     ignored = Signal()
     """Emitted when a task submission is ignored due to the DROP_IF_BUSY policy."""
 
-    stop_requested = Signal(TaskFuture)
-    """Emitted when :meth:`TaskFuture.request_stop` prevents the start of a task or reaches the running task."""
+    cancelled = Signal(TaskFuture)
+    """Emitted when :meth:`TaskFuture.cancel` prevented a queued task from starting."""
+
+    stopRequested = Signal(TaskFuture)
+    """Emitted when a task finishes after :meth:`TaskFuture.request_stop` prevented its start or reached it."""
 
     finished = Signal(TaskFuture)
-    """Emitted when a task finishes (success, failure, or stop request)."""
+    """Emitted last, for every submitted task."""
+
+    _done = Signal(object, object, object)
+    # Carries a done task to the thread of the executor, behind the events
+    # already queued for that thread.
 
     def __init__(
         self,
@@ -131,6 +139,8 @@ class EwoksExecutor(QObject):
 
         self._as_process = isinstance(executor, futures.ProcessPoolExecutor)
 
+        self._done.connect(self._handle_done, Qt.ConnectionType.QueuedConnection)
+
         self._manager: Optional[multiprocessing.managers.SyncManager] = None
 
     def submit_task(
@@ -145,13 +155,18 @@ class EwoksExecutor(QObject):
 
             self._running += 1
 
-        if self._executor is None:
-            return self._submit_sync(task_class, task_kwargs)
+        try:
+            if self._executor is None:
+                return self._submit_sync(task_class, task_kwargs)
 
-        if self._as_process:
-            return self._submit_process(task_class, task_kwargs)
+            if self._as_process:
+                return self._submit_process(task_class, task_kwargs)
 
-        return self._submit_thread(task_class, task_kwargs)
+            return self._submit_thread(task_class, task_kwargs)
+        except BaseException:
+            with self._lock:
+                self._running -= 1
+            raise
 
     def _submit_sync(
         self, task_class: Type[Task], task_kwargs: Dict[str, Any]
@@ -159,7 +174,7 @@ class EwoksExecutor(QObject):
         controller = _controllers.SyncTaskController()
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
-        task_kwargs = self._handle_progess_arg(task_class, task_kwargs)
+        task_kwargs = self._handle_progress_arg(task_class, task_kwargs)
         runner = _runners.SyncTaskRunner(
             task_class,
             task_kwargs,
@@ -185,7 +200,7 @@ class EwoksExecutor(QObject):
         ready_event = Event()
         self_ref = weakref.ref(self)
         holder: List[Optional[TaskFuture]] = [None]
-        task_kwargs = self._handle_progess_arg(task_class, task_kwargs)
+        task_kwargs = self._handle_progress_arg(task_class, task_kwargs)
         runner = _runners.ThreadTaskRunner(
             task_class,
             task_kwargs,
@@ -245,7 +260,7 @@ class EwoksExecutor(QObject):
             raw_future, controller, holder, self_ref, after_submitted=watch
         )
 
-    def _handle_progess_arg(
+    def _handle_progress_arg(
         self, task_class: Type[Task], task_kwargs: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Prepare the `progress` task argument for `task_class`, for backends
@@ -278,11 +293,7 @@ class EwoksExecutor(QObject):
         self_ref: weakref.ReferenceType["EwoksExecutor"],
         after_submitted: Callable[[], None],
     ) -> TaskFuture:
-        task_future = TaskFuture(
-            raw_future,
-            controller,
-            on_stop_requested=lambda: _emit_stop_requested(self_ref, holder),
-        )
+        task_future = TaskFuture(raw_future, controller)
 
         holder[0] = task_future
 
@@ -290,8 +301,9 @@ class EwoksExecutor(QObject):
 
         after_submitted()
 
+        queue_done = self._executor is not None
         raw_future.add_done_callback(
-            lambda f: _done_callback(self_ref, f, task_future, controller)
+            lambda f: _done_callback(self_ref, f, task_future, controller, queue_done)
         )
 
         return task_future
@@ -310,20 +322,19 @@ class EwoksExecutor(QObject):
         task_future: TaskFuture,
         controller: _controllers.TaskController,
     ) -> None:
-        with self._lock:
-            self._running -= 1
-
         if task_future.cancelled():
+            self.cancelled.emit(task_future)
+            self.finished.emit(task_future)
             return
 
-        try:
-            task_future.result()
-        except Exception:
-            self.failed.emit(task_future)
-        else:
+        if task_future.stop_requested():
+            self.stopRequested.emit(task_future)
+
+        if task_future.exception() is None:
             self.succeeded.emit(task_future)
-        finally:
-            self.finished.emit(task_future)
+        else:
+            self.failed.emit(task_future)
+        self.finished.emit(task_future)
 
     def shutdown(self, wait: bool = False) -> None:
         executor, self._executor = self._executor, None
@@ -350,15 +361,27 @@ def _done_callback(
     raw_future: futures.Future[VariableContainer],
     task_future: TaskFuture,
     controller: _controllers.TaskController,
+    queue_done: bool,
 ) -> None:
-    # Before emitting anything: this delivers the events still in flight
-    # (process backend), so receivers of "succeeded"/"failed" cannot observe
-    # "started" or progress arriving after they considered the task finished.
-    # Done even if the executor is gone, so the relay never outlives the task.
+    # Before emitting anything: this queues the events still in flight
+    # (process backend) for the thread of the executor. Done even if the
+    # executor is gone, so the relay never outlives the task.
     controller.stop_watching()
 
     executor = executor_ref()
-    if executor is not None:
+    if executor is None:
+        return
+
+    with executor._lock:
+        executor._running -= 1
+
+    if queue_done:
+        # The other signals of the task are queued for the thread of the
+        # executor, also when this callback runs in that thread (a task that
+        # finished before the callback was added). The completion signals must
+        # not overtake them.
+        executor._done.emit(raw_future, task_future, controller)
+    else:
         executor._handle_done(raw_future, task_future, controller)
 
 
@@ -378,15 +401,6 @@ def _emit_started(
     executor = executor_ref()
     if executor is not None and holder and holder[0] is not None:
         executor.started.emit(holder[0])
-
-
-def _emit_stop_requested(
-    executor_ref: weakref.ReferenceType[EwoksExecutor],
-    holder: List[Optional[TaskFuture]],
-) -> None:
-    executor = executor_ref()
-    if executor is not None and holder and holder[0] is not None:
-        executor.stop_requested.emit(holder[0])
 
 
 def _sync_submit(

@@ -179,6 +179,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         self.__executor.started.connect(self.__on_started)
         self.__executor.succeeded.connect(self.__on_succeeded)
         self.__executor.failed.connect(self.__on_failed)
+        self.__executor.finished.connect(self.__on_finished)
 
     @classmethod
     def _create_pool_executor(cls) -> Optional[futures.Executor]:
@@ -1099,3 +1100,11 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             self.progressBarFinished()
             self.__propagate_by_future.pop(task_future, None)
             self._output_changed()
+
+    def __on_finished(self, task_future: TaskFuture) -> None:
+        """
+        Forget a task that ended without succeeding or failing (cancelled before it started).
+
+        :param task_future: The future of the finished task.
+        """
+        self.__propagate_by_future.pop(task_future, None)

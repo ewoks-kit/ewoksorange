@@ -7,11 +7,21 @@ in the calling thread, in a thread pool or in a process pool. Whatever the
 backend, receivers observe the same order of signals for a task:
 
 ``submitted`` → ``aboutToStart`` → ``started`` → progress values →
-``succeeded`` / ``failed`` → ``finished``
+``stopRequested`` → ``succeeded`` / ``failed`` → ``finished``
 
-``stop_requested`` is emitted when the stop is requested, so anywhere after
-``submitted``. A task that is cancelled or requested to stop before it starts
-never emits ``aboutToStart`` and ``started``.
+``stopRequested`` is only emitted for a task that was requested to stop. A task
+that is cancelled before it starts emits ``submitted`` → ``cancelled`` →
+``finished``. A task that is requested to stop before it starts emits
+``submitted`` → ``stopRequested`` → ``failed`` → ``finished``. ``finished`` is
+the last signal of every submitted task.
+
+In the ``"thread"`` and ``"process"`` backends, the executor does not emit the
+completion signals (``cancelled``, ``stopRequested``, ``succeeded``,
+``failed``, ``finished``) from the callback that detects the completion. That
+callback can run in any thread, so it emits the internal ``_done`` signal,
+which is always queued to the GUI thread. The completion signals are then
+emitted in the GUI thread, after the signals of the task that were queued
+before.
 
 This page explains how each backend preserves that order. In the diagrams
 below, ``progress?`` stands for the optional ``progress`` task argument: it is
@@ -37,7 +47,7 @@ done.
         end
 
         W->>E: submit_task(task, progress?)
-        E->>E: _handle_progess_arg: keep or drop progress
+        E->>E: _handle_progress_arg: keep or drop progress
         E-->>W: submitted
         E->>R: _sync_submit(runner)
         R-->>W: aboutToStart (direct)
@@ -74,7 +84,7 @@ synchronization.
         end
 
         W->>E: submit_task(task, progress?)
-        E->>E: _handle_progess_arg: keep or drop progress
+        E->>E: _handle_progress_arg: keep or drop progress
         E->>R: pool.submit(runner)
         R->>R: _wait_ready()
         E-->>W: submitted
@@ -86,9 +96,11 @@ synchronization.
         T->>T: [0..n] progress = v, QProgress emits sigProgressChanged(v) (queued)
         T-->>R: result / exception
         R->>R: raw_future.set_result, done callback (worker thread)
-        R->>R: _done_callback: stop_watching() (no-op), then _handle_done
-        R-)W: succeeded / failed (queued)
-        R-)W: finished (queued)
+        R->>R: _done_callback: stop_watching() (no-op)
+        R-)E: _done (queued)
+        E->>E: _handle_done
+        E-->>W: succeeded / failed
+        E-->>W: finished
 
 The ``ready_event`` keeps the worker from starting the task before
 ``submitted`` has been emitted.
@@ -164,9 +176,10 @@ cannot start the task before that.
         M-->>RL: END (after all events above)
         RL->>RL: exit
         PM->>RL: join(timeout=5s)
-        PM->>PM: _handle_done
-        PM-)W: succeeded / failed (queued)
-        PM-)W: finished (queued)
+        PM-)E: _done (queued)
+        E->>E: _handle_done
+        E-->>W: succeeded / failed
+        E-->>W: finished
 
 The diagram shows the relay reading each event right after it is put; in
 practice both run concurrently. What matters is the ordering:
