@@ -92,7 +92,9 @@ def add_ewoks_import_export_actions() -> None:
         return
     _patched = True
 
-    # CanvasMainWindow is instantiated both in Orange3 or in Oasys2 and there is no public interface given.
+    # NOTE: There is no other way than a patch here because
+    # - We need a solution that works also with Oasys2 fork
+    # - Main code where the CanvasMainWindow is instantiated is in Orange3 or in Oasys2 and there is no public interface given.
     original_init = CanvasMainWindow.__init__
 
     def __init__(self, *args, **kwargs):
