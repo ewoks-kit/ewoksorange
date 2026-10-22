@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from ...orange_version import ORANGE_VERSION
 from .menu import add_ewoks_import_export_actions
 
-_logger = logging.getLogger(__file__)
+_logger = logging.getLogger(__name__)
 
 if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
     from oasys2.canvas import config as _oasys_config_module
