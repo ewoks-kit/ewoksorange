@@ -2,14 +2,13 @@ import logging
 import sys
 from contextlib import contextmanager
 
-from packaging.pylock import _logger
-
 from ...orange_version import ORANGE_VERSION
 from .menu import add_ewoks_import_export_actions
 
+_logger = logging.getLogger(__file__)
+
 if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
     from oasys2.canvas import config as _oasys_config_module
-
     from ..canvas.config import Config as _Config
 
     # `oasys2.canvas.__main__` imports `OasysConfig` at import time, hence
