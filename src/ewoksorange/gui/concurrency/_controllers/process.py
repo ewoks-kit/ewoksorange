@@ -22,12 +22,12 @@ class ProcessTaskController(TaskController):
 
     def __init__(
         self,
-        abort_event: Event,
-        aborted_event: Event,
+        stop_event: Event,
+        stop_requested_event: Event,
         events_queue: Queue,
     ):
-        self._abort_event = abort_event
-        self._aborted_event = aborted_event
+        self._stop_event = stop_event
+        self._stop_requested_event = stop_requested_event
         self._events_queue = events_queue
         self._relay_thread: Optional[threading.Thread] = None
 
@@ -82,9 +82,9 @@ class ProcessTaskController(TaskController):
         if self._relay_thread.is_alive():
             _logger.debug("events relay thread did not terminate in time")
 
-    def abort(self) -> bool:
-        self._abort_event.set()
+    def request_stop(self) -> bool:
+        self._stop_event.set()
         return True
 
-    def aborted(self) -> bool:
-        return self._aborted_event.is_set()
+    def stop_requested(self) -> bool:
+        return self._stop_requested_event.is_set()

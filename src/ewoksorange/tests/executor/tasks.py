@@ -10,7 +10,7 @@ class CustomFailure(Exception):
     pass
 
 
-class CustomCancelled(Exception):
+class CustomStopped(Exception):
     pass
 
 
@@ -26,7 +26,7 @@ class AddTask(
             for i in range(40):
                 time.sleep(period)
                 if self.stop_requested:
-                    raise CustomCancelled(f"cancelled after {(i + 1) * period} seconds")
+                    raise CustomStopped(f"stopped after {(i + 1) * period} seconds")
 
         if self.inputs.fail:
             raise CustomFailure("intentional failure")
@@ -43,12 +43,12 @@ class AddTask(
         pass
 
 
-class RequestCancelTask(
+class EarlyStopTask(
     Task,
     input_names=["duration"],
     output_names=["result"],
 ):
-    """Exits early on cancel, leaving its output undefined."""
+    """Exits early on a stop request, leaving its output undefined."""
 
     def run(self):
         step = 0.05
@@ -65,12 +65,12 @@ class RequestCancelTask(
         pass
 
 
-class PartialCancelTask(
+class PartialStopTask(
     Task,
     input_names=["duration"],
     output_names=["first", "second"],
 ):
-    """Sets `first`, then may be cancelled before setting `second`."""
+    """Sets `first`, then may be requested to stop before setting `second`."""
 
     def run(self):
         self.outputs.first = "first done"
@@ -90,7 +90,7 @@ class PartialCancelTask(
         pass
 
 
-class IgnoreCancelTask(
+class IgnoreStopTask(
     Task,
     input_names=["duration"],
     output_names=["result"],
@@ -99,14 +99,14 @@ class IgnoreCancelTask(
 
     def run(self):
         time.sleep(self.inputs.duration)
-        self.outputs.result = "completed despite abort"
+        self.outputs.result = "completed despite stop request"
 
     def _on_stop_requested(self):
         """Nothing to do: `run()` polls `self.stop_requested`."""
         pass
 
 
-class InterruptCancelTask(
+class InterruptStopTask(
     Task,
     input_names=["duration"],
     output_names=["result"],

@@ -79,7 +79,7 @@ class EwoksExecutor(QObject):
 
     Wraps a `concurrent.futures.Executor` (thread, process or None) and emits Qt
     signals on task lifecycle events. Returns TaskFuture objects that support
-    both native future cancellation (cancel()) and ewoks task abort (abort()).
+    both native future cancellation (cancel()) and ewoks task stop requests (request_stop()).
     Their result is the executed task's
     :class:`~ewokscore.variable.VariableContainer` of output variables.
     """
@@ -103,11 +103,11 @@ class EwoksExecutor(QObject):
     ignored = Signal()
     """Emitted when a task submission is ignored due to the DROP_IF_BUSY policy."""
 
-    aborted = Signal(TaskFuture)
-    """Emitted when a task was aborted."""
+    stop_requested = Signal(TaskFuture)
+    """Emitted when an unfinished task is requested to stop."""
 
     finished = Signal(TaskFuture)
-    """Emitted when a task finishes (success, failure, or abort)."""
+    """Emitted when a task finishes (success, failure, or stop request)."""
 
     def __init__(
         self,
@@ -209,11 +209,11 @@ class EwoksExecutor(QObject):
 
         ready_event = manager.Event()
         events_queue = manager.Queue()
-        abort_event = manager.Event()
-        aborted_event = manager.Event()
+        stop_event = manager.Event()
+        stop_requested_event = manager.Event()
 
         controller = _controllers.ProcessTaskController(
-            abort_event, aborted_event, events_queue
+            stop_event, stop_requested_event, events_queue
         )
 
         # The caller's progress object is usually unpicklable (QObject), so
@@ -231,8 +231,8 @@ class EwoksExecutor(QObject):
             task_kwargs,
             ready_event,
             events_queue,
-            abort_event,
-            aborted_event,
+            stop_event,
+            stop_requested_event,
         )
 
         self_ref = weakref.ref(self)
@@ -284,7 +284,11 @@ class EwoksExecutor(QObject):
         self_ref: weakref.ReferenceType["EwoksExecutor"],
         after_submitted: Callable[[], None],
     ) -> TaskFuture:
-        task_future = TaskFuture(raw_future, controller)
+        task_future = TaskFuture(
+            raw_future,
+            controller,
+            on_stop_requested=lambda: _emit_stop_requested(self_ref, holder),
+        )
 
         holder[0] = task_future
 
@@ -317,9 +321,6 @@ class EwoksExecutor(QObject):
 
         if raw_future.cancelled():
             return
-
-        if task_future.aborted():
-            self.aborted.emit(task_future)
 
         try:
             raw_future.result()
@@ -383,6 +384,15 @@ def _emit_started(
     executor = executor_ref()
     if executor is not None and holder and holder[0] is not None:
         executor.started.emit(holder[0])
+
+
+def _emit_stop_requested(
+    executor_ref: weakref.ReferenceType[EwoksExecutor],
+    holder: List[Optional[TaskFuture]],
+) -> None:
+    executor = executor_ref()
+    if executor is not None and holder and holder[0] is not None:
+        executor.stop_requested.emit(holder[0])
 
 
 def _sync_submit(

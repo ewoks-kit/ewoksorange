@@ -13,24 +13,24 @@ from ewokscore.variable import VariableContainer
 class TaskRunner(ABC):
     """Base class for ewoks task execution runners."""
 
-    _TRANSIENT_ABORT_ERRORS: Tuple[Type[Exception], ...] = ()
+    _TRANSIENT_STOP_ERRORS: Tuple[Type[Exception], ...] = ()
 
     def __init__(
         self,
         task_class: Type[Task],
         task_kwargs: Dict[str, Any],
-        abort_event: threading.Event,
+        stop_event: threading.Event,
     ):
         self._task_class = task_class
         self._task_kwargs = task_kwargs
-        self._abort_event = abort_event
+        self._stop_event = stop_event
 
     def __call__(self) -> VariableContainer:
         self._wait_ready()
         self._announce_about_to_start()
         task = self._create_task()
-        # Announce (only) once the task exists, so an abort() reacting to
-        # that signal always finds a task to abort.
+        # Announce (only) once the task exists, so a request_stop() reacting to
+        # that signal always finds a task to stop.
         self._announce_started(task)
         try:
             return self._execute(task)
@@ -58,10 +58,10 @@ class TaskRunner(ABC):
         return self._task_class(**self._task_kwargs)
 
     def _execute(self, task: Task) -> VariableContainer:
-        """Execute `task`, aborting it for as long as `abort_event` is set."""
+        """Execute `task`, requesting it to stop for as long as `stop_event` is set."""
         done = threading.Event()
 
-        def _watch_abort():
+        def _watch_stop_request():
             """
             `task.execute()` resets the task's `stop_requested` flag, which
             can silently undo a `request_stop()` racing with the start
@@ -71,32 +71,32 @@ class TaskRunner(ABC):
             until execution finishes, so a task's `run()` reliably observes it
             regardless of the timing.
 
-            The output of an aborted task is undefined. It could be an
+            The output of a task requested to stop is undefined. It could be an
             exception, undefined outputs, pertially defined outputs or
             fully defined outputs.
             """
             try:
-                self._abort_event.wait()
+                self._stop_event.wait()
                 if done.is_set():
                     # Woken up only to let this thread exit; the task
-                    # finished without ever being aborted.
+                    # finished without ever being requested to stop.
                     return
                 while not done.is_set():
                     task.request_stop()
                     done.wait(timeout=0.01)
-            except self._TRANSIENT_ABORT_ERRORS:
+            except self._TRANSIENT_STOP_ERRORS:
                 pass
 
-        watcher = threading.Thread(target=_watch_abort, daemon=True)
+        watcher = threading.Thread(target=_watch_stop_request, daemon=True)
         watcher.start()
         try:
             task.execute(raise_on_error=True)
         finally:
             done.set()
             try:
-                # Wake the watcher if the task completed without abort.
-                self._abort_event.set()
-            except self._TRANSIENT_ABORT_ERRORS:
+                # Wake the watcher if the task completed without stop request.
+                self._stop_event.set()
+            except self._TRANSIENT_STOP_ERRORS:
                 pass
             watcher.join()
 
