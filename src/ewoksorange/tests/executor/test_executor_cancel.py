@@ -11,29 +11,38 @@ def test_cancel_queued_task_sync(qtbot, executor_factory):
     executor = executor_factory(Concurrency.SYNC, workers=1)
 
     inputs = {"a": 1, "delay": 4}
-    thread = None
     # submit_task() blocks until the task finishes, so it must run
     # on its own thread to still be "busy" when the rest are submitted.
     thread = threading.Thread(
         target=executor.submit_task, args=(AddTask,), kwargs={"inputs": inputs}
     )
-    with qtbot.wait_signal(executor.started) as signal_blocker:
-        thread.start()
 
-    blocker_future = signal_blocker.args[0]
+    with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
+        executor.aborted
+    ), qtbot.wait_signals([executor.succeeded, executor.finished] * 2, timeout=10_000):
+        with qtbot.wait_signal(executor.started) as signal_blocker:
+            thread.start()
 
-    # Sync has no queue at all: submit_task() only returns once the task has
-    # already run, so cancel() there is correctly a no-op because already done,
-    # not merely unstarted.
-    with qtbot.wait_signals(
-        [executor.submitted, executor.started, executor.succeeded, executor.finished],
-        order="strict",
-        timeout=10_000,
-    ):
-        victim = executor.submit_task(AddTask, inputs={"a": 99})
-        assert not victim.cancel()
+        blocker_future = signal_blocker.args[0]
 
-    blocker_future.result(timeout=10)
+        # Sync has no queue at all: submit_task() only returns once the task
+        # has already run, so cancel() there is correctly a no-op because
+        # already done, not merely unstarted.
+        with qtbot.wait_signals(
+            [
+                executor.submitted,
+                executor.started,
+                executor.succeeded,
+                executor.finished,
+            ],
+            order="strict",
+            timeout=10_000,
+        ):
+            victim = executor.submit_task(AddTask, inputs={"a": 99})
+            assert not victim.cancel()
+
+        blocker_future.result(timeout=10)
+
     thread.join(timeout=10)
 
 
@@ -46,31 +55,46 @@ def test_cancel_queued_task(qtbot, concurrency, executor_factory):
     """cancel() prevents a genuinely queued task from ever running."""
     executor = executor_factory(concurrency, workers=1)
 
-    with qtbot.wait_signals(
-        [executor.submitted, executor.aboutToStart, executor.started], timeout=10_000
-    ):
-        blocker_future = executor.submit_task(AddTask, inputs={"a": 1, "delay": 4})
+    nb_fillers = 4
+    nb_ran = 1 + nb_fillers
 
-    with qtbot.wait_signals([executor.submitted] * 5, timeout=2_000):
+    with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
+        executor.aborted
+    ), qtbot.wait_signals(
+        [executor.submitted] * (nb_ran + 1)
+        + [
+            executor.aboutToStart,
+            executor.started,
+            executor.succeeded,
+            executor.finished,
+        ]
+        * nb_ran,
+        timeout=20_000,
+    ):
+        with qtbot.wait_signal(executor.started, timeout=10_000):
+            blocker_future = executor.submit_task(AddTask, inputs={"a": 1, "delay": 4})
+
         # ProcessPoolExecutor feeds its worker's call queue ahead of time
         # (EXTRA_QUEUED_CALLS), so with a single worker the first couple of
         # queued submissions can already be uncancellable before they truly
         # start. A few filler submissions guarantee the last one is still
         # genuinely queued when it gets cancelled below.
-        fillers = [executor.submit_task(AddTask, inputs={"a": i}) for i in range(4)]
+        fillers = [
+            executor.submit_task(AddTask, inputs={"a": i}) for i in range(nb_fillers)
+        ]
 
         victim = executor.submit_task(AddTask, inputs={"a": 99})
-        cancelled = victim.cancel()
-        assert cancelled is True
 
-    with qtbot.wait_signals(
-        [executor.succeeded, executor.finished]
-        + [executor.started, executor.succeeded, executor.finished] * 4,
-        timeout=20_000,
-    ):
+        # cancel() runs the future's done callbacks synchronously: a cancelled
+        # task must not be reported as finished (nor failed, see above).
+        with qtbot.assert_not_emitted(executor.finished):
+            assert victim.cancel() is True
+
         blocker_future.result(timeout=10)
         for filler in fillers:
             filler.result(timeout=10)
+
+    assert victim.cancelled()
 
 
 def test_cancel_after_completion(qtbot, executor_context_factory):

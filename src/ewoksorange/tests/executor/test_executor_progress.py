@@ -27,7 +27,9 @@ def test_progress(qtbot, executor_context_factory):
 
         # `finished` is only emitted once all progress values were relayed, so
         # no polling on `events` is needed here.
-        with qtbot.wait_signal(executor.finished, timeout=35_000):
+        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
+            executor.aborted
+        ), qtbot.wait_signal(executor.finished, timeout=35_000):
             future = executor.submit_task(
                 ProgressTask, inputs={"percentages": percentages}, progress=progress
             )
@@ -54,7 +56,9 @@ def test_progress_for_task_without_progress_support(qtbot, executor_context_fact
         received: List[int] = []
         progress.sigProgressChanged.connect(received.append)
 
-        with qtbot.wait_signals(
+        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
+            executor.aborted
+        ), qtbot.wait_signals(
             [
                 executor.submitted,
                 executor.aboutToStart,

@@ -18,34 +18,34 @@ def test_request_stop(qtbot, executor_context_factory):
         inputs = {"a": 1, "b": 2, "delay": 5}
         thread = None
 
-        with qtbot.wait_signals(
-            (executor.submitted, executor.aboutToStart, executor.started),
-            check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
-            timeout=5_000,
-            order="strict",
-        ) as signals_blocker:
-            if kind == "sync":
-                # submit_task() blocks until the task finishes, so it must run
-                # on its own thread for request_stop() to have anything to interrupt.
-                thread = threading.Thread(
-                    target=executor.submit_task,
-                    args=(AddTask,),
-                    kwargs={"inputs": inputs},
-                )
-                thread.start()
-            else:
-                executor.submit_task(AddTask, inputs=inputs)
-
-        submitted_future = signals_blocker.all_signals_and_args[0].args[0]
-        started_future = signals_blocker.all_signals_and_args[1].args[0]
-        assert started_future is submitted_future
-
-        with qtbot.wait_signals(
-            (executor.stop_requested, executor.failed, executor.finished),
+        with qtbot.assert_not_emitted(executor.succeeded), qtbot.wait_signals(
+            (executor.aborted, executor.failed, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
             order="strict",
         ):
+            with qtbot.wait_signals(
+                (executor.submitted, executor.aboutToStart, executor.started),
+                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
+                timeout=5_000,
+                order="strict",
+            ) as signals_blocker:
+                if kind == "sync":
+                    # submit_task() blocks until the task finishes, so it must run
+                    # on its own thread for abort() to have anything to interrupt.
+                    thread = threading.Thread(
+                        target=executor.submit_task,
+                        args=(AddTask,),
+                        kwargs={"inputs": inputs},
+                    )
+                    thread.start()
+                else:
+                    executor.submit_task(AddTask, inputs=inputs)
+
+            submitted_future = signals_blocker.all_signals_and_args[0].args[0]
+            started_future = signals_blocker.all_signals_and_args[1].args[0]
+            assert started_future is submitted_future
+
             assert submitted_future.request_stop()
 
             match = r"cancelled after [\.0-9]+ seconds"
@@ -73,32 +73,32 @@ def test_stop_leaves_outputs_undefined(qtbot, executor_context_factory, task_cla
         inputs = {"duration": 2}
         thread = None
 
-        with qtbot.wait_signals(
-            (executor.submitted, executor.aboutToStart, executor.started),
-            check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
-            timeout=5_000,
-            order="strict",
-        ) as signals_blocker:
-            if kind == "sync":
-                thread = threading.Thread(
-                    target=executor.submit_task,
-                    args=(task_class,),
-                    kwargs={"inputs": inputs},
-                )
-                thread.start()
-            else:
-                executor.submit_task(task_class, inputs=inputs)
-
-        submitted_future = signals_blocker.all_signals_and_args[0].args[0]
-        started_future = signals_blocker.all_signals_and_args[1].args[0]
-        assert started_future is submitted_future
-
-        with qtbot.wait_signals(
-            (executor.stop_requested, executor.succeeded, executor.finished),
+        with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
+            (executor.aborted, executor.succeeded, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
             order="strict",
         ):
+            with qtbot.wait_signals(
+                (executor.submitted, executor.aboutToStart, executor.started),
+                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
+                timeout=5_000,
+                order="strict",
+            ) as signals_blocker:
+                if kind == "sync":
+                    thread = threading.Thread(
+                        target=executor.submit_task,
+                        args=(task_class,),
+                        kwargs={"inputs": inputs},
+                    )
+                    thread.start()
+                else:
+                    executor.submit_task(task_class, inputs=inputs)
+
+            submitted_future = signals_blocker.all_signals_and_args[0].args[0]
+            started_future = signals_blocker.all_signals_and_args[1].args[0]
+            assert started_future is submitted_future
+
             assert submitted_future.request_stop()
 
             result = submitted_future.result(timeout=10)
@@ -117,32 +117,32 @@ def test_stop_leaves_partial_outputs(qtbot, executor_context_factory):
         inputs = {"duration": 2}
         thread = None
 
-        with qtbot.wait_signals(
-            (executor.submitted, executor.aboutToStart, executor.started),
-            check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
-            timeout=5_000,
-            order="strict",
-        ) as signals_blocker:
-            if kind == "sync":
-                thread = threading.Thread(
-                    target=executor.submit_task,
-                    args=(PartialStopTask,),
-                    kwargs={"inputs": inputs},
-                )
-                thread.start()
-            else:
-                executor.submit_task(PartialStopTask, inputs=inputs)
-
-        submitted_future = signals_blocker.all_signals_and_args[0].args[0]
-        started_future = signals_blocker.all_signals_and_args[1].args[0]
-        assert started_future is submitted_future
-
-        with qtbot.wait_signals(
+        with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
             (executor.aborted, executor.succeeded, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
             order="strict",
         ):
+            with qtbot.wait_signals(
+                (executor.submitted, executor.aboutToStart, executor.started),
+                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
+                timeout=5_000,
+                order="strict",
+            ) as signals_blocker:
+                if kind == "sync":
+                    thread = threading.Thread(
+                        target=executor.submit_task,
+                        args=(PartialStopTask,),
+                        kwargs={"inputs": inputs},
+                    )
+                    thread.start()
+                else:
+                    executor.submit_task(PartialStopTask, inputs=inputs)
+
+            submitted_future = signals_blocker.all_signals_and_args[0].args[0]
+            started_future = signals_blocker.all_signals_and_args[1].args[0]
+            assert started_future is submitted_future
+
             assert submitted_future.request_stop()
 
             result = submitted_future.result(timeout=10)
@@ -165,32 +165,32 @@ def test_request_stop_does_not_guarantee_stop(qtbot, executor_context_factory):
         inputs = {"duration": 0.3}
         thread = None
 
-        with qtbot.wait_signals(
-            (executor.submitted, executor.aboutToStart, executor.started),
-            check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
-            timeout=5_000,
-            order="strict",
-        ) as signals_blocker:
-            if kind == "sync":
-                thread = threading.Thread(
-                    target=executor.submit_task,
-                    args=(IgnoreStopTask,),
-                    kwargs={"inputs": inputs},
-                )
-                thread.start()
-            else:
-                executor.submit_task(IgnoreStopTask, inputs=inputs)
-
-        submitted_future = signals_blocker.all_signals_and_args[0].args[0]
-        started_future = signals_blocker.all_signals_and_args[1].args[0]
-        assert started_future is submitted_future
-
-        with qtbot.wait_signals(
+        with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
             (executor.aborted, executor.succeeded, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
             order="strict",
         ):
+            with qtbot.wait_signals(
+                (executor.submitted, executor.aboutToStart, executor.started),
+                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
+                timeout=5_000,
+                order="strict",
+            ) as signals_blocker:
+                if kind == "sync":
+                    thread = threading.Thread(
+                        target=executor.submit_task,
+                        args=(IgnoreStopTask,),
+                        kwargs={"inputs": inputs},
+                    )
+                    thread.start()
+                else:
+                    executor.submit_task(IgnoreStopTask, inputs=inputs)
+
+            submitted_future = signals_blocker.all_signals_and_args[0].args[0]
+            started_future = signals_blocker.all_signals_and_args[1].args[0]
+            assert started_future is submitted_future
+
             assert submitted_future.request_stop()
 
             result = submitted_future.result(timeout=10)

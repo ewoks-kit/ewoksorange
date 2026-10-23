@@ -10,39 +10,45 @@ def test_drop_if_busy(qtbot, executor_context_factory):
         executor,
     ):
         inputs = {"a": 1, "delay": 2}
-        with qtbot.wait_signals(
-            [executor.submitted, executor.aboutToStart, executor.started],
-            timeout=10_000,
-            order="strict",
-        ) as first_signals_blocker:
-            thread = None
-            if kind == "sync":
-                # submit_task() blocks until the task finishes, so it must run
-                # on its own thread to still be "busy" when the second is submitted.
-                thread = threading.Thread(
-                    target=executor.submit_task,
-                    args=(AddTask,),
-                    kwargs={"inputs": inputs},
-                )
-                thread.start()
-            else:
-                executor.submit_task(AddTask, inputs=inputs)
+        thread = None
 
-        first = first_signals_blocker.all_signals_and_args[0].args[0]
-
-        nb_extra = 4
-        with qtbot.wait_signals(
-            [executor.ignored] * nb_extra, timeout=10_000, order="strict"
-        ):
-            # Every submission while busy is dropped, not just the first excess one.
-            extra = [
-                executor.submit_task(AddTask, inputs={"a": i}) for i in range(nb_extra)
-            ]
-            assert extra == [None] * len(extra)
-
-        with qtbot.wait_signals(
+        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
+            executor.aborted
+        ), qtbot.wait_signals(
             [executor.succeeded, executor.finished], timeout=15_000, order="strict"
         ):
+            with qtbot.wait_signals(
+                [executor.submitted, executor.aboutToStart, executor.started],
+                timeout=10_000,
+                order="strict",
+            ) as first_signals_blocker:
+                if kind == "sync":
+                    # submit_task() blocks until the task finishes, so it must
+                    # run on its own thread to still be "busy" when the
+                    # second is submitted.
+                    thread = threading.Thread(
+                        target=executor.submit_task,
+                        args=(AddTask,),
+                        kwargs={"inputs": inputs},
+                    )
+                    thread.start()
+                else:
+                    executor.submit_task(AddTask, inputs=inputs)
+
+            first = first_signals_blocker.all_signals_and_args[0].args[0]
+
+            nb_extra = 4
+            with qtbot.wait_signals(
+                [executor.ignored] * nb_extra, timeout=10_000, order="strict"
+            ):
+                # Every submission while busy is dropped, not just the first
+                # excess one.
+                extra = [
+                    executor.submit_task(AddTask, inputs={"a": i})
+                    for i in range(nb_extra)
+                ]
+                assert extra == [None] * len(extra)
+
             first.result(timeout=10)
 
         if thread is not None:
@@ -58,7 +64,9 @@ def test_always_queue(qtbot, executor_context_factory):
         futures = []
 
         nb_submits = 3
-        with qtbot.wait_signals(
+        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
+            executor.aborted
+        ), qtbot.assert_not_emitted(executor.ignored), qtbot.wait_signals(
             [
                 executor.submitted,
                 executor.aboutToStart,
