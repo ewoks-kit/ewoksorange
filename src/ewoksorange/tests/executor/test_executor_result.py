@@ -8,7 +8,7 @@ from .utils import assert_exception
 def test_success(qtbot, executor_context_factory):
     with executor_context_factory() as (_, executor):
         with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-            executor.aborted
+            executor.stop_requested
         ), qtbot.wait_signals(
             (
                 executor.submitted,
@@ -36,7 +36,7 @@ def test_failure(qtbot, executor_context_factory):
 
     with executor_context_factory() as (_, executor):
         with qtbot.assert_not_emitted(executor.succeeded), qtbot.assert_not_emitted(
-            executor.aborted
+            executor.stop_requested
         ), qtbot.wait_signals(
             (
                 executor.submitted,

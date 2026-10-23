@@ -19,7 +19,7 @@ def test_parallel_execution(qtbot, executor_context_factory) -> None:
             for index, inputs in enumerate(inputs_list)
         ]
         with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-            executor.aborted
+            executor.stop_requested
         ), qtbot.wait_signals(
             [
                 executor.submitted,

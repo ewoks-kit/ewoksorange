@@ -18,7 +18,7 @@ def test_cancel_queued_task_sync(qtbot, executor_factory):
     )
 
     with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-        executor.aborted
+        executor.stop_requested
     ), qtbot.wait_signals([executor.succeeded, executor.finished] * 2, timeout=10_000):
         with qtbot.wait_signal(executor.started) as signal_blocker:
             thread.start()
@@ -59,7 +59,7 @@ def test_cancel_queued_task(qtbot, concurrency, executor_factory):
     nb_ran = 1 + nb_fillers
 
     with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-        executor.aborted
+        executor.stop_requested
     ), qtbot.wait_signals(
         [executor.submitted] * (nb_ran + 1)
         + [

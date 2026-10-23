@@ -13,7 +13,7 @@ def test_drop_if_busy(qtbot, executor_context_factory):
         thread = None
 
         with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-            executor.aborted
+            executor.stop_requested
         ), qtbot.wait_signals(
             [executor.succeeded, executor.finished], timeout=15_000, order="strict"
         ):
@@ -65,7 +65,7 @@ def test_always_queue(qtbot, executor_context_factory):
 
         nb_submits = 3
         with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-            executor.aborted
+            executor.stop_requested
         ), qtbot.assert_not_emitted(executor.ignored), qtbot.wait_signals(
             [
                 executor.submitted,

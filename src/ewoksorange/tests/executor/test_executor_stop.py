@@ -19,20 +19,20 @@ def test_request_stop(qtbot, executor_context_factory):
         thread = None
 
         with qtbot.assert_not_emitted(executor.succeeded), qtbot.wait_signals(
-            (executor.aborted, executor.failed, executor.finished),
+            (executor.stop_requested, executor.failed, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
             order="strict",
         ):
             with qtbot.wait_signals(
                 (executor.submitted, executor.aboutToStart, executor.started),
-                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
+                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 3,
                 timeout=5_000,
                 order="strict",
             ) as signals_blocker:
                 if kind == "sync":
                     # submit_task() blocks until the task finishes, so it must run
-                    # on its own thread for abort() to have anything to interrupt.
+                    # on its own thread for request_stop() to have anything to interrupt.
                     thread = threading.Thread(
                         target=executor.submit_task,
                         args=(AddTask,),
@@ -43,12 +43,12 @@ def test_request_stop(qtbot, executor_context_factory):
                     executor.submit_task(AddTask, inputs=inputs)
 
             submitted_future = signals_blocker.all_signals_and_args[0].args[0]
-            started_future = signals_blocker.all_signals_and_args[1].args[0]
+            started_future = signals_blocker.all_signals_and_args[2].args[0]
             assert started_future is submitted_future
 
             assert submitted_future.request_stop()
 
-            match = r"cancelled after [\.0-9]+ seconds"
+            match = r"stopped after [\.0-9]+ seconds"
             with pytest.raises(TaskExecutionError, match=match):
                 submitted_future.result(timeout=10)
 
@@ -74,14 +74,14 @@ def test_stop_leaves_outputs_undefined(qtbot, executor_context_factory, task_cla
         thread = None
 
         with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
-            (executor.aborted, executor.succeeded, executor.finished),
+            (executor.stop_requested, executor.succeeded, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
             order="strict",
         ):
             with qtbot.wait_signals(
                 (executor.submitted, executor.aboutToStart, executor.started),
-                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
+                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 3,
                 timeout=5_000,
                 order="strict",
             ) as signals_blocker:
@@ -96,7 +96,7 @@ def test_stop_leaves_outputs_undefined(qtbot, executor_context_factory, task_cla
                     executor.submit_task(task_class, inputs=inputs)
 
             submitted_future = signals_blocker.all_signals_and_args[0].args[0]
-            started_future = signals_blocker.all_signals_and_args[1].args[0]
+            started_future = signals_blocker.all_signals_and_args[2].args[0]
             assert started_future is submitted_future
 
             assert submitted_future.request_stop()
@@ -118,14 +118,14 @@ def test_stop_leaves_partial_outputs(qtbot, executor_context_factory):
         thread = None
 
         with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
-            (executor.aborted, executor.succeeded, executor.finished),
+            (executor.stop_requested, executor.succeeded, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
             order="strict",
         ):
             with qtbot.wait_signals(
                 (executor.submitted, executor.aboutToStart, executor.started),
-                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
+                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 3,
                 timeout=5_000,
                 order="strict",
             ) as signals_blocker:
@@ -140,7 +140,7 @@ def test_stop_leaves_partial_outputs(qtbot, executor_context_factory):
                     executor.submit_task(PartialStopTask, inputs=inputs)
 
             submitted_future = signals_blocker.all_signals_and_args[0].args[0]
-            started_future = signals_blocker.all_signals_and_args[1].args[0]
+            started_future = signals_blocker.all_signals_and_args[2].args[0]
             assert started_future is submitted_future
 
             assert submitted_future.request_stop()
@@ -166,14 +166,14 @@ def test_request_stop_does_not_guarantee_stop(qtbot, executor_context_factory):
         thread = None
 
         with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
-            (executor.aborted, executor.succeeded, executor.finished),
+            (executor.stop_requested, executor.succeeded, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
             order="strict",
         ):
             with qtbot.wait_signals(
                 (executor.submitted, executor.aboutToStart, executor.started),
-                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 2,
+                check_params_cbs=[lambda future: isinstance(future, TaskFuture)] * 3,
                 timeout=5_000,
                 order="strict",
             ) as signals_blocker:
@@ -188,13 +188,13 @@ def test_request_stop_does_not_guarantee_stop(qtbot, executor_context_factory):
                     executor.submit_task(IgnoreStopTask, inputs=inputs)
 
             submitted_future = signals_blocker.all_signals_and_args[0].args[0]
-            started_future = signals_blocker.all_signals_and_args[1].args[0]
+            started_future = signals_blocker.all_signals_and_args[2].args[0]
             assert started_future is submitted_future
 
             assert submitted_future.request_stop()
 
             result = submitted_future.result(timeout=10)
-            assert result["result"].value == "completed despite abort"
+            assert result["result"].value == "completed despite stop request"
 
             assert submitted_future.stop_requested()
 
