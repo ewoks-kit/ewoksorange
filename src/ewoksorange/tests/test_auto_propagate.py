@@ -21,7 +21,7 @@ class EwoksDummyWidget(OWEwoksWidgetNoThread, ewokstaskclass=DummyTask):
     name = "ewoks dummy widget"
 
 
-def test_auto_execute_enabled(ewoksorange_qtapp):
+def test_auto_execute_enabled(qtbot):
     widget = EwoksDummyWidget()
     task_submitted_spy = QSignalSpy(widget.task_executor.submitted)
     # New inputs -> task submitted
@@ -29,7 +29,7 @@ def test_auto_execute_enabled(ewoksorange_qtapp):
     assert len(task_submitted_spy) == 1
 
 
-def test_auto_execute_disabled(ewoksorange_qtapp):
+def test_auto_execute_disabled(qtbot):
     widget = EwoksDummyWidget()
     widget.auto_execute = False
     task_submitted_spy = QSignalSpy(widget.task_executor.submitted)
