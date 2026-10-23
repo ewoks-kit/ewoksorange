@@ -102,7 +102,7 @@ else:
         # Redefining the 'EDITOR_WIDGET_CONSTRUCTOR' allow use to add features to the default 'SchemeEditWidget' like adding actions to the link.
         _CanvasMainWindow.EDITOR_WIDGET_CONSTRUCTOR = _SchemeEditWidget
     else:
-        _logger.warning(
+        _logger.info(
             "orange-canvas-core %s < 0.2.9: the 'Trigger' action is not added to the link context menu",
             _ORANGE_CANVAS_CORE_VERSION,
         )
