@@ -1,9 +1,14 @@
+import importlib.metadata
 import logging
 import sys
 from contextlib import contextmanager
 
+from packaging.version import Version
+
 from ...orange_version import ORANGE_VERSION
 from .menu import add_ewoks_import_export_actions
+
+_logger = logging.getLogger(__name__)
 
 if ORANGE_VERSION == ORANGE_VERSION.latest_oasys:
     from oasys2.canvas import config as _oasys_config_module
@@ -83,6 +88,24 @@ elif ORANGE_VERSION == ORANGE_VERSION.latest_orange:
 else:
     from orangecanvas.main import arg_parser
     from orangecanvas.main import main as _main
+
+    _ORANGE_CANVAS_CORE_VERSION = Version(
+        importlib.metadata.version("orange-canvas-core")
+    )
+    if _ORANGE_CANVAS_CORE_VERSION >= Version("0.2.9"):
+        from orangecanvas.application.canvasmain import (
+            CanvasMainWindow as _CanvasMainWindow,
+        )
+
+        from .schemeedit import SchemeEditWidget as _SchemeEditWidget
+
+        # Redefining the 'EDITOR_WIDGET_CONSTRUCTOR' allow use to add features to the default 'SchemeEditWidget' like adding actions to the link.
+        _CanvasMainWindow.EDITOR_WIDGET_CONSTRUCTOR = _SchemeEditWidget
+    else:
+        _logger.info(
+            "orange-canvas-core %s < 0.2.9: the 'Trigger' action is not added to the link context menu",
+            _ORANGE_CANVAS_CORE_VERSION,
+        )
 
 
 @contextmanager
