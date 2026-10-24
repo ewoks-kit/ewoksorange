@@ -10,6 +10,8 @@ from ewokscore.task import Task
 from ewokscore.variable import VariableContainer
 
 from .._controllers.abstract import StartDenial
+from ..future import TaskAbortedError
+from ..future import TaskKilledError
 from ..future import TaskStoppedError
 
 
@@ -91,7 +93,7 @@ class TaskRunner(ABC):
         watcher = threading.Thread(target=_watch_stop_request, daemon=True)
         watcher.start()
         try:
-            task.execute(raise_on_error=True)
+            self._execute_task(task)
         finally:
             done.set()
             # Wake the watcher if the task completed without stop request.
@@ -100,10 +102,17 @@ class TaskRunner(ABC):
 
         return task.output_variables
 
+    def _execute_task(self, task: Task) -> None:
+        task.execute(raise_on_error=True)
+
 
 def _denial_error(task_class: Type[Task], denial: StartDenial) -> Exception:
     """The error of a task that was not allowed to start."""
     name = task_class.__name__
     if denial is StartDenial.STOPPED:
         return TaskStoppedError(f"Task {name} was stopped before it started")
+    if denial is StartDenial.ABORTED:
+        return TaskAbortedError(f"Task {name} was aborted before it started")
+    if denial is StartDenial.KILLED:
+        return TaskKilledError(f"Task {name} was killed before it started")
     return ValueError(f"Start denial {denial} is not handled")

@@ -13,12 +13,14 @@ backend, receivers observe the same order of signals for a task:
 that is cancelled before it starts emits ``submitted`` → ``cancelled`` →
 ``finished``. A task that is requested to stop before it starts emits
 ``submitted`` → ``stopRequested`` → ``failed`` → ``finished``. ``finished`` is
-the last signal of every submitted task.
+the last signal of every submitted task. ``aborted`` and ``killed`` (process
+pool only) follow the same rules as ``stopRequested``.
 
 In the ``"thread"`` and ``"process"`` backends, the executor does not emit the
-completion signals (``cancelled``, ``stopRequested``, ``succeeded``,
-``failed``, ``finished``) from the callback that detects the completion. That
-callback can run in any thread, so it emits the internal ``_done`` signal,
+completion signals (``cancelled``, ``stopRequested``, ``aborted``,
+``killed``, ``succeeded``, ``failed``, ``finished``) from the callback that
+detects the completion. That callback can run in any thread, including the GUI
+thread (in ``kill()``), so it emits the internal ``_done`` signal,
 which is always queued to the GUI thread. The completion signals are then
 emitted in the GUI thread, after the signals of the task that were queued
 before.
@@ -119,14 +121,19 @@ is not picklable). The ``ProcessTaskController`` in the GUI process and the
   object is replaced by a
   :class:`~ewoksorange.gui.concurrency._messages.QueueProgress`, which puts
   each progress value on that same queue.
+  While the task executes, a sender thread of the runner puts the progress
+  values, so that an abort never interrupts the task thread in the middle of
+  a queue call.
 - The queue to the runner carries the decision whether the task may start
-  (``ToRunner.START`` or a ``StartDenial``), then ``ToRunner.REQUEST_STOP``.
+  (``ToRunner.START`` or a ``StartDenial``), then ``ToRunner.REQUEST_STOP``
+  and ``ToRunner.ABORT``. ``ToRunner.ABORT`` interrupts the task with a
+  ``KeyboardInterrupt``.
 
 In the GUI process, a single relay thread started by
 :meth:`ProcessTaskController.watch() <ewoksorange.gui.concurrency._controllers.process.ProcessTaskController.watch>`
 reads the queue to the controller and calls the matching callback. On
 ``ToController.ABOUT_TO_START``, it decides whether the task may start (it may
-not once it was cancelled or requested to stop), replies to the runner, and
+not once it was cancelled, stopped, aborted or killed), replies to the runner, and
 emits ``aboutToStart`` when allowed. On ``ToController.STARTED`` it emits
 ``started``, and on a progress value it sets the value on the caller's progress
 object. The relay only starts once ``submitted`` was emitted, so the runner
@@ -143,8 +150,8 @@ cannot start the task before that.
         box GUI process: relay thread
         participant RL as Relay
         end
-        box GUI process: pool management thread
-        participant PM as ProcessPool mgmt
+        box GUI process: pebble pool threads
+        participant PM as pebble.ProcessPool
         end
         box Worker process
         participant R as ProcessTaskRunner + Task
@@ -193,7 +200,7 @@ practice both run concurrently. What matters is the ordering:
   are synchronous, so every event of the runner is already queued ahead of
   ``END``. Waiting for the relay to reach ``END`` therefore delivers all of
   them before ``succeeded`` / ``failed`` are emitted.
-- **The start decision comes first.** Stop requests are only put on the queue
+- **The start decision comes first.** Stop requests and aborts are only put on the queue
   to the runner once the start was allowed, so the runner always reads the
   decision first.
 
@@ -202,8 +209,13 @@ The relay's lifetime is tied to the task's future, not to a timeout:
 - **Cancelled or stopped while queued.** The runner only puts
   ``ABOUT_TO_START``, is denied and returns or raises, so the done callback
   runs and puts ``END``.
-- **Worker crash.** The pool sets ``BrokenProcessPool`` on the future, so the
-  done callback still runs and puts ``END``.
+- **Worker crash.** The pool sets ``pebble.ProcessExpired`` on the future and
+  replaces the worker process, so the done callback still runs and puts
+  ``END``.
+- **Killed worker.** ``kill()`` cancels the future of the pool, which runs the
+  done callback right away, in the thread calling ``kill()``. When a worker
+  already picked up the task, the pool terminates that worker process and
+  replaces it.
 - **Manager shut down.** Reading the queue raises and the relay exits.
 - **Long-running task.** The relay keeps waiting, since progress may still
   come. There is deliberately no timeout on reading the queue: a timeout would

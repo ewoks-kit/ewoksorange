@@ -1,11 +1,14 @@
 """Ewoks task progress reaches the caller for every execution backend."""
 
 import os
+import time
 from typing import List
 from typing import Union
 
 from ...gui.qt_utils.progress import QProgress
+from .tasks import InitProgressTask
 from .tasks import PidTask
+from .tasks import ProgressBurstTask
 from .tasks import ProgressTask
 
 
@@ -42,6 +45,40 @@ def test_progress(ewoksorange_qtapp, executor_context_factory):
             assert result["pid"].value != os.getpid()
         else:
             assert result["pid"].value == os.getpid()
+
+
+def test_progress_during_creation(ewoksorange_qtapp, executor_context_factory):
+    """The progress a task reports while it is created arrives between
+    `aboutToStart` and `started`."""
+    with executor_context_factory() as (kind, executor, recorder):
+        progress = QProgress()
+        events: List[Union[str, int]] = []
+        executor.aboutToStart.connect(lambda _: events.append("aboutToStart"))
+        executor.started.connect(lambda _: events.append("started"))
+        progress.sigProgressChanged.connect(events.append)
+
+        future = executor.submit_task(
+            InitProgressTask, inputs={"value": 1}, progress=progress
+        )
+
+        assert future.result(timeout=30)["value"].value == 1
+        recorder.wait_for("finished", 1)
+        assert events == ["aboutToStart", 50, "started", 100]
+
+
+def test_fast_progress_does_not_delay_result(
+    ewoksorange_qtapp, executor_context_factory
+):
+    """A task reporting progress faster than it can be relayed returns its
+    result without delay."""
+    with executor_context_factory() as (kind, executor, recorder):
+        progress = QProgress()
+        future = executor.submit_task(
+            ProgressBurstTask, inputs={"duration": 1}, progress=progress
+        )
+
+        end = future.result(timeout=30)["end"].value
+        assert time.time() - end < 5
 
 
 def test_progress_for_task_without_progress_support(

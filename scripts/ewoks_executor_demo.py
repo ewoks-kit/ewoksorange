@@ -4,13 +4,14 @@ import os
 import sys
 import threading
 import time
-from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import Optional
 
+import pebble
 from AnyQt.QtCore import QEventLoop
 from AnyQt.QtCore import Qt
 from AnyQt.QtCore import QTimer
@@ -30,6 +31,7 @@ from ewokscore.task import Task
 
 from ewoksorange.gui.concurrency.executor import EwoksExecutor
 from ewoksorange.gui.concurrency.executor import SubmitPolicy
+from ewoksorange.gui.concurrency.future import TaskFuture
 
 
 class SumTask(
@@ -38,7 +40,7 @@ class SumTask(
     optional_input_names=["b", "delay", "fail"],
     output_names=["result"],
 ):
-    """Add two numbers with a delay and optional failure."""
+    """Add two numbers with a delay and optional failure. Stops early on request."""
 
     def run(self) -> None:
         result = self.inputs.a
@@ -47,12 +49,28 @@ class SumTask(
             result += self.inputs.b
 
         if self.inputs.delay:
-            time.sleep(self.inputs.delay)
+            end = time.monotonic() + self.inputs.delay
+            while time.monotonic() < end:
+                if self.stop_requested:
+                    raise RuntimeError("Stopped on request")
+                time.sleep(0.05)
 
         if self.inputs.fail:
             raise RuntimeError(f"Intentional failure after {self.inputs.delay}s")
 
         self.outputs.result = result
+
+    def _on_stop_requested(self) -> None:
+        # `run` polls `stop_requested`.
+        pass
+
+
+_ACTIONS: Dict[str, Callable[[TaskFuture], bool]] = {
+    "Cancel (queued only)": TaskFuture.cancel,
+    "Request stop": TaskFuture.request_stop,
+    "Abort (process only)": TaskFuture.abort,
+    "Kill (process only)": TaskFuture.kill,
+}
 
 
 class Window(QWidget):
@@ -76,7 +94,9 @@ class Window(QWidget):
 
         self._pending = QListWidget()
         self._pending_items: Dict[int, QListWidgetItem] = {}
+        self._futures: Dict[int, TaskFuture] = {}
         self._buttons: Dict[str, QPushButton] = {}
+        self._action_buttons: Dict[str, QPushButton] = {}
 
         self._counter: int = 1
         self._total_tasks_triggered: int = 0
@@ -111,15 +131,15 @@ class Window(QWidget):
             ),
             # Processes
             "P DROP": EwoksExecutor(
-                ProcessPoolExecutor(max_workers=1),
+                pebble.ProcessPool(max_workers=1),
                 SubmitPolicy.DROP_IF_BUSY,
             ),
             "P QUEUE": EwoksExecutor(
-                ProcessPoolExecutor(max_workers=1),
+                pebble.ProcessPool(max_workers=1),
                 SubmitPolicy.ALWAYS,
             ),
             "P PARALLEL": EwoksExecutor(
-                ProcessPoolExecutor(max_workers=4),
+                pebble.ProcessPool(max_workers=4),
                 SubmitPolicy.ALWAYS,
             ),
         }
@@ -132,6 +152,8 @@ class Window(QWidget):
             executor.failed.connect(partial(self._on_failed, name))
             executor.cancelled.connect(partial(self._on_cancelled, name))
             executor.stopRequested.connect(partial(self._on_stop_requested, name))
+            executor.aborted.connect(partial(self._on_aborted, name))
+            executor.killed.connect(partial(self._on_killed, name))
             executor.finished.connect(partial(self._on_finished, name))
 
         layout = QVBoxLayout(self)
@@ -163,6 +185,15 @@ class Window(QWidget):
 
         layout.addLayout(grid)
 
+        actions = QHBoxLayout()
+        actions.addWidget(QLabel("Apply to all queued and running tasks:"))
+        for text in _ACTIONS:
+            button = QPushButton(text)
+            button.clicked.connect(partial(self._on_action_clicked, text))
+            actions.addWidget(button)
+            self._action_buttons[text] = button
+        layout.addLayout(actions)
+
         body = QHBoxLayout()
 
         log_box = QVBoxLayout()
@@ -171,7 +202,7 @@ class Window(QWidget):
         body.addLayout(log_box, 2)
 
         pending_box = QVBoxLayout()
-        pending_box.addWidget(QLabel("Pending tasks"))
+        pending_box.addWidget(QLabel("Queued and running tasks"))
         pending_box.addWidget(self._pending)
         body.addLayout(pending_box, 1)
 
@@ -183,8 +214,9 @@ class Window(QWidget):
         print(log)
         self._log.append(log)
 
-    def _on_submitted(self, name: str, future: Any) -> None:
+    def _on_submitted(self, name: str, future: TaskFuture) -> None:
         self._append_log(f"[{name}] Submitted -> {id(future)}")
+        self._futures[id(future)] = future
 
         item = QListWidgetItem(f"[{name}] {id(future)}")
         self._pending.addItem(item)
@@ -212,12 +244,19 @@ class Window(QWidget):
     def _on_stop_requested(self, name: str, future: Any) -> None:
         self._append_log(f"[{name}] ⏹ Stop requested -> {id(future)}")
 
+    def _on_aborted(self, name: str, future: Any) -> None:
+        self._append_log(f"[{name}] ⛔ Aborted -> {id(future)}")
+
+    def _on_killed(self, name: str, future: Any) -> None:
+        self._append_log(f"[{name}] 💀 Killed -> {id(future)}")
+
     def _on_finished(self, name: str, future: Any) -> None:
         self._total_tasks_handled += 1
         self._append_log(f"[{name}] ■ Finished -> {id(future)}")
         self._remove_pending(future)
 
     def _remove_pending(self, future: Any) -> None:
+        self._futures.pop(id(future), None)
         item: Optional[QListWidgetItem] = self._pending_items.pop(id(future), None)
 
         if item is not None:
@@ -229,6 +268,12 @@ class Window(QWidget):
         _checked: bool = False,
     ) -> None:
         self._submit_many(self._executors[key])
+
+    def _on_action_clicked(self, text: str, _checked: bool = False) -> None:
+        action = _ACTIONS[text]
+        futures = [future for future in self._futures.values() if not future.done()]
+        accepted = sum(action(future) for future in futures)
+        self._append_log(f"{text}: accepted by {accepted}/{len(futures)} tasks")
 
     def _submit_many(self, executor: EwoksExecutor) -> None:
         for _ in range(self._submit_count):
@@ -258,7 +303,8 @@ class Window(QWidget):
 
 
 def run_self_test(window: Window, submit_count: int, timeout: float) -> bool:
-    """Click every button and wait until all submitted tasks finish.
+    """Click every submit button, then every action button, and wait until all
+    submitted tasks finish.
 
     Used in CI to smoke-test the demo without a real display.
     """
@@ -275,6 +321,9 @@ def run_self_test(window: Window, submit_count: int, timeout: float) -> bool:
     for button in window._buttons.values():
         QTest.mouseClick(button, Qt.MouseButton.LeftButton)
         total_tasks_expected += submit_count
+
+    for button in window._action_buttons.values():
+        QTest.mouseClick(button, Qt.MouseButton.LeftButton)
 
     loop = QEventLoop()
 

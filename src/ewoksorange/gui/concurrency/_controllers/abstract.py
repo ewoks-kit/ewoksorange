@@ -13,6 +13,8 @@ class StartDenial(Enum):
 
     CANCELLED = auto()
     STOPPED = auto()
+    ABORTED = auto()
+    KILLED = auto()
 
 
 class StartGate:
@@ -61,8 +63,8 @@ class TaskController(ABC):
     """Interface for controlling an ewoks task.
 
     The task (instance) is expected to be executed at most once. Only the first
-    of cancel and stop that reaches a task before it starts has an effect: the
-    task never starts.
+    of cancel, stop, abort and kill that reaches a task before it starts has an
+    effect: the task never starts.
     """
 
     def __init__(self) -> None:
@@ -88,11 +90,28 @@ class TaskController(ABC):
         """Request the running task to stop."""
         raise NotImplementedError
 
+    def started(self) -> bool:
+        """Return True if the task was allowed to start."""
+        return self._gate.started
+
     def stop_requested(self) -> bool:
         """Return True if the stop request prevented the start or reached the task."""
         # Stopped before starting: the gate holds the denial, nothing was sent.
         # Stopped while running: the stop request was sent to the task.
         return self._gate.denial is StartDenial.STOPPED or self._stop_sent
+
+    def abort(self) -> bool:
+        """Request to interrupt the task, or prevent it from starting.
+
+        Not supported by default.
+
+        Returns True if the abort request prevented the start or was sent.
+        """
+        return False
+
+    def aborted(self, future: Future) -> bool:
+        """Return True if an abort request prevented the start or interrupted the task."""
+        return False
 
     def cancel(self, future: Future) -> bool:
         """Prevent execution if the task has not started.
@@ -104,6 +123,19 @@ class TaskController(ABC):
     def cancelled(self, future: Future) -> bool:
         """Return True if the task was cancelled before it started."""
         return self._gate.denial is StartDenial.CANCELLED
+
+    def kill(self, future: Future) -> bool:
+        """Kill the task running with `future`, or prevent it from starting.
+
+        Not supported by default.
+
+        Returns True if the task is killed or prevented from starting.
+        """
+        return False
+
+    def killed(self) -> bool:
+        """Return True if the task was killed or prevented from starting by a kill request."""
+        return False
 
     def watch(
         self,
