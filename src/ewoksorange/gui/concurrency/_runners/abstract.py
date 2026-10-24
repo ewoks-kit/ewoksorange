@@ -106,4 +106,4 @@ def _denial_error(task_class: Type[Task], denial: StartDenial) -> Exception:
     name = task_class.__name__
     if denial is StartDenial.STOPPED:
         return TaskStoppedError(f"Task {name} was stopped before it started")
-    raise ValueError(f"Start denial {denial} is not handled")
+    return ValueError(f"Start denial {denial} is not handled")
