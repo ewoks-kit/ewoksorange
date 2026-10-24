@@ -59,6 +59,10 @@ class SignalRecorder:
     def count(self, name: str) -> int:
         return len(self._events[name])
 
+    def futures(self, name: str) -> List[Optional[TaskFuture]]:
+        """Return the futures carried by all `name` signals."""
+        return list(self._events[name])
+
     def future(self, name: str, index: int = 0) -> TaskFuture:
         """Return the future carried by the `index`-th `name` signal."""
         return self._events[name][index]

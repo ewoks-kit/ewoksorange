@@ -25,7 +25,7 @@ from ewokscore.task import Task
 from ewokscore.variable import VariableContainer
 
 from . import _controllers
-from . import _progress
+from . import _messages
 from . import _runners
 from .future import TaskFuture
 
@@ -78,9 +78,8 @@ class EwoksExecutor(QObject):
     """Qt-aware executor for ewoks tasks.
 
     Wraps a `concurrent.futures.Executor` (thread, process or None) and emits Qt
-    signals on task lifecycle events. Returns TaskFuture objects that support
-    both native future cancellation (cancel()) and ewoks task stop requests (request_stop()).
-    Their result is the executed task's
+    signals on task lifecycle events. Returns :class:`TaskFuture` objects to cancel
+    or stop the task. Their result is the executed task's
     :class:`~ewokscore.variable.VariableContainer` of output variables.
     """
 
@@ -89,7 +88,7 @@ class EwoksExecutor(QObject):
 
     aboutToStart = Signal(TaskFuture)
     """Emitted when a worker picks the task up, right before it is created and
-    executed. Not emitted for a task cancelled while queued."""
+    executed. Not emitted for a task prevented from starting."""
 
     started = Signal(TaskFuture)
     """Emitted when a task starts executing."""
@@ -104,7 +103,7 @@ class EwoksExecutor(QObject):
     """Emitted when a task submission is ignored due to the DROP_IF_BUSY policy."""
 
     stop_requested = Signal(TaskFuture)
-    """Emitted when an unfinished task is requested to stop."""
+    """Emitted when :meth:`TaskFuture.request_stop` prevents the start of a task or reaches the running task."""
 
     finished = Signal(TaskFuture)
     """Emitted when a task finishes (success, failure, or stop request)."""
@@ -207,13 +206,11 @@ class EwoksExecutor(QObject):
     ) -> TaskFuture:
         manager = self._get_manager()
 
-        ready_event = manager.Event()
-        events_queue = manager.Queue()
-        stop_event = manager.Event()
-        stop_requested_event = manager.Event()
+        to_controller_queue = manager.Queue()
+        to_runner_queue = manager.Queue()
 
         controller = _controllers.ProcessTaskController(
-            stop_event, stop_requested_event, events_queue
+            to_controller_queue, to_runner_queue
         )
 
         # The caller's progress object is usually unpicklable (QObject), so
@@ -221,18 +218,13 @@ class EwoksExecutor(QObject):
         progress = self._pop_progress_arg(task_class, task_kwargs)
         on_progress: Optional[Callable[[float], None]] = None
         if progress is not None:
-            task_kwargs["progress"] = _progress.QueueProgress(events_queue)
+            task_kwargs["progress"] = _messages.QueueProgress(to_controller_queue)
 
             def on_progress(value: float) -> None:
                 progress.progress = value
 
         runner = _runners.ProcessTaskRunner(
-            task_class,
-            task_kwargs,
-            ready_event,
-            events_queue,
-            stop_event,
-            stop_requested_event,
+            task_class, task_kwargs, to_controller_queue, to_runner_queue
         )
 
         self_ref = weakref.ref(self)
@@ -240,15 +232,17 @@ class EwoksExecutor(QObject):
 
         raw_future = self._executor.submit(runner)
 
-        # Watch after the submission in case 'submit' fails (make sure 'STOP' will always be sent after this point).
-        controller.watch(
-            on_about_to_start=lambda: _emit_about_to_start(self_ref, holder),
-            on_started=lambda: _emit_started(self_ref, holder),
-            on_progress=on_progress,
-        )
+        def watch() -> None:
+            # Only after the submission (a failing 'submit' is never watched) and
+            # after "submitted" (the runner cannot start before the relay allows it).
+            controller.watch(
+                on_about_to_start=lambda: _emit_about_to_start(self_ref, holder),
+                on_started=lambda: _emit_started(self_ref, holder),
+                on_progress=on_progress,
+            )
 
         return self._finalize_submission(
-            raw_future, controller, holder, self_ref, after_submitted=ready_event.set
+            raw_future, controller, holder, self_ref, after_submitted=watch
         )
 
     def _handle_progess_arg(
@@ -319,11 +313,11 @@ class EwoksExecutor(QObject):
         with self._lock:
             self._running -= 1
 
-        if raw_future.cancelled():
+        if task_future.cancelled():
             return
 
         try:
-            raw_future.result()
+            task_future.result()
         except Exception:
             self.failed.emit(task_future)
         else:

@@ -1,8 +1,8 @@
 import threading
-from threading import Lock
+from concurrent.futures import Future
+from typing import Optional
 
-from ewokscore.task import Task
-
+from .abstract import StartDenial
 from .abstract import TaskController
 
 
@@ -11,25 +11,23 @@ class _InProcessTaskController(TaskController):
     or a worker thread)."""
 
     def __init__(self):
-        self._task = None
+        super().__init__()
         self._stop_event = threading.Event()
-        self._lock = Lock()
 
-    def set_task(self, task: Task) -> None:
-        with self._lock:
-            self._task = task
+    def try_start(self) -> Optional[StartDenial]:
+        """Mark the task as started unless it was denied. Returns the denial."""
+        return self._gate.open()
 
     @property
     def stop_event(self) -> threading.Event:
         return self._stop_event
 
-    def request_stop(self) -> bool:
+    def _send_stop_request(self) -> None:
         self._stop_event.set()
-        with self._lock:
-            return self._task is not None
 
-    def stop_requested(self) -> bool:
-        with self._lock:
-            task = self._task
-
-        return task is not None and task.stop_requested
+    def cancel(self, future: Future) -> bool:
+        if not super().cancel(future):
+            return False
+        # When the pool already picked up the task, the runner does not start it.
+        future.cancel()
+        return True

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import CancelledError
 from concurrent.futures import Future
 from typing import Any
 from typing import Callable
@@ -12,8 +13,24 @@ from ewokscore.variable import VariableContainer
 from . import _controllers
 
 
+class TaskStoppedError(RuntimeError):
+    """Raised by :meth:`TaskFuture.result` when a stop request prevented the task from starting."""
+
+
 class TaskFuture:
-    """Wraps a concurrent.futures.Future with ewoks-specific stop request support."""
+    """Future of an ewoks task submitted to an `EwoksExecutor`.
+
+    Ways to prevent or end the execution:
+
+    1. :meth:`cancel` (do not run): has no effect on a running task.
+    2. :meth:`request_stop` (cooperative): the running task is asked to stop and decides
+       whether and how (see `Task.stop_requested` and `Task._on_stop_requested`).
+
+    Each of them prevents a queued task from starting. Only the first one that reaches
+    a queued task has an effect. None of them has an effect on a finished task.
+
+    :meth:`cancelled` and :meth:`stop_requested` report which of these happened.
+    """
 
     def __init__(
         self,
@@ -26,20 +43,25 @@ class TaskFuture:
         self._on_stop_requested = on_stop_requested
 
     def cancel(self) -> bool:
-        """Prevent execution if the task has not started.
+        """Prevent a queued task from starting. Has no effect once the task started.
 
-        This is the native Future cancellation mechanism. It only works while
-        the task is still waiting in the executor queue.
+        The result raises `CancelledError`.
+
+        :return: True if this prevented the task from starting.
         """
-        return self._future.cancel()
+        return self._controller.cancel(self._future)
 
     def request_stop(self) -> bool:
-        """Request a running ewoks task to stop.
+        """Ask the ewoks task to stop (cooperative).
 
-        This delegates to the execution controller. Depending on the execution
-        backend, this may communicate with another thread, process, or do
-        nothing for already-completed tasks.
+        Supported for all backends. A queued task never starts and the result raises
+        :class:`TaskStoppedError`. A running task decides whether and how to stop and
+        the result is whatever the task returns or raises.
+
+        :return: True if this prevented the task from starting or reached the running task.
         """
+        if self.done():
+            return False
         requested = self._controller.request_stop()
         if requested and not self.done() and self._on_stop_requested is not None:
             on_stop_requested, self._on_stop_requested = self._on_stop_requested, None
@@ -47,11 +69,12 @@ class TaskFuture:
         return requested
 
     def stop_requested(self) -> bool:
-        """Return True if the ewoks task was requested to stop."""
+        """Return True if :meth:`request_stop` prevented the start or reached the ewoks task."""
         return self._controller.stop_requested()
 
     def cancelled(self) -> bool:
-        return self._future.cancelled()
+        """Return True if :meth:`cancel` prevented the execution."""
+        return self._controller.cancelled(self._future)
 
     def running(self) -> bool:
         return self._future.running()
@@ -65,11 +88,15 @@ class TaskFuture:
         :param timeout: Maximum number of seconds to wait for the future to complete, `None` to wait forever.
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
+        :raises TaskStoppedError: A stop request prevented the task from starting.
         :raises Exception: Whatever the task raised.
         :return: An immutable mapping of output name to
                  :class:`~ewokscore.variable.Variable`.
         """
-        return self._future.result(timeout=timeout)
+        result = self._future.result(timeout=timeout)
+        if self.cancelled():
+            raise CancelledError()
+        return result
 
     def output_values(
         self, timeout: Optional[float] = None, exclude: Collection[str] = ()
@@ -107,7 +134,10 @@ class TaskFuture:
         :raises CancelledError: The task was cancelled before it started.
         :return: The exception or `None` when the task succeeded.
         """
-        return self._future.exception(timeout=timeout)
+        exception = self._future.exception(timeout=timeout)
+        if exception is None and self.cancelled():
+            raise CancelledError()
+        return exception
 
     def task_exception(
         self, timeout: Optional[float] = None

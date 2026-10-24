@@ -106,6 +106,26 @@ class IgnoreStopTask(
         pass
 
 
+class WaitForFileTask(
+    Task,
+    input_names=["path"],
+    output_names=["result"],
+):
+    """Never checks `self.stop_requested` and completes once the file `path` exists."""
+
+    def run(self):
+        end = time.monotonic() + 30
+        while not os.path.exists(self.inputs.path):
+            if time.monotonic() > end:
+                raise TimeoutError(f"{self.inputs.path} does not exist")
+            time.sleep(0.01)
+        self.outputs.result = "completed despite stop request"
+
+    def _on_stop_requested(self):
+        """Nothing to do: the stop request is ignored."""
+        pass
+
+
 class InterruptStopTask(
     Task,
     input_names=["duration"],
