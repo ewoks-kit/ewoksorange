@@ -92,7 +92,7 @@ class TaskRunner(ABC):
         watcher = threading.Thread(target=_watch_stop_request, daemon=True)
         watcher.start()
         try:
-            self._run_task(task)
+            self._execute_task(task)
         finally:
             done.set()
             # Wake the watcher if the task completed without stop request.
@@ -101,7 +101,7 @@ class TaskRunner(ABC):
 
         return task.output_variables
 
-    def _run_task(self, task: Task) -> None:
+    def _execute_task(self, task: Task) -> None:
         task.execute(raise_on_error=True)
 
 

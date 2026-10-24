@@ -107,7 +107,7 @@ class ProcessTaskRunner(TaskRunner):
         except self._TRANSIENT_ERRORS:
             pass
 
-    def _run_task(self, task: Task) -> None:
+    def _execute_task(self, task: Task) -> None:
         # SIGINT only interrupts the task, not the runner. Outside the task, the
         # pebble worker ignores SIGINT.
         previous = signal.signal(signal.SIGINT, _raise_keyboard_interrupt)
@@ -116,7 +116,7 @@ class ProcessTaskRunner(TaskRunner):
                 if self._abort_sent is not None and self._abort_sent.is_set():
                     # The SIGINT arrived before the handler was installed and was ignored.
                     raise KeyboardInterrupt
-                super()._run_task(task)
+                super()._execute_task(task)
             finally:
                 signal.signal(signal.SIGINT, previous)
         except KeyboardInterrupt:
