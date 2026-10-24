@@ -36,11 +36,9 @@ class TaskFuture:
         self,
         raw_future: Future[VariableContainer],
         controller: _controllers.TaskController,
-        on_stop_requested: Optional[Callable[[], None]] = None,
     ):
         self._future = raw_future
         self._controller = controller
-        self._on_stop_requested = on_stop_requested
 
     def cancel(self) -> bool:
         """Prevent a queued task from starting. Has no effect once the task started.
@@ -62,11 +60,7 @@ class TaskFuture:
         """
         if self.done():
             return False
-        requested = self._controller.request_stop()
-        if requested and not self.done() and self._on_stop_requested is not None:
-            on_stop_requested, self._on_stop_requested = self._on_stop_requested, None
-            on_stop_requested()
-        return requested
+        return self._controller.request_stop()
 
     def stop_requested(self) -> bool:
         """Return True if :meth:`request_stop` prevented the start or reached the ewoks task."""

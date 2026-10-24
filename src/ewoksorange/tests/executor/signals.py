@@ -25,7 +25,8 @@ class SignalRecorder:
             "started": 0,
             "succeeded": 0,
             "failed": 0,
-            "stop_requested": 0,
+            "cancelled": 0,
+            "stopRequested": 0,
             "finished": 0,
             "ignored": 0,
         }
@@ -36,7 +37,8 @@ class SignalRecorder:
         executor.started.connect(self._store_future("started"))
         executor.succeeded.connect(self._store_future("succeeded"))
         executor.failed.connect(self._store_future("failed"))
-        executor.stop_requested.connect(self._store_future("stop_requested"))
+        executor.cancelled.connect(self._store_future("cancelled"))
+        executor.stopRequested.connect(self._store_future("stopRequested"))
         executor.finished.connect(self._store_future("finished"))
         executor.ignored.connect(self._store_noargs("ignored"))
 

@@ -39,16 +39,18 @@ def test_cancel_queued_task(ewoksorange_qtapp, executor_context_factory):
         else:
             assert cancelled is True
             n_ran = 1
+        n_cancelled = 2 - n_ran
 
         blocker.result(timeout=10)
 
-        recorder.wait_for("finished", n_ran)
+        recorder.wait_for("finished", n_ran + n_cancelled)
         recorder.assert_counts(
             submitted=2,
             aboutToStart=n_ran,
             started=n_ran,
             succeeded=n_ran,
-            finished=n_ran,
+            cancelled=n_cancelled,
+            finished=n_ran + n_cancelled,
         )
         if thread is not None:
             thread.join(timeout=10)

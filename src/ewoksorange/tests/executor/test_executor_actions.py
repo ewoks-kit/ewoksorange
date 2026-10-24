@@ -15,8 +15,8 @@ _ERRORS = {
 }
 
 _SIGNALS = {
-    "cancel": {},
-    "request_stop": {"stop_requested": 1, "failed": 1, "finished": 1},
+    "cancel": {"cancelled": 1, "finished": 1},
+    "request_stop": {"stopRequested": 1, "failed": 1, "finished": 1},
 }
 
 
