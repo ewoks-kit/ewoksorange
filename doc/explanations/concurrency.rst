@@ -1,9 +1,9 @@
 Execution Backends
 ==================
 
-A :term:`widget` executes its :term:`task` through an :term:`executor`, in one of three
-:term:`backends <backend>`: in the :term:`GUI thread`, in a thread pool or in a process
-pool. This page has two parts:
+A :term:`widget` executes its :term:`Ewoks task` through an :term:`executor`, in one of
+three :term:`backends <backend>`: in the :term:`GUI thread`, in a thread pool or in a
+process pool. This page has two parts:
 
 - :ref:`concurrency-contract`, for widget authors: which backend to choose, how to end an
   :term:`execution`, and which signals arrive in which order.
