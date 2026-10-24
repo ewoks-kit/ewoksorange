@@ -16,7 +16,11 @@ class StartDenial(Enum):
 
 
 class StartGate:
-    """Decides once whether a task may start."""
+    """Decides once whether a task may start.
+
+    The side executing the task calls `open` right before creating it, the side
+    controlling it calls `deny`. Whichever takes the lock first decides.
+    """
 
     def __init__(self) -> None:
         self._lock = Lock()
@@ -32,7 +36,7 @@ class StartGate:
         return self._denial
 
     def deny(self, denial: StartDenial) -> bool:
-        """Prevent the task from starting.
+        """Prevent the task from starting. Called by the side controlling the task.
 
         Returns False when the task already started or was denied before.
         """
@@ -43,7 +47,11 @@ class StartGate:
             return True
 
     def open(self) -> Optional[StartDenial]:
-        """Let the task start unless it was denied. Returns the denial."""
+        """Let the task start unless it was denied. Called by the side executing
+        the task, right before creating it.
+
+        Returns the denial, or `None` when the task may start.
+        """
         with self._lock:
             self._started = self._denial is None
             return self._denial
