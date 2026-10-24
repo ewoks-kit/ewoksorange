@@ -112,7 +112,7 @@ class EwoksExecutor(QObject):
     finished = Signal(TaskFuture)
     """Emitted last, for every submitted task."""
 
-    _done = Signal(object, object, object)
+    _done = Signal(TaskFuture)
     # Carries a done task to the thread of the executor, behind the events
     # already queued for that thread.
 
@@ -316,12 +316,7 @@ class EwoksExecutor(QObject):
 
             return self._manager
 
-    def _handle_done(
-        self,
-        raw_future: futures.Future[VariableContainer],
-        task_future: TaskFuture,
-        controller: _controllers.TaskController,
-    ) -> None:
+    def _handle_done(self, task_future: TaskFuture) -> None:
         if task_future.cancelled():
             self.cancelled.emit(task_future)
             self.finished.emit(task_future)
@@ -380,9 +375,9 @@ def _done_callback(
         # executor, also when this callback runs in that thread (a task that
         # finished before the callback was added). The completion signals must
         # not overtake them.
-        executor._done.emit(raw_future, task_future, controller)
+        executor._done.emit(task_future)
     else:
-        executor._handle_done(raw_future, task_future, controller)
+        executor._handle_done(task_future)
 
 
 def _emit_about_to_start(
