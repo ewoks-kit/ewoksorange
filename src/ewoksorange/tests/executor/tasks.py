@@ -144,7 +144,7 @@ class WaitForFileTask(
         pass
 
 
-class StubbornTask(
+class SurviveAbortTask(
     Task,
     input_names=["duration", "marker"],
     output_names=["result"],

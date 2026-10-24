@@ -17,8 +17,8 @@ from .tasks import PidTask
 from .tasks import ProgressLoopTask
 from .tasks import SlowInitTask
 from .tasks import StartMarkerTask
-from .tasks import StubbornTask
 from .tasks import SurviveAbortProgressTask
+from .tasks import SurviveAbortTask
 
 
 def test_abort(ewoksorange_qtapp, executor_context_factory, tmp_path):
@@ -195,7 +195,7 @@ def test_escalate(ewoksorange_qtapp, executor_context_factory, tmp_path):
 
         marker = tmp_path / "interrupted"
         executor.submit_task(
-            StubbornTask, inputs={"duration": 30, "marker": str(marker)}
+            SurviveAbortTask, inputs={"duration": 30, "marker": str(marker)}
         )
         future = recorder.wait_future("started")
 
