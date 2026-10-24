@@ -3,8 +3,10 @@ import queue
 import signal
 import sys
 import threading
+from contextlib import contextmanager
 from typing import Any
 from typing import Dict
+from typing import Generator
 from typing import Optional
 from typing import Type
 
@@ -110,21 +112,31 @@ class ProcessTaskRunner(TaskRunner):
             pass
 
     def _execute_task(self, task: Task) -> None:
-        # SIGINT only interrupts the task, not the runner. Outside the task, the
-        # pebble worker ignores SIGINT.
-        previous = signal.signal(signal.SIGINT, _raise_keyboard_interrupt)
+        with _sigint_raises_keyboard_interrupt():
+            self._raise_missed_abort()
+            super()._execute_task(task)
+
+    def _raise_missed_abort(self) -> None:
+        """Interrupt the task if the SIGINT of an abort arrived before the handler
+        was installed: the pebble worker ignored it."""
+        if self._abort_sent is not None and self._abort_sent.is_set():
+            raise KeyboardInterrupt
+
+
+@contextmanager
+def _sigint_raises_keyboard_interrupt() -> Generator[None, None, None]:
+    """SIGINT raises `KeyboardInterrupt` inside the context only. Outside, the
+    pebble worker ignores SIGINT."""
+    previous = signal.signal(signal.SIGINT, _raise_keyboard_interrupt)
+    try:
         try:
-            try:
-                if self._abort_sent is not None and self._abort_sent.is_set():
-                    # The SIGINT arrived before the handler was installed and was ignored.
-                    raise KeyboardInterrupt
-                super()._execute_task(task)
-            finally:
-                signal.signal(signal.SIGINT, previous)
-        except KeyboardInterrupt:
-            # The SIGINT can also interrupt the restore above.
+            yield
+        finally:
             signal.signal(signal.SIGINT, previous)
-            raise
+    except KeyboardInterrupt:
+        # A pending SIGINT can interrupt the restore above: restore again.
+        signal.signal(signal.SIGINT, previous)
+        raise
 
 
 def _raise_keyboard_interrupt(signum: int, frame: Any) -> None:
