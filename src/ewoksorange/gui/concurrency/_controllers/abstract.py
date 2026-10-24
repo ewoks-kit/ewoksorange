@@ -90,6 +90,8 @@ class TaskController(ABC):
 
     def stop_requested(self) -> bool:
         """Return True if the stop request prevented the start or reached the task."""
+        # Stopped before starting: the gate holds the denial, nothing was sent.
+        # Stopped while running: the stop request was sent to the task.
         return self._gate.denial is StartDenial.STOPPED or self._stop_sent
 
     def cancel(self, future: Future) -> bool:
