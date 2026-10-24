@@ -94,12 +94,12 @@ class QueueProgress(BasePercentageProgress):
 
     def _update(self) -> None:
         """Send the current progress, through the sender thread when it runs."""
-        if self._pending is None:
-            self._put(self._progress)
-        else:
-            # Not sent from here: an abort interrupts the task thread, which would
-            # leave the manager connection of that thread out of sync.
+        if self._pending is not None:
+            # The sender thread runs. Not sent from here: an abort interrupts the task
+            # thread, which would leave the manager connection of that thread out of sync.
             self._pending.put(self._progress)
+        else:
+            self._put(self._progress)
 
     def _send(self, pending: queue.Queue) -> None:
         """Send the queued progress values until :meth:`stop_sending`."""
