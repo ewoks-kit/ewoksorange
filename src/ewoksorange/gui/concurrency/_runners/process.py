@@ -99,6 +99,8 @@ class ProcessTaskRunner(TaskRunner):
                 if message is ToRunner.REQUEST_STOP:
                     stop_event.set()
                 elif message is ToRunner.ABORT:
+                    # Interrupt once: a second KeyboardInterrupt could hit the
+                    # task's cleanup or the runner.
                     if not abort_sent.is_set():
                         abort_sent.set()
                         _interrupt_main_thread()
