@@ -6,6 +6,7 @@ import pytest
 from ...gui.concurrency._controllers.process import ProcessTaskController
 from ...gui.concurrency.future import TaskAbortedError
 from ...gui.concurrency.future import TaskFuture
+from ...gui.concurrency.future import TaskKilledError
 from ...gui.concurrency.future import TaskStoppedError
 from .tasks import AddTask
 
@@ -17,7 +18,7 @@ _ERRORS = {
     "cancel": (CancelledError, None),
     "request_stop": (TaskStoppedError, "stopped before it started"),
     "abort": (TaskAbortedError, "aborted before it started"),
-    "kill": (TaskAbortedError, "killed before it started"),
+    "kill": (TaskKilledError, "killed before it started"),
 }
 
 _SIGNALS = {
@@ -111,7 +112,7 @@ def test_killed_queued_task_completes(ewoksorange_qtapp, executor_context_factor
         assert queued.kill()
         assert queued.done()
         assert not blocker.done()
-        with pytest.raises(TaskAbortedError, match="killed before it started"):
+        with pytest.raises(TaskKilledError, match="killed before it started"):
             queued.result(timeout=0)
 
         recorder.wait_for("finished", 1)

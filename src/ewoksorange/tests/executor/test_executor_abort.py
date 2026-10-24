@@ -8,6 +8,7 @@ import pytest
 from AnyQt.QtCore import Qt
 
 from ...gui.concurrency.future import TaskAbortedError
+from ...gui.concurrency.future import TaskKilledError
 from ...gui.qt_utils.app import wait_until
 from ...gui.qt_utils.progress import QProgress
 from .tasks import CleanupTask
@@ -159,10 +160,10 @@ def test_kill(ewoksorange_qtapp, executor_context_factory, tmp_path):
         t0 = time.monotonic()
         assert future.kill()
 
-        with pytest.raises(TaskAbortedError, match="was killed"):
+        with pytest.raises(TaskKilledError, match="was killed"):
             future.result(timeout=5)
         assert time.monotonic() - t0 < 5
-        assert isinstance(future.exception(), TaskAbortedError)
+        assert isinstance(future.exception(), TaskKilledError)
 
         assert future.killed()
         assert not future.aborted()
@@ -207,7 +208,7 @@ def test_escalate(ewoksorange_qtapp, executor_context_factory, tmp_path):
         assert not future.done()
 
         assert future.kill()
-        with pytest.raises(TaskAbortedError, match="was killed"):
+        with pytest.raises(TaskKilledError, match="was killed"):
             future.result(timeout=5)
         assert future.stop_requested()
         assert not future.aborted()
@@ -236,7 +237,7 @@ def test_kill_from_relay_thread(ewoksorange_qtapp, executor_context_factory):
         )
         future = executor.submit_task(IgnoreStopTask, inputs={"duration": 10})
 
-        with pytest.raises(TaskAbortedError, match="was killed"):
+        with pytest.raises(TaskKilledError, match="was killed"):
             future.result(timeout=5)
 
         recorder.wait_for("finished", 1)

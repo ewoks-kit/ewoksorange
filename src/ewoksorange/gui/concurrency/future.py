@@ -18,7 +18,11 @@ class TaskStoppedError(RuntimeError):
 
 
 class TaskAbortedError(RuntimeError):
-    """Raised by :meth:`TaskFuture.result` when the task was aborted or killed."""
+    """Raised by :meth:`TaskFuture.result` when the task was aborted (or killed: see :class:`TaskKilledError`)."""
+
+
+class TaskKilledError(TaskAbortedError):
+    """Raised by :meth:`TaskFuture.result` when the task was killed."""
 
 
 class TaskFuture:
@@ -97,7 +101,7 @@ class TaskFuture:
         Only supported for tasks running in a subprocess. A queued task never starts and
         its future completes right away. Unlike :meth:`abort`, this also works when a
         running task does not return to the Python interpreter. The task cannot clean up
-        and the pool replaces the subprocess. The result raises :class:`TaskAbortedError`.
+        and the pool replaces the subprocess. The result raises :class:`TaskKilledError`.
 
         :return: True if this prevented the task from starting or killed the running task.
         """
@@ -128,7 +132,8 @@ class TaskFuture:
         :raises TimeoutError: The task did not finish in time.
         :raises CancelledError: The task was cancelled before it started.
         :raises TaskStoppedError: A stop request prevented the task from starting.
-        :raises TaskAbortedError: The task was aborted or killed.
+        :raises TaskKilledError: The task was killed.
+        :raises TaskAbortedError: The task was aborted.
         :raises Exception: Whatever the task raised.
         :return: An immutable mapping of output name to
                  :class:`~ewokscore.variable.Variable`.
@@ -213,8 +218,8 @@ class TaskFuture:
         """
         self._future.add_done_callback(fn)
 
-    def _killed_error(self) -> TaskAbortedError:
+    def _killed_error(self) -> TaskKilledError:
         """The error of a killed task."""
         if self._controller.started():
-            return TaskAbortedError("The task was killed")
-        return TaskAbortedError("The task was killed before it started")
+            return TaskKilledError("The task was killed")
+        return TaskKilledError("The task was killed before it started")

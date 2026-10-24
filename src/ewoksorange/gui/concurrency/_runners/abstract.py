@@ -11,6 +11,7 @@ from ewokscore.variable import VariableContainer
 
 from .._controllers.abstract import StartDenial
 from ..future import TaskAbortedError
+from ..future import TaskKilledError
 from ..future import TaskStoppedError
 
 
@@ -113,5 +114,5 @@ def _denial_error(task_class: Type[Task], denial: StartDenial) -> Exception:
     if denial is StartDenial.ABORTED:
         return TaskAbortedError(f"Task {name} was aborted before it started")
     if denial is StartDenial.KILLED:
-        return TaskAbortedError(f"Task {name} was killed before it started")
+        return TaskKilledError(f"Task {name} was killed before it started")
     return ValueError(f"Start denial {denial} is not handled")
