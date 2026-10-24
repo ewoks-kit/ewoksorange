@@ -76,9 +76,9 @@ thread. The other backends only change who runs the task:
     Every step runs on the Qt main thread, inside the ``submit_task()`` call, so
     ``handleNewSignals()`` only returns once the outputs have been propagated.
 ``concurrency="process"``
-    A worker process runs the task. Its lifecycle events and progress travel
-    back, in order, through a single ``multiprocessing`` manager queue, relayed
-    onto the Qt main thread by
+    A worker process runs the task. Its "about to start" and "started" events
+    and its progress travel back, in order, through a ``multiprocessing``
+    manager queue, relayed onto the Qt main thread by a thread of
     :class:`~ewoksorange.gui.concurrency._controllers.process.ProcessTaskController`.
 
 See :doc:`concurrency` for how each backend keeps the signals in order.

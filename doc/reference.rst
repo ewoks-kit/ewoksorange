@@ -5,3 +5,4 @@ Reference
     :maxdepth: 1
 
     reference/api
+    reference/glossary
