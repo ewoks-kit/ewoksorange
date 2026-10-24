@@ -84,6 +84,7 @@ class ProcessTaskController(TaskController):
         cancelled). Manager queues are FIFO, so draining up to the sentinel
         delivers all of them.
         """
+        # Guard in case never watched. Should never happen.
         if self._relay_thread is None:
             return
 
