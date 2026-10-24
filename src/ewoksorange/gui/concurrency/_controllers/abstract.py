@@ -77,6 +77,7 @@ class TaskController(ABC):
         if self._gate.deny(StartDenial.STOPPED):
             return True
         if not self._gate.started:
+            # Denied before, e.g. cancelled.
             return False
         self._stop_sent = True
         self._send_stop_request()
