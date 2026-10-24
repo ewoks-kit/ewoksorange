@@ -301,9 +301,11 @@ class EwoksExecutor(QObject):
 
         after_submitted()
 
-        queue_done = self._executor is not None
+        defer_completion = self._executor is not None
         raw_future.add_done_callback(
-            lambda f: _done_callback(self_ref, f, task_future, controller, queue_done)
+            lambda f: _done_callback(
+                self_ref, f, task_future, controller, defer_completion
+            )
         )
 
         return task_future
@@ -356,7 +358,7 @@ def _done_callback(
     raw_future: futures.Future[VariableContainer],
     task_future: TaskFuture,
     controller: _controllers.TaskController,
-    queue_done: bool,
+    defer_completion: bool,
 ) -> None:
     # Before emitting anything: this queues the events still in flight
     # (process backend) for the thread of the executor. Done even if the
@@ -370,7 +372,7 @@ def _done_callback(
     with executor._lock:
         executor._running -= 1
 
-    if queue_done:
+    if defer_completion:
         # The other signals of the task are queued for the thread of the
         # executor, also when this callback runs in that thread (a task that
         # finished before the callback was added). The completion signals must
