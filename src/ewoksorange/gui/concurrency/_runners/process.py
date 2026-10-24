@@ -51,19 +51,9 @@ class ProcessTaskRunner(TaskRunner):
     def _execute(self, task: Task) -> VariableContainer:
         """Execute `task`, handling the stop requests of the controller."""
         stop_event = threading.Event()
-
-        def _read_to_runner_queue():
-            try:
-                while True:
-                    message = self._to_runner_queue.get()
-                    if message is ToRunner.REQUEST_STOP:
-                        stop_event.set()
-                    elif message is ToRunner.END:
-                        return
-            except self._TRANSIENT_ERRORS:
-                pass
-
-        reader = threading.Thread(target=_read_to_runner_queue, daemon=True)
+        reader = threading.Thread(
+            target=self._relay_stop_requests, args=(stop_event,), daemon=True
+        )
         reader.start()
         try:
             return self._execute_with_stop_event(task, stop_event)
@@ -74,3 +64,15 @@ class ProcessTaskRunner(TaskRunner):
             except self._TRANSIENT_ERRORS:
                 pass
             reader.join()
+
+    def _relay_stop_requests(self, stop_event: threading.Event) -> None:
+        """Set `stop_event` on stop requests until `ToRunner.END` or the manager shuts down."""
+        try:
+            while True:
+                message = self._to_runner_queue.get()
+                if message is ToRunner.REQUEST_STOP:
+                    stop_event.set()
+                elif message is ToRunner.END:
+                    return
+        except self._TRANSIENT_ERRORS:
+            pass
