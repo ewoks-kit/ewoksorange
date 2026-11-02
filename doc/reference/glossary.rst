@@ -4,21 +4,22 @@ Glossary
 .. glossary::
     :sorted:
 
-    Task
+    Ewoks task
         An `ewoks <https://ewoks.readthedocs.io/>`_ task: a class deriving from
         ``ewokscore.Task`` that declares its inputs and outputs and implements ``run()``.
-        Each execution creates a new instance of the task class.
+        Each execution creates a new instance of the task class, which lives only as long
+        as it executes.
 
     Widget
-        An Orange widget that executes an ewoks :term:`task`, deriving from
+        An Orange widget that executes an :term:`Ewoks task`, deriving from
         :class:`~ewoksorange.gui.owwidgets.base.OWEwoksBaseWidget`. It submits its task to
         its :term:`executor` when it is triggered (by default when its inputs change), then
         propagates the outputs downstream when the task succeeds, or invalidates them when
         it fails.
 
     Execution
-        One run of a :term:`task`, from its submission to the :term:`executor` to the
-        ``finished`` signal. Each submission is a new execution, with its own
+        One run of an :term:`Ewoks task`, from its submission to the :term:`executor` to
+        the ``finished`` signal. Each submission is a new execution, with its own
         :term:`task future`.
 
     Queued execution
@@ -33,20 +34,20 @@ Glossary
 
     Executor
         The :class:`~ewoksorange.gui.concurrency.executor.EwoksExecutor` that executes the
-        :term:`tasks <task>` of a :term:`widget` with a :term:`backend` and emits Qt signals
-        for each step of an :term:`execution`. Each signal carries the :term:`task future`
-        of the execution, except ``ignored``.
+        :term:`Ewoks tasks <Ewoks task>` of a :term:`widget` with a :term:`backend` and
+        emits Qt signals for each step of an :term:`execution`. Each signal carries the
+        :term:`task future` of the execution, except ``ignored``.
 
     Backend
-        Where the :term:`executor` executes a :term:`task`, selected by the ``concurrency``
-        class argument of a :term:`widget`
+        Where the :term:`executor` executes an :term:`Ewoks task`, selected by the
+        ``concurrency`` class argument of a :term:`widget`
         (:class:`~ewoksorange.gui.concurrency.executor.Concurrency`): ``"sync"`` in the
         :term:`GUI thread`, ``"thread"`` (the default) in a thread pool or ``"process"`` in
         a process pool.
 
     Worker
         A thread of the thread pool or a process of the process pool that executes
-        :term:`tasks <task>`, one at a time.
+        :term:`Ewoks tasks <Ewoks task>`, one at a time.
 
     Task future
         The :class:`~ewoksorange.gui.concurrency.future.TaskFuture` returned by
@@ -73,24 +74,24 @@ Glossary
         signals emitted in another thread.
 
     Cancel
-        Prevent a queued :term:`task` from starting
+        Prevent a queued :term:`Ewoks task` from starting
         (:meth:`TaskFuture.cancel() <ewoksorange.gui.concurrency.future.TaskFuture.cancel>`).
         It has no effect on a running task.
 
     Stop request
-        Ask a :term:`task` to stop
+        Ask an :term:`Ewoks task` to stop
         (:meth:`TaskFuture.request_stop() <ewoksorange.gui.concurrency.future.TaskFuture.request_stop>`).
         It is cooperative: a running task decides whether and how to stop, by checking
         ``Task.stop_requested`` or implementing ``Task._on_stop_requested``.
 
     Abort
-        Interrupt a :term:`task` running in a :term:`worker` process like Ctrl-C
+        Interrupt an :term:`Ewoks task` running in a :term:`worker` process like Ctrl-C
         (:meth:`TaskFuture.abort() <ewoksorange.gui.concurrency.future.TaskFuture.abort>`),
         also when it ignores :term:`stop requests <stop request>`. The task can clean up and
         the :term:`worker` survives.
 
     Kill
-        Terminate the :term:`worker` process running a :term:`task`
+        Terminate the :term:`worker` process running an :term:`Ewoks task`
         (:meth:`TaskFuture.kill() <ewoksorange.gui.concurrency.future.TaskFuture.kill>`). It
         also works when the task does not return to the Python interpreter, but the task
         cannot clean up. The pool replaces the :term:`worker`.
