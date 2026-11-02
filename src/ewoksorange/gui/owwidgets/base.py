@@ -2,7 +2,6 @@
 Base class for Ewoks-Orange widgets.
 """
 
-import functools
 import logging
 import multiprocessing
 import multiprocessing.context
@@ -389,7 +388,6 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             names -= set(self._ewoks_inputs_to_hide_from_orange)
         return names
 
-    @functools.lru_cache(maxsize=1)
     def _get_pydantic_model_default_values(self) -> dict:
         """
         Return default values defined in the task pydantic input model.
