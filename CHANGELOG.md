@@ -7,22 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0rc8] - 2026-11-04
+
 ### Added
 
-- Two new "Import Ewoks workflow..." and "Export Ewoks workflow..." menus in the orange main canvas.
-- New property `auto_execute` in `ewoksorange.gui.owwidgets.OWEwoksBaseWidget`. Allow to propagate outputs downstream without triggering execution. 
-- Support OASYS2 (`pip install ewoksorange[oasys2]`) next to the standard
-  `orange-canvas-core` + `orange-widget-base` and the optional Orange3.
+- `EwoksExecutor`: execute ewoks tasks synchronously, in a thread or in a process, with Qt lifecycle signals.
+- Orange widgets can execute their Ewoks task in a process pool.
 - `TaskFuture.output_values`, `TaskFuture.succeeded` and `TaskFuture.task_exception`.
-- canvas: Add a 'Trigger' action on link in order to trigger a specific link.
-- `TaskFuture.abort` and `TaskFuture.kill` to interrupt or kill a task running in a subprocess.
+- `TaskFuture.request_stop` and `TaskFuture.stop_requested` to ask a task to stop (cooperative, all backends).
+- `TaskFuture.abort` and `TaskFuture.aborted` to interrupt a subprocess task like Ctrl-C (forced, with cleanup).
+- `TaskFuture.kill` and `TaskFuture.killed` to terminate the subprocess running a task.
+- `TaskStoppedError`, `TaskAbortedError` and `TaskKilledError` raised by `TaskFuture.result`.
+- `OWEwoksBaseWidget` executes the Ewoks task itself and drives the Orange progress bar.
+- `OWEwoksWidgetNoThread`, `OWEwoksWidgetOneThread`, `OWEwoksWidgetOneThreadPerRun` and `OWEwoksWidgetWithTaskStack` only set class arguments.
+- `OWEwoksBaseWidget.auto_execute`: allow propagating outputs downstream without triggering execution.
+- `ParameterForm`: add an auto-completer for file / directory selection.
+- canvas: two new "Import Ewoks workflow..." and "Export Ewoks workflow..." menus in the main window.
+- canvas: add a 'Trigger' action on a link in order to trigger that specific link.
+- canvas: set the desktop file name of `ewoks-canvas`.
+- `execute_graph(..., no_gui=True)`: execute with the Orange workflow engine but without a GUI.
+- OASYS2 support (`pip install ewoksorange[oasys2]`), next to the standard Orange packages.
+- `ewoksorange_pytest_plugin`: Qt/Orange related fixtures.
 
 ### Changed
 
-- `ewoksorange.orange_version.ORANGE_VERSION` enum member `oasys_fork` is
-  renamed to `latest_oasys`.
-- `OWEwoksBaseWidget.task_output_changed` and
-  `OWEwoksBaseWidget.task_output_changed_callbacks` are deprecated.
+- `OWEwoksBaseWidget` is no longer abstract.
+- `OWEwoksBaseWidget.execute_ewoks_task` returns a `TaskFuture`, or `None` when the request was dropped.
+- `OWEwoksWidgetNoThread` now drives the Orange progress bar like the others.
+- `ewoksorange.orange_version.ORANGE_VERSION` enum member `oasys_fork` is renamed to `latest_oasys`.
+- Requires `ewokscore>=5.1.0rc5`, `pebble>=5.1`, `orange-canvas-core>=0.1.35` and `orange-widget-base>=4.22.0`.
+- The `orange` extra requires `Orange3>=3.36.0`.
+
+### Deprecated
+
+- `ewoksorange.gui.concurrency.base.TaskExecutor`
+- `ewoksorange.gui.concurrency.threaded.ThreadedTaskExecutor`
+- `ewoksorange.gui.concurrency.queued.TaskExecutorQueue`
+- `OWEwoksBaseWidget.task_succeeded`, `.task_done` and `.task_exception`: use the returned `TaskFuture` instead.
+- `OWEwoksBaseWidget.task_output_changed` and `OWEwoksBaseWidget.task_output_changed_callbacks`.
 
 ### Removed
 
@@ -30,54 +52,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Random crash on Windows at the end of a test session that uses the `ewoksorange_qtapp` fixture.
-
-## [6.0.0rc7] - 2026-08-18
-
-### Fixed
-
-- Fix `ParameterForm` file system selection in QT6 (Replace `QDialog.exec_` with `QDialog.exec`).
-- `ParameterForm.set_parameter_checked` now blocks signals while setting the
-  checkbox state, avoiding redundant reentrant widget refreshes (and related
-  test timeouts) triggered by programmatic updates.
+- `DeprecationWarning` from `Task.cancelled` with `ewokscore>=5.1.0rc5` (widget tests timed out with `-W error`).
+- A queued task that is cancelled or requested to stop never starts.
+- Orange link validity now matches the pydantic model of the task inputs.
+- `ParameterForm` file system selection in Qt6 (`QDialog.exec` instead of `QDialog.exec_`).
+- `ParameterForm.set_parameter_checked` blocks signals, avoiding reentrant refreshes and related test timeouts.
+- Logs when `ewoksdemo` is launched without its examples.
 - Store all graph attributes in OWS format.
-- `OrangeCanvasHandler.wait_widgets`: check the running state instead of `widget_is_executed`
-  since it might be executed again.
-- `.ows` round-trip (`ows_to_ewoks`/`ewoks_to_ows`) now preserves a native
-  Orange widget's settings and real distribution name.
+- `ows_to_ewoks`/`ewoks_to_ows` round-trip preserves a native Orange widget's settings and distribution name.
+- `ewoks_to_ows`/`ows_to_ewoks` preserve the original Ewoks node id's when possible.
 - Workflow-end ewoks event now carries `error_message` on Orange engine failures.
 - `OrangeCanvasHandler` can be created/destroyed repeatedly in the same process.
-- `ewoks_to_ows`/`ows_to_ewoks` preserve the original Ewoks node id's when possible.
-
-### Added
-
-- `ParameterForm`: add an auto-completer for file / directory selection.
-- `ewoksorange.gui.concurrency.executor.EwoksExecutor` for all ewoks task execution strategies
-  synchronous, multithreading and multiprocessing with Qt signals for the execution lifecycle.
-- `OWEwoksBaseWidget` executes the Ewoks task itself, configured by class arguments,
-  and drives the Orange progress bar.
-- `OWEwoksWidgetNoThread`, `OWEwoksWidgetOneThread`, `OWEwoksWidgetOneThreadPerRun`
-  and `OWEwoksWidgetWithTaskStack` set the class arguments and nothing else.
-- Orange widgets can execute their Ewoks task in a process pool.
-- `execute_graph(..., no_gui=True, orange_canvas_handler=None)`: execute
-  with the Orange workflow engine but without a GUI.
-- `ewoksorange_pytest_plugin`: Qt/Orange related fixtures.
-
-### Changed
-
-- ̀`OWEwoksBaseWidget`: `execute_ewoks_task` now returns `TaskFuture` or `None` when the execution
-  request was dropped.
-- `OWEwoksBaseWidget` is no longer abstract.
-- `OWEwoksWidgetNoThread` now drives the Orange progress bar like the others.
-
-### Deprecated
-
-- `ewoksorange.gui.concurrency.base.TaskExecutor`
-- `ewoksorange.gui.concurrency.threaded.ThreadedTaskExecutor`
-- `ewoksorange.gui.concurrency.queued.TaskExecutorQueue`
-- `OWEwoksBaseWidget.task_succeeded`, `.task_done` and `.task_exception`. Use the
-  `TaskFuture` returned by `execute_ewoks_task`/`execute_ewoks_task_without_propagation`
-  instead.
+- `OrangeCanvasHandler.wait_widgets` checks the running state instead of `widget_is_executed`.
+- Random crash on Windows at the end of a test session that uses the `ewoksorange_qtapp` fixture.
 
 ## [5.0.1] - 2026-04-17
 
@@ -416,8 +403,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - On-the-fly Orange add-on registration.
 - Add-on setup tools.
 
-[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc6...HEAD
-[6.0.0rc7]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc6
+[unreleased]: https://github.com/ewoks-kit/ewoksorange/compare/v6.0.0rc8...HEAD
+[6.0.0rc8]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.1...v6.0.0rc8
 [5.0.1]: https://github.com/ewoks-kit/ewoksorange/compare/v5.0.0...v5.0.1
 [5.0.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.1.0...v5.0.0
 [4.1.0]: https://github.com/ewoks-kit/ewoksorange/compare/v4.0.0...v4.1.0
