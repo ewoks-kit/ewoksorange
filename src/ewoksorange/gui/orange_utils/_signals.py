@@ -402,7 +402,7 @@ def _oldstyle_instantiate_signal(
         data_dict = {name: getattr(data, name) for name in names if hasattr(data, name)}
         signal = signal_class(**data_dict)
         if hasattr(data, "handler"):
-            signal.handler = getattr(data, "handler")
+            signal.handler = data.handler
         signal.ewoksname = signal.name
     elif isinstance(data, _OutputSignal):
         names = "name", "type", "id", "doc", "replaces"
