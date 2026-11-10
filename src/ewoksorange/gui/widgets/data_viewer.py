@@ -513,17 +513,19 @@ class DataViewer(qt.QWidget):
                 name = "the root"
 
             action = qt.QAction("Show %s" % name, event.source())
-            action.triggered.connect(lambda: self.displayData(h5))
+            action.triggered.connect(lambda h5=h5: self.displayData(h5))
             menu.addAction(action)
 
             if silx.io.is_file(h5):
                 action = qt.QAction("Close %s" % obj.local_filename, event.source())
                 action.triggered.connect(
-                    lambda: self.__treeview.findHdf5TreeModel().removeH5pyObject(h5)
+                    lambda h5=h5: self.__treeview.findHdf5TreeModel().removeH5pyObject(
+                        h5
+                    )
                 )
                 menu.addAction(action)
                 action = qt.QAction(
                     "Synchronize %s" % obj.local_filename, event.source()
                 )
-                action.triggered.connect(lambda: self.__synchronizeH5pyObject(h5))
+                action.triggered.connect(lambda h5=h5: self.__synchronizeH5pyObject(h5))
                 menu.addAction(action)
