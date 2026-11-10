@@ -1,3 +1,5 @@
+import gc
+import weakref
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -32,9 +34,27 @@ class EwoksOrangeTaskA(OWEwoksWidgetNoThread, ewokstaskclass=TaskA):
     name = "ewoks widget A"
 
 
+class MutableInputModel(BaseInputModel):
+    roi: List[int] = Field(default=[0, 10])
+    tags: List[str] = Field(default_factory=lambda: ["tag"])
+
+
+class TaskWithMutableDefaults(
+    Task, input_model=MutableInputModel, output_names=["tags"]
+):
+    def run(self):
+        self.outputs.tags = self.inputs.tags
+
+
+class EwoksOrangeMutableDefaults(
+    OWEwoksWidgetNoThread, ewokstaskclass=TaskWithMutableDefaults
+):
+    name = "ewoks widget with mutable defaults"
+
+
 def test_default_values(ewoksorange_qtapp):
     """
-    Test that task with an ewoks InputModel are taking into account field default values and default factory.
+    Test that task with an ewoks InputModel are taking into account field default values.
 
     Warning: Orange consider "None" as the value to 'invalidate' link. As a consequence those are filtered if defined as a default value.
     """
@@ -58,3 +78,53 @@ def test_default_values(ewoksorange_qtapp):
         "b": ("b",),
     }
     assert widget_a.get_default_input_value("c", "unset") == "unset"
+
+
+def test_removed_default_value(ewoksorange_qtapp):
+    """A default input removed from the widget falls back to the model default."""
+    widget = EwoksOrangeTaskA()
+
+    widget.set_default_input("a", 99)
+    assert widget.get_default_input_value("a") == 99
+
+    widget.set_default_input("a", None)
+    assert widget.get_default_input_value("a") == 12
+    assert widget.get_default_input_values() == {"a": 12, "b": ("b",)}
+
+
+def test_default_values_do_not_keep_widget_alive(ewoksorange_qtapp):
+    """Getting the model default values does not keep a reference to the widget."""
+    widget = EwoksOrangeTaskA()
+    assert widget.get_default_input_value("a") == 12
+
+    widget_ref = weakref.ref(widget)
+    del widget
+    gc.collect()
+    assert widget_ref() is None
+
+
+def test_mutable_default_values(ewoksorange_qtapp):
+    """Modifying a default value of a widget does not modify the model default.
+
+    Fields with a default factory have no widget default..
+    """
+    widget = EwoksOrangeMutableDefaults()
+    assert widget.get_default_input_values() == {"roi": [0, 10]}
+
+    widget.get_default_input_value("roi").append(99)
+    widget.get_default_input_values()["roi"].append(99)
+
+    assert widget.get_default_input_value("roi") == [0, 10]
+    assert EwoksOrangeMutableDefaults().get_default_input_value("roi") == [0, 10]
+    assert MutableInputModel().roi == [0, 10]
+
+
+def test_default_factory_values(ewoksorange_qtapp):
+    """Fields with a default factory have no widget default but the task gets the factory value."""
+    widget = EwoksOrangeMutableDefaults()
+    assert widget.get_default_input_value("tags", "unset") == "unset"
+    assert "tags" not in widget.get_default_input_values()
+    assert "tags" not in widget.get_task_input_values()
+
+    task_future = widget.execute_ewoks_task()
+    assert task_future.output_values() == {"tags": ["tag"]}

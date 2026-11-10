@@ -10,15 +10,14 @@ from pydantic_core import PydanticUndefined
 
 def get_model_default_values(model: Type[BaseModel]) -> Dict[str, Any]:
     """
-    :return: Dict of input name -> value or missing marker.
+    :return: Dict of input name -> default value, for the fields with a default value.
     """
-    field_with_values = filter(
-        lambda pair: pair[1] is not PydanticUndefined,
-        _get_default_field_factory(model=model),
-    )
-    return dict(field_with_values)
+    return dict(_iter_default_values(model))
 
 
-def _get_default_field_factory(model) -> Iterator[Tuple[str, Any]]:
+def _iter_default_values(model: Type[BaseModel]) -> Iterator[Tuple[str, Any]]:
     for field_name, field in model.model_fields.items():
-        yield field_name, field.default
+        if field.default is PydanticUndefined:
+            # Required field, or field with a default factory.
+            continue
+        yield field_name, field.get_default()
