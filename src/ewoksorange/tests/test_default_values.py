@@ -34,7 +34,7 @@ class EwoksOrangeTaskA(OWEwoksWidgetNoThread, ewokstaskclass=TaskA):
 
 def test_default_values(ewoksorange_qtapp):
     """
-    Test that task with an ewoks InputModel are taking into account field default values and default factory.
+    Test that task with an ewoks InputModel are taking into account field default values.
 
     Warning: Orange consider "None" as the value to 'invalidate' link. As a consequence those are filtered if defined as a default value.
     """
