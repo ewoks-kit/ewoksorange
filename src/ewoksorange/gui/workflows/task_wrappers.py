@@ -5,6 +5,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 
+from AnyQt.QtCore import QEvent
 from ewokscore import Task
 from ewokscore.variable import value_from_transfer
 from ewoksutils.import_utils import import_qualname
@@ -21,6 +22,7 @@ from ..owwidgets.types import is_ewoks_widget_class
 from ..owwidgets.types import is_native_widget_class
 from ..qt_utils.app import QtEvent
 from ..qt_utils.app import ensure_qtapp
+from ..qt_utils.app import get_qtapp
 from ..qt_utils.app import process_qtapp_events
 from ..utils import invalid_data
 
@@ -197,7 +199,7 @@ def execute_ewoks_owwidget(
             raise exception
     finally:
         widget.task_executor.finished.disconnect(_output_cb)
-        widget.close()
+        _delete_owwidget(widget)
     return result
 
 
@@ -262,8 +264,25 @@ def execute_native_owwidget(
             )
             result[ewoks_name] = value
     finally:
-        widget.close()
+        _delete_owwidget(widget)
     return result
+
+
+def _delete_owwidget(widget: OWBaseWidget) -> None:
+    """Delete the widget like Orange does when its node is removed from the scheme.
+
+    Delete it now, from the calling thread, instead of leaving it to the garbage
+    collector, which can run in any thread.
+    """
+    try:
+        widget.onDeleteWidget()
+        widget.close()
+    finally:
+        widget.deleteLater()
+        # `processEvents` does not send deferred deletions posted at the current
+        # event-loop level (e.g. when no event loop is running), so send this one
+        # explicitly.
+        get_qtapp().sendPostedEvents(widget, QEvent.DeferredDelete)
 
 
 def _parse_input_values(
