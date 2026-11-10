@@ -152,22 +152,22 @@ def execute_ewoks_owwidget(
     exception = None
     widget = instantiate_owwidget(widget_class, **widget_init_params)
 
+    # Receive and store results
+    outputsReceived = QtEvent()
+
+    def _output_cb(task_future: TaskFuture) -> None:
+        nonlocal exception
+
+        try:
+            exception = task_future.task_exception() or widget.post_task_exception
+            if exception is None:
+                result.update(task_future.output_values())
+        finally:
+            outputsReceived.set()
+
+    widget.task_executor.finished.connect(_output_cb)
+
     try:
-        # Receive and store results
-        outputsReceived = QtEvent()
-
-        def _output_cb(task_future: TaskFuture) -> None:
-            nonlocal exception
-
-            try:
-                exception = task_future.task_exception() or widget.post_task_exception
-                if exception is None:
-                    result.update(task_future.output_values())
-            finally:
-                outputsReceived.set()
-
-        widget.task_executor.finished.connect(_output_cb)
-
         # Call the input setters
         if inputs:
             signals = _signals.get_signal_list(widget, "inputs")
@@ -196,6 +196,7 @@ def execute_ewoks_owwidget(
         if exception is not None:
             raise exception
     finally:
+        widget.task_executor.finished.disconnect(_output_cb)
         widget.close()
     return result
 
