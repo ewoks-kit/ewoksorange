@@ -62,7 +62,7 @@ def test_owwidget_parallel(ewoksorange_qtapp):
 
     # all jobs start when the last run method is called
     futures = []
-    for value, stop in zip(values, stops):
+    for value in values:
         widget.set_dynamic_input("value", value)
         widget.set_dynamic_input("sleep", sleep_seconds)
         widget.set_dynamic_input("synchronize_run", synchronize_run)
