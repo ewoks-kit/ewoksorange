@@ -46,6 +46,7 @@ class OWEwoksWidgetWithTaskStack(
         warnings.warn(
             "'task_executor_queue' is deprecated since 6.0. Replaced by 'task_executor'.",
             DeprecationWarning,
+            stacklevel=2,
         )
 
         return self.task_executor

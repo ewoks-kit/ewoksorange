@@ -134,6 +134,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
                 f"{cls.__name__} overrides 'task_output_changed' which is deprecated "
                 "since 6.0. Use the `task_executor` ``finished`` signal instead.",
                 DeprecationWarning,
+                stacklevel=2,
             )
 
     def __init__(self, *args, **kwargs):
@@ -494,6 +495,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         warnings.warn(
             ".ows file node property 'default_inputs' has been converted to '_ewoks_default_inputs'. Please save the workflow to keep this change.",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.update_default_inputs(**adict)
 
@@ -609,6 +611,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         warnings.warn(
             "`_receive_dynamic_input` is deprecated in favor of `set_dynamic_input`.",
             DeprecationWarning,
+            stacklevel=2,
         )
         self.set_dynamic_input(name, value)
 
@@ -648,6 +651,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "`execute_ewoks_task` (`future.result()`) or the `task_executor` ``succeeded`` "
             "signal instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         task_future = self._last_task_future
         if task_future is None or not task_future.succeeded():
@@ -677,6 +681,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "returned by `execute_ewoks_task` (`future.result()`) or the `task_executor` "
             "``succeeded`` signal instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         task_future = self._last_task_future
         if task_future is None or not task_future.succeeded():
@@ -707,6 +712,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "returned by `execute_ewoks_task` (`future.result()`) or the `task_executor` "
             "``succeeded`` signal instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         task_future = self._last_task_future
         if task_future is None or not task_future.succeeded():
@@ -740,6 +746,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             warnings.warn(
                 "'succeeded' should be always provided from version 7.0.",
                 DeprecationWarning,
+                stacklevel=2,
             )
             succeeded = (
                 self._last_task_future is not None
@@ -812,6 +819,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "'task_output_changed_callbacks' is deprecated since 6.0. Use the "
             "`task_executor` ``finished`` signal instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.__task_output_changed_callbacks
 
@@ -876,6 +884,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         warnings.warn(
             "'task_succeeded' is deprecated since 6.0. Use the `task_executor` ``succeeded`` signal instead (and propagated Future).",
             DeprecationWarning,
+            stacklevel=2,
         )
         if self._last_task_future is None:
             return None
@@ -894,6 +903,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         warnings.warn(
             "'task_done' is deprecated since 6.0. Use the `task_executor` ``finished`` signal instead (and propagated Future).",
             DeprecationWarning,
+            stacklevel=2,
         )
         if self._last_task_future is None:
             return None
@@ -912,6 +922,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
         warnings.warn(
             "'task_exception' is deprecated since 6.0. Use the `task_executor` ``failed`` signal instead (and propagated Future).",
             DeprecationWarning,
+            stacklevel=2,
         )
         if self._last_task_future is None:
             return None
@@ -935,6 +946,7 @@ class OWEwoksBaseWidget(OWWidget, metaclass=OWEwoksWidgetMetaClass, **ow_build_o
             "'cancel_running_task' is deprecated since 6.0. Please stop the task by calling the "
             " `request_stop` method of the future provided during task submission.",
             DeprecationWarning,
+            stacklevel=2,
         )
         if self.__current_task_future is not None:
             self.__current_task_future.request_stop()
