@@ -158,3 +158,4 @@ class TaskController(ABC):
         No-op by default, since most controllers let the task report its
         events directly.
         """
+        return None
