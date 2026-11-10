@@ -39,9 +39,11 @@ class MutableInputModel(BaseInputModel):
     tags: List[str] = Field(default_factory=lambda: ["tag"])
 
 
-class TaskWithMutableDefaults(Task, input_model=MutableInputModel):
+class TaskWithMutableDefaults(
+    Task, input_model=MutableInputModel, output_names=["tags"]
+):
     def run(self):
-        pass
+        self.outputs.tags = self.inputs.tags
 
 
 class EwoksOrangeMutableDefaults(
@@ -104,8 +106,7 @@ def test_default_values_do_not_keep_widget_alive(ewoksorange_qtapp):
 def test_mutable_default_values(ewoksorange_qtapp):
     """Modifying a default value of a widget does not modify the model default.
 
-    Fields with a default factory have no widget default: pydantic calls the
-    factory when it validates the task inputs.
+    Fields with a default factory have no widget default..
     """
     widget = EwoksOrangeMutableDefaults()
     assert widget.get_default_input_values() == {"roi": [0, 10]}
@@ -116,3 +117,14 @@ def test_mutable_default_values(ewoksorange_qtapp):
     assert widget.get_default_input_value("roi") == [0, 10]
     assert EwoksOrangeMutableDefaults().get_default_input_value("roi") == [0, 10]
     assert MutableInputModel().roi == [0, 10]
+
+
+def test_default_factory_values(ewoksorange_qtapp):
+    """Fields with a default factory have no widget default but the task gets the factory value."""
+    widget = EwoksOrangeMutableDefaults()
+    assert widget.get_default_input_value("tags", "unset") == "unset"
+    assert "tags" not in widget.get_default_input_values()
+    assert "tags" not in widget.get_task_input_values()
+
+    task_future = widget.execute_ewoks_task()
+    assert task_future.output_values() == {"tags": ["tag"]}
