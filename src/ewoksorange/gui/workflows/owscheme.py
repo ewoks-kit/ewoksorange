@@ -586,10 +586,6 @@ _EWOKS_GRAPH_ATTRS_TAG = "ewoks_graph_attrs"
 
 @contextmanager
 def _preserve_stream_position(source: Union[str, os.PathLike, IO]) -> Iterator[None]:
-    """Restore the position of a seekable stream after parsing it.
-
-    File paths and non-seekable streams are left untouched.
-    """
     if isinstance(source, (str, os.PathLike)) or not source.seekable():
         yield
         return
@@ -601,10 +597,7 @@ def _preserve_stream_position(source: Union[str, os.PathLike, IO]) -> Iterator[N
 
 
 def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
-    """Extract ewoks graph attributes from the dedicated XML element, if present.
-
-    The position of a seekable stream is preserved.
-    """
+    """Extract ewoks graph attributes from the dedicated XML element, if present."""
     try:
         with _preserve_stream_position(source):
             root = xml_parse(source).getroot()
@@ -617,10 +610,7 @@ def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
 
 
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:
-    """Read an Orange Workflow Scheme from a file or a stream.
-
-    The position of a seekable stream is preserved.
-    """
+    """Read an Orange Workflow Scheme from a file or a stream."""
     with _preserve_stream_position(source):
         return _original_parse_ows_stream(source)
 
