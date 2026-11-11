@@ -319,19 +319,13 @@ def _pydantic_model_field_type(
     ]
     if has_UnionType:
         valid_union_types.append(UnionType)
-    if origin is None:
-        # if unsupported ()
-        return field_info.annotation
-    elif origin in (list, tuple, dict):
-        return origin
-    elif origin in valid_union_types:
+    if origin in valid_union_types:
         # Handle Union types (including Optional)
         args = get_args(field_info.annotation)
         non_none_args = [arg for arg in args if arg is not type(None)]
         return tuple([_from_annotation_to_builtin_type(arg) for arg in non_none_args])
     else:
-        # other cases
-        return object
+        return _from_annotation_to_builtin_type(field_info.annotation)
 
 
 def _from_annotation_to_builtin_type(value):

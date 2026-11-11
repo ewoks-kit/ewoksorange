@@ -1,10 +1,13 @@
+from collections import abc
 from enum import Enum
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Literal
+from typing import Mapping
 from typing import Optional
 from typing import Sequence
+from typing import Set
 from typing import Tuple
 from typing import Union
 
@@ -46,6 +49,9 @@ class OutputModelA(BaseOutputModel):
     f: Dict[str, int]
     g: Optional[Literal[1, "a"]]
     h: Optional[Any]
+    i: Set[int]
+    j: Optional[Set[int]]
+    k: Mapping[str, int]
 
 
 class InputModelB(BaseInputModel):
@@ -134,7 +140,7 @@ def test_link_value_data_type(tmp_path, ewoksorange_qtapp):
         qualified_name(object)
     )
 
-    assert len(descWidgetA.outputs) == 8
+    assert len(descWidgetA.outputs) == 11
     assert get_output_data_type(descWidgetA, "a") == expected_output_type(
         qualified_name(float)
     )
@@ -158,6 +164,15 @@ def test_link_value_data_type(tmp_path, ewoksorange_qtapp):
     )
     assert get_output_data_type(descWidgetA, "h") == expected_output_type(
         qualified_name(object)
+    )
+    assert get_output_data_type(descWidgetA, "i") == expected_output_type(
+        qualified_name(set)
+    )
+    assert get_output_data_type(descWidgetA, "j") == expected_output_type(
+        qualified_name(set)
+    )
+    assert get_output_data_type(descWidgetA, "k") == expected_output_type(
+        qualified_name(abc.Mapping)
     )
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
