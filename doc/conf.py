@@ -25,7 +25,6 @@ extensions = [
     "sphinx_copybutton",
     "sphinxcontrib.mermaid",
 ]
-
 templates_path = ["_templates"]
 source_suffix = [".rst", ".md"]
 exclude_patterns = ["build", "**.ipynb_checkpoints"]

@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- `ewoksorange_pytest_plugin`: the Qt application teardown no longer fails with `ReferenceError` when a dead `weakref.proxy` is alive (e.g. created by llvmlite/numba).
-
 ## [6.0.0rc8] - 2026-11-04
 
 ### Added
