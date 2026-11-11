@@ -3,6 +3,7 @@ import logging
 import os
 import sys
 from collections import namedtuple
+from contextlib import contextmanager
 from pathlib import Path
 from typing import IO
 from typing import Callable
@@ -203,9 +204,8 @@ def ows_to_ewoks(
     root_module: Optional[str] = None,
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
-    # Before `read_ows` which reads a stream to its end (the stream position is preserved)
-    ewoksinfo = _read_ewoks_graph_attrs(source)
     ows = read_ows(source)
+    ewoksinfo = _read_ewoks_graph_attrs(source)
 
     description = ows.description
 
@@ -584,27 +584,45 @@ class OwsSchemeWrapper:
 _EWOKS_GRAPH_ATTRS_TAG = "ewoks_graph_attrs"
 
 
-def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
-    """Extract ewoks graph attributes from the dedicated XML element, if present."""
-    pos = None
+@contextmanager
+def _preserve_stream_position(source: Union[str, os.PathLike, IO]) -> Iterator[None]:
+    """Restore the position of a seekable stream after parsing it.
+
+    File paths and non-seekable streams are left untouched.
+    """
+    if isinstance(source, (str, os.PathLike)) or not source.seekable():
+        yield
+        return
+    pos = source.tell()
     try:
-        if not isinstance(source, str) and hasattr(source, "tell"):
-            pos = source.tell()
-        root = xml_parse(source).getroot()
+        yield
+    finally:
+        source.seek(pos)
+
+
+def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
+    """Extract ewoks graph attributes from the dedicated XML element, if present.
+
+    The position of a seekable stream is preserved.
+    """
+    try:
+        with _preserve_stream_position(source):
+            root = xml_parse(source).getroot()
         elem = root.find(_EWOKS_GRAPH_ATTRS_TAG)
         if elem is not None and elem.text:
             return json.loads(elem.text)
     except Exception:
         logger.debug("Failed to read ewoks graph attributes", exc_info=True)
-    finally:
-        if pos is not None and not isinstance(source, str):
-            source.seek(pos)
     return None
 
 
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:
-    """Read an Orange Workflow Scheme from a file or a stream."""
-    return _original_parse_ows_stream(source)
+    """Read an Orange Workflow Scheme from a file or a stream.
+
+    The position of a seekable stream is preserved.
+    """
+    with _preserve_stream_position(source):
+        return _original_parse_ows_stream(source)
 
 
 def write_ows(scheme: OwsSchemeWrapper, destination: Union[str, IO]):

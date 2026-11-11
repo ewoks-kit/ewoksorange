@@ -17,6 +17,7 @@ from ..gui.workflows.owscheme import _read_ewoks_graph_attrs
 from ..gui.workflows.owscheme import ewoks_to_ows
 from ..gui.workflows.owscheme import graph_is_supported
 from ..gui.workflows.owscheme import ows_to_ewoks
+from ..gui.workflows.owscheme import read_ows
 
 _FakeEntryPoint = namedtuple("_FakeEntryPoint", ["target", "dist"])
 
@@ -199,6 +200,7 @@ def test_ows_to_ewoks_keeps_graph_attrs(tmp_path, from_stream):
     if from_stream:
         with open(filename, "rb") as stream:
             ewoksgraph = ows_to_ewoks(stream)
+            assert stream.tell() == 0  # stream position must be preserved
     else:
         ewoksgraph = ows_to_ewoks(filename)
 
@@ -220,3 +222,17 @@ def test_canvas_save_and_export_keep_graph_attrs(orange_canvas_handler, tmp_path
     scheme.save_to(buffer, pretty=True, pickle_fallback=True)
     buffer.seek(0)
     _assert_extra_graph_attrs(ows_to_ewoks(buffer).graph.graph)
+
+
+def test_read_ows_and_graph_attrs_do_not_consume_stream(tmp_path):
+    filename = str(tmp_path / "workflow.ows")
+    ewoks_to_ows(_GRAPH_WITH_ATTRS, filename)
+
+    with open(filename, "rb") as stream:
+        ows = read_ows(stream)
+        assert stream.tell() == 0
+        # Call order does not matter: the stream is still fully readable
+        _assert_extra_graph_attrs(_read_ewoks_graph_attrs(stream))
+        assert stream.tell() == 0
+        assert read_ows(stream).title == ows.title
+        assert stream.tell() == 0
