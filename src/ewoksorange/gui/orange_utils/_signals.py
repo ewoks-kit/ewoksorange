@@ -28,6 +28,7 @@ Implementation:
 
 import sys
 from collections.abc import Sequence
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -337,6 +338,9 @@ def _from_annotation_to_builtin_type(value):
     """Convert annotation to builtin types. Those will be orange Input/Output final type."""
     if get_origin(value) is Sequence:
         # handle Sequence[int] for example
+        return object
+    if value is Any or get_origin(value) is Literal:
+        # not classes
         return object
     if get_origin(value) is not None:
         # handle case like typing.Dict[str, int] for example.

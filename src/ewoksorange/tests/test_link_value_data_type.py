@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Literal
@@ -43,6 +44,8 @@ class OutputModelA(BaseOutputModel):
     d: Optional[int]
     e: Optional[Dict[str, int]]
     f: Dict[str, int]
+    g: Optional[Literal[1, "a"]]
+    h: Optional[Any]
 
 
 class InputModelB(BaseInputModel):
@@ -131,7 +134,7 @@ def test_link_value_data_type(tmp_path, ewoksorange_qtapp):
         qualified_name(object)
     )
 
-    assert len(descWidgetA.outputs) == 6
+    assert len(descWidgetA.outputs) == 8
     assert get_output_data_type(descWidgetA, "a") == expected_output_type(
         qualified_name(float)
     )
@@ -149,6 +152,12 @@ def test_link_value_data_type(tmp_path, ewoksorange_qtapp):
     )
     assert get_output_data_type(descWidgetA, "f") == expected_output_type(
         qualified_name(dict)
+    )
+    assert get_output_data_type(descWidgetA, "g") == expected_output_type(
+        qualified_name(object)
+    )
+    assert get_output_data_type(descWidgetA, "h") == expected_output_type(
+        qualified_name(object)
     )
 
     descWidgetB = widget_registry.registry.widget(qualname(EwoksOrangeTaskB))
