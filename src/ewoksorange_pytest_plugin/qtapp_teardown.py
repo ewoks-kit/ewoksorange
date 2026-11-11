@@ -24,7 +24,9 @@ def _global_cleanup_pytest() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         for obj in gc.get_objects():
-            if isinstance(obj, logging.LogRecord):
+            # No attribute access on `obj` (see `_delete_python_owned_qobjects`):
+            # `isinstance` raises `ReferenceError` on a dead `weakref.proxy`.
+            if issubclass(type(obj), logging.LogRecord):
                 obj.exc_info = None  # traceback keeps frames which keep locals
 
 
