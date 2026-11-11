@@ -42,6 +42,7 @@ class OutputModelA(BaseOutputModel):
     c: Union[str, None]
     d: Optional[int]
     e: Optional[Dict[str, int]]
+    f: Dict[str, int]
 
 
 class InputModelB(BaseInputModel):
@@ -130,7 +131,7 @@ def test_link_value_data_type(tmp_path, ewoksorange_qtapp):
         qualified_name(object)
     )
 
-    assert len(descWidgetA.outputs) == 5
+    assert len(descWidgetA.outputs) == 6
     assert get_output_data_type(descWidgetA, "a") == expected_output_type(
         qualified_name(float)
     )
@@ -144,6 +145,9 @@ def test_link_value_data_type(tmp_path, ewoksorange_qtapp):
         qualified_name(int)
     )
     assert get_output_data_type(descWidgetA, "e") == expected_output_type(
+        qualified_name(dict)
+    )
+    assert get_output_data_type(descWidgetA, "f") == expected_output_type(
         qualified_name(dict)
     )
 

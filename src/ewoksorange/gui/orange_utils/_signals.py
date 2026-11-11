@@ -321,7 +321,7 @@ def _pydantic_model_field_type(
     if origin is None:
         # if unsupported ()
         return field_info.annotation
-    elif origin in (list, tuple):
+    elif origin in (list, tuple, dict):
         return origin
     elif origin in valid_union_types:
         # Handle Union types (including Optional)
