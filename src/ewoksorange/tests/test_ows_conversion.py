@@ -1,3 +1,4 @@
+import io
 from collections import namedtuple
 
 try:
@@ -159,3 +160,63 @@ def test_read_ewoks_graph_attrs_restores_stream_position_on_failure(tmp_path):
     with open(filename, "rb") as stream:
         assert _read_ewoks_graph_attrs(stream) is None
         assert stream.tell() == 0
+
+
+_GRAPH_WITH_ATTRS = {
+    "graph": {
+        "id": "graph_with_attrs",
+        "label": "Graph with attributes",
+        "requirements": ["numpy"],
+        "input_schema": {"a": {"type": "integer"}},
+    },
+    "nodes": [
+        {
+            "id": "sum",
+            "task_type": "class",
+            "task_identifier": "ewokscore.tests.examples.tasks.sumtask.SumTask",
+            "default_inputs": [{"name": "a", "value": 1}],
+        }
+    ],
+    "links": [],
+}
+
+_EXTRA_GRAPH_ATTRS = {
+    "requirements": ["numpy"],
+    "input_schema": {"a": {"type": "integer"}},
+}
+
+
+def _assert_extra_graph_attrs(graph_attrs: dict):
+    for key, value in _EXTRA_GRAPH_ATTRS.items():
+        assert graph_attrs.get(key) == value, key
+
+
+@pytest.mark.parametrize("from_stream", [False, True])
+def test_ows_to_ewoks_keeps_graph_attrs(tmp_path, from_stream):
+    filename = str(tmp_path / "workflow.ows")
+    ewoks_to_ows(_GRAPH_WITH_ATTRS, filename)
+
+    if from_stream:
+        with open(filename, "rb") as stream:
+            ewoksgraph = ows_to_ewoks(stream)
+    else:
+        ewoksgraph = ows_to_ewoks(filename)
+
+    _assert_extra_graph_attrs(ewoksgraph.graph.graph)
+
+
+def test_canvas_save_and_export_keep_graph_attrs(orange_canvas_handler, tmp_path):
+    orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
+    scheme = orange_canvas_handler.scheme
+
+    # "File > Save"
+    filename = str(tmp_path / "saved.ows")
+    assert orange_canvas_handler.canvas.save_scheme_to(scheme, filename)
+    _assert_extra_graph_attrs(_read_ewoks_graph_attrs(filename))
+    _assert_extra_graph_attrs(ows_to_ewoks(filename).graph.graph)
+
+    # "File > Export Ewoks workflow..." converts the scheme saved in memory
+    buffer = io.BytesIO()
+    scheme.save_to(buffer, pretty=True, pickle_fallback=True)
+    buffer.seek(0)
+    _assert_extra_graph_attrs(ows_to_ewoks(buffer).graph.graph)

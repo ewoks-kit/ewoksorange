@@ -203,8 +203,9 @@ def ows_to_ewoks(
     root_module: Optional[str] = None,
 ) -> TaskGraph:
     """Load an Orange Workflow Scheme from a file or stream and convert it to a `TaskGraph`."""
-    ows = read_ows(source)
+    # Before `read_ows` which reads a stream to its end (the stream position is preserved)
     ewoksinfo = _read_ewoks_graph_attrs(source)
+    ows = read_ows(source)
 
     description = ows.description
 
