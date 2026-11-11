@@ -1,3 +1,4 @@
+import importlib.metadata
 import json
 import logging
 import os
@@ -607,6 +608,42 @@ def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
     except Exception:
         logger.debug("Failed to read ewoks graph attributes", exc_info=True)
     return None
+
+
+def update_ewoks_graph_attrs(scheme) -> None:
+    """Refresh the ewoks graph attributes of a scheme before it is saved.
+
+    Attributes generated from the current python environment (`requirements`,
+    when `ewoks` is installed) take precedence. The other attributes, and those
+    that cannot be generated, are kept from the workflow that was loaded.
+    """
+    ewoks_attrs = dict(scheme.get_runtime_env(_EWOKS_GRAPH_ATTRS_TAG) or {})
+    ewoks_attrs.update(_generate_ewoks_graph_attrs())
+    if ewoks_attrs:
+        scheme.set_runtime_env(_EWOKS_GRAPH_ATTRS_TAG, ewoks_attrs)
+
+
+def _generate_ewoks_graph_attrs() -> dict:
+    """Ewoks graph attributes of the current python environment, as generated
+    by `ewoks convert`."""
+    try:
+        from ewoks import generate_requirements
+    except ImportError:
+        logger.info("Workflow requirements are not generated: 'ewoks' is not installed")
+        return {}
+    try:
+        requirements = generate_requirements(engine=_engine_distribution())
+    except Exception:
+        logger.warning("Failed to generate the workflow requirements", exc_info=True)
+        return {}
+    return {"requirements": requirements}
+
+
+def _engine_distribution() -> Optional[Tuple[str, str]]:
+    try:
+        return "ewoksorange", importlib.metadata.version("ewoksorange")
+    except importlib.metadata.PackageNotFoundError:
+        return None
 
 
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:
