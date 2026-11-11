@@ -1,4 +1,6 @@
 import io
+import sys
+import types
 from collections import namedtuple
 
 try:
@@ -11,6 +13,7 @@ from ewokscore import load_graph
 from ewokscore.tests.examples.graphs import get_graph
 from ewokscore.tests.examples.graphs import graph_names
 
+from ..gui.canvas.menu import add_ewoks_import_export_actions
 from ..gui.workflows import owscheme
 from ..gui.workflows.owscheme import _native_widget_project_name
 from ..gui.workflows.owscheme import _read_ewoks_graph_attrs
@@ -18,6 +21,7 @@ from ..gui.workflows.owscheme import ewoks_to_ows
 from ..gui.workflows.owscheme import graph_is_supported
 from ..gui.workflows.owscheme import ows_to_ewoks
 from ..gui.workflows.owscheme import read_ows
+from ..gui.workflows.owscheme import update_ewoks_graph_attrs
 
 _FakeEntryPoint = namedtuple("_FakeEntryPoint", ["target", "dist"])
 
@@ -236,3 +240,76 @@ def test_read_ows_and_graph_attrs_do_not_consume_stream(tmp_path):
         assert stream.tell() == 0
         assert read_ows(stream).title == ows.title
         assert stream.tell() == 0
+
+
+_GENERATED_REQUIREMENTS = {"distributions": [{"name": "generated"}]}
+
+
+@pytest.fixture
+def fake_ewoks(monkeypatch):
+    """`ewoks` is not a dependency of `ewoksorange`"""
+    engines = []
+
+    def generate_requirements(engine=None):
+        engines.append(engine)
+        return _GENERATED_REQUIREMENTS
+
+    module = types.ModuleType("ewoks")
+    module.generate_requirements = generate_requirements
+    monkeypatch.setitem(sys.modules, "ewoks", module)
+    return engines
+
+
+@pytest.fixture
+def no_ewoks(monkeypatch):
+    monkeypatch.setitem(sys.modules, "ewoks", None)
+
+
+def _saved_graph_attrs(orange_canvas_handler, tmp_path) -> dict:
+    add_ewoks_import_export_actions()
+    orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
+    filename = str(tmp_path / "saved.ows")
+    assert orange_canvas_handler.canvas.save_scheme_to(
+        orange_canvas_handler.scheme, filename
+    )
+    graph_attrs = _read_ewoks_graph_attrs(filename)
+    assert (
+        ows_to_ewoks(filename).graph.graph["requirements"]
+        == graph_attrs["requirements"]
+    )
+    return graph_attrs
+
+
+def test_canvas_save_generates_requirements(
+    orange_canvas_handler, tmp_path, fake_ewoks
+):
+    graph_attrs = _saved_graph_attrs(orange_canvas_handler, tmp_path)
+
+    assert graph_attrs["requirements"] == _GENERATED_REQUIREMENTS
+    # Attributes that are not generated are kept from the loaded workflow
+    assert graph_attrs["input_schema"] == _EXTRA_GRAPH_ATTRS["input_schema"]
+    assert fake_ewoks[0][0] == "ewoksorange"
+
+
+def test_canvas_save_without_ewoks_keeps_requirements(
+    orange_canvas_handler, tmp_path, no_ewoks
+):
+    _assert_extra_graph_attrs(_saved_graph_attrs(orange_canvas_handler, tmp_path))
+
+
+def test_update_ewoks_graph_attrs_of_new_workflow(fake_ewoks):
+    from orangecanvas.scheme import Scheme
+
+    scheme = Scheme()
+    update_ewoks_graph_attrs(scheme)
+    assert scheme.get_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG) == {
+        "requirements": _GENERATED_REQUIREMENTS
+    }
+
+
+def test_update_ewoks_graph_attrs_of_new_workflow_without_ewoks(no_ewoks):
+    from orangecanvas.scheme import Scheme
+
+    scheme = Scheme()
+    update_ewoks_graph_attrs(scheme)
+    assert scheme.get_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG) is None
