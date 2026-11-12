@@ -67,6 +67,7 @@ def default_owwidget_class(task_class: Task) -> Tuple[OWEwoksBaseWidget, str]:
 
     # Add the class to the 'widgets' module
     widget_class.__name__ += "_" + task_class.class_registry_name().replace(".", "_")
+    widget_class.__qualname__ = widget_class.__name__
     widget_class.__module__ = widgets.__name__
     setattr(widgets, widget_class.__name__, widget_class)
 
