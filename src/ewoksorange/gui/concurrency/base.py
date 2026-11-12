@@ -26,6 +26,7 @@ class TaskExecutor:
             f"{type(self).__name__} is deprecated since version 6.0."
             "Please use 'ewoksorange.gui.concurrency.executor.EwoksExecutor' instead.",
             DeprecationWarning,
+            stacklevel=2,
         )
 
     def create_task(self, log_missing_inputs: bool = False, **kwargs) -> None:

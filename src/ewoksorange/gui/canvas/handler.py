@@ -152,8 +152,8 @@ class OrangeCanvasHandler:
                     return widget
         try:
             node = self.scheme.nodes[int(id)]
-        except (ValueError, IndexError):
-            raise RuntimeError(f"No Orange widget found for node {id!r}")
+        except (ValueError, IndexError) as exc:
+            raise RuntimeError(f"No Orange widget found for node {id!r}") from exc
         return self.scheme.widget_for_node(node)
 
     def iter_widgets(self):

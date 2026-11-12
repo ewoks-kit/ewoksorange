@@ -36,6 +36,7 @@ class TaskRunner(ABC):
 
     def _wait_ready(self) -> None:
         """Block until the task may be created and executed."""
+        return None
 
     @abstractmethod
     def _try_start(self) -> Optional[StartDenial]:
