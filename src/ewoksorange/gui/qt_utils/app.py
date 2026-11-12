@@ -105,7 +105,13 @@ def process_qtapp_events() -> None:
     """Process all pending Qt events when a Qt event loop is running"""
     if _APP is None:
         return
-    _APP.processEvents(QtCore.QEventLoop.AllEvents)
+    if QtCore.QThread.currentThread().loopLevel():
+        _APP.processEvents(QtCore.QEventLoop.AllEvents)
+        return
+    # Outside an event loop, `processEvents` skips deferred deletions (`deleteLater`).
+    loop = QtCore.QEventLoop()
+    QtCore.QTimer.singleShot(0, loop.quit)
+    loop.exec()
 
 
 class QtEvent:
