@@ -1,25 +1,29 @@
 import threading
 
-from ...gui.qt_utils.app import QtEvent
-from ...gui.qt_utils.app import wait_until
+from ...gui.concurrency.executor import TaskFuture
 from .tasks import AddTask
 
 
-def test_running_and_done(ewoksorange_qtapp, executor_context_factory):
-    with executor_context_factory() as (kind, executor, recorder):
+def test_running_and_done(qtbot, executor_context_factory):
+    with executor_context_factory() as (kind, executor):
         inputs = {"a": 1, "delay": 1}
         thread = None
-        if kind == "sync":
-            # submit_task() blocks until the task finishes, so it must run
-            # on its own thread to observe it mid-flight below.
-            thread = threading.Thread(
-                target=executor.submit_task, args=(AddTask,), kwargs={"inputs": inputs}
-            )
-            thread.start()
-        else:
-            executor.submit_task(AddTask, inputs=inputs)
+        with qtbot.wait_signal(executor.started) as signal_blocker:
+            if kind == "sync":
+                # submit_task() blocks until the task finishes, so it must run
+                # on its own thread to observe it mid-flight below.
+                thread = threading.Thread(
+                    target=executor.submit_task,
+                    args=(AddTask,),
+                    kwargs={"inputs": inputs},
+                )
+                thread.start()
+            else:
+                executor.submit_task(AddTask, inputs=inputs)
 
-        future = recorder.wait_future("started")
+        assert len(signal_blocker.args) == 1
+        future = signal_blocker.args[0]
+        assert isinstance(future, TaskFuture)
 
         assert future.running()
         assert not future.done()
@@ -33,44 +37,47 @@ def test_running_and_done(ewoksorange_qtapp, executor_context_factory):
             thread.join(timeout=10)
 
 
-def test_cancelled(ewoksorange_qtapp, executor_context_factory):
+def test_cancelled(qtbot, executor_context_factory):
     """`cancelled()` reflects whether `cancel()` actually succeeded."""
-    with executor_context_factory() as (kind, executor, recorder):
+    with executor_context_factory() as (kind, executor):
         inputs = {"a": 1}
-        thread = None
         if kind == "sync":
             # submit_task() blocks, so cancel() can only ever race with (or
             # arrive after) completion: it never truly finds a queued task.
             thread = threading.Thread(
                 target=executor.submit_task, args=(AddTask,), kwargs={"inputs": inputs}
             )
-            thread.start()
-            future = recorder.wait_future("succeeded")
+            with qtbot.wait_signal(executor.succeeded) as signal_blocker:
+                thread.start()
+
+            assert len(signal_blocker.args) == 1
+            future = signal_blocker.args[0]
+            assert isinstance(future, TaskFuture)
+
             assert not future.cancel()
             assert not future.cancelled()
             thread.join(timeout=10)
         else:
-            future = executor.submit_task(AddTask, inputs=inputs)
-            cancelled = future.cancel()
-            assert wait_until(future.done, timeout=10)
+            # `finished` is emitted whether or not the task was cancelled.
+            with qtbot.wait_signal(executor.finished, timeout=10_000):
+                future = executor.submit_task(AddTask, inputs=inputs)
+                cancelled = future.cancel()
+            qtbot.wait_until(future.done, timeout=10_000)
             # Whether cancel() wins the race with the worker picking up the
             # task is not guaranteed; cancelled() must simply agree with it.
             assert future.cancelled() == cancelled
-            if not cancelled:
-                recorder.wait_for("finished", 1)
 
 
-def test_add_done_callback(ewoksorange_qtapp, executor_context_factory):
-    with executor_context_factory() as (_, executor, recorder):
-        done = QtEvent()
+def test_add_done_callback(qtbot, executor_context_factory):
+    with executor_context_factory() as (_, executor):
         received = {}
 
         future = executor.submit_task(AddTask, inputs={"a": 1, "b": 2})
         # add_done_callback() forwards to the wrapped concurrent.futures.Future,
         # so the callback receives that raw future, not the TaskFuture itself.
         future.add_done_callback(
-            lambda raw_future: (received.update(raw_future=raw_future), done.set())
+            lambda raw_future: received.update(raw_future=raw_future)
         )
+        qtbot.wait_until(lambda: "raw_future" in received, timeout=10_000)
 
-        assert done.wait(timeout=10)
         assert received["raw_future"].result()["result"].value == 3
