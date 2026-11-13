@@ -15,4 +15,5 @@ def test_sumtask_widget(qtbot):
 
 def test_orange_only_input(qtbot):
     widget = OWSumTask()
+    qtbot.addWidget(widget)
     assert widget.Inputs.c

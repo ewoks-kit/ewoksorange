@@ -18,7 +18,7 @@ from .tasks import SlowInitTask
 from .tasks import StartMarkerTask
 from .tasks import SurviveAbortProgressTask
 from .tasks import SurviveAbortTask
-from .utils import assert_none_emitted
+from .utils import assert_signal_counts
 
 
 def test_abort(qtbot, executor_context_factory, tmp_path):
@@ -31,12 +31,15 @@ def test_abort(qtbot, executor_context_factory, tmp_path):
         pid = _run_pid_task(qtbot, executor, 1)
 
         marker = tmp_path / "cleanup"
-        with assert_none_emitted(
+        with assert_signal_counts(
             qtbot,
-            executor.succeeded,
-            executor.cancelled,
-            executor.stopRequested,
-            executor.killed,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            aborted=1,
+            failed=1,
+            finished=1,
         ), qtbot.wait_signals(
             [executor.aborted, executor.failed, executor.finished],
             timeout=15_000,
@@ -131,8 +134,14 @@ def test_abort_survived_keeps_progress(qtbot, executor_context_factory):
             pytest.skip("abort is only supported for tasks running in a subprocess")
 
         progress = QProgress()
-        with assert_none_emitted(
-            qtbot, executor.failed, executor.aborted
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
         ), qtbot.wait_signals(
             [executor.succeeded, executor.finished], timeout=15_000, order="strict"
         ):
@@ -160,12 +169,15 @@ def test_kill(qtbot, executor_context_factory, tmp_path):
         pid = _run_pid_task(qtbot, executor, 1)
 
         marker = tmp_path / "cleanup"
-        with assert_none_emitted(
+        with assert_signal_counts(
             qtbot,
-            executor.succeeded,
-            executor.cancelled,
-            executor.stopRequested,
-            executor.aborted,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            killed=1,
+            failed=1,
+            finished=1,
         ), qtbot.wait_signals(
             [executor.killed, executor.failed, executor.finished],
             timeout=15_000,
@@ -201,8 +213,16 @@ def test_escalate(qtbot, executor_context_factory, tmp_path):
             pytest.skip("abort and kill are only supported in a subprocess")
 
         marker = tmp_path / "interrupted"
-        with assert_none_emitted(
-            qtbot, executor.succeeded, executor.aborted
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            stopRequested=1,
+            killed=1,
+            failed=1,
+            finished=1,
         ), qtbot.wait_signals(
             [
                 executor.stopRequested,
@@ -247,18 +267,15 @@ def test_kill_from_relay_thread(qtbot, executor_context_factory):
         )
         # The kill can overtake the delivery of `started` to the GUI thread:
         # the signals are not checked for their order.
-        with assert_none_emitted(
-            qtbot, executor.succeeded, executor.aborted
-        ), qtbot.wait_signals(
-            [
-                executor.submitted,
-                executor.aboutToStart,
-                executor.started,
-                executor.killed,
-                executor.failed,
-                executor.finished,
-            ],
-            timeout=15_000,
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            killed=1,
+            failed=1,
+            finished=1,
         ):
             future = executor.submit_task(IgnoreStopTask, inputs={"duration": 10})
 
@@ -289,8 +306,14 @@ def test_abort_not_supported(qtbot, executor_context_factory):
 
         inputs = {"duration": 0.3}
         thread = None
-        with assert_none_emitted(
-            qtbot, executor.failed, executor.aborted, executor.killed
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
         ), qtbot.wait_signals(
             [executor.succeeded, executor.finished], timeout=15_000, order="strict"
         ):
@@ -322,8 +345,15 @@ def test_abort_not_supported(qtbot, executor_context_factory):
 def _run_pid_task(qtbot, executor, value: int) -> int:
     """Run a `PidTask` to completion, including its signals, and return the
     process ID of the worker that executed it."""
-    with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signal(
-        executor.finished, timeout=15_000
+    with assert_signal_counts(
+        qtbot,
+        executor,
+        timeout=15_000,
+        submitted=1,
+        aboutToStart=1,
+        started=1,
+        succeeded=1,
+        finished=1,
     ):
         outputs = executor.submit_task(PidTask, inputs={"value": value}).result(
             timeout=10

@@ -27,6 +27,7 @@ class OWSequential(
 def test_owwidget_fifo(qtbot):
     """Test FIFO execution in a single worker thread."""
     widget = OWSequential()
+    qtbot.addWidget(widget)
 
     sleep_seconds = 0.5
     values = [0, 1, 2]

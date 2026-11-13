@@ -2,6 +2,7 @@ import threading
 
 from ...gui.concurrency.executor import SubmitPolicy
 from .tasks import AddTask
+from .utils import assert_signal_counts
 
 
 def test_drop_if_busy(qtbot, executor_context_factory):
@@ -11,9 +12,17 @@ def test_drop_if_busy(qtbot, executor_context_factory):
     ):
         inputs = {"a": 1, "delay": 2}
         thread = None
+        nb_extra = 4
 
-        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-            executor.stopRequested
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
+            ignored=nb_extra,
         ), qtbot.wait_signals(
             [executor.succeeded, executor.finished], timeout=15_000, order="strict"
         ):
@@ -37,7 +46,6 @@ def test_drop_if_busy(qtbot, executor_context_factory):
 
             first = first_signals_blocker.all_signals_and_args[0].args[0]
 
-            nb_extra = 4
             with qtbot.wait_signals(
                 [executor.ignored] * nb_extra, timeout=10_000, order="strict"
             ):
@@ -64,18 +72,14 @@ def test_always_queue(qtbot, executor_context_factory):
         futures = []
 
         nb_submits = 3
-        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-            executor.stopRequested
-        ), qtbot.assert_not_emitted(executor.ignored), qtbot.wait_signals(
-            [
-                executor.submitted,
-                executor.aboutToStart,
-                executor.started,
-                executor.succeeded,
-                executor.finished,
-            ]
-            * nb_submits,
-            timeout=35_000,
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=nb_submits,
+            aboutToStart=nb_submits,
+            started=nb_submits,
+            succeeded=nb_submits,
+            finished=nb_submits,
         ):
             for i in range(nb_submits):
                 futures.append(

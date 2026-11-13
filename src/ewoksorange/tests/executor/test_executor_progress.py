@@ -10,6 +10,7 @@ from .tasks import InitProgressTask
 from .tasks import PidTask
 from .tasks import ProgressBurstTask
 from .tasks import ProgressTask
+from .utils import assert_signal_counts
 
 
 def test_progress(qtbot, executor_context_factory):
@@ -30,9 +31,15 @@ def test_progress(qtbot, executor_context_factory):
 
         # `finished` is only emitted once all progress values were relayed, so
         # no polling on `events` is needed here.
-        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-            executor.stopRequested
-        ), qtbot.wait_signal(executor.finished, timeout=35_000):
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
+        ):
             future = executor.submit_task(
                 ProgressTask, inputs={"percentages": percentages}, progress=progress
             )
@@ -59,8 +66,14 @@ def test_progress_during_creation(qtbot, executor_context_factory):
         progress.sigProgressChanged.connect(events.append)
 
         # `finished` is only emitted once all progress values were relayed.
-        with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signal(
-            executor.finished, timeout=35_000
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
         ):
             future = executor.submit_task(
                 InitProgressTask, inputs={"value": 1}, progress=progress
@@ -95,8 +108,14 @@ def test_progress_for_task_without_progress_support(qtbot, executor_context_fact
         received: List[int] = []
         progress.sigProgressChanged.connect(received.append)
 
-        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-            executor.stopRequested
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
         ), qtbot.wait_signals(
             [
                 executor.submitted,

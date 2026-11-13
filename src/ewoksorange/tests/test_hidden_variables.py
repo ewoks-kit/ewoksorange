@@ -34,6 +34,7 @@ class OWDummyWidget(OWEwoksWidgetNoThread, **ow_build_opts, ewokstaskclass=Dummy
 )
 def test_hidden_inputs(qtbot, exclude_hidden, expected):
     widget = OWDummyWidget()
+    qtbot.addWidget(widget)
 
     widget.set_default_input("visible_input", "visible_default")
     widget.set_default_input("hidden_input", "hidden_default")
@@ -73,6 +74,7 @@ def test_hidden_inputs(qtbot, exclude_hidden, expected):
 )
 def test_hidden_outputs(qtbot, exclude_hidden, expected):
     widget = OWDummyWidget()
+    qtbot.addWidget(widget)
 
     widget.set_default_input("visible_input", "visible_default")
     widget.set_default_input("hidden_input", "hidden_default")

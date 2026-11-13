@@ -156,11 +156,12 @@ def test_success_with_propagation_failure(qtbot, task_cls):
         "trigger_downstream": _TestException("error in widget: success propagation")
     }
 
-    with qtbot.capture_exceptions(), pytest.raises(
+    with qtbot.capture_exceptions() as exceptions, pytest.raises(
         _TestException, match="error in widget: success propagation"
     ):
         _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
     assert recorded_calls == ["run", "trigger_downstream", "task_finished"]
+    _assert_raised_in_qt(exceptions, "error in widget: success propagation")
 
 
 @pytest.mark.parametrize("task_cls", _WIDGET_CLASSES)
@@ -171,11 +172,12 @@ def test_failure_with_propagation_failure(qtbot, task_cls):
         "clear_downstream": _TestException("error in widget: failure propagation"),
     }
 
-    with qtbot.capture_exceptions(), pytest.raises(
+    with qtbot.capture_exceptions() as exceptions, pytest.raises(
         _TestException, match="error in task"
     ):
         _execute_task(task_cls, recorded_calls, failures, a=1, b=2)
     assert recorded_calls == ["run", "clear_downstream", "task_finished"]
+    _assert_raised_in_qt(exceptions, "error in widget: failure propagation")
 
 
 def test_deprecated_task_output_changed(qtbot):
@@ -212,11 +214,18 @@ def test_deprecated_task_output_changed(qtbot):
                 if exception:
                     raise exception
 
-    with qtbot.capture_exceptions(), pytest.raises(
+    with qtbot.capture_exceptions() as exceptions, pytest.raises(
         _TestException, match="error in widget: output callback"
     ):
         _execute_task(DeprecatedHookWidget, recorded_calls, failures, a=1, b=2)
     assert recorded_calls == ["run", "task_output_changed"]
+    _assert_raised_in_qt(exceptions, "error in widget: output callback")
+
+
+def _assert_raised_in_qt(exceptions, message: str) -> None:
+    """Check that the only exception raised in a Qt slot is the expected one."""
+    raised = [(type(exception), str(exception)) for _, exception, _ in exceptions]
+    assert raised == [(_TestException, message)]
 
 
 def _execute_task(

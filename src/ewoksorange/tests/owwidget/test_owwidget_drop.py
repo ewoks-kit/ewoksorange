@@ -25,6 +25,7 @@ class OWSequential(OWEwoksWidgetOneThread, **ow_build_opts, ewokstaskclass=Seque
 def test_owwidget_drop(qtbot):
     """Test sequential task execution in one worker thread with drop-when-busy."""
     widget = OWSequential()
+    qtbot.addWidget(widget)
 
     sleep_seconds = 0.5
     futures = {}

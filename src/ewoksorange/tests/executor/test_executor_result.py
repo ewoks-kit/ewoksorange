@@ -2,13 +2,19 @@ import pytest
 from ewoksutils.exceptions import TaskExecutionError
 
 from .tasks import AddTask
-from .utils import assert_exception
+from .utils import assert_signal_counts
 
 
 def test_success(qtbot, executor_context_factory):
     with executor_context_factory() as (_, executor):
-        with qtbot.assert_not_emitted(executor.failed), qtbot.assert_not_emitted(
-            executor.stopRequested
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
         ), qtbot.wait_signals(
             (
                 executor.submitted,
@@ -35,8 +41,14 @@ def test_success(qtbot, executor_context_factory):
 def test_failure(qtbot, executor_context_factory):
 
     with executor_context_factory() as (_, executor):
-        with qtbot.assert_not_emitted(executor.succeeded), qtbot.assert_not_emitted(
-            executor.stopRequested
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            failed=1,
+            finished=1,
         ), qtbot.wait_signals(
             (
                 executor.submitted,
@@ -50,8 +62,5 @@ def test_failure(qtbot, executor_context_factory):
         ):
             future = executor.submit_task(AddTask, inputs={"a": 1, "fail": True})
 
-            match = "intentional failure"
-            with pytest.raises(TaskExecutionError, match=match):
+            with pytest.raises(TaskExecutionError, match="intentional failure"):
                 _ = future.result(timeout=10)
-
-        assert_exception(future.exception(), TaskExecutionError, match=match)

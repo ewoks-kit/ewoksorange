@@ -5,7 +5,7 @@ import pytest
 from ...gui.concurrency.executor import Concurrency
 from .tasks import AddTask
 from .tasks import IgnoreStopTask
-from .utils import assert_none_emitted
+from .utils import assert_signal_counts
 
 
 def test_cancel_queued_task_sync(qtbot, executor_factory):
@@ -19,9 +19,15 @@ def test_cancel_queued_task_sync(qtbot, executor_factory):
         target=executor.submit_task, args=(AddTask,), kwargs={"inputs": inputs}
     )
 
-    with assert_none_emitted(
-        qtbot, executor.failed, executor.stopRequested, executor.cancelled
-    ), qtbot.wait_signals([executor.succeeded, executor.finished] * 2, timeout=10_000):
+    with assert_signal_counts(
+        qtbot,
+        executor,
+        submitted=2,
+        aboutToStart=2,
+        started=2,
+        succeeded=2,
+        finished=2,
+    ):
         with qtbot.wait_signal(executor.started) as signal_blocker:
             thread.start()
 
@@ -57,27 +63,20 @@ def test_cancel_queued_task(qtbot, concurrency, executor_factory):
     """cancel() prevents a genuinely queued task from ever running."""
     executor = executor_factory(concurrency, workers=1)
 
-    with qtbot.wait_signal(executor.started, timeout=10_000):
-        blocker_future = executor.submit_task(AddTask, inputs={"a": 1, "delay": 2})
-
-    # `aboutToStart` and `started` of the blocker were already received:
-    # the victim must never start.
-    with assert_none_emitted(
+    # Only the blocker starts: the victim must never start.
+    with assert_signal_counts(
         qtbot,
-        executor.aboutToStart,
-        executor.started,
-        executor.failed,
-        executor.stopRequested,
-    ), qtbot.wait_signals(
-        [
-            executor.submitted,
-            executor.cancelled,
-            executor.finished,
-            executor.succeeded,
-            executor.finished,
-        ],
-        timeout=20_000,
+        executor,
+        submitted=2,
+        aboutToStart=1,
+        started=1,
+        succeeded=1,
+        cancelled=1,
+        finished=2,
     ):
+        with qtbot.wait_signal(executor.started, timeout=10_000):
+            blocker_future = executor.submit_task(AddTask, inputs={"a": 1, "delay": 2})
+
         victim = executor.submit_task(AddTask, inputs={"a": 99})
         assert victim.cancel() is True
 
@@ -115,8 +114,14 @@ def test_cancel_running_task(qtbot, executor_context_factory):
         inputs = {"duration": 0.3}
         thread = None
 
-        with assert_none_emitted(
-            qtbot, executor.failed, executor.cancelled
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
         ), qtbot.wait_signals(
             [executor.succeeded, executor.finished], timeout=15_000, order="strict"
         ):

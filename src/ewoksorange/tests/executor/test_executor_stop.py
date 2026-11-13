@@ -9,7 +9,7 @@ from .tasks import EarlyStopTask
 from .tasks import InterruptStopTask
 from .tasks import PartialStopTask
 from .tasks import WaitForFileTask
-from .utils import assert_exception
+from .utils import assert_signal_counts
 
 
 def test_request_stop(qtbot, executor_context_factory):
@@ -18,7 +18,16 @@ def test_request_stop(qtbot, executor_context_factory):
         inputs = {"a": 1, "b": 2, "delay": 5}
         thread = None
 
-        with qtbot.assert_not_emitted(executor.succeeded), qtbot.wait_signals(
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            stopRequested=1,
+            failed=1,
+            finished=1,
+        ), qtbot.wait_signals(
             (executor.stopRequested, executor.failed, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
@@ -48,15 +57,12 @@ def test_request_stop(qtbot, executor_context_factory):
 
             assert submitted_future.request_stop()
 
-            match = r"stopped after [\.0-9]+ seconds"
-            with pytest.raises(TaskExecutionError, match=match):
+            with pytest.raises(
+                TaskExecutionError, match=r"stopped after [\.0-9]+ seconds"
+            ):
                 submitted_future.result(timeout=10)
 
             assert submitted_future.stop_requested()
-
-            assert_exception(
-                submitted_future.exception(), TaskExecutionError, match=match
-            )
 
         if thread is not None:
             thread.join(timeout=10)
@@ -73,7 +79,16 @@ def test_stop_leaves_outputs_undefined(qtbot, executor_context_factory, task_cla
         inputs = {"duration": 2}
         thread = None
 
-        with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            stopRequested=1,
+            succeeded=1,
+            finished=1,
+        ), qtbot.wait_signals(
             (executor.stopRequested, executor.succeeded, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
@@ -117,7 +132,16 @@ def test_stop_leaves_partial_outputs(qtbot, executor_context_factory):
         inputs = {"duration": 2}
         thread = None
 
-        with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            stopRequested=1,
+            succeeded=1,
+            finished=1,
+        ), qtbot.wait_signals(
             (executor.stopRequested, executor.succeeded, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,
@@ -168,7 +192,16 @@ def test_request_stop_does_not_guarantee_stop(
         inputs = {"path": str(release)}
         thread = None
 
-        with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            stopRequested=1,
+            succeeded=1,
+            finished=1,
+        ), qtbot.wait_signals(
             (executor.stopRequested, executor.succeeded, executor.finished),
             check_params_cbs=[lambda future: future is submitted_future] * 3,
             timeout=15_000,

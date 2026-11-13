@@ -14,8 +14,9 @@ pytest.register_assert_rewrite("ewoksorange.tests.executor.utils")
 
 
 @pytest.fixture(params=list(Concurrency), ids=lambda c: c.name.lower())
-def executor_context_factory(qtbot, request):
-
+def executor_context_factory(request, executor_factory):
+    """Return a context manager factory yielding the concurrency kind name and an
+    `EwoksExecutor` for each `Concurrency`"""
     concurrency = request.param
     kind = concurrency.name.lower()
 
@@ -23,14 +24,7 @@ def executor_context_factory(qtbot, request):
     def executor_context(
         policy=SubmitPolicy.ALWAYS, workers=2
     ) -> Generator[Tuple[str, EwoksExecutor], None, None]:
-
-        pool = create_pool_executor(concurrency, max_workers=workers)
-        executor = EwoksExecutor(pool, policy)
-
-        try:
-            yield kind, executor
-        finally:
-            executor.shutdown(wait=True)
+        yield kind, executor_factory(concurrency, policy, workers)
 
     return executor_context
 

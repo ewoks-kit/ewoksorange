@@ -9,7 +9,7 @@ from ...gui.concurrency.executor import SubmitPolicy
 from ...gui.concurrency.executor import create_pool_executor
 from .tasks import AddTask
 from .tasks import StartMarkerTask
-from .utils import assert_none_emitted
+from .utils import assert_signal_counts
 
 
 def test_completion_after_start_while_gui_thread_busy(qtbot, executor_context_factory):
@@ -19,7 +19,15 @@ def test_completion_after_start_while_gui_thread_busy(qtbot, executor_context_fa
         if kind == "sync":
             pytest.skip("sync execution emits all signals directly")
 
-        with qtbot.assert_not_emitted(executor.failed), qtbot.wait_signals(
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
+        ), qtbot.wait_signals(
             [
                 executor.submitted,
                 executor.aboutToStart,
@@ -43,7 +51,16 @@ def test_kill_completion_after_start(qtbot, executor_context_factory, tmp_path):
             pytest.skip("kill is only supported for tasks running in a subprocess")
 
         marker = tmp_path / "started"
-        with qtbot.assert_not_emitted(executor.succeeded), qtbot.wait_signals(
+        with assert_signal_counts(
+            qtbot,
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            killed=1,
+            failed=1,
+            finished=1,
+        ), qtbot.wait_signals(
             [
                 executor.submitted,
                 executor.aboutToStart,
@@ -75,20 +92,7 @@ def test_failed_submission_is_not_running(qtbot, concurrency):
         pool.shutdown()
     executor = EwoksExecutor(pool, SubmitPolicy.DROP_IF_BUSY)
     try:
-        with assert_none_emitted(
-            qtbot,
-            executor.submitted,
-            executor.aboutToStart,
-            executor.started,
-            executor.succeeded,
-            executor.failed,
-            executor.cancelled,
-            executor.stopRequested,
-            executor.aborted,
-            executor.killed,
-            executor.finished,
-            executor.ignored,
-        ):
+        with assert_signal_counts(qtbot, executor):
             for _ in range(2):
                 with pytest.raises(RuntimeError):
                     executor.submit_task(AddTask, inputs={"a": 1})

@@ -1,3 +1,4 @@
+from collections import Counter
 from concurrent.futures import CancelledError
 from typing import Dict
 
@@ -9,7 +10,7 @@ from ...gui.concurrency.future import TaskFuture
 from ...gui.concurrency.future import TaskKilledError
 from ...gui.concurrency.future import TaskStoppedError
 from .tasks import AddTask
-from .utils import assert_none_emitted
+from .utils import assert_signal_counts
 
 _ACTIONS = ("cancel", "request_stop", "abort", "kill")
 
@@ -30,15 +31,6 @@ _SIGNALS = {
     "kill": ("killed", "failed", "finished"),
 }
 
-_OUTCOME_SIGNALS = (
-    "succeeded",
-    "failed",
-    "cancelled",
-    "stopRequested",
-    "aborted",
-    "killed",
-)
-
 
 @pytest.mark.parametrize("action", _ACTIONS)
 def test_queued_task_never_starts(qtbot, executor_context_factory, action):
@@ -53,27 +45,16 @@ def test_queued_task_never_starts(qtbot, executor_context_factory, action):
 
         supported = kind == "process" or action not in _SUBPROCESS_ONLY
 
-        if not supported:
-            expected = ["submitted", "aboutToStart", "started"] + [
-                "succeeded",
-                "finished",
-            ] * 2
-            not_emitted = [name for name in _OUTCOME_SIGNALS if name != "succeeded"]
-        else:
+        # The signals of the blocker completing, and of the queued task.
+        expected = Counter(["succeeded", "finished", "submitted"])
+        if supported:
             # `aboutToStart` and `started` of the blocker were already received:
             # the queued task must never start.
-            expected = ["submitted", "succeeded", "finished", *_SIGNALS[action]]
-            not_emitted = ["aboutToStart", "started"] + [
-                name
-                for name in _OUTCOME_SIGNALS
-                if name != "succeeded" and name not in _SIGNALS[action]
-            ]
+            expected.update(_SIGNALS[action])
+        else:
+            expected.update(["aboutToStart", "started", "succeeded", "finished"])
 
-        with assert_none_emitted(
-            qtbot, *(getattr(executor, name) for name in not_emitted)
-        ), qtbot.wait_signals(
-            [getattr(executor, name) for name in expected], timeout=20_000
-        ):
+        with assert_signal_counts(qtbot, executor, timeout=20_000, **expected):
             queued = executor.submit_task(AddTask, inputs={"a": 2})
             assert getattr(queued, action)() is supported
 
@@ -151,12 +132,8 @@ def test_failed_watch_ends_execution(qtbot, executor_context_factory, monkeypatc
         def _failing_watch(*args, **kwargs) -> None:
             raise RuntimeError("cannot start the relay")
 
-        with assert_none_emitted(
-            qtbot,
-            executor.aboutToStart,
-            executor.started,
-            executor.succeeded,
-            executor.failed,
+        with assert_signal_counts(
+            qtbot, executor, submitted=1, cancelled=1, finished=1
         ), qtbot.wait_signals(
             [executor.submitted, executor.cancelled, executor.finished],
             timeout=10_000,
@@ -178,13 +155,14 @@ def test_failed_watch_ends_execution(qtbot, executor_context_factory, monkeypatc
 def test_finished_task(qtbot, executor_context_factory):
     """No action has an effect on a finished task."""
     with executor_context_factory() as (_, executor):
-        with assert_none_emitted(
+        with assert_signal_counts(
             qtbot,
-            *(
-                getattr(executor, name)
-                for name in _OUTCOME_SIGNALS
-                if name != "succeeded"
-            ),
+            executor,
+            submitted=1,
+            aboutToStart=1,
+            started=1,
+            succeeded=1,
+            finished=1,
         ), qtbot.wait_signals(
             [
                 executor.submitted,
