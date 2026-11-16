@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Orange signal type of a `Dict[...]` task input/output is `dict`, with or without `Optional`.
+- Orange signal type of an `Optional[Literal[...]]` or `Optional[Any]` task input/output is `object`.
+- Orange signal type of a generic task input/output (`Set[...]`, `Mapping[...]`, ...) is the same with or without `Optional`.
+
 ## [6.0.0rc8] - 2026-11-04
 
 ### Added
