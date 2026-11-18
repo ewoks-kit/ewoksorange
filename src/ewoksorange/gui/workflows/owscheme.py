@@ -1,3 +1,4 @@
+import importlib.metadata
 import json
 import logging
 import os
@@ -7,6 +8,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import IO
 from typing import Callable
+from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import NamedTuple
@@ -23,6 +25,7 @@ from ewokscore.graph import TaskGraph
 from ewokscore.graph.serialize import GraphRepresentation
 from ewokscore.inittask import task_executable_info
 from ewokscore.node import get_node_label
+from ewokscore.requirements import add_requirements
 from ewokscore.task import Task
 from ewoksutils.import_utils import import_qualname
 from ewoksutils.import_utils import qualname
@@ -607,6 +610,38 @@ def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
     except Exception:
         logger.debug("Failed to read ewoks graph attributes", exc_info=True)
     return None
+
+
+def update_ewoks_graph_attrs(scheme) -> None:
+    """Refresh the ewoks graph attributes of a scheme before it is saved.
+    Attributes generated from the current python environment precedence with other attributes loaded from the workflow
+    """
+    ewoks_attrs = dict(scheme.get_runtime_env(_EWOKS_GRAPH_ATTRS_TAG) or {})
+    ewoks_attrs.update(_generate_ewoks_graph_attrs())
+    if ewoks_attrs:
+        scheme.set_runtime_env(_EWOKS_GRAPH_ATTRS_TAG, ewoks_attrs)
+
+
+def _generate_ewoks_graph_attrs() -> dict:
+    """Ewoks graph attributes of the current python environment, as generated
+    by `ewoks convert`."""
+    graph = load_graph({"graph": {"id": "requirements"}, "nodes": [], "links": []})
+    try:
+        add_requirements(graph, bootstrap=_bootstrap_distributions())
+    except Exception:
+        logger.warning("Failed to generate the workflow requirements", exc_info=True)
+        return {}
+    return {"requirements": graph.graph.graph["requirements"]}
+
+
+def _bootstrap_distributions() -> Dict[str, str]:
+    distributions = {}
+    for name in ("ewoks", "ewoksorange"):
+        try:
+            distributions[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            pass
+    return distributions
 
 
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:
