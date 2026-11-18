@@ -1,6 +1,4 @@
 import io
-import sys
-import types
 from collections import namedtuple
 
 try:
@@ -211,7 +209,9 @@ def test_ows_to_ewoks_keeps_graph_attrs(tmp_path, from_stream):
     _assert_extra_graph_attrs(ewoksgraph.graph.graph)
 
 
-def test_canvas_save_and_export_keep_graph_attrs(orange_canvas_handler, tmp_path):
+def test_canvas_save_and_export_keep_graph_attrs(
+    orange_canvas_handler, tmp_path, failing_requirements
+):
     orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
     scheme = orange_canvas_handler.scheme
 
@@ -246,23 +246,25 @@ _GENERATED_REQUIREMENTS = {"distributions": [{"name": "generated"}]}
 
 
 @pytest.fixture
-def fake_ewoks(monkeypatch):
-    """`ewoks` is not a dependency of `ewoksorange`"""
-    engines = []
+def fake_requirements(monkeypatch):
+    """Do not let the package manager gather the requirements of the test environment"""
+    bootstraps = []
 
-    def generate_requirements(engine=None):
-        engines.append(engine)
-        return _GENERATED_REQUIREMENTS
+    def add_requirements(graph, bootstrap=None, **_):
+        bootstraps.append(bootstrap)
+        graph.graph.graph["requirements"] = _GENERATED_REQUIREMENTS
+        return "fake"
 
-    module = types.ModuleType("ewoks")
-    module.generate_requirements = generate_requirements
-    monkeypatch.setitem(sys.modules, "ewoks", module)
-    return engines
+    monkeypatch.setattr(owscheme, "add_requirements", add_requirements)
+    return bootstraps
 
 
 @pytest.fixture
-def no_ewoks(monkeypatch):
-    monkeypatch.setitem(sys.modules, "ewoks", None)
+def failing_requirements(monkeypatch):
+    def add_requirements(*_, **__):
+        raise RuntimeError("no package manager")
+
+    monkeypatch.setattr(owscheme, "add_requirements", add_requirements)
 
 
 def _saved_graph_attrs(orange_canvas_handler, tmp_path) -> dict:
@@ -281,23 +283,23 @@ def _saved_graph_attrs(orange_canvas_handler, tmp_path) -> dict:
 
 
 def test_canvas_save_generates_requirements(
-    orange_canvas_handler, tmp_path, fake_ewoks
+    orange_canvas_handler, tmp_path, fake_requirements
 ):
     graph_attrs = _saved_graph_attrs(orange_canvas_handler, tmp_path)
 
     assert graph_attrs["requirements"] == _GENERATED_REQUIREMENTS
     # Attributes that are not generated are kept from the loaded workflow
     assert graph_attrs["input_schema"] == _EXTRA_GRAPH_ATTRS["input_schema"]
-    assert fake_ewoks[0][0] == "ewoksorange"
+    assert "ewoksorange" in fake_requirements[0]
 
 
-def test_canvas_save_without_ewoks_keeps_requirements(
-    orange_canvas_handler, tmp_path, no_ewoks
+def test_canvas_save_keeps_requirements_when_generation_fails(
+    orange_canvas_handler, tmp_path, failing_requirements
 ):
     _assert_extra_graph_attrs(_saved_graph_attrs(orange_canvas_handler, tmp_path))
 
 
-def test_update_ewoks_graph_attrs_of_new_workflow(fake_ewoks):
+def test_update_ewoks_graph_attrs_of_new_workflow(fake_requirements):
     from orangecanvas.scheme import Scheme
 
     scheme = Scheme()
@@ -307,7 +309,9 @@ def test_update_ewoks_graph_attrs_of_new_workflow(fake_ewoks):
     }
 
 
-def test_update_ewoks_graph_attrs_of_new_workflow_without_ewoks(no_ewoks):
+def test_update_ewoks_graph_attrs_of_new_workflow_when_generation_fails(
+    failing_requirements,
+):
     from orangecanvas.scheme import Scheme
 
     scheme = Scheme()

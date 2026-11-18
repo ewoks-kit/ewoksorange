@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import IO
 from typing import Callable
+from typing import Dict
 from typing import Iterator
 from typing import List
 from typing import NamedTuple
@@ -24,6 +25,7 @@ from ewokscore.graph import TaskGraph
 from ewokscore.graph.serialize import GraphRepresentation
 from ewokscore.inittask import task_executable_info
 from ewokscore.node import get_node_label
+from ewokscore.requirements import add_requirements
 from ewokscore.task import Task
 from ewoksutils.import_utils import import_qualname
 from ewoksutils.import_utils import qualname
@@ -612,10 +614,7 @@ def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
 
 def update_ewoks_graph_attrs(scheme) -> None:
     """Refresh the ewoks graph attributes of a scheme before it is saved.
-
-    Attributes generated from the current python environment (`requirements`,
-    when `ewoks` is installed) take precedence. The other attributes, and those
-    that cannot be generated, are kept from the workflow that was loaded.
+    Attributes generated from the current python environment precedence with other attributes loaded from the workflow
     """
     ewoks_attrs = dict(scheme.get_runtime_env(_EWOKS_GRAPH_ATTRS_TAG) or {})
     ewoks_attrs.update(_generate_ewoks_graph_attrs())
@@ -626,24 +625,23 @@ def update_ewoks_graph_attrs(scheme) -> None:
 def _generate_ewoks_graph_attrs() -> dict:
     """Ewoks graph attributes of the current python environment, as generated
     by `ewoks convert`."""
+    graph = load_graph({"graph": {"id": "requirements"}, "nodes": [], "links": []})
     try:
-        from ewoks import generate_requirements
-    except ImportError:
-        logger.info("Workflow requirements are not generated: 'ewoks' is not installed")
-        return {}
-    try:
-        requirements = generate_requirements(engine=_engine_distribution())
+        add_requirements(graph, bootstrap=_bootstrap_distributions())
     except Exception:
         logger.warning("Failed to generate the workflow requirements", exc_info=True)
         return {}
-    return {"requirements": requirements}
+    return {"requirements": graph.graph.graph["requirements"]}
 
 
-def _engine_distribution() -> Optional[Tuple[str, str]]:
-    try:
-        return "ewoksorange", importlib.metadata.version("ewoksorange")
-    except importlib.metadata.PackageNotFoundError:
-        return None
+def _bootstrap_distributions() -> Dict[str, str]:
+    distributions = {}
+    for name in ("ewoks", "ewoksorange"):
+        try:
+            distributions[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            pass
+    return distributions
 
 
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:
