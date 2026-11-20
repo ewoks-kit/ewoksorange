@@ -2,6 +2,7 @@ from ewokscore.task import Task
 from ewoksutils.import_utils import qualname
 
 from ...bindings import execute_graph
+from ...gui.canvas.handler import OrangeCanvasHandler
 from ...gui.orange_utils.signals import Input
 from ...gui.orange_utils.signals import Output
 from ...gui.owwidgets.base import OWWidget
@@ -43,7 +44,7 @@ class EwoksOrangeWidget(OWEwoksWidgetNoThread, ewokstaskclass=EwoksTask):
     name = "ewoks widget"
 
 
-def test_dynamic_link(tmp_path, orange_canvas_handler):
+def test_dynamic_link(tmp_path, qtbot):
     """Test that a dynamic link in orange will be processed as expected."""
     # Create an Orange workflows
     workflow = {
@@ -74,22 +75,23 @@ def test_dynamic_link(tmp_path, orange_canvas_handler):
         ],
     }
 
-    for widget in (NativeWidget, EwoksOrangeWidget):
-        register_owwidget(
-            widget_class=widget,
-            package_name="ewoksorange",
-            category_name="test",
-            project_name="ewoksorange",
+    with OrangeCanvasHandler() as orange_canvas_handler:
+        for widget in (NativeWidget, EwoksOrangeWidget):
+            register_owwidget(
+                widget_class=widget,
+                package_name="ewoksorange",
+                category_name="test",
+                project_name="ewoksorange",
+            )
+
+        destination = str(tmp_path / "ewoksgraph.ows")
+        ewoks_to_ows(workflow, destination)
+
+        results = execute_graph(
+            destination,
+            outputs=[{"id": "1"}],
+            no_gui=True,
+            timeout=10,
+            orange_canvas_handler=orange_canvas_handler,
         )
-
-    destination = str(tmp_path / "ewoksgraph.ows")
-    ewoks_to_ows(workflow, destination)
-
-    results = execute_graph(
-        destination,
-        outputs=[{"id": "1"}],
-        no_gui=True,
-        timeout=10,
-        orange_canvas_handler=orange_canvas_handler,
-    )
     assert results == {"data": 2}

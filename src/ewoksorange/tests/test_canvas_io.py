@@ -4,9 +4,7 @@ from ewoksorange.gui.canvas import menu
 from ewoksorange.gui.canvas.handler import OrangeCanvasHandler
 
 
-def test_exported_json_matches_manual_workflow(
-    tmp_path, monkeypatch, ewoksorange_qtapp
-):
+def test_exported_json_matches_manual_workflow(tmp_path, monkeypatch, qtbot):
     destination_path = tmp_path / "exported_workflow.json"
     graph = {
         "nodes": [

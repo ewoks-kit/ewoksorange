@@ -52,7 +52,7 @@ class EwoksOrangeMutableDefaults(
     name = "ewoks widget with mutable defaults"
 
 
-def test_default_values(ewoksorange_qtapp):
+def test_default_values(qtbot):
     """
     Test that task with an ewoks InputModel are taking into account field default values.
 
@@ -80,9 +80,10 @@ def test_default_values(ewoksorange_qtapp):
     assert widget_a.get_default_input_value("c", "unset") == "unset"
 
 
-def test_removed_default_value(ewoksorange_qtapp):
+def test_removed_default_value(qtbot):
     """A default input removed from the widget falls back to the model default."""
     widget = EwoksOrangeTaskA()
+    qtbot.addWidget(widget)
 
     widget.set_default_input("a", 99)
     assert widget.get_default_input_value("a") == 99
@@ -92,9 +93,10 @@ def test_removed_default_value(ewoksorange_qtapp):
     assert widget.get_default_input_values() == {"a": 12, "b": ("b",)}
 
 
-def test_default_values_do_not_keep_widget_alive(ewoksorange_qtapp):
+def test_default_values_do_not_keep_widget_alive(qtbot):
     """Getting the model default values does not keep a reference to the widget."""
     widget = EwoksOrangeTaskA()
+    qtbot.addWidget(widget)
     assert widget.get_default_input_value("a") == 12
 
     widget_ref = weakref.ref(widget)
@@ -103,12 +105,13 @@ def test_default_values_do_not_keep_widget_alive(ewoksorange_qtapp):
     assert widget_ref() is None
 
 
-def test_mutable_default_values(ewoksorange_qtapp):
+def test_mutable_default_values(qtbot):
     """Modifying a default value of a widget does not modify the model default.
 
     Fields with a default factory have no widget default..
     """
     widget = EwoksOrangeMutableDefaults()
+    qtbot.addWidget(widget)
     assert widget.get_default_input_values() == {"roi": [0, 10]}
 
     widget.get_default_input_value("roi").append(99)
@@ -119,9 +122,10 @@ def test_mutable_default_values(ewoksorange_qtapp):
     assert MutableInputModel().roi == [0, 10]
 
 
-def test_default_factory_values(ewoksorange_qtapp):
+def test_default_factory_values(qtbot):
     """Fields with a default factory have no widget default but the task gets the factory value."""
     widget = EwoksOrangeMutableDefaults()
+    qtbot.addWidget(widget)
     assert widget.get_default_input_value("tags", "unset") == "unset"
     assert "tags" not in widget.get_default_input_values()
     assert "tags" not in widget.get_task_input_values()

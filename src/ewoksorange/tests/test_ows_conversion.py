@@ -11,6 +11,7 @@ from ewokscore import load_graph
 from ewokscore.tests.examples.graphs import get_graph
 from ewokscore.tests.examples.graphs import graph_names
 
+from ..gui.canvas.handler import OrangeCanvasHandler
 from ..gui.workflows import owscheme
 from ..gui.workflows.owscheme import _native_widget_project_name
 from ..gui.workflows.owscheme import _read_ewoks_graph_attrs
@@ -85,7 +86,7 @@ def test_native_widget_project_name_falls_back_to_dynamic_registration(
     assert _native_widget_project_name(widget_class) == "dynamic_distro"
 
 
-def test_ows_to_ewoks_sumtask_tutorial(tmp_path, ewoksorange_qtapp):
+def test_ows_to_ewoks_sumtask_tutorial(tmp_path, qtbot):
     """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.ewokstest import tutorials
 
@@ -98,7 +99,7 @@ def test_ows_to_ewoks_sumtask_tutorial(tmp_path, ewoksorange_qtapp):
     assert ewoksgraph == ewoksgraph2
 
 
-def test_ows_to_ewoks_sumlist_tutorial(tmp_path, ewoksorange_qtapp):
+def test_ows_to_ewoks_sumlist_tutorial(tmp_path, qtbot):
     """Test conversion of orange worflow files to ewoks and back"""
     from orangecontrib.ewokstest import tutorials
 
@@ -207,21 +208,22 @@ def test_ows_to_ewoks_keeps_graph_attrs(tmp_path, from_stream):
     _assert_extra_graph_attrs(ewoksgraph.graph.graph)
 
 
-def test_canvas_save_and_export_keep_graph_attrs(orange_canvas_handler, tmp_path):
-    orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
-    scheme = orange_canvas_handler.scheme
+def test_canvas_save_and_export_keep_graph_attrs(tmp_path):
+    with OrangeCanvasHandler() as orange_canvas_handler:
+        orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
+        scheme = orange_canvas_handler.scheme
 
-    # "File > Save"
-    filename = str(tmp_path / "saved.ows")
-    assert orange_canvas_handler.canvas.save_scheme_to(scheme, filename)
-    _assert_extra_graph_attrs(_read_ewoks_graph_attrs(filename))
-    _assert_extra_graph_attrs(ows_to_ewoks(filename).graph.graph)
+        # "File > Save"
+        filename = str(tmp_path / "saved.ows")
+        assert orange_canvas_handler.canvas.save_scheme_to(scheme, filename)
+        _assert_extra_graph_attrs(_read_ewoks_graph_attrs(filename))
+        _assert_extra_graph_attrs(ows_to_ewoks(filename).graph.graph)
 
-    # "File > Export Ewoks workflow..." converts the scheme saved in memory
-    buffer = io.BytesIO()
-    scheme.save_to(buffer, pretty=True, pickle_fallback=True)
-    buffer.seek(0)
-    _assert_extra_graph_attrs(ows_to_ewoks(buffer).graph.graph)
+        # "File > Export Ewoks workflow..." converts the scheme saved in memory
+        buffer = io.BytesIO()
+        scheme.save_to(buffer, pretty=True, pickle_fallback=True)
+        buffer.seek(0)
+        _assert_extra_graph_attrs(ows_to_ewoks(buffer).graph.graph)
 
 
 def test_read_ows_and_graph_attrs_do_not_consume_stream(tmp_path):

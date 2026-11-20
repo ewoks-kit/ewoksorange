@@ -40,6 +40,7 @@ full = ["PyQt6"]
 test = [
     "ewoksorange[full]",
     "pytest >=7",
+    "pytest-qt",
     "pytest-timeout",
 ]
 dev = [
@@ -132,7 +133,8 @@ ewoks-canvas = "ewoksorange.gui.canvas.main:main"
 "ewoksorange" = "ewoksorange_pytest_plugin.pytest_plugin"
 
 [tool.pytest.ini_options]
-addopts = "--import-mode=importlib"
+addopts = " -p no:ewoksorange --import-mode=importlib"
+qt_api = "pyqt6"
 timeout = 120
 
 [tool.ruff.lint]
