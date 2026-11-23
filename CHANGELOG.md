@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Saving a workflow in the canvas now stores requirements. This is visible to users.
+- Saving a workflow in the canvas now stores requirements.
 
+### Changed
+
+- Rename `add_ewoks_import_export_actions` to `patch_canvas_main_window`.
 
 ### Fixed
 

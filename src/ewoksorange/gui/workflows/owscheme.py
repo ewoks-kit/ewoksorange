@@ -40,7 +40,6 @@ from ..owwidgets.registration import get_dynamic_widget_project_name
 from ..owwidgets.registration import get_owwidget_descriptions
 from ..owwidgets.types import is_ewoks_widget_class
 from ..utils import invalid_data
-from .requirements import generate_requirements
 from .task_wrappers import OWWIDGET_TASKS_GENERATOR
 
 if sys.version_info >= (3, 10):
@@ -611,18 +610,16 @@ def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
     return None
 
 
-def update_ewoks_graph_attrs(scheme: Scheme) -> None:
-    """Generate the requirements of the current Python environment. They replace
-    the requirements loaded from the workflow.
-
-    :raises Exception: the generation failed. The scheme then has no requirements.
+def update_ewoks_graph_attrs(scheme: Scheme, requirements: Optional[dict]) -> None:
+    """The requirements of the current Python environment replace the requirements
+    loaded from the workflow. The workflow has no requirements when `requirements`
+    is `None`.
     """
     ewoks_attrs = dict(scheme.get_runtime_env(_EWOKS_GRAPH_ATTRS_TAG) or {})
     ewoks_attrs.pop("requirements", None)
-    try:
-        ewoks_attrs["requirements"] = generate_requirements()
-    finally:
-        scheme.set_runtime_env(_EWOKS_GRAPH_ATTRS_TAG, ewoks_attrs or None)
+    if requirements is not None:
+        ewoks_attrs["requirements"] = requirements
+    scheme.set_runtime_env(_EWOKS_GRAPH_ATTRS_TAG, ewoks_attrs or None)
 
 
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:

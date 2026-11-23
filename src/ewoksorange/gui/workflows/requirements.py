@@ -1,51 +1,51 @@
 import importlib.metadata
-import logging
 import threading
+from concurrent.futures import Future
 from typing import Dict
 from typing import Optional
 
 from ewokscore import requirements
-from ewokscore.graph import TaskGraph
 
-logger = logging.getLogger(__name__)
-
-_prefetch_thread: Optional[threading.Thread] = None
+_lock = threading.Lock()
+_last_thread: Optional[threading.Thread] = None
 
 
 def prefetch_requirements() -> None:
-    """Generate the requirements in a background thread. Saving a workflow then
-    only waits when the generation has not finished yet."""
-    global _prefetch_thread
-    if _prefetch_thread is not None:
+    """Generate the requirements in the background when the canvas starts, so that
+    saving a workflow does not wait for them."""
+    generate_requirements_in_background()
+
+
+def generate_requirements_in_background() -> "Future[dict]":
+    """Generate the requirements of the current Python environment in a daemon
+    thread. Generations run one after the other: a generation reuses the result
+    that ewokscore cached for the previous one."""
+    global _last_thread
+    future = Future()
+    with _lock:
+        thread = threading.Thread(
+            target=_generate,
+            args=(future, _last_thread),
+            name="ewoks-requirements",
+            daemon=True,
+        )
+        _last_thread = thread
+        thread.start()
+    return future
+
+
+def _generate(future: Future, previous: Optional[threading.Thread]) -> None:
+    if previous is not None:
+        previous.join()
+    if not future.set_running_or_notify_cancel():
         return
-    _prefetch_thread = threading.Thread(
-        target=_prefetch, name="ewoks-requirements", daemon=True
-    )
-    _prefetch_thread.start()
-
-
-def generate_requirements() -> dict:
-    _wait_for_prefetch()
-    return requirements.generate_requirements(bootstrap=_bootstrap())
-
-
-def add_requirements(graph: TaskGraph) -> None:
-    _wait_for_prefetch()
-    requirements.add_requirements(graph, bootstrap=_bootstrap())
+    try:
+        result = requirements.generate_requirements(bootstrap=_bootstrap())
+    except BaseException as ex:
+        future.set_exception(ex)
+    else:
+        future.set_result(result)
 
 
 def _bootstrap() -> Dict[str, str]:
     return {"ewoksorange": importlib.metadata.version("ewoksorange")}
-
-
-def _prefetch() -> None:
-    try:
-        requirements.generate_requirements(bootstrap=_bootstrap())
-    except Exception:
-        # Not cached: generating again when saving reports the error
-        logger.debug("Failed to generate the workflow requirements", exc_info=True)
-
-
-def _wait_for_prefetch() -> None:
-    if _prefetch_thread is not None:
-        _prefetch_thread.join()
