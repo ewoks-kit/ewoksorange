@@ -10,8 +10,10 @@ import pytest
 from ewokscore import load_graph
 from ewokscore.tests.examples.graphs import get_graph
 from ewokscore.tests.examples.graphs import graph_names
+from orangecanvas.scheme import Scheme
 
-from ..gui.canvas.menu import add_ewoks_import_export_actions
+from ..gui.canvas import menu
+from ..gui.canvas.menu import patch_canvas_main_window
 from ..gui.workflows import owscheme
 from ..gui.workflows.owscheme import _native_widget_project_name
 from ..gui.workflows.owscheme import _read_ewoks_graph_attrs
@@ -209,23 +211,30 @@ def test_ows_to_ewoks_keeps_graph_attrs(tmp_path, from_stream):
     _assert_extra_graph_attrs(ewoksgraph.graph.graph)
 
 
-def test_canvas_save_and_export_keep_graph_attrs(
-    orange_canvas_handler, tmp_path, failing_requirements
-):
+def _assert_input_schema(graph_attrs: dict):
+    """The requirements can be generated: only assert on the other attributes."""
+    assert graph_attrs["input_schema"] == _EXTRA_GRAPH_ATTRS["input_schema"]
+
+
+def _assert_generated_requirements(graph_attrs: dict):
+    assert "ewoksorange" in graph_attrs["requirements"]["bootstrap"]["distributions"]
+
+
+def test_canvas_save_and_export_keep_graph_attrs(orange_canvas_handler, tmp_path):
     orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
     scheme = orange_canvas_handler.scheme
 
     # "File > Save"
     filename = str(tmp_path / "saved.ows")
     assert orange_canvas_handler.canvas.save_scheme_to(scheme, filename)
-    _assert_extra_graph_attrs(_read_ewoks_graph_attrs(filename))
-    _assert_extra_graph_attrs(ows_to_ewoks(filename).graph.graph)
+    _assert_input_schema(_read_ewoks_graph_attrs(filename))
+    _assert_input_schema(ows_to_ewoks(filename).graph.graph)
 
     # "File > Export Ewoks workflow..." converts the scheme saved in memory
     buffer = io.BytesIO()
     scheme.save_to(buffer, pretty=True, pickle_fallback=True)
     buffer.seek(0)
-    _assert_extra_graph_attrs(ows_to_ewoks(buffer).graph.graph)
+    _assert_input_schema(ows_to_ewoks(buffer).graph.graph)
 
 
 def test_read_ows_and_graph_attrs_do_not_consume_stream(tmp_path):
@@ -242,78 +251,58 @@ def test_read_ows_and_graph_attrs_do_not_consume_stream(tmp_path):
         assert stream.tell() == 0
 
 
-_GENERATED_REQUIREMENTS = {"distributions": [{"name": "generated"}]}
-
-
-@pytest.fixture
-def fake_requirements(monkeypatch):
-    """Do not let the package manager gather the requirements of the test environment"""
-    bootstraps = []
-
-    def add_requirements(graph, bootstrap=None, **_):
-        bootstraps.append(bootstrap)
-        graph.graph.graph["requirements"] = _GENERATED_REQUIREMENTS
-        return "fake"
-
-    monkeypatch.setattr(owscheme, "add_requirements", add_requirements)
-    return bootstraps
-
-
-@pytest.fixture
-def failing_requirements(monkeypatch):
-    def add_requirements(*_, **__):
-        raise RuntimeError("no package manager")
-
-    monkeypatch.setattr(owscheme, "add_requirements", add_requirements)
-
-
-def _saved_graph_attrs(orange_canvas_handler, tmp_path) -> dict:
-    add_ewoks_import_export_actions()
+def test_canvas_save_generates_requirements(orange_canvas_handler, tmp_path):
+    patch_canvas_main_window()
     orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
     filename = str(tmp_path / "saved.ows")
     assert orange_canvas_handler.canvas.save_scheme_to(
         orange_canvas_handler.scheme, filename
     )
+
     graph_attrs = _read_ewoks_graph_attrs(filename)
+    _assert_generated_requirements(graph_attrs)
+    _assert_input_schema(graph_attrs)
     assert (
         ows_to_ewoks(filename).graph.graph["requirements"]
         == graph_attrs["requirements"]
     )
-    return graph_attrs
 
 
-def test_canvas_save_generates_requirements(
-    orange_canvas_handler, tmp_path, fake_requirements
+def test_canvas_export_generates_requirements(
+    orange_canvas_handler, tmp_path, monkeypatch
 ):
-    graph_attrs = _saved_graph_attrs(orange_canvas_handler, tmp_path)
+    filename = str(tmp_path / "exported.json")
 
-    assert graph_attrs["requirements"] == _GENERATED_REQUIREMENTS
-    # Attributes that are not generated are kept from the loaded workflow
-    assert graph_attrs["input_schema"] == _EXTRA_GRAPH_ATTRS["input_schema"]
-    assert "ewoksorange" in fake_requirements[0]
+    class _FileDialog:
+        @staticmethod
+        def getSaveFileName(*_, **__):
+            return filename, ""
+
+    monkeypatch.setattr(menu, "QFileDialog", _FileDialog)
+    orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
+    menu._export_ewoks_workflow(orange_canvas_handler.canvas)
+
+    graph_attrs = load_graph(filename).graph.graph
+    _assert_generated_requirements(graph_attrs)
+    _assert_input_schema(graph_attrs)
+    # The open document keeps the requirements it was loaded with
+    scheme = orange_canvas_handler.scheme
+    _assert_extra_graph_attrs(scheme.get_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG))
 
 
-def test_canvas_save_keeps_requirements_when_generation_fails(
-    orange_canvas_handler, tmp_path, failing_requirements
-):
-    _assert_extra_graph_attrs(_saved_graph_attrs(orange_canvas_handler, tmp_path))
+@pytest.mark.parametrize("loaded", [False, True])
+def test_update_ewoks_graph_attrs(orange_canvas_handler, loaded):
+    if loaded:
+        orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
+        scheme = orange_canvas_handler.scheme
+    else:
+        scheme = Scheme()
 
-
-def test_update_ewoks_graph_attrs_of_new_workflow(fake_requirements):
-    from orangecanvas.scheme import Scheme
-
-    scheme = Scheme()
     update_ewoks_graph_attrs(scheme)
-    assert scheme.get_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG) == {
-        "requirements": _GENERATED_REQUIREMENTS
-    }
 
-
-def test_update_ewoks_graph_attrs_of_new_workflow_when_generation_fails(
-    failing_requirements,
-):
-    from orangecanvas.scheme import Scheme
-
-    scheme = Scheme()
-    update_ewoks_graph_attrs(scheme)
-    assert scheme.get_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG) is None
+    graph_attrs = scheme.get_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG)
+    _assert_generated_requirements(graph_attrs)
+    if loaded:
+        _assert_input_schema(graph_attrs)
+    else:
+        assert set(graph_attrs) == {"requirements"}

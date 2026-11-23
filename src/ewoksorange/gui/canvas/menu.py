@@ -8,10 +8,12 @@ from AnyQt.QtWidgets import QAction
 from AnyQt.QtWidgets import QFileDialog
 from AnyQt.QtWidgets import QMenu
 from orangecanvas.application.canvasmain import CanvasMainWindow
+from orangecanvas.gui.utils import message_warning
 
 from ..workflows.owscheme import ewoks_to_ows
 from ..workflows.owscheme import ows_to_ewoks
 from ..workflows.owscheme import update_ewoks_graph_attrs
+from ..workflows.requirements import add_requirements
 
 _logger = logging.getLogger(__name__)
 _FILTER = "Ewoks workflow (*.json *.yml *.yaml)"
@@ -53,15 +55,30 @@ def _export_ewoks_workflow(window: CanvasMainWindow) -> None:
         filename += ".json"
     try:
         scheme = window.current_document().scheme()
-        update_ewoks_graph_attrs(scheme)
         buffer = io.BytesIO()
         scheme.save_to(buffer, pretty=True, pickle_fallback=True)
         buffer.seek(0)
         graph = ows_to_ewoks(buffer)
+        try:
+            add_requirements(graph)
+        except Exception:
+            graph.graph.graph.pop("requirements", None)
+            _requirements_warning(window, "exported")
         save_graph(graph, filename)
     except Exception as e:
         _logger.exception("Ewoks export failed")
         window.output_view().write(f"Ewoks export failed: {e}\n")
+
+
+def _requirements_warning(window: CanvasMainWindow, action: str) -> None:
+    _logger.warning("Failed to generate the workflow requirements", exc_info=True)
+    message_warning(
+        "Failed to generate the requirements of the current Python environment. "
+        f"The workflow is {action} without requirements.",
+        title="Workflow requirements",
+        exc_info=True,
+        parent=window,
+    )
 
 
 def _add_actions(window: CanvasMainWindow) -> None:
@@ -85,10 +102,10 @@ def _add_actions(window: CanvasMainWindow) -> None:
             menu.addAction(action)
 
 
-def add_ewoks_import_export_actions() -> None:
+def patch_canvas_main_window() -> None:
     """
     Add Ewoks import/export to the File menu of every canvas window, and
-    refresh the ewoks graph attributes when a workflow is saved.
+    generate the workflow requirements when a workflow is saved.
     """
     global _patched
     if _patched:
@@ -109,7 +126,10 @@ def add_ewoks_import_export_actions() -> None:
     original_save_scheme_to = CanvasMainWindow.save_scheme_to
 
     def save_scheme_to(self, scheme, filename):
-        update_ewoks_graph_attrs(scheme)
+        try:
+            update_ewoks_graph_attrs(scheme)
+        except Exception:
+            _requirements_warning(self, "saved")
         return original_save_scheme_to(self, scheme, filename)
 
     CanvasMainWindow.save_scheme_to = save_scheme_to

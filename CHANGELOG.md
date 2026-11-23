@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Saving a workflow in the canvas now stores requirements. This is visible to users.
+
+
 ### Fixed
 
 - Orange signal type of a `Dict[...]` task input/output is `dict`, with or without `Optional`.
