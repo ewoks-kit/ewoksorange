@@ -25,14 +25,11 @@ def prefetch_requirements() -> None:
 
 
 def generate_requirements() -> dict:
-    """Requirements of the current python environment, as stored in the
-    `requirements` graph attribute."""
     _wait_for_prefetch()
     return requirements.generate_requirements(bootstrap=_bootstrap())
 
 
 def add_requirements(graph: TaskGraph) -> None:
-    """Add the requirements of the current python environment to a workflow."""
     _wait_for_prefetch()
     requirements.add_requirements(graph, bootstrap=_bootstrap())
 
