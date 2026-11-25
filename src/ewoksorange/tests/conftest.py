@@ -4,6 +4,8 @@ import pytest
 
 from orangecontrib.ewokstest import enable_ewokstest_category
 
+from ..gui.canvas.menu import patch_canvas_main_window
+
 pytest.register_assert_rewrite("ewoksorange.tests.executor.signals")
 
 
@@ -45,3 +47,16 @@ def ewoks_orange_canvas(raw_ewoks_orange_canvas):
         stacklevel=2,
     )
     yield raw_ewoks_orange_canvas
+
+
+@pytest.fixture()
+def patched_canvas_main_window():
+    patch_canvas_main_window()
+
+
+@pytest.fixture()
+def orange_canvas_handler(patched_canvas_main_window, orange_canvas_handler):
+    """The canvas of all tests is patched as in `ewoksorange.gui.canvas.main`,
+    whatever the order of the tests. The patch is done before the plugin fixture
+    creates the canvas window."""
+    yield orange_canvas_handler

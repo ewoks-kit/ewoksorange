@@ -2,15 +2,24 @@ import io
 import logging
 import os
 import tempfile
+from concurrent.futures import Future
+from concurrent.futures import wait
 from pathlib import Path
+from typing import Optional
 
+from AnyQt.QtCore import Qt
+from AnyQt.QtCore import QTimer
 from AnyQt.QtWidgets import QAction
 from AnyQt.QtWidgets import QFileDialog
 from AnyQt.QtWidgets import QMenu
+from AnyQt.QtWidgets import QProgressDialog
 from orangecanvas.application.canvasmain import CanvasMainWindow
+from orangecanvas.gui.utils import message_warning
 
 from ..workflows.owscheme import ewoks_to_ows
 from ..workflows.owscheme import ows_to_ewoks
+from ..workflows.owscheme import update_ewoks_graph_attrs
+from ..workflows.requirements import generate_requirements_in_background
 
 _logger = logging.getLogger(__name__)
 _FILTER = "Ewoks workflow (*.json *.yml *.yaml)"
@@ -40,9 +49,6 @@ def _import_ewoks_workflow(window: CanvasMainWindow) -> None:
 
 
 def _export_ewoks_workflow(window: CanvasMainWindow) -> None:
-
-    from ...bindings import save_graph  # Lazy import to avoid circular import
-
     filename, _ = QFileDialog.getSaveFileName(
         window, "Export Ewoks workflow", "", _FILTER
     )
@@ -50,16 +56,84 @@ def _export_ewoks_workflow(window: CanvasMainWindow) -> None:
         return
     if not Path(filename).suffix:
         filename += ".json"
+    _export_ewoks_workflow_to(window, filename)
+
+
+def _export_ewoks_workflow_to(window: CanvasMainWindow, filename: str) -> None:
+    """Export the workflow of the window as an Ewoks workflow file."""
+
+    from ...bindings import save_graph  # Lazy import to avoid circular import
+
     try:
         scheme = window.current_document().scheme()
         buffer = io.BytesIO()
         scheme.save_to(buffer, pretty=True, pickle_fallback=True)
         buffer.seek(0)
         graph = ows_to_ewoks(buffer)
+        requirements = _generate_requirements(window, "exported")
+        if requirements is None:
+            graph.graph.graph.pop("requirements", None)
+        else:
+            graph.graph.graph["requirements"] = requirements
         save_graph(graph, filename)
     except Exception as e:
         _logger.exception("Ewoks export failed")
         window.output_view().write(f"Ewoks export failed: {e}\n")
+
+
+def _generate_requirements(window: CanvasMainWindow, action: str) -> Optional[dict]:
+    """Requirements of the current Python environment, generated in a worker
+    thread. The GUI stays responsive while waiting. `None` when the generation
+    fails or the user skips it.
+    """
+    future = generate_requirements_in_background()
+    wait([future], timeout=0.1)  # no dialog when the requirements are cached
+    if not future.done():
+        _wait_with_progress_dialog(window, future, action)
+    if not future.done():
+        future.cancel()
+        return None
+    try:
+        return future.result()
+    except Exception:
+        _logger.warning("Failed to generate the workflow requirements", exc_info=True)
+        message_warning(
+            "Failed to generate the requirements of the current Python environment. "
+            f"The workflow is {action} without requirements.",
+            title="Workflow requirements",
+            exc_info=True,
+            parent=window,
+        )
+        return None
+
+
+def _wait_with_progress_dialog(
+    window: CanvasMainWindow, future: Future, action: str
+) -> None:
+    """Window-modal dialog until the future is done or the user skips it. The Qt
+    event loop keeps running. The worker thread does not use Qt: this thread polls
+    the future."""
+    dialog = QProgressDialog(
+        "Generating the requirements of the current Python environment...\n"
+        f"Skip: the workflow is {action} without requirements.",
+        "Skip",
+        0,
+        0,
+        window,
+    )
+    dialog.setWindowTitle("Workflow requirements")
+    dialog.setWindowModality(Qt.WindowModal)
+    timer = QTimer(dialog)
+
+    def close_when_done():
+        if future.done():
+            dialog.accept()
+
+    timer.timeout.connect(close_when_done)
+    timer.start(50)
+    dialog.exec()
+    timer.stop()
+    dialog.deleteLater()
 
 
 def _add_actions(window: CanvasMainWindow) -> None:
@@ -83,9 +157,10 @@ def _add_actions(window: CanvasMainWindow) -> None:
             menu.addAction(action)
 
 
-def add_ewoks_import_export_actions() -> None:
+def patch_canvas_main_window() -> None:
     """
-    Add Ewoks import/export to the File menu of every canvas window.
+    Add Ewoks import/export to the File menu of every canvas window, and
+    generate the workflow requirements when a workflow is saved.
     """
     global _patched
     if _patched:
@@ -100,3 +175,14 @@ def add_ewoks_import_export_actions() -> None:
         _add_actions(self)
 
     CanvasMainWindow.__init__ = __init__
+
+    # "File > Save" and "File > Save As". Not in `scheme_to_etree` which also
+    # serializes the scheme on every edit (recovery file) and on copy.
+    original_save_scheme_to = CanvasMainWindow.save_scheme_to
+
+    def save_scheme_to(self, scheme, filename):
+        # The file is written when the requirements are generated
+        update_ewoks_graph_attrs(scheme, _generate_requirements(self, "saved"))
+        return original_save_scheme_to(self, scheme, filename)
+
+    CanvasMainWindow.save_scheme_to = save_scheme_to

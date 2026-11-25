@@ -26,6 +26,7 @@ from ewokscore.node import get_node_label
 from ewokscore.task import Task
 from ewoksutils.import_utils import import_qualname
 from ewoksutils.import_utils import qualname
+from orangecanvas.scheme import Scheme
 from orangecanvas.scheme import annotations
 from orangecanvas.scheme import readwrite
 
@@ -607,6 +608,18 @@ def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
     except Exception:
         logger.debug("Failed to read ewoks graph attributes", exc_info=True)
     return None
+
+
+def update_ewoks_graph_attrs(scheme: Scheme, requirements: Optional[dict]) -> None:
+    """The requirements of the current Python environment replace the requirements
+    loaded from the workflow. The workflow has no requirements when `requirements`
+    is `None`.
+    """
+    ewoks_attrs = dict(scheme.get_runtime_env(_EWOKS_GRAPH_ATTRS_TAG) or {})
+    ewoks_attrs.pop("requirements", None)
+    if requirements is not None:
+        ewoks_attrs["requirements"] = requirements
+    scheme.set_runtime_env(_EWOKS_GRAPH_ATTRS_TAG, ewoks_attrs or None)
 
 
 def read_ows(source: Union[str, IO]) -> ReadSchemeType:

@@ -6,7 +6,8 @@ from contextlib import contextmanager
 from packaging.version import Version
 
 from ...orange_version import ORANGE_VERSION
-from .menu import add_ewoks_import_export_actions
+from ..workflows.requirements import prefetch_requirements
+from .menu import patch_canvas_main_window
 
 _logger = logging.getLogger(__name__)
 
@@ -122,7 +123,8 @@ def _temporary_log_handlers(log_level):
 
 
 def main(argv=None):
-    add_ewoks_import_export_actions()
+    patch_canvas_main_window()
+    prefetch_requirements()
     parser = arg_parser()
 
     parser.add_argument(
