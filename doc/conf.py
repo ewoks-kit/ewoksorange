@@ -3,6 +3,8 @@
 
 import importlib.metadata
 
+from packaging.version import Version
+
 release = importlib.metadata.version("ewoksorange")
 
 project = "ewoksorange"
@@ -41,7 +43,10 @@ autodoc_default_flags = [
 copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
 copybutton_prompt_is_regexp = True
 
-mermaid_d3_zoom = True
+if Version(importlib.metadata.version("sphinxcontrib-mermaid")) >= Version("3.0.0a0"):
+    mermaid_zoom = True
+else:
+    mermaid_d3_zoom = True
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
