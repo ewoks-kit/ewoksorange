@@ -10,16 +10,9 @@ _lock = threading.Lock()
 _last_thread: Optional[threading.Thread] = None
 
 
-def prefetch_requirements() -> None:
-    """Generate the requirements in the background when the canvas starts, so that
-    saving a workflow does not wait for them."""
-    generate_requirements_in_background()
-
-
 def generate_requirements_in_background() -> "Future[dict]":
     """Generate the requirements of the current Python environment in a daemon
-    thread. Generations run one after the other: a generation reuses the result
-    that ewokscore cached for the previous one."""
+    thread."""
     global _last_thread
     future = Future()
     with _lock:
@@ -35,6 +28,8 @@ def generate_requirements_in_background() -> "Future[dict]":
 
 
 def _generate(future: Future, previous: Optional[threading.Thread]) -> None:
+    # One generation at a time: it reuses the result that ewokscore cached
+    # for the previous one.
     if previous is not None:
         previous.join()
     if not future.set_running_or_notify_cancel():

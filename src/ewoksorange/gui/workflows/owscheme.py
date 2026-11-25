@@ -610,11 +610,9 @@ def _read_ewoks_graph_attrs(source: Union[str, IO]) -> Optional[dict]:
     return None
 
 
-def update_ewoks_graph_attrs(scheme: Scheme, requirements: Optional[dict]) -> None:
-    """The requirements of the current Python environment replace the requirements
-    loaded from the workflow. The workflow has no requirements when `requirements`
-    is `None`.
-    """
+def _update_ewoks_graph_attrs(scheme: Scheme, requirements: Optional[dict]) -> None:
+    """Replace the requirements of the workflow. Remove them when `requirements`
+    is `None`."""
     ewoks_attrs = dict(scheme.get_runtime_env(_EWOKS_GRAPH_ATTRS_TAG) or {})
     ewoks_attrs.pop("requirements", None)
     if requirements is not None:
