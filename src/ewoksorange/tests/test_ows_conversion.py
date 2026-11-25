@@ -1,4 +1,5 @@
 from collections import namedtuple
+from typing import Optional
 
 try:
     from importlib.resources import files as resource_files
@@ -19,8 +20,6 @@ from ..gui.workflows.owscheme import ewoks_to_ows
 from ..gui.workflows.owscheme import graph_is_supported
 from ..gui.workflows.owscheme import ows_to_ewoks
 from ..gui.workflows.owscheme import read_ows
-from ..gui.workflows.owscheme import update_ewoks_graph_attrs
-from ..gui.workflows.requirements import generate_requirements_in_background
 
 _FakeEntryPoint = namedtuple("_FakeEntryPoint", ["target", "dist"])
 
@@ -210,12 +209,12 @@ def test_ows_to_ewoks_keeps_graph_attrs(tmp_path, from_stream):
     _assert_extra_graph_attrs(ewoksgraph.graph.graph)
 
 
-def _assert_input_schema(graph_attrs: dict):
+def _assert_input_schema(graph_attrs: dict) -> None:
     """The requirements can be generated: only assert on the other attributes."""
     assert graph_attrs["input_schema"] == _EXTRA_GRAPH_ATTRS["input_schema"]
 
 
-def _assert_generated_requirements(graph_attrs: dict):
+def _assert_generated_requirements(graph_attrs: dict) -> None:
     assert "ewoksorange" in graph_attrs["requirements"]["bootstrap"]["distributions"]
 
 
@@ -249,7 +248,7 @@ def test_read_ows_and_graph_attrs_do_not_consume_stream(tmp_path):
         assert stream.tell() == 0
 
 
-def test_canvas_save_generates_requirements(orange_canvas_handler, tmp_path):
+def test_canvas_save_generates_requirements(orange_canvas_handler, tmp_path) -> None:
     orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
     filename = str(tmp_path / "saved.ows")
     assert orange_canvas_handler.canvas.save_scheme_to(
@@ -265,7 +264,7 @@ def test_canvas_save_generates_requirements(orange_canvas_handler, tmp_path):
     )
 
 
-def test_canvas_export_generates_requirements(orange_canvas_handler, tmp_path):
+def test_canvas_export_generates_requirements(orange_canvas_handler, tmp_path) -> None:
     filename = str(tmp_path / "exported.json")
     orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
     menu._export_ewoks_workflow_to(orange_canvas_handler.canvas, filename)
@@ -278,31 +277,34 @@ def test_canvas_export_generates_requirements(orange_canvas_handler, tmp_path):
     _assert_extra_graph_attrs(scheme.get_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG))
 
 
-@pytest.mark.parametrize("generated", [True, False])
-@pytest.mark.parametrize("loaded", [False, True])
-def test_update_ewoks_graph_attrs(orange_canvas_handler, loaded, generated):
-    """Generated requirements replace the loaded ones. A failed or skipped
-    generation (`None`) removes them. Other attributes are kept."""
-    if loaded:
-        orange_canvas_handler.load_graph(_GRAPH_WITH_ATTRS)
-        scheme = orange_canvas_handler.scheme
-    else:
-        scheme = Scheme()
-    if generated:
-        requirements = generate_requirements_in_background().result(timeout=60)
-    else:
-        requirements = None
+_REQUIREMENTS = {"bootstrap": {"distributions": {"ewoksorange": "1.0"}}}
 
-    update_ewoks_graph_attrs(scheme, requirements)
 
-    graph_attrs = scheme.get_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG)
-    if generated:
-        _assert_generated_requirements(graph_attrs)
-    elif loaded:
-        assert "requirements" not in graph_attrs
-    else:
-        assert graph_attrs is None
-    if loaded:
-        _assert_input_schema(graph_attrs)
-    elif generated:
-        assert set(graph_attrs) == {"requirements"}
+@pytest.mark.parametrize(
+    "loaded, requirements, expected",
+    [
+        (None, None, None),
+        (None, _REQUIREMENTS, {"requirements": _REQUIREMENTS}),
+        (
+            _EXTRA_GRAPH_ATTRS,
+            None,
+            {"input_schema": _EXTRA_GRAPH_ATTRS["input_schema"]},
+        ),
+        (
+            _EXTRA_GRAPH_ATTRS,
+            _REQUIREMENTS,
+            {**_EXTRA_GRAPH_ATTRS, "requirements": _REQUIREMENTS},
+        ),
+    ],
+)
+def test_update_ewoks_graph_attrs(
+    ewoksorange_qtapp,
+    loaded: Optional[dict],
+    requirements: Optional[dict],
+    expected: Optional[dict],
+) -> None:
+    """New requirements replace the loaded ones. `None` removes them."""
+    scheme = Scheme()
+    scheme.set_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG, loaded)
+    owscheme._update_ewoks_graph_attrs(scheme, requirements)
+    assert scheme.get_runtime_env(owscheme._EWOKS_GRAPH_ATTRS_TAG) == expected

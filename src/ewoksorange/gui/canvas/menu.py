@@ -15,11 +15,12 @@ from AnyQt.QtWidgets import QMenu
 from AnyQt.QtWidgets import QProgressDialog
 from orangecanvas.application.canvasmain import CanvasMainWindow
 from orangecanvas.gui.utils import message_warning
+from orangecanvas.scheme import Scheme
 
+from ..workflows._requirements import generate_requirements_in_background
+from ..workflows.owscheme import _update_ewoks_graph_attrs
 from ..workflows.owscheme import ewoks_to_ows
 from ..workflows.owscheme import ows_to_ewoks
-from ..workflows.owscheme import update_ewoks_graph_attrs
-from ..workflows.requirements import generate_requirements_in_background
 
 _logger = logging.getLogger(__name__)
 _FILTER = "Ewoks workflow (*.json *.yml *.yaml)"
@@ -82,10 +83,8 @@ def _export_ewoks_workflow_to(window: CanvasMainWindow, filename: str) -> None:
 
 
 def _generate_requirements(window: CanvasMainWindow, action: str) -> Optional[dict]:
-    """Requirements of the current Python environment, generated in a worker
-    thread. The GUI stays responsive while waiting. `None` when the generation
-    fails or the user skips it.
-    """
+    """Requirements of the current Python environment. `None` when the generation
+    fails or the user skips it."""
     future = generate_requirements_in_background()
     wait([future], timeout=0.1)  # no dialog when the requirements are cached
     if not future.done():
@@ -110,9 +109,7 @@ def _generate_requirements(window: CanvasMainWindow, action: str) -> Optional[di
 def _wait_with_progress_dialog(
     window: CanvasMainWindow, future: Future, action: str
 ) -> None:
-    """Window-modal dialog until the future is done or the user skips it. The Qt
-    event loop keeps running. The worker thread does not use Qt: this thread polls
-    the future."""
+    """Show a window-modal dialog until the future is done or the user skips it."""
     dialog = QProgressDialog(
         "Generating the requirements of the current Python environment...\n"
         f"Skip: the workflow is {action} without requirements.",
@@ -123,9 +120,10 @@ def _wait_with_progress_dialog(
     )
     dialog.setWindowTitle("Workflow requirements")
     dialog.setWindowModality(Qt.WindowModal)
+    # Poll the future: the worker thread does not use Qt.
     timer = QTimer(dialog)
 
-    def close_when_done():
+    def close_when_done() -> None:
         if future.done():
             dialog.accept()
 
@@ -180,9 +178,8 @@ def patch_canvas_main_window() -> None:
     # serializes the scheme on every edit (recovery file) and on copy.
     original_save_scheme_to = CanvasMainWindow.save_scheme_to
 
-    def save_scheme_to(self, scheme, filename):
-        # The file is written when the requirements are generated
-        update_ewoks_graph_attrs(scheme, _generate_requirements(self, "saved"))
+    def save_scheme_to(self: CanvasMainWindow, scheme: Scheme, filename: str) -> bool:
+        _update_ewoks_graph_attrs(scheme, _generate_requirements(self, "saved"))
         return original_save_scheme_to(self, scheme, filename)
 
     CanvasMainWindow.save_scheme_to = save_scheme_to
